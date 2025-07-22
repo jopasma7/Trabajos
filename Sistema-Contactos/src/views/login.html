@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Contactos Pro - Iniciar Sesión</title>
+    <link rel="stylesheet" href="../styles/login.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-background">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+        <div class="gradient-orb orb-4"></div>
+    </div>
+
+    <!-- Main Login Container -->
+    <div class="login-wrapper">
+        <!-- Brand Section -->
+        <div class="brand-section">
+            <div class="brand-content">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                </div>
+                <h1 class="brand-title">CRM Contactos <span class="highlight">Pro</span></h1>
+                <p class="brand-description">
+                    Plataforma integral de gestión empresarial con tecnología avanzada
+                </p>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics en tiempo real</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Seguridad empresarial</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <span>Exportación avanzada</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Form Section -->
+        <div class="login-section">
+            <div class="login-card">
+                <div class="card-header">
+                    <h2>Bienvenido de vuelta</h2>
+                    <p>Ingresa tus credenciales para acceder al sistema</p>
+                </div>
+
+                <form id="loginForm" class="login-form">
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <input type="email" id="email" name="email" required 
+                               placeholder="Correo electrónico" autocomplete="email">
+                        <label for="email">Email</label>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="input-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input type="password" id="password" name="password" required 
+                               placeholder="Contraseña" autocomplete="current-password">
+                        <label for="password">Contraseña</label>
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="custom-checkbox">
+                            <input type="checkbox" id="rememberMe">
+                            <span class="checkmark">
+                                <i class="fas fa-check"></i>
+                            </span>
+                            <span class="checkbox-text">Mantener sesión iniciada</span>
+                        </label>
+                        <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
+                    </div>
+
+                    <button type="submit" class="login-button" id="loginBtn">
+                        <span class="button-content">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span class="button-text">Iniciar Sesión</span>
+                        </span>
+                        <div class="button-loading">
+                            <div class="loading-spinner"></div>
+                            <span>Verificando credenciales...</span>
+                        </div>
+                    </button>
+
+                    <div class="error-message" id="errorMessage">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span class="error-text"></span>
+                    </div>
+                </form>
+
+                <!-- Register Section -->
+                <div class="register-section">
+                    <div class="register-divider">
+                        <span>¿No tienes cuenta?</span>
+                    </div>
+                    <button type="button" class="register-button" id="showRegisterBtn">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Crear cuenta nueva</span>
+                    </button>
+                </div>
+
+                <!-- Demo Credentials -->
+                <div class="demo-section">
+                    <div class="demo-header">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Credenciales de demostración</span>
+                    </div>
+                    <div class="demo-credentials">
+                        <div class="credential-item">
+                            <span class="credential-label">Usuario:</span>
+                            <code class="credential-value" onclick="copyToClipboard('admin@test.com')">
+                                admin@test.com
+                                <i class="fas fa-copy"></i>
+                            </code>
+                        </div>
+                        <div class="credential-item">
+                            <span class="credential-label">Contraseña:</span>
+                            <code class="credential-value" onclick="copyToClipboard('123456')">
+                                123456
+                                <i class="fas fa-copy"></i>
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <div class="loading-text">Iniciando CRM Contactos Pro...</div>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../scripts/login.js"></script>
+</body>
+</html>

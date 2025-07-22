@@ -1,0 +1,33 @@
+{
+  "name": "gestion-usuarios",
+  "version": "1.0.0",
+  "description": "Aplicación de gestión de usuarios con autenticación",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack-win": "electron-packager . GestionUsuarios --platform=win32 --arch=x64 --out=dist --overwrite --app-copyright=\"Copyright © 2025\" --app-version=\"1.0.0\"",
+    "pack-all": "electron-packager . GestionUsuarios --all --out=dist --overwrite --app-copyright=\"Copyright © 2025\" --app-version=\"1.0.0\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "usuarios",
+    "autenticacion",
+    "crud",
+    "sqlite"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^37.2.3",
+    "electron-packager": "^17.1.2"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  }
+}
