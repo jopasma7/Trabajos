@@ -71,18 +71,17 @@
                             <table class="records-table" id="difuntos-table">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nombre Completo</th>
-                                        <th>Fecha Nacimiento</th>
-                                        <th>Fecha Defunción</th>
-                                        <th>Parcela</th>
-                                        <th>Estado</th>
+                                        <th class="sortable" data-column="id">ID <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="nombre">Nombre Completo <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="fecha_nacimiento">Fecha Nacimiento <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="fecha_defuncion">Fecha Defunción <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="parcela_numero">Parcela <span class="sort-icon">↕️</span></th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="7">Cargando registros...</td>
+                                        <td colspan="6">Cargando registros...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -104,19 +103,20 @@
                             <table class="records-table" id="parcelas-table">
                                 <thead>
                                     <tr>
-                                        <th>Código</th>
-                                        <th>Tipo</th>
-                                        <th>Zona</th>
-                                        <th>Sección</th>
-                                        <th>Ubicación</th>
-                                        <th>Estado</th>
-                                        <th>Precio</th>
+                                        <th class="sortable" data-column="codigo">Código <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="tipo">Tipo <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="zona">Zona <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="seccion">Sección <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="fila">Fila <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="ubicacion">Ubicación <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="estado">Estado <span class="sort-icon">↕️</span></th>
+                                        <th class="sortable" data-column="precio">Precio <span class="sort-icon">↕️</span></th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="8">Cargando parcelas...</td>
+                                        <td colspan="9">Cargando parcelas...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -288,11 +288,35 @@
                     </div>
                     
                     <div class="form-section">
+                        <h3>Asignación de Parcela</h3>
+                        <div class="parcela-container">
+                            <div class="form-group">
+                                <label for="parcela_id">Parcela Disponible</label>
+                                <select id="parcela_id" name="parcela_id" onchange="updateParcelaMessage(this.value, this.options[this.selectedIndex].text)">
+                                    <option value="">Sin asignar</option>
+                                </select>
+                            </div>
+                            <div id="parcela-status" class="parcela-status-right" style="display: none;">
+                                <span class="status-icon">🏛️</span>
+                                <span id="parcela-message">Sin parcela asignada</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
                         <h3>Información Adicional</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="lugar_nacimiento">Lugar de Nacimiento</label>
-                                <input type="text" id="lugar_nacimiento" name="lugar_nacimiento">
+                                <input type="text" id="lugar_nacimiento" name="lugar_nacimiento" 
+                                       list="ciudades" placeholder="Escribe para buscar ciudades..." 
+                                       autocomplete="off" oninput="buscarCiudades(this.value)" onfocus="buscarCiudades(this.value)">
+                                <datalist id="ciudades">
+                                    <!-- Las opciones se cargarán dinámicamente -->
+                                </datalist>
+                                <div id="ciudades-loading" style="display: none;" class="loading-indicator">
+                                    <span>🔍</span> Buscando ciudades...
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="causa_muerte">Causa de Muerte</label>

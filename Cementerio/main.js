@@ -9,7 +9,7 @@ let dbManager;
 // Función para crear la ventana principal
 function createMainWindow() {
     mainWindow = new BrowserWindow({
-        width: 1200,
+        width: 1600,
         height: 800,
         minWidth: 800,
         minHeight: 600,
