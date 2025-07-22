@@ -290,7 +290,7 @@ Este proyecto está bajo la **Licencia MIT**. Ver el archivo `LICENSE` para más
 
 ## 👥 Autor
 
-**José Pascual Martín (jopasma7)**
+**Alejandro Pastor Mayor (jopasma7)**
 - 🐙 GitHub: [@jopasma7](https://github.com/jopasma7)
 - 📧 Email: contacto disponible via GitHub
 - 🌟 Repository: [Sistema de Cementerio](https://github.com/jopasma7/Trabajos/tree/master/Cementerio)
@@ -322,4 +322,4 @@ Este proyecto está bajo la **Licencia MIT**. Ver el archivo `LICENSE` para más
 
 ---
 
-*Desarrollado con ❤️ para mejorar la gestión de cementerios*
+*Desarrollado con ❤️ por Alejandro Pastor Mayor para mejorar la gestión de cementerios*

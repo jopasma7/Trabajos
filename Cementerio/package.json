@@ -20,7 +20,7 @@
     "gestion",
     "desktop-app"
   ],
-  "author": "jopasma7",
+  "author": "Alejandro Pastor Mayor <jopasma7@github.com>",
   "license": "MIT",
   "devDependencies": {
     "electron": "^30.0.0",
