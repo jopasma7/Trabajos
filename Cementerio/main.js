@@ -1,8 +1,10 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
+const DatabaseManager = require('./src/database/database');
 
 // Variables globales
 let mainWindow;
+let dbManager;
 
 // Función para crear la ventana principal
 function createMainWindow() {
@@ -17,15 +19,16 @@ function createMainWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'src', 'preload.js')
         },
-        show: false
+        show: true
     });
-
+    
     // Cargar la página principal
     mainWindow.loadFile(path.join(__dirname, 'src', 'views', 'index.html'));
 
     // Mostrar ventana cuando esté lista
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
+        mainWindow.focus(); // Asegurar que tenga el foco
     });
 
     // Evento cuando se cierra la ventana
@@ -96,7 +99,16 @@ function createMenu() {
 }
 
 // Eventos de la aplicación
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+    // Inicializar base de datos
+    dbManager = new DatabaseManager();
+    try {
+        await dbManager.connect();
+        await dbManager.insertSampleData(); // Insertar datos de ejemplo
+    } catch (error) {
+        console.error('Error inicializando base de datos:', error);
+    }
+
     createMainWindow();
     createMenu();
 
@@ -109,7 +121,12 @@ app.whenReady().then(() => {
 });
 
 // Cerrar la aplicación cuando todas las ventanas están cerradas
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+    // Cerrar conexión a la base de datos
+    if (dbManager) {
+        await dbManager.close();
+    }
+    
     if (process.platform !== 'darwin') {
         app.quit();
     }
@@ -122,6 +139,53 @@ ipcMain.handle('app-version', () => {
 
 ipcMain.handle('app-name', () => {
     return app.getName();
+});
+
+// Eventos de base de datos
+ipcMain.handle('db-get-estadisticas', async () => {
+    try {
+        return await dbManager.getEstadisticas();
+    } catch (error) {
+        console.error('Error obteniendo estadísticas:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-difuntos', async (event, options = {}) => {
+    try {
+        const { limit = 100, offset = 0 } = options;
+        return await dbManager.getAllDifuntos(limit, offset);
+    } catch (error) {
+        console.error('Error obteniendo difuntos:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-search-difuntos', async (event, searchTerm) => {
+    try {
+        return await dbManager.searchDifuntos(searchTerm);
+    } catch (error) {
+        console.error('Error buscando difuntos:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-create-difunto', async (event, data) => {
+    try {
+        return await dbManager.createDifunto(data);
+    } catch (error) {
+        console.error('Error creando difunto:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-parcelas-disponibles', async () => {
+    try {
+        return await dbManager.getParcelasDisponibles();
+    } catch (error) {
+        console.error('Error obteniendo parcelas:', error);
+        return { error: error.message };
+    }
 });
 
 // Prevenir navegación externa

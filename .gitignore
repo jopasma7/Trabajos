@@ -228,3 +228,20 @@ temp/
 
 # Yarn lock file (if using yarn instead of npm)
 # yarn.lock
+
+# Project-specific exclusions
+# SQLite databases (may contain sensitive data)
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary and backup files
+*_old.*
+*_new.*
+*_backup.*
+*_temp.*
+
+# Local data directories
+data/
+backups/
+temp/

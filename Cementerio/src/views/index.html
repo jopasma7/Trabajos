@@ -23,9 +23,9 @@
                     <h3>Navegación</h3>
                     <ul>
                         <li><a href="#" data-section="dashboard" class="nav-link active">📊 Dashboard</a></li>
-                        <li><a href="#" data-section="registros" class="nav-link">📝 Registros</a></li>
-                        <li><a href="#" data-section="buscar" class="nav-link">🔍 Buscar</a></li>
-                        <li><a href="#" data-section="estadisticas" class="nav-link">📈 Estadísticas</a></li>
+                        <li><a href="#" data-section="difuntos" class="nav-link">📝 Difuntos</a></li>
+                        <li><a href="#" data-section="parcelas" class="nav-link">🏛️ Parcelas</a></li>
+                        <li><a href="#" data-section="busqueda" class="nav-link">🔍 Búsqueda</a></li>
                         <li><a href="#" data-section="configuracion" class="nav-link">⚙️ Configuración</a></li>
                     </ul>
                 </nav>
@@ -33,79 +33,287 @@
 
             <div class="content">
                 <!-- Dashboard Section -->
-                <section id="dashboard" class="content-section active">
+                <section id="dashboard-section" class="content-section" style="display: block;">
                     <h2>Dashboard Principal</h2>
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <h3>Total Registros</h3>
-                            <div class="stat-number" id="totalRegistros">0</div>
+                            <h3>Total Difuntos</h3>
+                            <div class="stat-number" id="total-difuntos">0</div>
                         </div>
                         <div class="stat-card">
-                            <h3>Este Mes</h3>
-                            <div class="stat-number" id="registrosMes">0</div>
+                            <h3>Total Parcelas</h3>
+                            <div class="stat-number" id="total-parcelas">0</div>
                         </div>
                         <div class="stat-card">
-                            <h3>Espacios Disponibles</h3>
-                            <div class="stat-number" id="espaciosDisponibles">0</div>
+                            <h3>Parcelas Ocupadas</h3>
+                            <div class="stat-number" id="parcelas-ocupadas">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Parcelas Disponibles</h3>
+                            <div class="stat-number" id="parcelas-disponibles">0</div>
                         </div>
                     </div>
                     
                     <div class="recent-activity">
                         <h3>Actividad Reciente</h3>
                         <div id="recentList" class="activity-list">
-                            <!-- Los registros recientes se cargarán aquí -->
+                            <p>No hay actividad reciente para mostrar.</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Registros Section -->
-                <section id="registros" class="content-section">
-                    <h2>Gestión de Registros</h2>
-                    <div class="section-content">
-                        <p>Aquí podrás gestionar todos los registros del cementerio.</p>
-                        <!-- Contenido del módulo de registros -->
+                <!-- Difuntos Section -->
+                <section id="difuntos-section" class="content-section" style="display: none;">
+                    <div class="section-header">
+                        <h2>Gestión de Difuntos</h2>
+                        <button id="btn-nuevo-difunto" class="btn btn-primary">
+                            ➕ Nuevo Difunto
+                        </button>
+                    </div>
+                    
+                    <div class="records-container">
+                        <div class="records-table-container" id="difuntos-table-container">
+                            <table class="records-table" id="difuntos-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre Completo</th>
+                                        <th>Fecha Nacimiento</th>
+                                        <th>Fecha Defunción</th>
+                                        <th>Parcela</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="7">Cargando registros...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
-                <!-- Buscar Section -->
-                <section id="buscar" class="content-section">
-                    <h2>Búsqueda de Registros</h2>
-                    <div class="section-content">
-                        <p>Sistema de búsqueda avanzada para encontrar registros específicos.</p>
-                        <!-- Contenido del módulo de búsqueda -->
+                <!-- Parcelas Section -->
+                <section id="parcelas-section" class="content-section" style="display: none;">
+                    <div class="section-header">
+                        <h2>Gestión de Parcelas</h2>
+                        <button id="btn-nueva-parcela" class="btn btn-primary">
+                            ➕ Nueva Parcela
+                        </button>
+                    </div>
+                    
+                    <div class="records-container">
+                        <div class="records-table-container" id="parcelas-table-container">
+                            <table class="records-table" id="parcelas-table">
+                                <thead>
+                                    <tr>
+                                        <th>Número</th>
+                                        <th>Tipo</th>
+                                        <th>Ubicación</th>
+                                        <th>Estado</th>
+                                        <th>Precio</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="6">Cargando parcelas...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
 
-                <!-- Estadísticas Section -->
-                <section id="estadisticas" class="content-section">
-                    <h2>Estadísticas y Reportes</h2>
-                    <div class="section-content">
-                        <p>Visualización de estadísticas y generación de reportes.</p>
-                        <!-- Contenido del módulo de estadísticas -->
+                <!-- Búsqueda Section -->
+                <section id="busqueda-section" class="content-section" style="display: none;">
+                    <h2>Búsqueda Avanzada</h2>
+                    <div class="search-advanced">
+                        <form id="search-form" class="search-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="search-nombre">Nombre:</label>
+                                    <input type="text" id="search-nombre" name="search-nombre">
+                                </div>
+                                <div class="form-group">
+                                    <label for="search-apellidos">Apellidos:</label>
+                                    <input type="text" id="search-apellidos" name="search-apellidos">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="search-fecha-desde">Desde:</label>
+                                    <input type="date" id="search-fecha-desde" name="search-fecha-desde">
+                                </div>
+                                <div class="form-group">
+                                    <label for="search-fecha-hasta">Hasta:</label>
+                                    <input type="date" id="search-fecha-hasta" name="search-fecha-hasta">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+                                <button type="reset" class="btn btn-secondary">🗑️ Limpiar</button>
+                            </div>
+                        </form>
+                        
+                        <div id="search-results" class="search-results empty">
+                            <p>Utiliza los filtros para buscar registros</p>
+                        </div>
                     </div>
                 </section>
 
                 <!-- Configuración Section -->
-                <section id="configuracion" class="content-section">
-                    <h2>Configuración del Sistema</h2>
-                    <div class="section-content">
-                        <p>Configuraciones generales del sistema.</p>
-                        <!-- Contenido del módulo de configuración -->
+                <section id="configuracion-section" class="content-section" style="display: none;">
+                    <h2>Configuración</h2>
+                    <div class="config-options">
+                        <div class="config-section">
+                            <h3>Base de Datos</h3>
+                            <p>Configuración de la base de datos del sistema.</p>
+                            <button class="btn btn-secondary">Respaldar Base de Datos</button>
+                        </div>
+                        <div class="config-section">
+                            <h3>Preferencias</h3>
+                            <p>Personalización de la interfaz y configuraciones.</p>
+                            <button class="btn btn-secondary">Configurar Preferencias</button>
+                        </div>
                     </div>
                 </section>
             </div>
         </main>
     </div>
 
-    <!-- Modal para About -->
-    <div id="aboutModal" class="modal">
+    <!-- Modales -->
+    <!-- Modal Difunto -->
+    <div id="modal-difunto" class="modal" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Nuevo Difunto</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-difunto" class="form">
+                    <div class="form-section">
+                        <h3>Datos Personales</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="nombre">Nombre *</label>
+                                <input type="text" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="apellidos">Apellidos *</label>
+                                <input type="text" id="apellidos" name="apellidos" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="documento">Documento</label>
+                                <input type="text" id="documento" name="documento">
+                            </div>
+                            <div class="form-group">
+                                <label for="sexo">Sexo</label>
+                                <select id="sexo" name="sexo">
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Fechas</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fecha_nacimiento">Fecha de Nacimiento</label>
+                                <input type="date" id="fecha_nacimiento" name="fecha_nacimiento">
+                            </div>
+                            <div class="form-group">
+                                <label for="fecha_defuncion">Fecha de Defunción *</label>
+                                <input type="date" id="fecha_defuncion" name="fecha_defuncion" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Información Adicional</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="lugar_nacimiento">Lugar de Nacimiento</label>
+                                <input type="text" id="lugar_nacimiento" name="lugar_nacimiento">
+                            </div>
+                            <div class="form-group">
+                                <label for="causa_muerte">Causa de Muerte</label>
+                                <input type="text" id="causa_muerte" name="causa_muerte">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label for="observaciones">Observaciones</label>
+                            <textarea id="observaciones" name="observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Parcela -->
+    <div id="modal-parcela" class="modal" style="display: none;">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Acerca del Sistema</h2>
-            <p><strong>Sistema de Gestión de Cementerio</strong></p>
-            <p>Versión: <span id="appVersion">1.0.0</span></p>
-            <p>Desarrollado con Electron y Node.js</p>
-            <p>© 2025 - Todos los derechos reservados</p>
+            <div class="modal-header">
+                <h3>Nueva Parcela</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="form-parcela" class="form">
+                    <div class="form-section">
+                        <h3>Información de la Parcela</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="codigo">Código *</label>
+                                <input type="text" id="codigo" name="codigo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="numero">Número *</label>
+                                <input type="text" id="numero" name="numero" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tipo">Tipo *</label>
+                                <select id="tipo" name="tipo" required>
+                                    <option value="nicho">Nicho</option>
+                                    <option value="parcela">Parcela</option>
+                                    <option value="mausoleo">Mausoleo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="precio">Precio</label>
+                                <input type="number" id="precio" name="precio" step="0.01">
+                            </div>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="ubicacion">Ubicación</label>
+                            <input type="text" id="ubicacion" name="ubicacion">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="observaciones-parcela">Observaciones</label>
+                            <textarea id="observaciones-parcela" name="observaciones" rows="3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -10,6 +10,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onMenuNewRecord: (callback) => ipcRenderer.on('menu-new-record', callback),
     onShowAbout: (callback) => ipcRenderer.on('show-about', callback),
     
+    // APIs de base de datos
+    getEstadisticas: () => ipcRenderer.invoke('db-get-estadisticas'),
+    getDifuntos: (options) => ipcRenderer.invoke('db-get-difuntos', options),
+    searchDifuntos: (searchTerm) => ipcRenderer.invoke('db-search-difuntos', searchTerm),
+    createDifunto: (data) => ipcRenderer.invoke('db-create-difunto', data),
+    getParcelasDisponibles: () => ipcRenderer.invoke('db-get-parcelas-disponibles'),
+    
     // Remover listeners
     removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
 });

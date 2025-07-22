@@ -28,6 +28,7 @@
     "electron-packager": "^17.1.0"
   },
   "dependencies": {
-    "sqlite3": "^5.1.0"
+    "sqlite3": "^5.1.7",
+    "moment": "^2.29.4"
   }
 }
