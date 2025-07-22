@@ -276,17 +276,19 @@ class CementerioApp {
         parcelas.forEach(parcela => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${parcela.numero}</td>
-                <td>${parcela.tipo}</td>
-                <td>${parcela.ubicacion || 'N/A'}</td>
+                <td><strong>${parcela.codigo}</strong></td>
+                <td><span class="badge badge-${parcela.tipo}">${parcela.tipo}</span></td>
+                <td><span class="badge badge-zona-${parcela.zona?.toLowerCase()}">${parcela.zona || 'N/A'}</span></td>
+                <td>${parcela.seccion}-${parcela.fila || 'S'}-${parcela.numero}</td>
+                <td><span class="badge badge-ubicacion">${parcela.ubicacion || 'N/A'}</span></td>
                 <td><span class="status ${parcela.estado}">${parcela.estado}</span></td>
                 <td>${parcela.precio ? '$' + parcela.precio.toFixed(2) : 'N/A'}</td>
                 <td class="action-buttons">
                     <button class="btn btn-small btn-secondary" onclick="app.editParcela(${parcela.id})">
-                        Editar
+                        ✏️ Editar
                     </button>
                     <button class="btn btn-small btn-danger" onclick="app.deleteParcela(${parcela.id})">
-                        Eliminar
+                        🗑️ Eliminar
                     </button>
                 </td>
             `;
@@ -434,8 +436,11 @@ class CementerioApp {
         const formData = new FormData(e.target);
         const parcelaData = {
             codigo: formData.get('codigo'),
-            numero: formData.get('numero'),
             tipo: formData.get('tipo'),
+            zona: formData.get('zona'),
+            seccion: formData.get('seccion'),
+            fila: parseInt(formData.get('fila')) || null,
+            numero: parseInt(formData.get('numero')),
             ubicacion: formData.get('ubicacion'),
             precio: parseFloat(formData.get('precio')) || 0,
             observaciones: formData.get('observaciones')
@@ -447,11 +452,11 @@ class CementerioApp {
             if (editingId) {
                 // Actualizar parcela existente
                 await window.electronAPI.updateParcela(editingId, parcelaData);
-                this.showNotification('Parcela actualizada correctamente', 'success');
+                this.showNotification('✅ Parcela actualizada correctamente', 'success');
             } else {
                 // Crear nueva parcela
                 await window.electronAPI.createParcela(parcelaData);
-                this.showNotification('Parcela creada correctamente', 'success');
+                this.showNotification('✅ Parcela creada correctamente', 'success');
             }
             
             this.closeModal('modal-parcela');
@@ -461,7 +466,7 @@ class CementerioApp {
             await this.loadDashboard(); // Actualizar estadísticas
         } catch (error) {
             console.error('Error procesando parcela:', error);
-            this.showNotification('Error al procesar la parcela: ' + error.message, 'error');
+            this.showNotification('❌ Error al procesar la parcela: ' + error.message, 'error');
         }
     }
 
@@ -634,9 +639,13 @@ class CementerioApp {
         const form = document.getElementById('form-parcela');
         if (!form) return;
 
-        form.querySelector('[name="numero"]').value = parcela.numero || '';
+        form.querySelector('[name="codigo"]').value = parcela.codigo || '';
         form.querySelector('[name="tipo"]').value = parcela.tipo || '';
-        form.querySelector('[name="ubicacion"]').value = parcela.ubicacion || '';
+        form.querySelector('[name="zona"]').value = parcela.zona || 'Nueva';
+        form.querySelector('[name="seccion"]').value = parcela.seccion || '';
+        form.querySelector('[name="fila"]').value = parcela.fila || '';
+        form.querySelector('[name="numero"]').value = parcela.numero || '';
+        form.querySelector('[name="ubicacion"]').value = parcela.ubicacion || 'Centro';
         form.querySelector('[name="precio"]').value = parcela.precio || '';
         form.querySelector('[name="observaciones"]').value = parcela.observaciones || '';
         

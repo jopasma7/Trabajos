@@ -555,6 +555,69 @@ body {
     color: #721c24;
 }
 
+/* Estados de parcelas */
+.records-table .status.disponible {
+    background: #d4edda;
+    color: #155724;
+}
+
+.records-table .status.ocupada {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.records-table .status.reservada {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.records-table .status.mantenimiento {
+    background: #cce5ff;
+    color: #004085;
+}
+
+/* Badges para tipos de parcela */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.badge-nicho {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.badge-parcela {
+    background: #f3e5f5;
+    color: #4a148c;
+}
+
+.badge-mausoleo {
+    background: #fff8e1;
+    color: #e65100;
+}
+
+/* Badges para zonas */
+.badge-zona-nueva {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.badge-zona-vieja {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+/* Badge para ubicación */
+.badge-ubicacion {
+    background: #f0f4ff;
+    color: #3f51b5;
+}
+
 .action-buttons {
     display: flex;
     gap: 0.5rem;

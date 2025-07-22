@@ -55,13 +55,16 @@ class DatabaseManager {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 codigo TEXT UNIQUE NOT NULL,
                 tipo TEXT CHECK(tipo IN ('nicho', 'parcela', 'mausoleo')) NOT NULL,
+                zona TEXT CHECK(zona IN ('Nueva', 'Vieja')) NOT NULL DEFAULT 'Nueva',
                 seccion TEXT NOT NULL,
                 fila INTEGER,
                 numero INTEGER,
+                ubicacion TEXT CHECK(ubicacion IN ('Centro', 'Izquierda', 'Derecha')) NOT NULL DEFAULT 'Centro',
                 estado TEXT DEFAULT 'disponible' CHECK(estado IN ('disponible', 'ocupada', 'reservada', 'mantenimiento')),
                 precio DECIMAL(10,2),
                 observaciones TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
 
             // Tabla de familiares/responsables
@@ -146,6 +149,67 @@ class DatabaseManager {
                 [clave, valor, descripcion]
             );
         }
+
+        // Ejecutar migraciones
+        await this.runMigrations();
+    }
+
+    // Ejecutar migraciones de la base de datos
+    async runMigrations() {
+        try {
+            // Verificar si las columnas zona y ubicacion ya existen
+            const tableInfo = await this.all("PRAGMA table_info(parcelas)");
+            const columnNames = tableInfo.map(col => col.name);
+            
+            let needsMigration = false;
+            
+            // Verificar si faltan las nuevas columnas
+            if (!columnNames.includes('zona')) {
+                await this.run(`ALTER TABLE parcelas ADD COLUMN zona TEXT DEFAULT 'Nueva'`);
+                needsMigration = true;
+            }
+            
+            if (!columnNames.includes('ubicacion')) {
+                await this.run(`ALTER TABLE parcelas ADD COLUMN ubicacion TEXT DEFAULT 'Centro'`);
+                needsMigration = true;
+            }
+            
+            if (!columnNames.includes('updated_at')) {
+                await this.run(`ALTER TABLE parcelas ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP`);
+                needsMigration = true;
+            }
+            
+            if (needsMigration) {
+                console.log('✅ Migración de parcelas completada: agregadas columnas zona, ubicacion y updated_at');
+                
+                // Actualizar registros existentes para que cumplan las restricciones
+                await this.run(`UPDATE parcelas SET zona = 'Nueva' WHERE zona IS NULL OR zona = ''`);
+                await this.run(`UPDATE parcelas SET ubicacion = 'Centro' WHERE ubicacion IS NULL OR ubicacion = ''`);
+            }
+        } catch (error) {
+            console.error('❌ Error en migración de parcelas:', error);
+        }
+    }
+
+    // Validar datos de parcela
+    validateParcelaData(data) {
+        const validZonas = ['Nueva', 'Vieja'];
+        const validUbicaciones = ['Centro', 'Izquierda', 'Derecha'];
+        const validTipos = ['nicho', 'parcela', 'mausoleo'];
+
+        if (data.zona && !validZonas.includes(data.zona)) {
+            throw new Error(`Zona inválida. Debe ser: ${validZonas.join(', ')}`);
+        }
+
+        if (data.ubicacion && !validUbicaciones.includes(data.ubicacion)) {
+            throw new Error(`Ubicación inválida. Debe ser: ${validUbicaciones.join(', ')}`);
+        }
+
+        if (data.tipo && !validTipos.includes(data.tipo)) {
+            throw new Error(`Tipo inválido. Debe ser: ${validTipos.join(', ')}`);
+        }
+
+        return true;
     }
 
     // Ejecutar consulta SQL
@@ -306,11 +370,24 @@ class DatabaseManager {
 
     // Métodos para parcelas
     async createParcela(data) {
+        // Validar datos antes de insertar
+        this.validateParcelaData(data);
+        
         const sql = `
-            INSERT INTO parcelas (codigo, tipo, seccion, fila, numero, precio, observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO parcelas (codigo, tipo, zona, seccion, fila, numero, ubicacion, precio, observaciones)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        const params = [data.codigo, data.tipo, data.seccion, data.fila, data.numero, data.precio, data.observaciones];
+        const params = [
+            data.codigo, 
+            data.tipo, 
+            data.zona || 'Nueva', 
+            data.seccion, 
+            data.fila, 
+            data.numero, 
+            data.ubicacion || 'Centro', 
+            data.precio, 
+            data.observaciones
+        ];
         return await this.run(sql, params);
     }
 
@@ -341,11 +418,11 @@ class DatabaseManager {
 
             // Parcelas de ejemplo
             const parcelas = [
-                { codigo: 'A-1-001', tipo: 'nicho', seccion: 'A', fila: 1, numero: 1, precio: 1000 },
-                { codigo: 'A-1-002', tipo: 'nicho', seccion: 'A', fila: 1, numero: 2, precio: 1000 },
-                { codigo: 'B-1-001', tipo: 'parcela', seccion: 'B', fila: 1, numero: 1, precio: 2000 },
-                { codigo: 'B-1-002', tipo: 'parcela', seccion: 'B', fila: 1, numero: 2, precio: 2000 },
-                { codigo: 'C-1-001', tipo: 'mausoleo', seccion: 'C', fila: 1, numero: 1, precio: 5000 }
+                { codigo: 'A-1-001', tipo: 'nicho', zona: 'Nueva', seccion: 'A', fila: 1, numero: 1, ubicacion: 'Centro', precio: 1000 },
+                { codigo: 'A-1-002', tipo: 'nicho', zona: 'Nueva', seccion: 'A', fila: 1, numero: 2, ubicacion: 'Izquierda', precio: 1000 },
+                { codigo: 'B-1-001', tipo: 'parcela', zona: 'Vieja', seccion: 'B', fila: 1, numero: 1, ubicacion: 'Derecha', precio: 2000 },
+                { codigo: 'B-1-002', tipo: 'parcela', zona: 'Vieja', seccion: 'B', fila: 1, numero: 2, ubicacion: 'Centro', precio: 2000 },
+                { codigo: 'C-1-001', tipo: 'mausoleo', zona: 'Nueva', seccion: 'C', fila: 1, numero: 1, ubicacion: 'Centro', precio: 5000 }
             ];
 
             // Solo insertar si no existen parcelas
@@ -424,14 +501,31 @@ class DatabaseManager {
     }
 
     async updateParcela(id, data) {
+        // Validar datos antes de actualizar
+        this.validateParcelaData(data);
+        
+        // Verificar si la columna updated_at existe
+        const tableInfo = await this.all("PRAGMA table_info(parcelas)");
+        const columnNames = tableInfo.map(col => col.name);
+        const hasUpdatedAt = columnNames.includes('updated_at');
+        
         const sql = `
             UPDATE parcelas SET 
-                codigo = ?, numero = ?, tipo = ?, ubicacion = ?, precio = ?, observaciones = ?
+                codigo = ?, tipo = ?, zona = ?, seccion = ?, fila = ?, numero = ?, ubicacion = ?, precio = ?, observaciones = ?${hasUpdatedAt ? ', updated_at = CURRENT_TIMESTAMP' : ''}
             WHERE id = ?
         `;
         
         const params = [
-            data.codigo, data.numero, data.tipo, data.ubicacion, data.precio, data.observaciones, id
+            data.codigo, 
+            data.tipo, 
+            data.zona || 'Nueva', 
+            data.seccion, 
+            data.fila, 
+            data.numero, 
+            data.ubicacion || 'Centro', 
+            data.precio, 
+            data.observaciones, 
+            id
         ];
         
         return await this.run(sql, params);
