@@ -22,10 +22,8 @@ class DatabaseManager {
         return new Promise((resolve, reject) => {
             this.db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) {
-                    console.error('Error conectando a la base de datos:', err);
                     reject(err);
                 } else {
-                    console.log('Conectado a la base de datos SQLite');
                     this.initializeTables().then(resolve).catch(reject);
                 }
             });
@@ -128,8 +126,6 @@ class DatabaseManager {
 
         // Insertar configuración inicial
         await this.insertInitialConfig();
-        
-        console.log('Tablas inicializadas correctamente');
     }
 
     // Insertar configuración inicial
@@ -241,17 +237,52 @@ class DatabaseManager {
         return await this.all(sql, [limit, offset]);
     }
 
-    async searchDifuntos(searchTerm) {
-        const sql = `
-            SELECT d.*, p.codigo as parcela_codigo 
+    async searchDifuntos(searchParams) {
+        let sql = `
+            SELECT d.*, p.codigo as parcela_codigo, a.fecha_asignacion 
             FROM difuntos d
             LEFT JOIN asignaciones a ON d.id = a.difunto_id AND a.estado = 'activa'
             LEFT JOIN parcelas p ON a.parcela_id = p.id
-            WHERE d.nombre LIKE ? OR d.apellidos LIKE ? OR d.cedula LIKE ?
-            ORDER BY d.apellidos, d.nombre
+            WHERE 1=1
         `;
-        const searchPattern = `%${searchTerm}%`;
-        return await this.all(sql, [searchPattern, searchPattern, searchPattern]);
+        let params = [];
+
+        // Si es una búsqueda simple (string), buscar en nombre, apellidos y cédula
+        if (typeof searchParams === 'string') {
+            const searchPattern = `%${searchParams}%`;
+            sql += ` AND (d.nombre LIKE ? OR d.apellidos LIKE ? OR d.cedula LIKE ?)`;
+            params.push(searchPattern, searchPattern, searchPattern);
+        } else {
+            // Búsqueda avanzada con múltiples filtros
+            if (searchParams.nombre && searchParams.nombre.trim()) {
+                sql += ` AND d.nombre LIKE ?`;
+                params.push(`%${searchParams.nombre.trim()}%`);
+            }
+            
+            if (searchParams.apellidos && searchParams.apellidos.trim()) {
+                sql += ` AND d.apellidos LIKE ?`;
+                params.push(`%${searchParams.apellidos.trim()}%`);
+            }
+            
+            if (searchParams.fecha_desde) {
+                sql += ` AND d.fecha_defuncion >= ?`;
+                params.push(searchParams.fecha_desde);
+            }
+            
+            if (searchParams.fecha_hasta) {
+                sql += ` AND d.fecha_defuncion <= ?`;
+                params.push(searchParams.fecha_hasta);
+            }
+            
+            if (searchParams.general && searchParams.general.trim()) {
+                const searchPattern = `%${searchParams.general.trim()}%`;
+                sql += ` AND (d.nombre LIKE ? OR d.apellidos LIKE ? OR d.cedula LIKE ?)`;
+                params.push(searchPattern, searchPattern, searchPattern);
+            }
+        }
+
+        sql += ` ORDER BY d.apellidos, d.nombre`;
+        return await this.all(sql, params);
     }
 
     // Métodos para estadísticas
@@ -305,7 +336,6 @@ class DatabaseManager {
             const existingDifuntos = await this.getDifuntos();
             
             if (existingParcelas.length > 0 && existingDifuntos.length > 0) {
-                console.log('Datos de ejemplo ya existen, omitiendo inserción');
                 return;
             }
 
@@ -355,9 +385,324 @@ class DatabaseManager {
                 }
             }
 
-            console.log('Datos de ejemplo insertados correctamente');
         } catch (error) {
-            console.error('Error en insertSampleData:', error);
+            throw error;
+        }
+    }
+
+    // Métodos CRUD para difuntos individuales
+    async getDifunto(id) {
+        return await this.get('SELECT * FROM difuntos WHERE id = ?', [id]);
+    }
+
+    async updateDifunto(id, data) {
+        const sql = `
+            UPDATE difuntos SET 
+                nombre = ?, apellidos = ?, fecha_nacimiento = ?, fecha_defuncion = ?,
+                cedula = ?, sexo = ?, lugar_nacimiento = ?, causa_muerte = ?, observaciones = ?
+            WHERE id = ?
+        `;
+        
+        const params = [
+            data.nombre, data.apellidos, data.fecha_nacimiento, data.fecha_defuncion,
+            data.cedula, data.sexo, data.lugar_nacimiento, data.causa_muerte, data.observaciones, id
+        ];
+        
+        return await this.run(sql, params);
+    }
+
+    async deleteDifunto(id) {
+        // Primero eliminar asignaciones relacionadas
+        await this.run('DELETE FROM asignaciones WHERE difunto_id = ?', [id]);
+        // Luego eliminar el difunto
+        return await this.run('DELETE FROM difuntos WHERE id = ?', [id]);
+    }
+
+    // Métodos CRUD para parcelas individuales
+    async getParcela(id) {
+        return await this.get('SELECT * FROM parcelas WHERE id = ?', [id]);
+    }
+
+    async updateParcela(id, data) {
+        const sql = `
+            UPDATE parcelas SET 
+                codigo = ?, numero = ?, tipo = ?, ubicacion = ?, precio = ?, observaciones = ?
+            WHERE id = ?
+        `;
+        
+        const params = [
+            data.codigo, data.numero, data.tipo, data.ubicacion, data.precio, data.observaciones, id
+        ];
+        
+        return await this.run(sql, params);
+    }
+
+    async deleteParcela(id) {
+        // Primero verificar si tiene asignaciones activas
+        const asignaciones = await this.all('SELECT * FROM asignaciones WHERE parcela_id = ? AND estado = "activa"', [id]);
+        if (asignaciones.length > 0) {
+            throw new Error('No se puede eliminar la parcela porque tiene difuntos asignados');
+        }
+        
+        // Eliminar asignaciones históricas
+        await this.run('DELETE FROM asignaciones WHERE parcela_id = ?', [id]);
+        // Eliminar la parcela
+        return await this.run('DELETE FROM parcelas WHERE id = ?', [id]);
+    }
+
+    // Crear respaldo de la base de datos
+    async createBackup(customPath = null) {
+        try {
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupFileName = `cementerio_backup_${timestamp}.db`;
+            
+            // Usar ruta personalizada o ruta por defecto
+            let backupDir;
+            if (customPath) {
+                backupDir = customPath;
+            } else {
+                backupDir = path.join(__dirname, '..', '..', 'backups');
+            }
+            
+            const backupPath = path.join(backupDir, backupFileName);
+
+            // Crear directorio de respaldos si no existe
+            if (!fs.existsSync(backupDir)) {
+                fs.mkdirSync(backupDir, { recursive: true });
+            }
+
+            // Copiar archivo de base de datos
+            await fs.promises.copyFile(this.dbPath, backupPath);
+
+            // Obtener información del respaldo
+            const stats = await fs.promises.stat(backupPath);
+            const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+
+            return {
+                success: true,
+                message: 'Respaldo creado exitosamente',
+                backupPath: backupPath,
+                fileName: backupFileName,
+                size: sizeInMB + ' MB',
+                date: new Date().toLocaleString('es-ES'),
+                customPath: customPath !== null
+            };
+        } catch (error) {
+            console.error('Error creando respaldo:', error);
+            throw new Error(`Error al crear respaldo: ${error.message}`);
+        }
+    }
+
+    // Optimizar base de datos
+    async optimizeDatabase() {
+        try {
+            const startTime = Date.now();
+            const results = [];
+
+            // Ejecutar VACUUM para recompilar y optimizar la base de datos
+            await new Promise((resolve, reject) => {
+                this.db.run('VACUUM', (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        results.push('VACUUM ejecutado correctamente');
+                        resolve();
+                    }
+                });
+            });
+
+            // Ejecutar ANALYZE para actualizar estadísticas de consulta
+            await new Promise((resolve, reject) => {
+                this.db.run('ANALYZE', (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        results.push('ANALYZE ejecutado correctamente');
+                        resolve();
+                    }
+                });
+            });
+
+            // Verificar integridad de la base de datos
+            const integrityResult = await new Promise((resolve, reject) => {
+                this.db.get('PRAGMA integrity_check', (err, row) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(row);
+                    }
+                });
+            });
+
+            const integrityStatus = integrityResult['integrity_check'] === 'ok' ? 
+                'Base de datos íntegra' : 
+                'Problemas de integridad detectados';
+            results.push(integrityStatus);
+
+            const endTime = Date.now();
+            const executionTime = ((endTime - startTime) / 1000).toFixed(2);
+
+            return {
+                success: true,
+                message: 'Optimización completada exitosamente',
+                results: results,
+                executionTime: executionTime + ' segundos',
+                date: new Date().toLocaleString('es-ES')
+            };
+        } catch (error) {
+            console.error('Error optimizando base de datos:', error);
+            throw new Error(`Error al optimizar base de datos: ${error.message}`);
+        }
+    }
+
+    // Obtener tamaño de la base de datos
+    async getDatabaseSize() {
+        try {
+            const stats = await fs.promises.stat(this.dbPath);
+            const sizeInBytes = stats.size;
+            const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+            const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+
+            // Obtener información adicional de la base de datos
+            const pageCount = await new Promise((resolve, reject) => {
+                this.db.get('PRAGMA page_count', (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.page_count);
+                });
+            });
+
+            const pageSize = await new Promise((resolve, reject) => {
+                this.db.get('PRAGMA page_size', (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.page_size);
+                });
+            });
+
+            const freePages = await new Promise((resolve, reject) => {
+                this.db.get('PRAGMA freelist_count', (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row.freelist_count);
+                });
+            });
+
+            const usedSpace = ((pageCount - freePages) * pageSize / (1024 * 1024)).toFixed(2);
+            const freeSpace = (freePages * pageSize / (1024 * 1024)).toFixed(2);
+
+            return {
+                success: true,
+                fileSize: {
+                    bytes: sizeInBytes,
+                    kb: sizeInKB + ' KB',
+                    mb: sizeInMB + ' MB'
+                },
+                database: {
+                    totalPages: pageCount,
+                    pageSize: pageSize + ' bytes',
+                    usedSpace: usedSpace + ' MB',
+                    freeSpace: freeSpace + ' MB',
+                    freePages: freePages
+                },
+                lastModified: stats.mtime.toLocaleString('es-ES')
+            };
+        } catch (error) {
+            console.error('Error obteniendo tamaño de base de datos:', error);
+            throw new Error(`Error al obtener información de la base de datos: ${error.message}`);
+        }
+    }
+
+    // Obtener actividad reciente
+    async getRecentActivity(limit = 10) {
+        try {
+            // Obtener difuntos recientes (últimos registrados)
+            const recentDifuntos = await new Promise((resolve, reject) => {
+                this.db.all(`
+                    SELECT 
+                        'difunto' as tipo,
+                        'Nuevo registro' as accion,
+                        nombre || ' ' || apellidos as descripcion,
+                        created_at as fecha,
+                        id
+                    FROM difuntos 
+                    WHERE created_at IS NOT NULL
+                    ORDER BY created_at DESC 
+                    LIMIT ?
+                `, [Math.ceil(limit * 0.6)], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+            });
+
+            // Obtener parcelas recientes
+            const recentParcelas = await new Promise((resolve, reject) => {
+                this.db.all(`
+                    SELECT 
+                        'parcela' as tipo,
+                        'Nueva parcela' as accion,
+                        CASE 
+                            WHEN codigo IS NOT NULL AND codigo != '' 
+                            THEN 'Parcela ' || codigo || ' (' || tipo || ')'
+                            ELSE 'Parcela #' || numero || ' (' || tipo || ')'
+                        END as descripcion,
+                        created_at as fecha,
+                        id
+                    FROM parcelas 
+                    WHERE created_at IS NOT NULL
+                    ORDER BY created_at DESC 
+                    LIMIT ?
+                `, [Math.ceil(limit * 0.4)], (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                });
+            });
+
+            // Combinar y ordenar por fecha
+            const allActivity = [...recentDifuntos, ...recentParcelas]
+                .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+                .slice(0, limit)
+                .map(item => ({
+                    ...item,
+                    fecha: new Date(item.fecha).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    fechaRaw: item.fecha
+                }));
+            return allActivity;
+        } catch (error) {
+            // Devolver datos de ejemplo si hay error
+            return [
+                {
+                    tipo: 'sistema',
+                    accion: 'Sistema iniciado',
+                    descripcion: 'Aplicación iniciada correctamente',
+                    fecha: new Date().toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    fechaRaw: new Date().toISOString(),
+                    id: 'system'
+                },
+                {
+                    tipo: 'sistema',
+                    accion: 'Base de datos',
+                    descripcion: 'Conexión establecida exitosamente',
+                    fecha: new Date(Date.now() - 1000).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    fechaRaw: new Date(Date.now() - 1000).toISOString(),
+                    id: 'db'
+                }
+            ];
         }
     }
 }

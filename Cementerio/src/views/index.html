@@ -10,11 +10,6 @@
     <div class="app-container">
         <header class="app-header">
             <h1>🏛️ Sistema de Gestión de Cementerio</h1>
-            <div class="header-actions">
-                <button id="newRecordBtn" class="btn btn-primary">
-                    ➕ Nuevo Registro
-                </button>
-            </div>
         </header>
 
         <main class="app-main">
@@ -166,17 +161,72 @@
 
                 <!-- Configuración Section -->
                 <section id="configuracion-section" class="content-section" style="display: none;">
-                    <h2>Configuración</h2>
-                    <div class="config-options">
-                        <div class="config-section">
+                    <h2>⚙️ Configuración del Sistema</h2>
+                    <div class="config-container">
+                        <div class="config-card">
+                            <div class="config-icon">🗄️</div>
                             <h3>Base de Datos</h3>
-                            <p>Configuración de la base de datos del sistema.</p>
-                            <button class="btn btn-secondary">Respaldar Base de Datos</button>
+                            <p>Administración y mantenimiento de la base de datos del sistema.</p>
+                            <div class="config-stats">
+                                <span class="stat-item">📊 Estado: <strong>Conectada</strong></span>
+                                <span class="stat-item">💾 Tamaño: <strong id="db-size">Calculando...</strong></span>
+                            </div>
+                            <div class="config-actions">
+                                <button class="btn btn-primary" onclick="app.backupDatabase()">
+                                    💾 Respaldar Base de Datos
+                                </button>
+                                <button class="btn btn-secondary" onclick="app.optimizeDatabase()">
+                                    🔧 Optimizar Base de Datos
+                                </button>
+                            </div>
                         </div>
-                        <div class="config-section">
-                            <h3>Preferencias</h3>
-                            <p>Personalización de la interfaz y configuraciones.</p>
-                            <button class="btn btn-secondary">Configurar Preferencias</button>
+
+                        <div class="config-card">
+                            <div class="config-icon">🎨</div>
+                            <h3>Interfaz y Preferencias</h3>
+                            <p>Personalización de la interfaz de usuario y configuraciones generales.</p>
+                            <div class="config-options">
+                                <div class="option-group">
+                                    <label for="theme-select">Tema del Sistema:</label>
+                                    <select id="theme-select" class="form-control">
+                                        <option value="light">Claro</option>
+                                        <option value="dark">Oscuro</option>
+                                        <option value="auto">Automático</option>
+                                    </select>
+                                </div>
+                                <div class="option-group">
+                                    <label for="records-per-page">Registros por página:</label>
+                                    <select id="records-per-page" class="form-control">
+                                        <option value="25">25</option>
+                                        <option value="50" selected>50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="config-actions">
+                                <button class="btn btn-primary" onclick="app.savePreferences()">
+                                    💾 Guardar Preferencias
+                                </button>
+                                <button class="btn btn-secondary" onclick="app.resetPreferences()">
+                                    🔄 Restaurar Predeterminados
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="config-card">
+                            <div class="config-icon">ℹ️</div>
+                            <h3>Información del Sistema</h3>
+                            <p>Detalles técnicos y información de la aplicación.</p>
+                            <div class="config-stats">
+                                <span class="stat-item">📱 Versión: <strong id="app-version">1.0.0</strong></span>
+                                <span class="stat-item">💻 Plataforma: <strong id="platform">Windows</strong></span>
+                                <span class="stat-item">🔧 Electron: <strong id="electron-version">Cargando...</strong></span>
+                            </div>
+                            <div class="config-actions">
+                                <button class="btn btn-primary" onclick="app.showAbout()">
+                                    📋 Acerca de
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -212,9 +262,9 @@
                                 <input type="text" id="documento" name="documento">
                             </div>
                             <div class="form-group">
-                                <label for="sexo">Sexo</label>
-                                <select id="sexo" name="sexo">
-                                    <option value="M">Masculino</option>
+                                <label for="sexo">Sexo *</label>
+                                <select id="sexo" name="sexo" required>
+                                    <option value="M" selected>Masculino</option>
                                     <option value="F">Femenino</option>
                                 </select>
                             </div>

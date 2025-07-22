@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const path = require('path');
 const DatabaseManager = require('./src/database/database');
 
@@ -48,15 +48,6 @@ function createMenu() {
         {
             label: 'Archivo',
             submenu: [
-                {
-                    label: 'Nuevo Registro',
-                    accelerator: 'CmdOrCtrl+N',
-                    click: () => {
-                        // Enviar evento al renderer
-                        mainWindow.webContents.send('menu-new-record');
-                    }
-                },
-                { type: 'separator' },
                 {
                     label: 'Salir',
                     accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
@@ -170,6 +161,15 @@ ipcMain.handle('db-search-difuntos', async (event, searchTerm) => {
     }
 });
 
+ipcMain.handle('db-get-difunto', async (event, id) => {
+    try {
+        return await dbManager.getDifunto(id);
+    } catch (error) {
+        console.error('Error obteniendo difunto:', error);
+        return { error: error.message };
+    }
+});
+
 ipcMain.handle('db-create-difunto', async (event, data) => {
     try {
         return await dbManager.createDifunto(data);
@@ -179,11 +179,129 @@ ipcMain.handle('db-create-difunto', async (event, data) => {
     }
 });
 
+ipcMain.handle('db-update-difunto', async (event, id, data) => {
+    try {
+        return await dbManager.updateDifunto(id, data);
+    } catch (error) {
+        console.error('Error actualizando difunto:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-delete-difunto', async (event, id) => {
+    try {
+        return await dbManager.deleteDifunto(id);
+    } catch (error) {
+        console.error('Error eliminando difunto:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-parcela', async (event, id) => {
+    try {
+        return await dbManager.getParcela(id);
+    } catch (error) {
+        console.error('Error obteniendo parcela:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-create-parcela', async (event, data) => {
+    try {
+        return await dbManager.createParcela(data);
+    } catch (error) {
+        console.error('Error creando parcela:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-update-parcela', async (event, id, data) => {
+    try {
+        return await dbManager.updateParcela(id, data);
+    } catch (error) {
+        console.error('Error actualizando parcela:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-delete-parcela', async (event, id) => {
+    try {
+        return await dbManager.deleteParcela(id);
+    } catch (error) {
+        console.error('Error eliminando parcela:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-parcelas', async () => {
+    try {
+        return await dbManager.getParcelas();
+    } catch (error) {
+        console.error('Error obteniendo todas las parcelas:', error);
+        return { error: error.message };
+    }
+});
+
 ipcMain.handle('db-get-parcelas-disponibles', async () => {
     try {
         return await dbManager.getParcelasDisponibles();
     } catch (error) {
         console.error('Error obteniendo parcelas:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('select-backup-folder', async () => {
+    try {
+        const result = await dialog.showOpenDialog(mainWindow, {
+            title: 'Seleccionar carpeta para el respaldo',
+            properties: ['openDirectory', 'createDirectory'],
+            buttonLabel: 'Seleccionar Carpeta'
+        });
+        
+        if (!result.canceled && result.filePaths.length > 0) {
+            return { success: true, folderPath: result.filePaths[0] };
+        } else {
+            return { success: false, canceled: true };
+        }
+    } catch (error) {
+        console.error('Error seleccionando carpeta:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-backup', async (event, customPath = null) => {
+    try {
+        return await dbManager.createBackup(customPath);
+    } catch (error) {
+        console.error('Error creando respaldo:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-optimize', async () => {
+    try {
+        return await dbManager.optimizeDatabase();
+    } catch (error) {
+        console.error('Error optimizando base de datos:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-size', async () => {
+    try {
+        return await dbManager.getDatabaseSize();
+    } catch (error) {
+        console.error('Error obteniendo tamaño de base de datos:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-get-recent-activity', async (event, limit = 10) => {
+    try {
+        return await dbManager.getRecentActivity(limit);
+    } catch (error) {
+        console.error('Error obteniendo actividad reciente:', error);
         return { error: error.message };
     }
 });
