@@ -8,12 +8,16 @@ Esta aplicación de escritorio permite gestionar de manera eficiente todos los a
 
 ## ✨ Características
 
-- 📊 **Dashboard Informativo** - Vista general con estadísticas principales
-- 📝 **Gestión de Registros** - CRUD completo para registros de difuntos
-- 🔍 **Búsqueda Avanzada** - Sistema de búsqueda por múltiples criterios
-- 📈 **Estadísticas y Reportes** - Análisis de datos y generación de reportes
-- ⚙️ **Configuración** - Personalización del sistema
-- 🏛️ **Gestión de Espacios** - Control de disponibilidad de parcelas y nichos
+- 📊 **Dashboard Interactivo** - Vista general con estadísticas actualizadas en tiempo real y navegación clickeable
+- 📝 **Gestión Completa de Registros** - CRUD completo para registros de difuntos con asignación automática de parcelas
+- 🏛️ **Gestión Inteligente de Parcelas** - Control avanzado de disponibilidad con actualización automática de estados
+- 🔍 **Búsqueda Avanzada** - Sistema de búsqueda por múltiples criterios con resultados en tiempo real
+- 📈 **Estadísticas Dinámicas** - Dashboard con métricas actualizadas automáticamente
+- 📋 **Tablas Ordenables** - Sistema de ordenamiento intuitivo con indicadores visuales
+- 🌍 **Búsqueda de Ciudades** - Autocompletado inteligente con base de datos internacional
+- 🔄 **Actividad en Tiempo Real** - Seguimiento automático de todas las operaciones del sistema
+- ⚙️ **Configuración Avanzada** - Personalización completa del sistema
+- 🛡️ **Integridad de Datos** - Sistema de eliminación lógica que preserva la consistencia
 
 ## 🚀 Instalación
 
@@ -54,14 +58,19 @@ npm start
 Cementerio/
 ├── main.js                    # Proceso principal de Electron
 ├── package.json              # Configuración y dependencias
+├── cementerio.code-workspace  # Configuración del workspace
+├── data/
+│   └── cementerio.db         # Base de datos SQLite
 ├── src/
 │   ├── preload.js            # Script de preload para seguridad
+│   ├── database/
+│   │   └── database.js       # Gestión de base de datos y modelos
 │   ├── views/
-│   │   └── index.html        # Interfaz principal
+│   │   └── index.html        # Interfaz principal con componentes avanzados
 │   ├── styles/
-│   │   └── main.css          # Estilos de la aplicación
+│   │   └── main.css          # Estilos mejorados con efectos visuales
 │   └── scripts/
-│       └── main.js           # Lógica del frontend
+│       └── main.js           # Lógica del frontend con funcionalidades avanzadas
 └── README.md
 ```
 
@@ -74,31 +83,50 @@ Cementerio/
 
 ## 📊 Módulos del Sistema
 
-### Dashboard
-- Resumen de estadísticas principales
-- Actividad reciente
-- Accesos rápidos a funciones principales
+### Dashboard Interactivo
+- Estadísticas actualizadas en tiempo real
+- Tarjetas clickeables para navegación rápida
+- Indicadores de carga visuales
+- Panel de actividad reciente con actualización automática
+- Métricas de ocupación de parcelas
 
-### Gestión de Registros
-- Registro de nuevos difuntos
-- Edición de información existente
-- Gestión de documentación
-- Control de fechas importantes
+### Gestión Avanzada de Difuntos
+- Registro completo con validación de datos
+- Asignación inteligente de parcelas
+- Sistema de eliminación lógica
+- Autocompletado de ciudades internacionales
+- Gestión de documentación y fechas
 
-### Búsqueda
-- Búsqueda por nombre, apellido, fecha
-- Filtros avanzados
-- Resultados paginados
+### Gestión Inteligente de Parcelas
+- Control automático de disponibilidad
+- Actualización de estados en tiempo real
+- Liberación automática al eliminar difuntos
+- Organización por zonas, secciones y tipos
+- Gestión de precios y observaciones
 
-### Estadísticas
-- Reportes mensuales/anuales
-- Gráficos de ocupación
-- Análisis de tendencias
+### Sistema de Tablas Ordenables
+- Ordenamiento por defecto (ID para difuntos, Código para parcelas)
+- Indicadores visuales de ordenamiento
+- Efectos hover mejorados
+- Navegación intuitiva entre columnas
 
-### Configuración
-- Configuración de la base de datos
-- Personalización de la interfaz
-- Gestión de usuarios del sistema
+### Búsqueda Avanzada
+- Búsqueda por nombre, apellido, fechas
+- Filtros dinámicos en tiempo real
+- Resultados paginados y organizados
+- Navegación directa desde resultados
+
+### Actividad en Tiempo Real
+- Seguimiento automático de operaciones
+- Historial completo de cambios
+- Indicadores de acciones (creado, modificado, eliminado)
+- Actualización manual con feedback visual
+
+### Configuración del Sistema
+- Configuración de base de datos automática
+- Verificación de integridad de datos
+- Optimización automática de rendimiento
+- Gestión de respaldos
 
 ## 🔧 Desarrollo
 
@@ -117,7 +145,34 @@ Esto habilitará:
 
 ### Base de Datos
 
-El sistema utiliza SQLite para almacenamiento local. La base de datos se crea automáticamente en el primer inicio.
+El sistema utiliza SQLite para almacenamiento local con las siguientes características:
+
+- **Creación automática** - La base de datos se inicializa automáticamente en el primer inicio
+- **Integridad de datos** - Verificaciones automáticas de consistencia
+- **Eliminación lógica** - Preserva la integridad referencial al eliminar registros
+- **Optimización automática** - Mantenimiento automático de rendimiento
+- **Gestión de estados** - Actualización automática de estados de parcelas
+
+## 🆕 Mejoras Recientes
+
+### ✅ Completadas en la Última Versión
+
+- **Dashboard en Tiempo Real**: Las estadísticas se actualizan automáticamente al realizar cambios
+- **Navegación Clickeable**: Las tarjetas del dashboard permiten navegación directa a secciones
+- **Tablas Ordenables Mejoradas**: Ordenamiento por defecto y mejor feedback visual
+- **Sistema de Actividad**: Seguimiento automático de todas las operaciones
+- **Gestión Inteligente de Parcelas**: Liberación automática al eliminar difuntos
+- **Integridad de Datos**: Corrección de errores críticos en eliminación lógica
+- **Autocompletado de Ciudades**: Base de datos internacional con APIs de respaldo
+- **Efectos Visuales Mejorados**: CSS optimizado con mejor contraste y hover effects
+
+### 🔧 Correcciones Técnicas
+
+- Eliminado error `this.registrarActividad is not a function`
+- Corregida actualización automática de estados de parcelas
+- Implementado sistema de eliminación lógica consistente
+- Mejorada la experiencia visual en tablas ordenables
+- Optimizada la carga de datos y navegación entre secciones
 
 ## 🤝 Contribución
 
@@ -141,6 +196,16 @@ Si encuentras algún problema o tienes sugerencias:
 
 ## 🔮 Roadmap
 
+### ✅ Completado
+
+- [x] Dashboard interactivo con estadísticas en tiempo real
+- [x] Sistema de tablas ordenables con indicadores visuales
+- [x] Gestión automática de estados de parcelas
+- [x] Eliminación lógica con integridad de datos
+- [x] Autocompletado de ciudades internacionales
+- [x] Panel de actividad en tiempo real
+- [x] Navegación clickeable en dashboard
+
 ### Próximas Características
 
 - [ ] Sistema de usuarios y permisos
@@ -149,13 +214,17 @@ Si encuentras algún problema o tienes sugerencias:
 - [ ] Sistema de copias de seguridad automáticas
 - [ ] Notificaciones de fechas importantes
 - [ ] Módulo de contabilidad básica
+- [ ] Filtros avanzados en tablas
+- [ ] Modo oscuro para la interfaz
 
 ### Versiones Futuras
 
 - [ ] Aplicación web complementaria
 - [ ] API REST para integraciones
-- [ ] Módulo de mapas interactivos
+- [ ] Módulo de mapas interactivos del cementerio
 - [ ] Sistema de reservas online
+- [ ] Aplicación móvil para consultas
+- [ ] Generación automática de reportes PDF
 
 ## 👥 Autor
 
