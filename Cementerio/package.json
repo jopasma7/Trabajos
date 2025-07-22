@@ -1,0 +1,33 @@
+{
+  "name": "cementerio",
+  "version": "1.0.0",
+  "description": "Sistema de gestión de cementerio desarrollado con Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "pack-win": "electron-packager . Cementerio --platform=win32 --arch=x64 --out=dist --overwrite --app-copyright=\"Copyright © 2025\" --app-version=\"1.0.0\"",
+    "pack-all": "electron-packager . Cementerio --all --out=dist --overwrite --app-copyright=\"Copyright © 2025\" --app-version=\"1.0.0\"",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "cementerio",
+    "gestion",
+    "desktop-app"
+  ],
+  "author": "jopasma7",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0",
+    "electron-packager": "^17.1.0"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.0"
+  }
+}

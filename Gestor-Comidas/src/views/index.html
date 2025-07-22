@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Comidas y Nutrición</title>
+    <link rel="stylesheet" href="../styles/main.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>🍽️ Gestor de Comidas y Nutrición</h1>
+            <div class="header-actions">
+                <button id="newRecipeBtn" class="btn btn-primary">
+                    ➕ Nueva Receta
+                </button>
+                <button id="newPlanBtn" class="btn btn-secondary">
+                    📅 Nuevo Plan
+                </button>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <div class="sidebar">
+                <nav class="nav-menu">
+                    <h3>Principal</h3>
+                    <ul>
+                        <li><a href="#" data-section="dashboard" class="nav-link active">📊 Dashboard</a></li>
+                        <li><a href="#" data-section="planificacion" class="nav-link">📅 Planificación</a></li>
+                        <li><a href="#" data-section="recetas" class="nav-link">📝 Recetas</a></li>
+                    </ul>
+                    
+                    <h3>Herramientas</h3>
+                    <ul>
+                        <li><a href="#" data-section="ingredientes" class="nav-link">🥬 Ingredientes</a></li>
+                        <li><a href="#" data-section="nutricion" class="nav-link">🧮 Calculadora Nutricional</a></li>
+                        <li><a href="#" data-section="compras" class="nav-link">🛒 Lista de Compras</a></li>
+                    </ul>
+                    
+                    <h3>Análisis</h3>
+                    <ul>
+                        <li><a href="#" data-section="estadisticas" class="nav-link">📈 Estadísticas</a></li>
+                        <li><a href="#" data-section="reportes" class="nav-link">📄 Reportes</a></li>
+                    </ul>
+                    
+                    <h3>Sistema</h3>
+                    <ul>
+                        <li><a href="#" data-section="configuracion" class="nav-link">⚙️ Configuración</a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="content">
+                <!-- Dashboard Section -->
+                <section id="dashboard" class="content-section active">
+                    <h2>Dashboard Nutricional</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">📝</div>
+                            <h3>Total Recetas</h3>
+                            <div class="stat-number" id="totalRecetas">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📅</div>
+                            <h3>Planes Creados</h3>
+                            <div class="stat-number" id="totalPlanes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🥬</div>
+                            <h3>Ingredientes</h3>
+                            <div class="stat-number" id="totalIngredientes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">⭐</div>
+                            <h3>Favoritas</h3>
+                            <div class="stat-number" id="recetasFavoritas">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-content">
+                        <div class="recent-recipes">
+                            <h3>Recetas Recientes</h3>
+                            <div id="recentRecipesList" class="recipes-list">
+                                <!-- Las recetas recientes se cargarán aquí -->
+                                <p class="empty-state">No hay recetas recientes para mostrar.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="weekly-plan">
+                            <h3>Plan de la Semana Actual</h3>
+                            <div id="currentWeekPlan" class="week-plan">
+                                <!-- El plan semanal se cargará aquí -->
+                                <p class="empty-state">No hay plan semanal configurado.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Planificación Section -->
+                <section id="planificacion" class="content-section">
+                    <h2>Planificación de Comidas</h2>
+                    <div class="section-content">
+                        <p>Planifica tus comidas semanales y mensuales de manera eficiente.</p>
+                        <!-- Contenido del módulo de planificación -->
+                    </div>
+                </section>
+
+                <!-- Recetas Section -->
+                <section id="recetas" class="content-section">
+                    <h2>Gestión de Recetas</h2>
+                    <div class="section-content">
+                        <p>Administra tu colección de recetas favoritas.</p>
+                        <!-- Contenido del módulo de recetas -->
+                    </div>
+                </section>
+
+                <!-- Ingredientes Section -->
+                <section id="ingredientes" class="content-section">
+                    <h2>Base de Datos de Ingredientes</h2>
+                    <div class="section-content">
+                        <p>Gestiona ingredientes y su información nutricional.</p>
+                        <!-- Contenido del módulo de ingredientes -->
+                    </div>
+                </section>
+
+                <!-- Nutrición Section -->
+                <section id="nutricion" class="content-section">
+                    <h2>Calculadora Nutricional</h2>
+                    <div class="section-content">
+                        <p>Calcula valores nutricionales de recetas y comidas.</p>
+                        <!-- Contenido de la calculadora nutricional -->
+                    </div>
+                </section>
+
+                <!-- Compras Section -->
+                <section id="compras" class="content-section">
+                    <h2>Lista de Compras</h2>
+                    <div class="section-content">
+                        <p>Genera listas de compras automáticas basadas en tus planes.</p>
+                        <!-- Contenido del módulo de compras -->
+                    </div>
+                </section>
+
+                <!-- Estadísticas Section -->
+                <section id="estadisticas" class="content-section">
+                    <h2>Estadísticas Nutricionales</h2>
+                    <div class="section-content">
+                        <p>Analiza tus hábitos alimenticios y progreso nutricional.</p>
+                        <!-- Contenido del módulo de estadísticas -->
+                    </div>
+                </section>
+
+                <!-- Reportes Section -->
+                <section id="reportes" class="content-section">
+                    <h2>Reportes y Análisis</h2>
+                    <div class="section-content">
+                        <p>Genera reportes detallados de tu alimentación.</p>
+                        <!-- Contenido del módulo de reportes -->
+                    </div>
+                </section>
+
+                <!-- Configuración Section -->
+                <section id="configuracion" class="content-section">
+                    <h2>Configuración del Sistema</h2>
+                    <div class="section-content">
+                        <p>Personaliza la aplicación según tus preferencias.</p>
+                        <!-- Contenido del módulo de configuración -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para About -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Acerca del Gestor de Comidas</h2>
+            <p><strong>Gestor de Comidas y Nutrición</strong></p>
+            <p>Versión: <span id="appVersion">1.0.0</span></p>
+            <p>Tu asistente personal para una alimentación saludable</p>
+            <p>Desarrollado con Electron y Node.js</p>
+            <p>© 2025 - Todos los derechos reservados</p>
+        </div>
+    </div>
+
+    <script src="../scripts/main.js"></script>
+</body>
+</html>
