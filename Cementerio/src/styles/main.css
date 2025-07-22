@@ -170,11 +170,27 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     text-align: center;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    background-color: #f8f9fa;
+}
+
+.stat-card[style*="cursor: pointer"] {
+    user-select: none;
+}
+
+.stat-card[style*="cursor: pointer"]:hover {
+    background-color: #e3f2fd;
+    border: 1px solid var(--accent-color);
+}
+
+.stat-card[style*="cursor: pointer"]:active {
+    transform: translateY(0px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card h3 {
@@ -529,6 +545,14 @@ body {
     vertical-align: middle;
 }
 
+/* Estilos específicos para columnas */
+.records-table th:first-child,
+.records-table td:first-child {
+    width: 80px;
+    min-width: 80px;
+    white-space: nowrap;
+}
+
 .records-table tr:hover {
     background-color: #f8f9fa;
 }
@@ -576,6 +600,50 @@ body {
     color: #004085;
 }
 
+/* Columnas ordenables */
+.records-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+    position: relative;
+    border-radius: 4px;
+}
+
+.records-table th.sortable:hover {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.records-table th.sortable.sort-asc,
+.records-table th.sortable.sort-desc {
+    background-color: #bbdefb;
+    color: #0d47a1;
+    font-weight: 600;
+}
+
+.records-table th.sortable .sort-icon {
+    opacity: 0.3;
+    transition: opacity 0.2s ease;
+}
+
+.records-table th.sortable:hover .sort-icon {
+    opacity: 0.8;
+}
+
+.records-table th.sortable.sort-asc .sort-icon::after {
+    content: " ⬆️";
+    opacity: 1;
+    font-size: 0.9em;
+}
+
+.records-table th.sortable.sort-desc .sort-icon::after {
+    content: " ⬇️";
+    opacity: 1;
+    font-size: 0.9em;
+}
+
 /* Badges para tipos de parcela */
 .badge {
     display: inline-block;
@@ -599,6 +667,77 @@ body {
 .badge-mausoleo {
     background: #fff8e1;
     color: #e65100;
+}
+
+.badge-sin-asignar {
+    background: #f5f5f5;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Mensaje de estado de parcela */
+.parcela-status {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #1565c0;
+}
+
+/* Container para parcela con layout horizontal */
+.parcela-container {
+    display: flex;
+    align-items: flex-end; /* Alinear por abajo para sincronizar alturas */
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.parcela-container .form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* Mensaje de estado de parcela a la derecha */
+.parcela-status-right {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+    height: 40px; /* Misma altura que el select */
+    padding: 0 0.75rem;
+    background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+    border: 1px solid #2196f3;
+    border-radius: 4px; /* Radio más pequeño para coincidir con el select */
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #1565c0;
+    box-sizing: border-box;
+}
+
+.parcela-status-right .status-icon {
+    font-size: 1.2rem;
+}
+
+.parcela-status-right.sin-asignar {
+    background: linear-gradient(135deg, #f5f5f5, #fafafa);
+    border-color: #9e9e9e;
+    color: #616161;
+}
+
+.parcela-status-right .status-icon {
+    font-size: 1.2rem;
+}
+
+.parcela-status-right.sin-asignar {
+    background: linear-gradient(135deg, #f5f5f5, #fafafa);
+    border-color: #9e9e9e;
+    color: #616161;
 }
 
 /* Badges para zonas */
@@ -695,6 +834,26 @@ body {
 
 @keyframes spin {
     to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Indicador de carga para ciudades */
+.loading-indicator {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    padding: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-indicator span {
+    font-size: 1rem;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 /* Mensajes de notificación */
@@ -1541,6 +1700,49 @@ body {
     color: #9b59b6;
 }
 
+/* Estilos basados en acciones */
+.activity-item.activity-deleted {
+    border-left-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.05);
+}
+
+.activity-item.activity-deleted .activity-icon {
+    background: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
+
+.activity-item.activity-deleted:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.activity-item.activity-modified {
+    border-left-color: #f39c12;
+    background: rgba(243, 156, 18, 0.05);
+}
+
+.activity-item.activity-modified .activity-icon {
+    background: rgba(243, 156, 18, 0.15);
+    color: #f39c12;
+}
+
+.activity-item.activity-modified:hover {
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.activity-item.activity-created {
+    border-left-color: #27ae60;
+    background: rgba(39, 174, 96, 0.05);
+}
+
+.activity-item.activity-created .activity-icon {
+    background: rgba(39, 174, 96, 0.15);
+    color: #27ae60;
+}
+
+.activity-item.activity-created:hover {
+    background: rgba(39, 174, 96, 0.1);
+}
+
 .activity-icon {
     font-size: 1.5rem;
     flex-shrink: 0;
@@ -1724,11 +1926,21 @@ body {
 }
 
 .activity-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 0.2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.3rem;
     line-height: 1.3;
+}
+
+.activity-action {
+    font-size: 0.75rem;
+    color: #7a8c9e;
+    line-height: 1.2;
+    opacity: 0.8;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .activity-description {
