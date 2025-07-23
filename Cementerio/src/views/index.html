@@ -419,6 +419,25 @@
         </div>
     </div>
 
+    <!-- Modal de Confirmación para Eliminación de Parcelas -->
+    <div id="modal-confirmacion-parcela" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="confirmacion-titulo">⚠️ Confirmar Eliminación</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="confirmacion-mensaje" class="confirmacion-content">
+                    <!-- El contenido se generará dinámicamente -->
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="btn-cancelar-eliminacion">❌ Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-eliminacion">🗑️ Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../scripts/main.js"></script>
 </body>
 </html>

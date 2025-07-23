@@ -2036,3 +2036,155 @@ body {
         font-size: 0.75rem;
     }
 }
+
+/* Modal de Confirmación de Eliminación */
+.confirmacion-content {
+    padding: 20px 0;
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.confirmacion-content h4 {
+    color: var(--danger-color);
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirmacion-content .parcela-info {
+    background: var(--card-background);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.confirmacion-content .parcela-info h5 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.confirmacion-content .difuntos-list {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 12px 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.confirmacion-content .difunto-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #fed7d7;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.confirmacion-content .difunto-item:last-child {
+    border-bottom: none;
+}
+
+.confirmacion-content .difunto-item .difunto-icon {
+    color: var(--warning-color);
+    font-size: 1.1rem;
+}
+
+.confirmacion-content .difunto-item .difunto-info {
+    flex: 1;
+}
+
+.confirmacion-content .difunto-item .difunto-nombre {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.confirmacion-content .difunto-item .difunto-id {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.confirmacion-content .opciones-eliminacion {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.confirmacion-content .opciones-eliminacion h5 {
+    margin: 0 0 12px 0;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+}
+
+.confirmacion-content .opcion {
+    padding: 8px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.confirmacion-content .opcion-icon {
+    font-size: 1rem;
+    margin-top: 2px;
+}
+
+.confirmacion-content .opcion-texto {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.confirmacion-content .opcion-principal {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.confirmacion-content .opcion-descripcion {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
+.confirmacion-content .sin-dependencias {
+    text-align: center;
+    padding: 20px;
+    color: var(--success-color);
+}
+
+.confirmacion-content .sin-dependencias .checkmark {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Botones del modal de confirmación */
+#modal-confirmacion-parcela .btn-danger {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+    font-weight: 600;
+}
+
+#modal-confirmacion-parcela .btn-danger:hover {
+    background: #c53030;
+    border-color: #c53030;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
+}
+
+#modal-confirmacion-parcela .btn-secondary {
+    background: var(--secondary-color);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+#modal-confirmacion-parcela .btn-secondary:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

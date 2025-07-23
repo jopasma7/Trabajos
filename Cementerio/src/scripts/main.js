@@ -1416,34 +1416,102 @@ class CementerioApp {
             
             const { parcela, difuntosAsignados, canDelete } = dependencies;
             
-            if (canDelete) {
-                // La parcela se puede eliminar sin problemas
-                if (confirm(`¿Está seguro de que desea eliminar la parcela ${parcela.codigo}?`)) {
-                    await this.performParcelaDelete(id, false);
-                }
-            } else {
-                // La parcela tiene difuntos asignados
-                const difuntosInfo = difuntosAsignados.map(d => `• ${d.nombre} ${d.apellidos} (ID: ${d.id})`).join('\n');
-                
-                const message = `⚠️ La parcela ${parcela.codigo} tiene ${difuntosAsignados.length} difunto(s) asignado(s):
-
-${difuntosInfo}
-
-¿Qué desea hacer?
-
-• CANCELAR: No eliminar la parcela
-• ACEPTAR: Liberar los difuntos y eliminar la parcela (recomendado)
-
-Los difuntos liberados quedarán sin parcela asignada y podrán ser reasignados posteriormente.`;
-
-                if (confirm(message)) {
-                    await this.performParcelaDelete(id, true);
-                }
-            }
+            // Mostrar modal de confirmación personalizado
+            this.showParcelaDeleteConfirmation(parcela, difuntosAsignados, canDelete);
+            
         } catch (error) {
             console.error('Error en deleteParcela:', error);
             this.showNotification('Error al procesar la eliminación de la parcela', 'error');
         }
+    }
+    
+    showParcelaDeleteConfirmation(parcela, difuntosAsignados, canDelete) {
+        const modal = document.getElementById('modal-confirmacion-parcela');
+        const mensaje = document.getElementById('confirmacion-mensaje');
+        const btnConfirmar = document.getElementById('btn-confirmar-eliminacion');
+        const btnCancelar = document.getElementById('btn-cancelar-eliminacion');
+        
+        // Generar contenido del modal
+        if (canDelete) {
+            // Sin dependencias - eliminación simple
+            mensaje.innerHTML = `
+                <div class="sin-dependencias">
+                    <span class="checkmark">✅</span>
+                    <h4>Eliminación Simple</h4>
+                    <div class="parcela-info">
+                        <h5>📍 Parcela: ${parcela.codigo}</h5>
+                        <p><strong>Tipo:</strong> ${parcela.tipo}</p>
+                        <p><strong>Ubicación:</strong> ${parcela.zona} - ${parcela.seccion}-${parcela.numero}</p>
+                    </div>
+                    <p>Esta parcela no tiene difuntos asignados y se puede eliminar de forma segura.</p>
+                </div>
+            `;
+            btnConfirmar.textContent = '🗑️ Eliminar Parcela';
+        } else {
+            // Con dependencias - eliminación con liberación
+            const difuntosHTML = difuntosAsignados.map(d => `
+                <div class="difunto-item">
+                    <span class="difunto-icon">👤</span>
+                    <div class="difunto-info">
+                        <div class="difunto-nombre">${d.nombre} ${d.apellidos}</div>
+                        <div class="difunto-id">ID: ${d.id}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            mensaje.innerHTML = `
+                <h4>⚠️ Parcela con Difuntos Asignados</h4>
+                <div class="parcela-info">
+                    <h5>📍 Parcela: ${parcela.codigo}</h5>
+                    <p><strong>Tipo:</strong> ${parcela.tipo}</p>
+                    <p><strong>Ubicación:</strong> ${parcela.zona} - ${parcela.seccion}-${parcela.numero}</p>
+                </div>
+                
+                <p><strong>Esta parcela tiene ${difuntosAsignados.length} difunto(s) asignado(s):</strong></p>
+                <div class="difuntos-list">
+                    ${difuntosHTML}
+                </div>
+                
+                <div class="opciones-eliminacion">
+                    <h5>🔄 ¿Qué sucederá al eliminar?</h5>
+                    <div class="opcion">
+                        <span class="opcion-icon">🔓</span>
+                        <div class="opcion-texto">
+                            <div class="opcion-principal">Los difuntos serán liberados automáticamente</div>
+                            <div class="opcion-descripcion">Quedarán sin parcela asignada y podrán ser reasignados posteriormente</div>
+                        </div>
+                    </div>
+                    <div class="opcion">
+                        <span class="opcion-icon">🗑️</span>
+                        <div class="opcion-texto">
+                            <div class="opcion-principal">La parcela será eliminada del sistema</div>
+                            <div class="opcion-descripcion">No se podrá recuperar una vez eliminada</div>
+                        </div>
+                    </div>
+                    <div class="opcion">
+                        <span class="opcion-icon">📊</span>
+                        <div class="opcion-texto">
+                            <div class="opcion-principal">Las estadísticas se actualizarán automáticamente</div>
+                            <div class="opcion-descripcion">Dashboard y contadores reflejarán los cambios</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            btnConfirmar.textContent = '🔄 Liberar y Eliminar';
+        }
+        
+        // Configurar eventos de los botones
+        btnConfirmar.onclick = () => {
+            this.closeModal('modal-confirmacion-parcela');
+            this.performParcelaDelete(parcela.id, !canDelete);
+        };
+        
+        btnCancelar.onclick = () => {
+            this.closeModal('modal-confirmacion-parcela');
+        };
+        
+        // Mostrar modal
+        this.openModal('modal-confirmacion-parcela');
     }
     
     async performParcelaDelete(id, isForced) {
