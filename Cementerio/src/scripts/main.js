@@ -8,19 +8,8 @@ class CementerioApp {
         this.currentSortColumn = null;
         this.currentSortDirection = 'asc';
         this.originalData = {}; // Para almacenar datos originales sin ordenar
+        this.lastSearchData = null; // Para almacenar la última búsqueda realizada
         this.init();
-    }
-
-    // Nueva función con emoji correcto
-    getActivityIconFixed(tipo) {
-        const icons = {
-            'difunto': '👤',
-            'parcela': '🏛️',
-            'sistema': '⚙️',
-            'backup': '💾',
-            'optimizacion': '⚡'
-        };
-        return icons[tipo] || '📝';
     }
 
     async init() {
@@ -211,7 +200,7 @@ class CementerioApp {
         }
 
         const activitiesHtml = activities.map(activity => {
-            const icon = this.getActivityIconFixed(activity.tipo);
+            const icon = this.getActivityIcon(activity.tipo);
             const actionClass = this.getActivityActionClass(activity.accion, activity.tipo);
             const badge = this.getActivityBadge(activity.tipo);
             
@@ -244,7 +233,7 @@ class CementerioApp {
     getActivityIcon(tipo) {
         const icons = {
             'difunto': '👤',
-            'parcela': '�',
+            'parcela': '🏛️',
             'sistema': '⚙️',
             'backup': '💾',
             'optimizacion': '⚡'
@@ -607,6 +596,10 @@ class CementerioApp {
             if (this.currentSection === 'parcelas') {
                 await this.loadParcelas();
             }
+            if (this.currentSection === 'busqueda') {
+                // Refrescar la búsqueda si estamos en esa sección
+                await this.refreshLastSearch();
+            }
             
             // SIEMPRE actualizar dashboard para refrescar estadísticas
             await this.loadDashboard();
@@ -684,6 +677,9 @@ class CementerioApp {
             resultsContainer.className = 'search-results empty';
         }
         
+        // Limpiar la última búsqueda guardada
+        this.lastSearchData = null;
+        
         // Mostrar notificación
         this.showNotification('Búsqueda limpiada', 'success');
     }
@@ -706,6 +702,9 @@ class CementerioApp {
             this.showNotification('Por favor, ingrese al menos un criterio de búsqueda', 'info');
             return;
         }
+
+        // Guardar los datos de búsqueda para poder repetir la búsqueda más tarde
+        this.lastSearchData = searchData;
 
         try {
             this.showLoading('search-results');
@@ -737,9 +736,8 @@ class CementerioApp {
                         <th>ID</th>
                         <th>Nombre Completo</th>
                         <th>Fecha Defunción</th>
-                        <th>Parcela</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th>Parcela Asignada</th>
+                        <th class="action-header">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -748,8 +746,12 @@ class CementerioApp {
                             <td>${result.id}</td>
                             <td>${result.nombre} ${result.apellidos}</td>
                             <td>${this.formatDate(result.fecha_defuncion)}</td>
-                            <td>${result.parcela_codigo || 'Sin asignar'}</td>
-                            <td><span class="status ${result.estado}">${result.estado}</span></td>
+                            <td>
+                                ${result.parcela_codigo 
+                                    ? `🏛️ ${result.parcela_codigo}` 
+                                    : '<span class="badge badge-sin-asignar">Sin asignar</span>'
+                                }
+                            </td>
                             <td class="action-buttons">
                                 <button class="btn btn-small btn-primary" onclick="app.editDifunto(${result.id})">
                                     ✏️ Editar
@@ -760,6 +762,24 @@ class CementerioApp {
                 </tbody>
             </table>
         `;
+    }
+
+    // Función para repetir la última búsqueda realizada
+    async refreshLastSearch() {
+        if (!this.lastSearchData) {
+            return; // No hay búsqueda previa para repetir
+        }
+
+        try {
+            this.showLoading('search-results');
+            const results = await window.electronAPI.searchDifuntos(this.lastSearchData);
+            this.renderSearchResults(results);
+        } catch (error) {
+            console.error('Error refrescando búsqueda:', error);
+            this.showNotification('Error al actualizar los resultados de búsqueda: ' + error.message, 'error');
+        } finally {
+            this.hideLoading('search-results');
+        }
     }
 
     // Funciones de ordenamiento de tablas
@@ -1362,25 +1382,70 @@ class CementerioApp {
     }
 
     async deleteDifunto(id) {
-        if (confirm('¿Está seguro de que desea eliminar este registro?')) {
-            try {
-                await window.electronAPI.deleteDifunto(id);
-                this.showNotification('Registro eliminado correctamente', 'success');
-                
-                // Actualizar la sección actual si corresponde
-                if (this.currentSection === 'difuntos') {
-                    await this.loadDifuntos();
-                }
-                if (this.currentSection === 'parcelas') {
-                    await this.loadParcelas(); // Actualizar porque una parcela puede haberse liberado
-                }
-                
-                // SIEMPRE actualizar dashboard para refrescar estadísticas
-                await this.loadDashboard();
-                await this.loadRecentActivity(); // Actualizar actividad reciente
-            } catch (error) {
-                this.showNotification('Error al eliminar el registro', 'error');
+        try {
+            // Obtener información del difunto
+            const difunto = await window.electronAPI.getDifunto(id);
+            if (!difunto) {
+                this.showNotification('No se pudo encontrar el registro del difunto', 'error');
+                return;
             }
+
+            // Mostrar diálogo de confirmación personalizado
+            const message = `
+                <div class="confirmation-dialog compact">
+                    <div class="warning-section">
+                        <div class="warning-icon">⚠️</div>
+                        <h3>Eliminar Registro de Difunto</h3>
+                    </div>
+                    
+                    <div class="compact-info">
+                        <strong>👤 ${difunto.nombre} ${difunto.apellidos}</strong> (ID: ${difunto.id})<br>
+                        📅 ${this.formatDate(difunto.fecha_nacimiento)} - ${this.formatDate(difunto.fecha_defuncion)}<br>
+                        ${difunto.lugar_nacimiento ? `📍 ${difunto.lugar_nacimiento}<br>` : ''}${difunto.parcela_codigo ? `🏛️ Parcela: ${difunto.parcela_codigo}` : '<span class="badge badge-sin-asignar">Sin parcela asignada</span>'}
+                    </div>
+                    
+                    ${difunto.parcela_codigo ? `
+                    <div class="info-notice">
+                        <p>La parcela asignada será liberada automáticamente.</p>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            const result = await this.showCustomDialog({
+                title: '⚠️ Confirmar Eliminación de Difunto',
+                message: message,
+                headerClass: 'about-header',
+                buttons: [
+                    { id: 'btn-confirm', class: 'btn-danger-modern', text: '🗑️ Eliminar Registro', value: 'confirm' }
+                ],
+                critical: true
+            });
+
+            if (result === 'confirm') {
+                try {
+                    await window.electronAPI.deleteDifunto(id);
+                    this.showNotification('Registro eliminado correctamente', 'success');
+                    
+                    // Actualizar la sección actual si corresponde
+                    if (this.currentSection === 'difuntos') {
+                        await this.loadDifuntos();
+                    }
+                    if (this.currentSection === 'parcelas') {
+                        await this.loadParcelas(); // Actualizar porque una parcela puede haberse liberado
+                    }
+                    
+                    // SIEMPRE actualizar dashboard para refrescar estadísticas
+                    await this.loadDashboard();
+                    await this.loadRecentActivity(); // Actualizar actividad reciente
+                } catch (error) {
+                    this.showNotification('Error al eliminar el registro', 'error');
+                }
+            }
+
+        } catch (error) {
+            console.error('Error en deleteDifunto:', error);
+            this.showNotification('Error al cargar la información del difunto', 'error');
         }
     }
 
@@ -1426,92 +1491,64 @@ class CementerioApp {
     }
     
     showParcelaDeleteConfirmation(parcela, difuntosAsignados, canDelete) {
-        const modal = document.getElementById('modal-confirmacion-parcela');
-        const mensaje = document.getElementById('confirmacion-mensaje');
-        const btnConfirmar = document.getElementById('btn-confirmar-eliminacion');
-        const btnCancelar = document.getElementById('btn-cancelar-eliminacion');
+        let message, headerClass, buttons;
         
-        // Generar contenido del modal
         if (canDelete) {
-            // Sin dependencias - eliminación simple
-            mensaje.innerHTML = `
-                <div class="sin-dependencias">
-                    <span class="checkmark">✅</span>
-                    <h4>Eliminación Simple</h4>
-                    <div class="parcela-info">
-                        <h5>📍 Parcela: ${parcela.codigo}</h5>
-                        <p><strong>Tipo:</strong> ${parcela.tipo}</p>
-                        <p><strong>Ubicación:</strong> ${parcela.zona} - ${parcela.seccion}-${parcela.numero}</p>
+            // Sin dependencias - eliminación simple (formato compacto)
+            message = `
+                <div class="confirmation-dialog compact">
+                    <div class="parcela-info-section">
+                        <div class="success-icon">✅</div>
+                        <h3>Eliminación Simple</h3>
+                        <div class="compact-info">
+                            <strong>📍 Parcela:</strong> ${parcela.codigo} (${parcela.tipo})<br>
+                            <strong>🗺️ Ubicación:</strong> ${parcela.zona} - ${parcela.seccion}-${parcela.numero}
+                        </div>
+                        <div class="safe-delete-notice">
+                            <p>Esta parcela no tiene difuntos asignados y se puede eliminar de forma segura.</p>
+                        </div>
                     </div>
-                    <p>Esta parcela no tiene difuntos asignados y se puede eliminar de forma segura.</p>
                 </div>
             `;
-            btnConfirmar.textContent = '🗑️ Eliminar Parcela';
+            headerClass = 'about-header';
+            buttons = [
+                { id: 'btn-confirm', class: 'btn-danger-modern', text: '🗑️ Eliminar Parcela', value: 'confirm' }
+            ];
         } else {
-            // Con dependencias - eliminación con liberación
-            const difuntosHTML = difuntosAsignados.map(d => `
-                <div class="difunto-item">
-                    <span class="difunto-icon">👤</span>
-                    <div class="difunto-info">
-                        <div class="difunto-nombre">${d.nombre} ${d.apellidos}</div>
-                        <div class="difunto-id">ID: ${d.id}</div>
-                    </div>
-                </div>
-            `).join('');
+            // Con dependencias - eliminación con liberación (formato compacto)
+            const difuntosCompactos = difuntosAsignados.map(d => `👤 ${d.nombre} ${d.apellidos} (ID: ${d.id})`).join(', ');
             
-            mensaje.innerHTML = `
-                <h4>⚠️ Parcela con Difuntos Asignados</h4>
-                <div class="parcela-info">
-                    <h5>📍 Parcela: ${parcela.codigo}</h5>
-                    <p><strong>Tipo:</strong> ${parcela.tipo}</p>
-                    <p><strong>Ubicación:</strong> ${parcela.zona} - ${parcela.seccion}-${parcela.numero}</p>
-                </div>
-                
-                <p><strong>Esta parcela tiene ${difuntosAsignados.length} difunto(s) asignado(s):</strong></p>
-                <div class="difuntos-list">
-                    ${difuntosHTML}
-                </div>
-                
-                <div class="opciones-eliminacion">
-                    <h5>🔄 ¿Qué sucederá al eliminar?</h5>
-                    <div class="opcion">
-                        <span class="opcion-icon">🔓</span>
-                        <div class="opcion-texto">
-                            <div class="opcion-principal">Los difuntos serán liberados automáticamente</div>
-                            <div class="opcion-descripcion">Quedarán sin parcela asignada y podrán ser reasignados posteriormente</div>
-                        </div>
+            message = `
+                <div class="confirmation-dialog compact">
+                    <div class="warning-section">
+                        <div class="warning-icon">⚠️</div>
+                        <h3>Parcela con ${difuntosAsignados.length} Difunto(s)</h3>
                     </div>
-                    <div class="opcion">
-                        <span class="opcion-icon">🗑️</span>
-                        <div class="opcion-texto">
-                            <div class="opcion-principal">La parcela será eliminada del sistema</div>
-                            <div class="opcion-descripcion">No se podrá recuperar una vez eliminada</div>
-                        </div>
-                    </div>
-                    <div class="opcion">
-                        <span class="opcion-icon">📊</span>
-                        <div class="opcion-texto">
-                            <div class="opcion-principal">Las estadísticas se actualizarán automáticamente</div>
-                            <div class="opcion-descripcion">Dashboard y contadores reflejarán los cambios</div>
-                        </div>
+                    
+                    <div class="compact-info">
+                        <p><strong>🏞️ Parcela:</strong> ${parcela.codigo} (${parcela.tipo})</p>
+                        <p><strong>⚰️ Difuntos:</strong> ${difuntosCompactos}</p>
+                        <p><strong>⚠️ Acción:</strong> Los difuntos serán liberados automáticamente</p>
                     </div>
                 </div>
             `;
-            btnConfirmar.textContent = '🔄 Liberar y Eliminar';
+            headerClass = 'about-header';
+            buttons = [
+                { id: 'btn-confirm', class: 'btn-warning-modern', text: '🔄 Liberar y Eliminar', value: 'confirm' }
+            ];
         }
         
-        // Configurar eventos de los botones
-        btnConfirmar.onclick = () => {
-            this.closeModal('modal-confirmacion-parcela');
-            this.performParcelaDelete(parcela.id, !canDelete);
-        };
-        
-        btnCancelar.onclick = () => {
-            this.closeModal('modal-confirmacion-parcela');
-        };
-        
-        // Mostrar modal
-        this.openModal('modal-confirmacion-parcela');
+        this.showCustomDialog({
+            title: '⚠️ Confirmar Eliminación de Parcela',
+            message: message,
+            headerClass: 'about-header',
+            buttons: buttons,
+            critical: true
+        }).then((result) => {
+            if (result === 'confirm') {
+                this.performParcelaDelete(parcela.id, !canDelete);
+            }
+        });
     }
     
     async performParcelaDelete(id, isForced) {
@@ -1654,6 +1691,7 @@ class CementerioApp {
                 <div class="custom-dialog ${config.type === 'info' ? 'info-dialog' : ''}">
                     <div class="dialog-header ${config.headerClass || ''}">
                         <h3>${config.title}</h3>
+                        <button class="dialog-close-btn" id="dialog-close">×</button>
                     </div>
                     <div class="dialog-content">
                         <div class="dialog-message">${config.message}</div>
@@ -1665,6 +1703,12 @@ class CementerioApp {
             `;
 
             document.body.appendChild(dialog);
+
+            // Event listener para el botón de cerrar (X)
+            dialog.querySelector('#dialog-close').addEventListener('click', () => {
+                document.body.removeChild(dialog);
+                resolve('cancel');
+            });
 
             // Agregar event listeners
             if (config.buttons) {
@@ -2162,17 +2206,5 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             console.error('Window.app no está disponible o buscarCiudades no es una función');
         }
-    };
-    
-    // Función de debug
-    window.testBuscarCiudades = (termino) => {
-        console.log('Probando búsqueda con término:', termino);
-        if (window.app) {
-            const ciudades = window.app.buscarCiudadesLocal(termino);
-            console.log('Resultados encontrados:', ciudades.length);
-            console.log('Primeras 10 ciudades:', ciudades.slice(0, 10));
-            return ciudades;
-        }
-        return [];
     };
 });

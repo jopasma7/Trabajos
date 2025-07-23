@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Database backups and temporary files
+*.db-backup
+*.db-journal
+*.db-wal
+*.tmp
+*.temp
+
+# System files
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# Build files
+dist/
+build/
+
+# Environment files
+.env
+.env.local

@@ -598,10 +598,9 @@ class DatabaseManager {
 
     async searchDifuntos(searchParams) {
         let sql = `
-            SELECT d.*, p.codigo as parcela_codigo, a.fecha_asignacion 
+            SELECT d.*, p.codigo as parcela_codigo
             FROM difuntos d
-            LEFT JOIN asignaciones a ON d.id = a.difunto_id AND a.estado = 'activa'
-            LEFT JOIN parcelas p ON a.parcela_id = p.id
+            LEFT JOIN parcelas p ON d.parcela_id = p.id
             WHERE d.estado != 'eliminado'
         `;
         let params = [];
@@ -717,7 +716,12 @@ class DatabaseManager {
 
     // Obtener todos los difuntos
     async getDifuntos() {
-        return await this.all('SELECT * FROM difuntos ORDER BY apellidos, nombre');
+        return await this.all(`
+            SELECT d.*, p.codigo as parcela_codigo 
+            FROM difuntos d 
+            LEFT JOIN parcelas p ON d.parcela_id = p.id 
+            ORDER BY d.apellidos, d.nombre
+        `);
     }
 
     // Insertar datos de ejemplo
@@ -856,7 +860,12 @@ class DatabaseManager {
 
     // Métodos CRUD para difuntos individuales
     async getDifunto(id) {
-        return await this.get('SELECT * FROM difuntos WHERE id = ?', [id]);
+        return await this.get(`
+            SELECT d.*, p.codigo as parcela_codigo 
+            FROM difuntos d 
+            LEFT JOIN parcelas p ON d.parcela_id = p.id 
+            WHERE d.id = ?
+        `, [id]);
     }
 
     async updateDifunto(id, data) {
