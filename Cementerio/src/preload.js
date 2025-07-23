@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getParcela: (id) => ipcRenderer.invoke('db-get-parcela', id),
     updateParcela: (id, data) => ipcRenderer.invoke('db-update-parcela', id, data),
     deleteParcela: (id) => ipcRenderer.invoke('db-delete-parcela', id),
+    checkParcelaDependencies: (id) => ipcRenderer.invoke('db-check-parcela-dependencies', id),
+    forceDeleteParcela: (id) => ipcRenderer.invoke('db-force-delete-parcela', id),
     getParcelas: () => ipcRenderer.invoke('db-get-parcelas'),
     getParcelasDisponibles: () => ipcRenderer.invoke('db-get-parcelas-disponibles'),
     

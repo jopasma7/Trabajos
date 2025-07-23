@@ -1405,25 +1405,80 @@ class CementerioApp {
     }
 
     async deleteParcela(id) {
-        if (confirm('¿Está seguro de que desea eliminar esta parcela?')) {
-            try {
-                await window.electronAPI.deleteParcela(id);
-                this.showNotification('Parcela eliminada correctamente', 'success');
-                
-                // Actualizar la sección actual si corresponde
-                if (this.currentSection === 'parcelas') {
-                    await this.loadParcelas();
-                }
-                if (this.currentSection === 'difuntos') {
-                    await this.loadDifuntos(); // Actualizar porque algunos difuntos pueden perder su parcela
-                }
-                
-                // SIEMPRE actualizar dashboard para refrescar estadísticas
-                await this.loadDashboard();
-                await this.loadRecentActivity(); // Actualizar actividad reciente
-            } catch (error) {
-                this.showNotification('Error al eliminar la parcela', 'error');
+        try {
+            // Primero verificar si la parcela tiene difuntos asignados
+            const dependencies = await window.electronAPI.checkParcelaDependencies(id);
+            
+            if (dependencies.error) {
+                this.showNotification('Error al verificar la parcela: ' + dependencies.error, 'error');
+                return;
             }
+            
+            const { parcela, difuntosAsignados, canDelete } = dependencies;
+            
+            if (canDelete) {
+                // La parcela se puede eliminar sin problemas
+                if (confirm(`¿Está seguro de que desea eliminar la parcela ${parcela.codigo}?`)) {
+                    await this.performParcelaDelete(id, false);
+                }
+            } else {
+                // La parcela tiene difuntos asignados
+                const difuntosInfo = difuntosAsignados.map(d => `• ${d.nombre} ${d.apellidos} (ID: ${d.id})`).join('\n');
+                
+                const message = `⚠️ La parcela ${parcela.codigo} tiene ${difuntosAsignados.length} difunto(s) asignado(s):
+
+${difuntosInfo}
+
+¿Qué desea hacer?
+
+• CANCELAR: No eliminar la parcela
+• ACEPTAR: Liberar los difuntos y eliminar la parcela (recomendado)
+
+Los difuntos liberados quedarán sin parcela asignada y podrán ser reasignados posteriormente.`;
+
+                if (confirm(message)) {
+                    await this.performParcelaDelete(id, true);
+                }
+            }
+        } catch (error) {
+            console.error('Error en deleteParcela:', error);
+            this.showNotification('Error al procesar la eliminación de la parcela', 'error');
+        }
+    }
+    
+    async performParcelaDelete(id, isForced) {
+        try {
+            let result;
+            
+            if (isForced) {
+                // Eliminación forzada: liberar difuntos primero
+                result = await window.electronAPI.forceDeleteParcela(id);
+                this.showNotification('✅ Parcela eliminada y difuntos liberados correctamente', 'success');
+            } else {
+                // Eliminación normal
+                result = await window.electronAPI.deleteParcela(id);
+                this.showNotification('✅ Parcela eliminada correctamente', 'success');
+            }
+            
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            
+            // Actualizar todas las secciones relevantes
+            if (this.currentSection === 'parcelas') {
+                await this.loadParcelas();
+            }
+            if (this.currentSection === 'difuntos') {
+                await this.loadDifuntos(); // Actualizar porque algunos difuntos pueden perder su parcela
+            }
+            
+            // SIEMPRE actualizar dashboard para refrescar estadísticas
+            await this.loadDashboard();
+            await this.loadRecentActivity(); // Actualizar actividad reciente
+            
+        } catch (error) {
+            console.error('Error eliminando parcela:', error);
+            this.showNotification('❌ Error al eliminar la parcela: ' + error.message, 'error');
         }
     }
 

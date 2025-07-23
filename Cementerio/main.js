@@ -233,6 +233,49 @@ ipcMain.handle('db-delete-parcela', async (event, id) => {
     }
 });
 
+ipcMain.handle('db-check-parcela-dependencies', async (event, id) => {
+    try {
+        // Verificar si la parcela tiene difuntos asignados
+        const difuntosAsignados = await dbManager.all(
+            'SELECT id, nombre, apellidos FROM difuntos WHERE parcela_id = ? AND estado != "eliminado"', 
+            [id]
+        );
+        
+        const parcela = await dbManager.getParcela(id);
+        
+        return {
+            success: true,
+            parcela: parcela,
+            difuntosAsignados: difuntosAsignados,
+            canDelete: difuntosAsignados.length === 0
+        };
+    } catch (error) {
+        console.error('Error verificando dependencias de parcela:', error);
+        return { error: error.message };
+    }
+});
+
+ipcMain.handle('db-force-delete-parcela', async (event, id) => {
+    try {
+        // Primero liberar todos los difuntos asignados
+        await dbManager.run(
+            'UPDATE difuntos SET parcela_id = NULL WHERE parcela_id = ? AND estado != "eliminado"',
+            [id]
+        );
+        
+        // Luego eliminar la parcela
+        const result = await dbManager.deleteParcela(id);
+        
+        // Actualizar estado de parcelas
+        await dbManager.updateParcelasEstado();
+        
+        return result;
+    } catch (error) {
+        console.error('Error en eliminación forzada de parcela:', error);
+        return { error: error.message };
+    }
+});
+
 ipcMain.handle('db-get-parcelas', async () => {
     try {
         return await dbManager.getParcelas();
