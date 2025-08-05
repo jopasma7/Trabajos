@@ -2856,6 +2856,9 @@ class FlowerShopApp {
             case 'prediccion':
                 await this.loadPrediccionDemanda();
                 break;
+            case 'stock':
+                await this.loadStockEventos();
+                break;
             case 'proveedores':
                 await this.loadProviders();
                 break;
@@ -4582,18 +4585,1186 @@ class FlowerShopApp {
         }).format(amount);
     }
 
-    async eliminarProducto(id) {
-        if (confirm('¿Eliminar este producto?')) {
-            this.showNotification(`Producto ${id} eliminado`, 'success');
+    async gestionarEventoStock(id) {
+        // Redirigir a la sección de Stock en Inventario
+        this.showContent('inventario');
+        this.switchInventoryTab('stock');
+        
+        // Cargar y seleccionar el evento específico
+        setTimeout(() => {
+            this.seleccionarEventoStock(id);
+        }, 100);
+    }
+
+    // ========== FUNCIONES DE GESTIÓN DE STOCK PARA EVENTOS ==========
+    
+    async loadStockEventos() {
+        try {
+            console.log('📦 Cargando gestión de stock para eventos...');
+            
+            // Cargar eventos en el selector
+            await this.cargarEventosEnSelector();
+            
+            // Configurar event listeners para sub-tabs
+            this.setupStockSubTabs();
+            
+            // Configurar formularios y controles
+            this.setupStockControls();
+            
+            console.log('✅ Stock de eventos cargado correctamente');
+        } catch (error) {
+            console.error('❌ Error cargando stock de eventos:', error);
+            this.showNotification('Error cargando gestión de stock', 'error');
         }
     }
 
-    async editarEvento(id) {
-        this.showNotification(`Editando evento ${id}`, 'info');
+    async cargarEventosEnSelector() {
+        try {
+            const eventos = await window.flowerShopAPI.getEventos();
+            const selector = document.getElementById('selector-evento-stock');
+            
+            if (!selector) return;
+            
+            selector.innerHTML = '<option value="">Seleccionar evento...</option>';
+            
+            eventos.forEach(evento => {
+                const option = document.createElement('option');
+                option.value = evento.id;
+                option.textContent = `${evento.nombre} - ${this.formatDate(evento.fecha_inicio)}`;
+                selector.appendChild(option);
+            });
+            
+        } catch (error) {
+            console.error('Error cargando eventos:', error);
+        }
     }
 
-    async gestionarEventoStock(id) {
-        this.showNotification(`Gestionando stock para evento ${id}`, 'info');
+    setupStockSubTabs() {
+        const subTabBtns = document.querySelectorAll('.stock-nav-tab');
+        subTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const subTabId = btn.dataset.subtab;
+                this.switchStockSubTab(subTabId);
+            });
+        });
+    }
+
+    switchStockSubTab(subTabId) {
+        // Actualizar botones de sub-pestañas
+        document.querySelectorAll('.stock-nav-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-subtab="${subTabId}"]`).classList.add('active');
+
+        // Actualizar contenido de sub-pestañas
+        document.querySelectorAll('.stock-panel').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`subtab-${subTabId}`).classList.add('active');
+
+        // Cargar datos específicos del sub-tab si hay evento seleccionado
+        const eventoId = document.getElementById('selector-evento-stock').value;
+        if (eventoId) {
+            this.loadStockSubTabData(subTabId, eventoId);
+        }
+    }
+
+    setupStockControls() {
+        // Event listener para cargar evento
+        const btnCargar = document.querySelector('[onclick="app.cargarStockEvento()"]');
+        if (btnCargar) {
+            btnCargar.addEventListener('click', () => this.cargarStockEvento());
+        }
+
+        // Event listener para selector de producto en form de reserva
+        const selectProducto = document.getElementById('producto-reservar');
+        const stockDisplay = document.getElementById('stock-display');
+        
+        if (selectProducto && stockDisplay) {
+            selectProducto.addEventListener('change', (e) => {
+                const selectedOption = e.target.selectedOptions[0];
+                const stockNumber = stockDisplay.querySelector('.stock-number');
+                const stockStatus = stockDisplay.querySelector('.stock-status');
+                
+                if (selectedOption && selectedOption.dataset.stock) {
+                    if (stockNumber) stockNumber.textContent = selectedOption.dataset.stock;
+                    if (stockStatus) stockStatus.textContent = 'Unidades disponibles';
+                } else {
+                    if (stockNumber) stockNumber.textContent = '-';
+                    if (stockStatus) stockStatus.textContent = 'Selecciona un producto';
+                }
+            });
+        }
+
+        // Event listener para formulario de reserva
+        const formReservar = document.getElementById('form-reservar-stock');
+        if (formReservar) {
+            formReservar.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.procesarReservaStock(e.target);
+            });
+        }
+    }
+
+    async cargarStockEvento() {
+        const selector = document.getElementById('selector-evento-stock');
+        const eventoId = selector.value;
+        
+        if (!eventoId) {
+            this.showNotification('Por favor selecciona un evento', 'warning');
+            return;
+        }
+
+        await this.seleccionarEventoStock(eventoId);
+    }
+
+    async seleccionarEventoStock(eventoId) {
+        try {
+            console.log('📦 Cargando stock para evento:', eventoId);
+            
+            // Obtener datos del evento
+            const eventos = await window.flowerShopAPI.getEventos();
+            const evento = eventos.find(e => e.id == eventoId);
+            
+            if (!evento) {
+                this.showNotification('Evento no encontrado', 'error');
+                return;
+            }
+
+            // Actualizar información del evento en la UI
+            this.mostrarInfoEvento(evento);
+            
+            // Mostrar contenedores de gestión
+            document.getElementById('evento-info-container').style.display = 'block';
+            document.getElementById('stock-tabs-container').style.display = 'block';
+            
+            // Cargar datos del sub-tab activo
+            const activeSubTabElement = document.querySelector('.stock-nav-tab.active');
+            if (activeSubTabElement && activeSubTabElement.dataset && activeSubTabElement.dataset.subtab) {
+                const activeSubTab = activeSubTabElement.dataset.subtab;
+                await this.loadStockSubTabData(activeSubTab, eventoId);
+            } else {
+                // Por defecto cargar reservas si no hay tab activa
+                await this.loadStockSubTabData('reservas', eventoId);
+            }
+            
+            // Cargar productos en selector de reserva
+            await this.cargarProductosEnSelector();
+            
+            this.showNotification(`Stock del evento "${evento.nombre}" cargado`, 'success');
+            
+        } catch (error) {
+            console.error('❌ Error cargando stock del evento:', error);
+            this.showNotification('Error cargando datos del evento', 'error');
+        }
+    }
+
+    mostrarInfoEvento(evento) {
+        // Actualizar información básica
+        document.getElementById('evento-nombre').textContent = evento.nombre;
+        document.getElementById('evento-fecha').textContent = this.formatDate(evento.fecha_inicio);
+        document.getElementById('evento-tipo').textContent = this.getEventTypeText(evento.tipo_evento);
+        document.getElementById('evento-demanda').textContent = this.getDemandaText(evento.demanda_esperada);
+        
+        // Calcular y mostrar días restantes
+        const diasRestantes = this.calcularDiasRestantes(evento.fecha_inicio);
+        const diasElement = document.getElementById('dias-restantes');
+        const countdownNumber = diasElement.querySelector('.countdown-number');
+        const countdownLabel = diasElement.querySelector('.countdown-label');
+        
+        if (countdownNumber) {
+            countdownNumber.textContent = Math.abs(diasRestantes);
+        }
+        if (countdownLabel) {
+            countdownLabel.textContent = diasRestantes >= 0 ? 'días para el evento' : 'días desde el evento';
+        }
+        
+        // Actualizar estado
+        const statusElement = document.getElementById('evento-status');
+        const status = this.getEstadoPreparacion(diasRestantes, 0); // Por ahora 0 productos insuficientes
+        const statusIcon = statusElement.querySelector('.status-icon');
+        const statusText = statusElement.querySelector('.status-text');
+        
+        if (statusIcon) {
+            statusIcon.textContent = status.icon;
+        }
+        if (statusText) {
+            statusText.textContent = status.text;
+        }
+        
+        statusElement.style.background = status.color;
+        statusElement.style.color = status.textColor;
+    }
+
+    async loadStockSubTabData(subTabId, eventoId) {
+        switch(subTabId) {
+            case 'reservas':
+                await this.loadReservasEvento(eventoId);
+                break;
+            case 'demanda':
+                await this.loadAnalisisDemanda(eventoId);
+                break;
+            case 'agregar':
+                await this.loadProductosParaAgregar();
+                break;
+            case 'ordenes':
+                await this.loadResumenOrdenes(eventoId);
+                break;
+            case 'reporte':
+                // Se carga cuando se genera el reporte
+                break;
+        }
+    }
+
+    async loadReservasEvento(eventoId) {
+        try {
+            // Simular datos de reservas
+            const reservas = await this.getReservasEvento(eventoId);
+            this.renderReservasEvento(reservas);
+            this.actualizarStatsReservas(reservas);
+        } catch (error) {
+            console.error('Error cargando reservas:', error);
+        }
+    }
+
+    async getReservasEvento(eventoId) {
+        // Inicializar almacenamiento de reservas si no existe
+        if (!this.reservasEventos) {
+            this.reservasEventos = {
+                1: [ // Boda María & Carlos
+                    { 
+                        id: 1, 
+                        producto_id: 1, 
+                        producto_nombre: 'Rosas Rojas Premium', 
+                        cantidad_reservada: 150, 
+                        stock_disponible: 120,
+                        prioridad: 'alta'
+                    },
+                    { 
+                        id: 2, 
+                        producto_id: 2, 
+                        producto_nombre: 'Orquídeas Blancas Phalaenopsis', 
+                        cantidad_reservada: 30, 
+                        stock_disponible: 45,
+                        prioridad: 'normal'
+                    },
+                    { 
+                        id: 3, 
+                        producto_id: 3, 
+                        producto_nombre: 'Lirios Orientales Blancos', 
+                        cantidad_reservada: 80, 
+                        stock_disponible: 85,
+                        prioridad: 'normal'
+                    },
+                    { 
+                        id: 4, 
+                        producto_id: 7, 
+                        producto_nombre: 'Peonías Rosadas', 
+                        cantidad_reservada: 60, 
+                        stock_disponible: 40,
+                        prioridad: 'alta'
+                    }
+                ],
+                2: [ // Graduación Universidad
+                    { 
+                        id: 5, 
+                        producto_id: 5, 
+                        producto_nombre: 'Gerberas Multicolor', 
+                        cantidad_reservada: 200, 
+                        stock_disponible: 180,
+                        prioridad: 'alta'
+                    },
+                    { 
+                        id: 6, 
+                        producto_id: 8, 
+                        producto_nombre: 'Girasoles Gigantes', 
+                        cantidad_reservada: 100, 
+                        stock_disponible: 100,
+                        prioridad: 'normal'
+                    },
+                    { 
+                        id: 7, 
+                        producto_id: 4, 
+                        producto_nombre: 'Tulipanes Holandeses Mix', 
+                        cantidad_reservada: 120, 
+                        stock_disponible: 90,
+                        prioridad: 'normal'
+                    }
+                ],
+                3: [ // Aniversario Hotel Plaza
+                    { 
+                        id: 8, 
+                        producto_id: 7, 
+                        producto_nombre: 'Peonías Rosadas', 
+                        cantidad_reservada: 50, 
+                        stock_disponible: 30,
+                        prioridad: 'alta'
+                    },
+                    { 
+                        id: 9, 
+                        producto_id: 1, 
+                        producto_nombre: 'Rosas Rojas Premium', 
+                        cantidad_reservada: 80, 
+                        stock_disponible: 95,
+                        prioridad: 'normal'
+                    },
+                    { 
+                        id: 10, 
+                        producto_id: 6, 
+                        producto_nombre: 'Claveles Españoles', 
+                        cantidad_reservada: 150, 
+                        stock_disponible: 140,
+                        prioridad: 'baja'
+                    }
+                ]
+            };
+        }
+
+        return this.reservasEventos[eventoId] || [];
+    }
+
+    renderReservasEvento(reservas) {
+        const container = document.getElementById('reservas-list');
+        
+        if (!reservas || reservas.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📦</div>
+                    <h5>No hay reservas</h5>
+                    <p>No hay productos reservados para este evento</p>
+                    <button class="btn btn-primary" onclick="app.switchStockSubTab('agregar')">
+                        ➕ Agregar Productos
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = reservas.map(reserva => {
+            const stockSuficiente = reserva.cantidad_reservada <= reserva.stock_disponible;
+            const fechaFormateada = new Date().toLocaleDateString('es-ES');
+            
+            return `
+                <div class="reserva-item ${stockSuficiente ? 'reservado' : 'insuficiente'}">
+                    <div class="reserva-acciones">
+                        <button class="btn btn-sm btn-primary" onclick="app.editarReservaStock(${reserva.id})" title="Editar reserva">
+                            ✏️
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="app.eliminarReservaStock(${reserva.id})" title="Eliminar reserva">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="reserva-producto">
+                        <h5>
+                            🌸 ${reserva.producto_nombre}
+                            <span class="codigo-producto">#${reserva.producto_id}</span>
+                        </h5>
+                        <div class="reserva-meta">
+                            Stock disponible: <span class="${stockSuficiente ? 'text-success' : 'text-danger'}">${reserva.stock_disponible}</span> unidades
+                            ${!stockSuficiente ? ` • <strong class="text-danger">Faltan ${reserva.cantidad_reservada - reserva.stock_disponible}</strong>` : ''}
+                        </div>
+                        <div class="reserva-fecha">
+                            Reservado el ${fechaFormateada}
+                        </div>
+                    </div>
+                    <div class="reserva-cantidad">
+                        <span class="cantidad-numero">${reserva.cantidad_reservada}</span>
+                        <span class="cantidad-label">reservadas</span>
+                    </div>
+                    <div class="reserva-prioridad">
+                        <span class="prioridad-badge ${reserva.prioridad}">${this.getPrioridadText(reserva.prioridad)}</span>
+                    </div>
+                    <div class="reserva-estado">
+                        <span class="estado-badge ${stockSuficiente ? 'reservado' : 'insuficiente'}">
+                            ${stockSuficiente ? '✅ Disponible' : '⚠️ Insuficiente'}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    actualizarStatsReservas(reservas) {
+        const totalReservado = reservas.reduce((sum, r) => sum + r.cantidad_reservada, 0);
+        const productosInsuficientes = reservas.filter(r => r.estado === 'insuficiente').length;
+        
+        document.getElementById('total-reservado').textContent = totalReservado;
+        document.getElementById('productos-insuficientes').textContent = productosInsuficientes;
+        
+        // Actualizar badge en la tab de reservas
+        this.updateReservasBadge(reservas.length);
+    }
+
+    updateReservasBadge(count) {
+        const badge = document.getElementById('reservas-count');
+        if (badge) {
+            badge.textContent = count || 0;
+        }
+    }
+
+    async cargarProductosEnSelector() {
+        try {
+            const productos = await window.flowerShopAPI.getProductos();
+            const selector = document.getElementById('producto-reservar');
+            
+            if (!selector) return;
+            
+            selector.innerHTML = '<option value="">Seleccionar producto...</option>';
+            
+            productos.forEach(producto => {
+                const option = document.createElement('option');
+                option.value = producto.id;
+                option.textContent = `${producto.nombre} (Stock: ${producto.stock_actual || 0})`;
+                option.dataset.stock = producto.stock_actual || 0;
+                selector.appendChild(option);
+            });
+            
+        } catch (error) {
+            console.error('Error cargando productos:', error);
+        }
+    }
+
+    // Funciones auxiliares
+    getPrioridadText(prioridad) {
+        const prioridades = {
+            'normal': 'Normal',
+            'media': 'Normal',
+            'alta': 'Alta',
+            'baja': 'Baja',
+            'critica': 'Crítica'
+        };
+        return prioridades[prioridad] || 'Normal';
+    }
+
+    getEventTypeText(tipo) {
+        const tipos = {
+            'temporal': '🌸 Temporal',
+            'religioso': '⛪ Religioso',
+            'comercial': '🛒 Comercial',
+            'personalizado': '✨ Personalizado'
+        };
+        return tipos[tipo] || '📅 General';
+    }
+
+    getDemandaText(demanda) {
+        const demandas = {
+            'baja': '📉 Baja',
+            'media': '📊 Media',
+            'alta': '📈 Alta',
+            'extrema': '🔥 Extrema'
+        };
+        return demandas[demanda] || '📊 Media';
+    }
+
+    calcularDiasRestantes(fechaEvento) {
+        if (!fechaEvento) return 0;
+        const hoy = new Date();
+        const fecha = new Date(fechaEvento);
+        const diferencia = fecha.getTime() - hoy.getTime();
+        return Math.ceil(diferencia / (1000 * 3600 * 24));
+    }
+
+    getEstadoPreparacion(diasRestantes, productosInsuficientes) {
+        if (productosInsuficientes > 0) {
+            return {
+                text: 'Acción Requerida',
+                icon: '⚠️',
+                color: '#fef3c7',
+                textColor: '#92400e'
+            };
+        }
+        
+        if (diasRestantes < 0) {
+            return {
+                text: 'Evento Pasado',
+                icon: '📅',
+                color: '#f3f4f6',
+                textColor: '#6b7280'
+            };
+        }
+        
+        if (diasRestantes <= 3) {
+            return {
+                text: 'Urgente',
+                icon: '🔴',
+                color: '#fef2f2',
+                textColor: '#dc2626'
+            };
+        }
+        
+        if (diasRestantes <= 7) {
+            return {
+                text: 'Próximo',
+                icon: '🟡',
+                color: '#fffbeb',
+                textColor: '#d97706'
+            };
+        }
+        
+        return {
+            text: 'En Preparación',
+            icon: '✅',
+            color: '#dcfce7',
+            textColor: '#16a34a'
+        };
+    }
+
+    // ========== FUNCIONES ADICIONALES DE GESTIÓN DE STOCK ==========
+    
+    async procesarReservaStock(form) {
+        try {
+            const productoId = document.getElementById('producto-reservar').value;
+            const cantidad = parseInt(document.getElementById('cantidad-reservar').value);
+            const prioridad = document.getElementById('prioridad-reserva').value || 'normal';
+            const eventoId = document.getElementById('selector-evento-stock').value;
+            
+            console.log('Datos del formulario:', { productoId, cantidad, prioridad, eventoId });
+            
+            if (!productoId) {
+                this.showNotification('Por favor selecciona un producto', 'warning');
+                return;
+            }
+            
+            if (!eventoId) {
+                this.showNotification('Por favor selecciona un evento primero', 'warning');
+                return;
+            }
+            
+            if (!cantidad || isNaN(cantidad)) {
+                this.showNotification('Por favor ingresa una cantidad válida', 'warning');
+                return;
+            }
+
+            if (cantidad <= 0) {
+                this.showNotification('La cantidad debe ser mayor a 0', 'warning');
+                return;
+            }
+
+            // Validar stock disponible
+            const selectedOption = document.querySelector('#producto-reservar').selectedOptions[0];
+            const stockDisponible = parseInt(selectedOption?.dataset?.stock || 0);
+            
+            if (cantidad > stockDisponible) {
+                this.showNotification(`Solo hay ${stockDisponible} unidades disponibles`, 'error');
+                return;
+            }
+
+            // Simular guardado de reserva
+            this.showNotification(`Producto reservado correctamente: ${cantidad} unidades`, 'success');
+            
+            // Limpiar formulario
+            form.reset();
+            const stockDisplay = document.getElementById('stock-display');
+            if (stockDisplay) {
+                const stockNumber = stockDisplay.querySelector('.stock-number');
+                const stockStatus = stockDisplay.querySelector('.stock-status');
+                if (stockNumber) stockNumber.textContent = '-';
+                if (stockStatus) stockStatus.textContent = 'Selecciona un producto';
+            }
+            
+            // Recargar reservas
+            const selectorEvento = document.getElementById('selector-evento-stock');
+            if (selectorEvento && selectorEvento.value) {
+                this.loadReservasEvento(selectorEvento.value);
+            }
+            
+        } catch (error) {
+            console.error('Error reservando producto:', error);
+            this.showNotification('Error al reservar producto', 'error');
+        }
+    }
+
+    async editarReservaStock(reservaId) {
+        try {
+            // Crear modal de edición personalizado
+            this.mostrarModalEditarReserva(reservaId);
+        } catch (error) {
+            console.error('Error editando reserva:', error);
+            this.showNotification('Error al editar reserva', 'error');
+        }
+    }
+
+    mostrarModalEditarReserva(reservaId) {
+        // Obtener datos actuales de la reserva (simulado)
+        const selectorEvento = document.getElementById('selector-evento-stock');
+        const eventoId = selectorEvento?.value;
+        
+        if (!eventoId) {
+            this.showNotification('No hay evento seleccionado', 'warning');
+            return;
+        }
+
+        // Verificar si ya existe un modal y eliminarlo
+        const existingModal = document.getElementById('modal-editar-reserva');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        console.log('🔧 Creando modal de edición para reserva:', reservaId);
+
+        // Crear modal
+        const modal = document.createElement('div');
+        modal.id = 'modal-editar-reserva';
+        modal.className = 'modal';
+        // Estilos para asegurar visibilidad
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modal.style.zIndex = '99999'; // z-index muy alto
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.flexDirection = 'row';
+        modal.style.pointerEvents = 'auto';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        // Forzar display visible por si hay CSS global
+        modal.setAttribute('style', modal.getAttribute('style') + ';display:flex !important;');
+
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 400px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); position: relative;">
+                <div class="modal-header" style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0; font-size: 1.1rem; color: #1f2937;">✏️ Editar Reserva</h3>
+                    <button type="button" class="modal-close" onclick="this.closest('.modal').remove()" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1rem;
+                        background: none;
+                        border: none;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        color: #6b7280;
+                        padding: 0;
+                        line-height: 1;
+                    ">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 1.5rem;">
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <label for="nueva-cantidad" class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.9rem;">Nueva cantidad a reservar:</label>
+                        <input type="number" 
+                               id="nueva-cantidad" 
+                               class="form-control" 
+                               min="1" 
+                               placeholder="Ingresa la nueva cantidad"
+                               style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box;">
+                    </div>
+                    <div class="form-group">
+                        <label for="nueva-prioridad" class="form-label" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #374151; font-size: 0.9rem;">Prioridad:</label>
+                        <select id="nueva-prioridad" 
+                                class="form-control" 
+                                style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; background: white;">
+                            <option value="normal">Normal</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()" style="
+                        padding: 0.5rem 1rem;
+                        border: 1px solid #d1d5db;
+                        background: white;
+                        color: #374151;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 0.9rem;
+                    ">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="app.confirmarEditarReserva(${reservaId})" style="
+                        padding: 0.5rem 1rem;
+                        border: 1px solid #3b82f6;
+                        background: #3b82f6;
+                        color: white;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 0.9rem;
+                    ">
+                        Actualizar Reserva
+                    </button>
+                </div>
+            </div>
+        `;
+
+        // Agregar al DOM
+        document.body.appendChild(modal);
+        
+        console.log('✅ Modal de edición agregado al DOM:', modal);
+
+        // Focus en el input
+        setTimeout(() => {
+            const input = document.getElementById('nueva-cantidad');
+            if (input) {
+                input.focus();
+                console.log('🎯 Focus puesto en input de cantidad');
+            } else {
+                console.log('❌ No se encontró el input nueva-cantidad');
+            }
+        }, 100);
+
+        // Cerrar con ESC
+        modal.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+            }
+        });
+
+        // Cerrar clickeando fuera
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    confirmarEditarReserva(reservaId) {
+        const nuevaCantidad = document.getElementById('nueva-cantidad').value;
+        const nuevaPrioridad = document.getElementById('nueva-prioridad').value;
+        
+        if (!nuevaCantidad || isNaN(nuevaCantidad) || parseInt(nuevaCantidad) <= 0) {
+            this.showNotification('Por favor ingresa una cantidad válida', 'warning');
+            return;
+        }
+
+        // Cerrar modal
+        const modal = document.getElementById('modal-editar-reserva');
+        if (modal) modal.remove();
+
+        try {
+            console.log('✏️ Actualizando reserva con ID:', reservaId);
+            
+            // Obtener el evento actual
+            const selectorEvento = document.getElementById('selector-evento-stock');
+            const eventoId = selectorEvento?.value;
+            
+            if (!eventoId) {
+                this.showNotification('No hay evento seleccionado', 'error');
+                return;
+            }
+
+            // Actualizar la reserva en el almacenamiento dinámico
+            const actualizada = this.actualizarReservaEnLista(eventoId, reservaId, {
+                cantidad_reservada: parseInt(nuevaCantidad),
+                prioridad: nuevaPrioridad
+            });
+            
+            if (actualizada) {
+                this.showNotification(`Reserva actualizada: ${nuevaCantidad} unidades, prioridad ${nuevaPrioridad}`, 'success');
+                
+                // Recargar reservas
+                this.loadReservasEvento(eventoId);
+            } else {
+                this.showNotification('No se pudo encontrar la reserva para actualizar', 'error');
+            }
+        } catch (error) {
+            console.error('Error actualizando reserva:', error);
+            this.showNotification('Error al actualizar reserva', 'error');
+        }
+    }
+
+    // Función auxiliar para actualizar reserva en la lista
+    actualizarReservaEnLista(eventoId, reservaId, nuevosDatos) {
+        if (!this.reservasEventos || !this.reservasEventos[eventoId]) {
+            return false;
+        }
+
+        const reservasEvento = this.reservasEventos[eventoId];
+        const reserva = reservasEvento.find(r => r.id == reservaId);
+        
+        if (reserva) {
+            // Actualizar los campos especificados
+            Object.assign(reserva, nuevosDatos);
+            console.log(`✅ Reserva ${reservaId} actualizada en el evento ${eventoId}:`, nuevosDatos);
+            return true;
+        }
+        
+        console.log(`❌ No se encontró la reserva ${reservaId} en el evento ${eventoId}`);
+        return false;
+    }
+
+    async eliminarReservaStock(reservaId) {
+        this.mostrarConfirmacionEliminar({
+            tipo: 'Reserva',
+            nombre: 'esta reserva de stock',
+            mensaje: '¿Estás seguro de que quieres eliminar esta reserva de stock del evento? Esta acción no se puede deshacer.',
+            onConfirm: () => {
+                try {
+                    console.log('🗑️ Eliminando reserva con ID:', reservaId);
+                    
+                    // Obtener el evento actual
+                    const selectorEvento = document.getElementById('selector-evento-stock');
+                    const eventoId = selectorEvento?.value;
+                    
+                    if (!eventoId) {
+                        this.showNotification('No hay evento seleccionado', 'error');
+                        return;
+                    }
+
+                    // Eliminar la reserva del almacenamiento dinámico
+                    const eliminada = this.eliminarReservaDeLista(eventoId, reservaId);
+                    
+                    if (eliminada) {
+                        this.showNotification('Reserva eliminada correctamente', 'success');
+                        
+                        // Recargar reservas
+                        this.loadReservasEvento(eventoId);
+                    } else {
+                        this.showNotification('No se pudo encontrar la reserva', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error eliminando reserva:', error);
+                    this.showNotification('Error al eliminar reserva', 'error');
+                }
+            }
+        });
+    }
+
+    // Función auxiliar para eliminar reserva de la lista
+    eliminarReservaDeLista(eventoId, reservaId) {
+        if (!this.reservasEventos || !this.reservasEventos[eventoId]) {
+            return false;
+        }
+
+        const reservasEvento = this.reservasEventos[eventoId];
+        const indiceReserva = reservasEvento.findIndex(r => r.id == reservaId);
+        
+        if (indiceReserva !== -1) {
+            // Eliminar la reserva del array
+            reservasEvento.splice(indiceReserva, 1);
+            console.log(`✅ Reserva ${reservaId} eliminada del evento ${eventoId}`);
+            return true;
+        }
+        
+        console.log(`❌ No se encontró la reserva ${reservaId} en el evento ${eventoId}`);
+        return false;
+    }
+
+    async loadAnalisisDemanda(eventoId) {
+        try {
+            // Simular análisis de demanda
+            this.renderAnalisisDemanda();
+        } catch (error) {
+            console.error('Error cargando análisis de demanda:', error);
+        }
+    }
+
+    renderAnalisisDemanda() {
+        const productosContainer = document.getElementById('productos-demandados');
+        const tendenciasContainer = document.getElementById('tendencias-demanda');
+        
+        if (productosContainer) {
+            productosContainer.innerHTML = `
+                <div class="demanda-item">
+                    <span class="producto-nombre">🌹 Rosas Rojas</span>
+                    <span class="demanda-valor">85%</span>
+                </div>
+                <div class="demanda-item">
+                    <span class="producto-nombre">🌷 Tulipanes</span>
+                    <span class="demanda-valor">72%</span>
+                </div>
+                <div class="demanda-item">
+                    <span class="producto-nombre">🌺 Claveles</span>
+                    <span class="demanda-valor">58%</span>
+                </div>
+            `;
+        }
+        
+        if (tendenciasContainer) {
+            tendenciasContainer.innerHTML = `
+                <div class="tendencia-item">
+                    <span class="tendencia-icon">📈</span>
+                    <span class="tendencia-texto">Demanda alta en eventos religiosos</span>
+                </div>
+                <div class="tendencia-item">
+                    <span class="tendencia-icon">🔄</span>
+                    <span class="tendencia-texto">Rotación rápida en temporada alta</span>
+                </div>
+            `;
+        }
+        
+        // Crear gráfico de demanda
+        this.createDemandChart();
+    }
+
+    createDemandChart() {
+        const canvas = document.getElementById('stock-demanda-chart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Limpiar canvas
+        ctx.clearRect(0, 0, width, height);
+        
+        // Datos de ejemplo
+        const data = [
+            { label: 'Rosas', value: 85, color: '#ff6384' },
+            { label: 'Tulipanes', value: 72, color: '#36a2eb' },
+            { label: 'Claveles', value: 58, color: '#ffce56' },
+            { label: 'Lirios', value: 45, color: '#4bc0c0' }
+        ];
+        
+        const maxValue = 100;
+        const barWidth = 60;
+        const barSpacing = 80;
+        const startX = 40;
+        const startY = height - 40;
+        const chartHeight = height - 80;
+        
+        // Dibujar barras
+        data.forEach((item, index) => {
+            const barHeight = (item.value / maxValue) * chartHeight;
+            const x = startX + (index * barSpacing);
+            const y = startY - barHeight;
+            
+            // Barra
+            ctx.fillStyle = item.color;
+            ctx.fillRect(x, y, barWidth, barHeight);
+            
+            // Etiqueta del valor
+            ctx.fillStyle = '#374151';
+            ctx.font = '12px system-ui';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${item.value}%`, x + barWidth/2, y - 5);
+            
+            // Etiqueta del producto
+            ctx.fillText(item.label, x + barWidth/2, startY + 15);
+        });
+        
+        // Título
+        ctx.fillStyle = '#1f2937';
+        ctx.font = 'bold 14px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Demanda por Producto (%)', width/2, 20);
+        
+        // Líneas de grid
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const y = startY - (i * chartHeight / 4);
+            ctx.beginPath();
+            ctx.moveTo(startX - 10, y);
+            ctx.lineTo(width - 20, y);
+            ctx.stroke();
+            
+            // Etiquetas del eje Y
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '10px system-ui';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${(i * 25)}%`, startX - 15, y + 3);
+        }
+    }
+
+    async loadResumenOrdenes(eventoId) {
+        try {
+            const resumenContainer = document.getElementById('resumen-necesidades');
+            
+            if (resumenContainer) {
+                resumenContainer.innerHTML = `
+                    <div class="necesidad-item">
+                        <div class="necesidad-producto">🌹 Rosas Rojas</div>
+                        <div class="necesidad-cantidad">Faltan: <strong>20 unidades</strong></div>
+                        <div class="necesidad-estado critico">🔴 Crítico</div>
+                    </div>
+                    <div class="necesidad-item">
+                        <div class="necesidad-producto">🌷 Tulipanes Blancos</div>
+                        <div class="necesidad-cantidad">Faltan: <strong>5 unidades</strong></div>
+                        <div class="necesidad-estado alto">🟡 Medio</div>
+                    </div>
+                    <div class="estado-general">
+                        <strong>Estado:</strong> Se requiere generar 2 órdenes de compra
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error cargando resumen de órdenes:', error);
+        }
+    }
+
+    async analizarNecesidadesStock() {
+        try {
+            this.showNotification('Analizando necesidades de stock...', 'info');
+            
+            setTimeout(() => {
+                this.showNotification('Análisis completado', 'success');
+                const eventoId = document.getElementById('selector-evento-stock').value;
+                if (eventoId) {
+                    this.loadResumenOrdenes(eventoId);
+                }
+            }, 2000);
+        } catch (error) {
+            console.error('Error analizando necesidades:', error);
+            this.showNotification('Error en el análisis', 'error');
+        }
+    }
+
+    async generarOrdenesAutomaticas() {
+        try {
+            this.showNotification('Generando órdenes de compra automáticas...', 'info');
+            
+            // Simular generación de órdenes
+            const ordenesGeneradas = [
+                {
+                    id: 1,
+                    producto: 'Rosas Rojas Premium',
+                    cantidad: 30,
+                    proveedor: 'Florería Central',
+                    estado: 'Pendiente'
+                },
+                {
+                    id: 2,
+                    producto: 'Peonías Rosadas',
+                    cantidad: 20,
+                    proveedor: 'Vivero San José',
+                    estado: 'Pendiente'
+                }
+            ];
+            
+            setTimeout(() => {
+                this.renderOrdenesGeneradas(ordenesGeneradas);
+                this.showNotification(`${ordenesGeneradas.length} órdenes de compra generadas correctamente`, 'success');
+            }, 2000);
+        } catch (error) {
+            console.error('Error generando órdenes:', error);
+            this.showNotification('Error generando órdenes', 'error');
+        }
+    }
+
+    renderOrdenesGeneradas(ordenes) {
+        const container = document.getElementById('ordenes-generadas');
+        if (!container) return;
+
+        if (ordenes.length === 0) {
+            container.innerHTML = `
+                <div class="ordenes-placeholder">
+                    <i class="placeholder-icon">📋</i>
+                    <p>No hay órdenes generadas</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = ordenes.map(orden => `
+            <div class="orden-item">
+                <div class="orden-info">
+                    <h6>🛒 ${orden.producto}</h6>
+                    <div class="orden-meta">${orden.cantidad} unidades • ${orden.proveedor}</div>
+                </div>
+                <div class="orden-estado">
+                    <span class="badge badge-warning">${orden.estado}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async verOrdenesGeneradas() {
+        try {
+            this.showNotification('Abriendo vista de órdenes generadas...', 'info');
+            // Cambiar a la tab de órdenes
+            this.switchInventoryTab('ordenes');
+        } catch (error) {
+            console.error('Error mostrando órdenes:', error);
+        }
+    }
+
+    async generarReporteStock() {
+        try {
+            this.showNotification('Generando reporte de stock...', 'info');
+            
+            const reporteContainer = document.getElementById('reporte-content');
+            
+            setTimeout(() => {
+                if (reporteContainer) {
+                    reporteContainer.innerHTML = `
+                        <div class="reporte-generado">
+                            <div class="reporte-header">
+                                <h5>📊 Reporte de Stock del Evento</h5>
+                                <div class="reporte-fecha">Generado: ${new Date().toLocaleDateString('es-ES')}</div>
+                            </div>
+                            <div class="reporte-seccion">
+                                <h6>📋 Resumen de Reservas</h6>
+                                <div class="reporte-dato">Total productos reservados: <strong>100 unidades</strong></div>
+                                <div class="reporte-dato">Productos con stock suficiente: <strong>2 de 3</strong></div>
+                                <div class="reporte-dato">Valor total estimado: <strong>€1,250.00</strong></div>
+                            </div>
+                            <div class="reporte-seccion">
+                                <h6>⚠️ Alertas</h6>
+                                <div class="reporte-alerta">1 producto requiere reabastecimiento urgente</div>
+                            </div>
+                            <div class="reporte-seccion">
+                                <h6>🛒 Órdenes Recomendadas</h6>
+                                <div class="reporte-orden">Orden #1: 20 Rosas Rojas - Proveedor: Florería Central</div>
+                                <div class="reporte-orden">Orden #2: 5 Tulipanes - Proveedor: Distribuidora Verde</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                this.showNotification('Reporte generado correctamente', 'success');
+            }, 1500);
+        } catch (error) {
+            console.error('Error generando reporte:', error);
+            this.showNotification('Error generando reporte', 'error');
+        }
+    }
+
+    async exportarReporteStock() {
+        try {
+            this.showNotification('Exportando reporte a Excel...', 'info');
+            setTimeout(() => {
+                this.showNotification('Reporte exportado correctamente', 'success');
+            }, 1000);
+        } catch (error) {
+            console.error('Error exportando reporte:', error);
+            this.showNotification('Error exportando reporte', 'error');
+        }
+    }
+
+    async imprimirReporteStock() {
+        try {
+            this.showNotification('Preparando vista de impresión...', 'info');
+            setTimeout(() => {
+                this.showNotification('Vista de impresión lista', 'success');
+                // Aquí se abriría la ventana de impresión
+            }, 1000);
+        } catch (error) {
+            console.error('Error preparando impresión:', error);
+            this.showNotification('Error preparando impresión', 'error');
+        }
+    }
+
+    limpiarFormularioReserva() {
+        const form = document.getElementById('form-reservar-stock');
+        if (form) {
+            form.reset();
+            const stockDisplay = document.getElementById('stock-display');
+            if (stockDisplay) {
+                const stockNumber = stockDisplay.querySelector('.stock-number');
+                const stockStatus = stockDisplay.querySelector('.stock-status');
+                if (stockNumber) stockNumber.textContent = '-';
+                if (stockStatus) stockStatus.textContent = 'Selecciona un producto';
+            }
+        }
+    }
+
+    nuevoEventoStock() {
+        this.showNotification('Redirigiendo a crear nuevo evento...', 'info');
+        // Cambiar a la sección de eventos
+        this.showContent('eventos');
+    }
+
+    async loadProductosParaAgregar() {
+        try {
+            const selector = document.getElementById('producto-reservar');
+            if (selector) {
+                await this.cargarProductosEnSelector(selector);
+            }
+        } catch (error) {
+            console.error('Error cargando productos para agregar:', error);
+        }
     }
 
     async eliminarEvento(id) {

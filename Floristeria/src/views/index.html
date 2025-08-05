@@ -395,6 +395,7 @@
                         <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
                         <button class="tab-btn" data-tab="alertas">⚠️ Alertas</button>
                         <button class="tab-btn" data-tab="prediccion">📈 Predicción</button>
+                        <button class="tab-btn" data-tab="stock">📦 Stock</button>
                         <button class="tab-btn" data-tab="proveedores">🏪 Proveedores</button>
                         <button class="tab-btn" data-tab="ordenes">📋 Órdenes</button>
                         <button class="tab-btn" data-tab="movimientos">📦 Movimientos</button>
@@ -523,6 +524,331 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Gestión de Stock para Eventos -->
+                    <div id="tab-stock" class="tab-content">
+                        <!-- Header Principal -->
+                        <div class="stock-main-header">
+                            <div class="header-content">
+                                <div class="header-title">
+                                    <h3>📦 Gestión de Stock para Eventos</h3>
+                                    <p class="header-subtitle">Administra y reserva productos para eventos específicos</p>
+                                </div>
+                                <div class="header-actions">
+                                    <button class="btn btn-outline-primary" onclick="app.nuevoEventoStock()">
+                                        <i class="icon">➕</i> Nuevo Evento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selector de Evento -->
+                        <div class="stock-event-selector">
+                            <div class="selector-content">
+                                <div class="selector-section">
+                                    <label class="selector-label">
+                                        <i class="icon">📅</i> Seleccionar Evento
+                                    </label>
+                                    <div class="selector-row">
+                                        <select id="selector-evento-stock" class="form-control-pro">
+                                            <option value="">Seleccionar evento...</option>
+                                        </select>
+                                        <button class="btn btn-primary" onclick="app.cargarStockEvento()">
+                                            <i class="icon">🔍</i> Cargar Evento
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información del Evento Seleccionado -->
+                        <div id="evento-info-container" class="evento-info-container" style="display: none;">
+                            <div class="evento-info-card">
+                                <div class="evento-header">
+                                    <div class="evento-main-info">
+                                        <div class="evento-title">
+                                            <h4 id="evento-nombre" class="evento-name">-</h4>
+                                            <div class="evento-metadata">
+                                                <span class="evento-meta-item">
+                                                    <i class="icon">📅</i>
+                                                    <span id="evento-fecha">-</span>
+                                                </span>
+                                                <span class="evento-meta-item">
+                                                    <i class="icon">🎯</i>
+                                                    <span id="evento-tipo">-</span>
+                                                </span>
+                                                <span class="evento-meta-item">
+                                                    <i class="icon">📊</i>
+                                                    <span id="evento-demanda">-</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="evento-status-section">
+                                        <div class="status-badge" id="evento-status">
+                                            <span class="status-icon">⏱️</span>
+                                            <span class="status-text">Cargando...</span>
+                                        </div>
+                                        <div class="countdown-info" id="dias-restantes">
+                                            <span class="countdown-number">-</span>
+                                            <span class="countdown-label">días restantes</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contenido Principal de Gestión -->
+                        <div id="stock-tabs-container" class="stock-management-container" style="display: none;">
+                            <!-- Navigation Tabs -->
+                            <div class="stock-navigation">
+                                <nav class="stock-nav-tabs">
+                                    <button class="stock-nav-tab active" data-subtab="reservas">
+                                        <i class="tab-icon">📋</i>
+                                        <span class="tab-text">Reservas</span>
+                                        <span class="tab-badge" id="reservas-count">0</span>
+                                    </button>
+                                    <button class="stock-nav-tab" data-subtab="demanda">
+                                        <i class="tab-icon">📊</i>
+                                        <span class="tab-text">Análisis</span>
+                                    </button>
+                                    <button class="stock-nav-tab" data-subtab="agregar">
+                                        <i class="tab-icon">➕</i>
+                                        <span class="tab-text">Reservar</span>
+                                    </button>
+                                    <button class="stock-nav-tab" data-subtab="ordenes">
+                                        <i class="tab-icon">🛒</i>
+                                        <span class="tab-text">Órdenes</span>
+                                    </button>
+                                    <button class="stock-nav-tab" data-subtab="reporte">
+                                        <i class="tab-icon">📄</i>
+                                        <span class="tab-text">Reportes</span>
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <!-- Tab Content Panels -->
+                            <div class="stock-content-area">
+
+                                <!-- Panel: Reservas Actuales -->
+                                <div id="subtab-reservas" class="stock-panel active">
+                                    <div class="panel-header">
+                                        <div class="panel-title">
+                                            <h4>📋 Productos Reservados</h4>
+                                            <p class="panel-subtitle">Gestiona las reservas de productos para este evento</p>
+                                        </div>
+                                        <div class="panel-stats">
+                                            <div class="stat-card">
+                                                <div class="stat-value" id="total-reservado">0</div>
+                                                <div class="stat-label">Total Reservado</div>
+                                            </div>
+                                            <div class="stat-card critical">
+                                                <div class="stat-value" id="productos-insuficientes">0</div>
+                                                <div class="stat-label">Insuficientes</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="reservas-list" id="reservas-list">
+                                            <div class="empty-state">
+                                                <div class="empty-icon">📦</div>
+                                                <h5>No hay reservas</h5>
+                                                <p>Selecciona un evento para ver las reservas de productos</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel: Análisis de Demanda -->
+                                <div id="subtab-demanda" class="stock-panel">
+                                    <div class="panel-header">
+                                        <div class="panel-title">
+                                            <h4>📊 Análisis de Demanda</h4>
+                                            <p class="panel-subtitle">Tendencias y patrones de consumo para eventos similares</p>
+                                        </div>
+                                        <div class="panel-controls">
+                                            <select id="periodo-demanda" class="form-control-small">
+                                                <option value="7">Últimos 7 días</option>
+                                                <option value="30" selected>Últimos 30 días</option>
+                                                <option value="90">Últimos 90 días</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="demanda-grid">
+                                            <div class="chart-section">
+                                                <div class="chart-container">
+                                                    <canvas id="stock-demanda-chart" width="400" height="250"></canvas>
+                                                </div>
+                                            </div>
+                                            <div class="insights-section">
+                                                <div class="insight-card">
+                                                    <h5>🎯 Productos Más Demandados</h5>
+                                                    <div id="productos-demandados" class="productos-list">
+                                                        <div class="loading-indicator">Cargando datos...</div>
+                                                    </div>
+                                                </div>
+                                                <div class="insight-card">
+                                                    <h5>📈 Tendencias Identificadas</h5>
+                                                    <div id="tendencias-demanda" class="tendencias-list">
+                                                        <div class="loading-indicator">Analizando patrones...</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel: Reservar Productos -->
+                                <div id="subtab-agregar" class="stock-panel">
+                                    <div class="panel-header">
+                                        <div class="panel-title">
+                                            <h4>➕ Reservar Productos</h4>
+                                            <p class="panel-subtitle">Agrega productos a la reserva del evento seleccionado</p>
+                                        </div>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="reservation-form-container">
+                                            <form id="form-reservar-stock" class="reservation-form">
+                                                <div class="form-section">
+                                                    <h6 class="section-title">Información del Producto</h6>
+                                                    <div class="form-grid">
+                                                        <div class="form-group">
+                                                            <label for="producto-reservar" class="form-label">
+                                                                <i class="label-icon">🌸</i> Producto
+                                                            </label>
+                                                            <select id="producto-reservar" class="form-control-pro" required>
+                                                                <option value="">Seleccionar producto...</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="cantidad-reservar" class="form-label">
+                                                                <i class="label-icon">📦</i> Cantidad
+                                                            </label>
+                                                            <input type="number" id="cantidad-reservar" class="form-control-pro" min="1" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label class="form-label">
+                                                                <i class="label-icon">📊</i> Stock Disponible
+                                                            </label>
+                                                            <div class="stock-indicator" id="stock-display">
+                                                                <div class="stock-value">
+                                                                    <span class="stock-number">-</span>
+                                                                    <span class="stock-unit">unidades</span>
+                                                                </div>
+                                                                <div class="stock-status">Selecciona un producto</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="prioridad-reserva" class="form-label">
+                                                                <i class="label-icon">⚡</i> Prioridad
+                                                            </label>
+                                                            <select id="prioridad-reserva" class="form-control-pro">
+                                                                <option value="normal">Normal</option>
+                                                                <option value="alta">Alta</option>
+                                                                <option value="critica">Crítica</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="form-actions">
+                                                    <button type="submit" class="btn btn-primary btn-lg">
+                                                        <i class="btn-icon">➕</i> Reservar Producto
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary" onclick="app.limpiarFormularioReserva()">
+                                                        <i class="btn-icon">🔄</i> Limpiar
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel: Generar Órdenes -->
+                                <div id="subtab-ordenes" class="stock-panel">
+                                    <div class="panel-header">
+                                        <div class="panel-title">
+                                            <h4>🛒 Órdenes de Compra</h4>
+                                            <p class="panel-subtitle">Genera órdenes automáticas basadas en las necesidades del evento</p>
+                                        </div>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="ordenes-workflow">
+                                            <div class="workflow-step">
+                                                <div class="step-header">
+                                                    <div class="step-number">1</div>
+                                                    <h6>Análisis de Necesidades</h6>
+                                                </div>
+                                                <div class="needs-summary" id="resumen-necesidades">
+                                                    <div class="analysis-placeholder">
+                                                        <i class="placeholder-icon">🔍</i>
+                                                        <p>Ejecuta el análisis para identificar productos faltantes</p>
+                                                    </div>
+                                                </div>
+                                                <button class="btn btn-warning btn-block" onclick="app.analizarNecesidadesStock()">
+                                                    <i class="btn-icon">🔍</i> Analizar Necesidades
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="workflow-step">
+                                                <div class="step-header">
+                                                    <div class="step-number">2</div>
+                                                    <h6>Generación de Órdenes</h6>
+                                                </div>
+                                                <div class="generation-actions">
+                                                    <button class="btn btn-success" onclick="app.generarOrdenesAutomaticas()">
+                                                        <i class="btn-icon">🛒</i> Generar Órdenes Automáticas
+                                                    </button>
+                                                    <button class="btn btn-info" onclick="app.verOrdenesGeneradas()">
+                                                        <i class="btn-icon">📋</i> Ver Órdenes Generadas
+                                                    </button>
+                                                </div>
+                                                <div class="ordenes-lista" id="ordenes-generadas">
+                                                    <div class="ordenes-placeholder">
+                                                        <i class="placeholder-icon">📋</i>
+                                                        <p>Las órdenes generadas aparecerán aquí</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Panel: Reportes -->
+                                <div id="subtab-reporte" class="stock-panel">
+                                    <div class="panel-header">
+                                        <div class="panel-title">
+                                            <h4>📄 Reportes de Stock</h4>
+                                            <p class="panel-subtitle">Genera reportes detallados del estado del stock para el evento</p>
+                                        </div>
+                                        <div class="panel-actions">
+                                            <button class="btn btn-primary" onclick="app.generarReporteStock()">
+                                                <i class="btn-icon">📊</i> Generar Reporte
+                                            </button>
+                                            <button class="btn btn-secondary" onclick="app.showNotification('Función próximamente disponible', 'info')">
+                                                <i class="btn-icon">💾</i> Exportar
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="app.showNotification('Función próximamente disponible', 'info')">
+                                                <i class="btn-icon">🖨️</i> Imprimir
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="reporte-area" id="reporte-content">
+                                            <div class="report-placeholder">
+                                                <div class="placeholder-illustration">
+                                                    <i class="illustration-icon">📄</i>
+                                                    <h5>Reporte no generado</h5>
+                                                    <p>Haz clic en "Generar Reporte" para crear un análisis completo del stock del evento</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
