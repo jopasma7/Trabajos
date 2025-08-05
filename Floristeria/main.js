@@ -37,13 +37,10 @@ function createMainWindow() {
     });
 
     // Solo abrir DevTools en modo desarrollo
-    // Forzar apertura de DevTools temporalmente
-    mainWindow.webContents.openDevTools();
-    
-    // Condición original comentada temporalmente
-    // if (process.env.NODE_ENV === 'development') {
-    //     mainWindow.webContents.openDevTools();
-    // }
+    const isDev = process.argv.includes('--dev') || process.env.NODE_ENV === 'development';
+    if (isDev) {
+        mainWindow.webContents.openDevTools();
+    }
 }
 
 // Crear menú de la aplicación

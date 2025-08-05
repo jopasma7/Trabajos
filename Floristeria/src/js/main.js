@@ -1764,9 +1764,9 @@ class FlowerShopApp {
             
             if (statPedidos && statGastado && statFecha) {
                 console.log('✅ Actualizando estadísticas con IDs específicos...');
-                statPedidos.innerHTML = `<strong>${totalPedidos}</strong> pedidos`;
-                statGastado.innerHTML = `<strong>${window.flowerShopAPI.formatCurrency(totalGastado)}</strong> gastado`;
-                statFecha.innerHTML = `Desde <strong>${fechaRegistro}</strong>`;
+                statPedidos.innerHTML = `<strong>${totalPedidos}</strong>&nbsp;pedidos`;
+                statGastado.innerHTML = `<strong>${window.flowerShopAPI.formatCurrency(totalGastado)}</strong>&nbsp;gastado`;
+                statFecha.innerHTML = `Desde&nbsp;<strong>${fechaRegistro}</strong>`;
                 
                 console.log('📊 Estadística 1 aplicada:', statPedidos.innerHTML);
                 console.log('📊 Estadística 2 aplicada:', statGastado.innerHTML);
@@ -4275,13 +4275,311 @@ class FlowerShopApp {
         }
     }
 
-    // Funciones de productos, clientes, eventos que pueden estar faltando
-    async editarProducto(id) {
-        this.showNotification(`Editando producto ${id}`, 'info');
+    async verProducto(id) {
+        console.log('👁️ Ver producto:', id);
+        try {
+            // Obtener datos del producto
+            const productos = await window.flowerShopAPI.getProductos();
+            const producto = productos.find(p => p.id === id);
+            
+            if (!producto) {
+                this.showNotification('Producto no encontrado', 'error');
+                return;
+            }
+
+            // Crear y mostrar modal de vista de producto
+            const modal = this.createViewProductModal(producto);
+            document.body.appendChild(modal);
+            this.showModal('modal-view-producto');
+            
+        } catch (error) {
+            console.error('❌ Error viendo producto:', error);
+            this.showNotification('Error cargando datos del producto', 'error');
+        }
     }
 
-    async verProducto(id) {
-        this.showNotification(`Viendo producto ${id}`, 'info');
+    createViewProductModal(producto) {
+        const modal = document.createElement('div');
+        modal.id = 'modal-view-producto';
+        modal.className = 'modal';
+        modal.style.display = 'none';
+        
+        // Calcular datos adicionales
+        const stockStatus = this.getStockStatus(producto.stock_actual, producto.stock_minimo);
+        const margenGanancia = producto.precio_venta && producto.precio_compra 
+            ? ((producto.precio_venta - producto.precio_compra) / producto.precio_compra * 100).toFixed(1)
+            : 'N/A';
+        
+        // Obtener nombre de categoría
+        const categoriaNombre = this.getCategoryName(producto.categoria_id);
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 650px;">
+                <div class="modal-header" style="padding: 1.2rem 1.8rem 0.8rem 1.8rem;">
+                    <div>
+                        <h2 class="modal-title-pro" style="font-size: 1.5rem; margin-bottom: 0.2rem;">🌺 Información del Producto</h2>
+                        <p class="modal-subtitle-pro" style="font-size: 0.85rem;">Detalles completos del producto</p>
+                    </div>
+                    <button type="button" class="modal-close" onclick="app.hideModal('modal-view-producto')" style="
+                        position: absolute;
+                        top: 1rem;
+                        right: 1.2rem;
+                        background: none;
+                        border: none;
+                        font-size: 1.8rem;
+                        cursor: pointer;
+                        color: #6b7280;
+                        transition: color 0.2s;
+                        line-height: 1;
+                        padding: 0.2rem;
+                    ">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 1rem 1.8rem; max-height: 60vh; overflow-y: auto;">
+                    <div class="producto-info-header" style="
+                        display: flex;
+                        align-items: center;
+                        gap: 0.8rem;
+                        margin-bottom: 1rem;
+                        padding: 0.8rem;
+                        background: #f8fafc;
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                    ">
+                        <div class="producto-avatar" style="
+                            width: 40px;
+                            height: 40px;
+                            background: #e2e8f0;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 1.2rem;
+                        ">🌸</div>
+                        <div class="producto-details" style="flex: 1;">
+                            <h3 style="font-size: 1rem; margin: 0 0 0.2rem 0; color: #1f2937;">${producto.nombre}</h3>
+                            <p style="font-size: 0.8rem; margin: 0 0 0.3rem 0; color: #6b7280;">Código: ${producto.codigo_producto || 'No asignado'}</p>
+                            <div class="producto-stats" style="display: flex; gap: 1rem; font-size: 0.75rem;">
+                                <span class="stat-item">
+                                    <strong>${producto.stock_actual || 0}</strong>&nbsp;en stock
+                                </span>
+                                <span class="stat-item">
+                                    <strong>${this.formatCurrency(producto.precio_venta)}</strong>&nbsp;precio
+                                </span>
+                                <span class="stat-item ${stockStatus.class}">
+                                    <strong>${stockStatus.text}</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="producto-status-badge" style="
+                            display: flex;
+                            align-items: center;
+                            gap: 0.3rem;
+                            padding: 0.3rem 0.6rem;
+                            border-radius: 6px;
+                            font-weight: 600;
+                            font-size: 0.75rem;
+                            background: ${stockStatus.class === 'sin-stock' ? '#fef2f2' : 
+                                       stockStatus.class === 'stock-bajo' ? '#fffbeb' : 
+                                       stockStatus.class === 'stock-medio' ? '#fff7ed' : '#f0fdf4'};
+                            color: ${stockStatus.class === 'sin-stock' ? '#dc2626' : 
+                                   stockStatus.class === 'stock-bajo' ? '#d97706' : 
+                                   stockStatus.class === 'stock-medio' ? '#ea580c' : '#16a34a'};
+                            border: 1px solid ${stockStatus.class === 'sin-stock' ? '#fecaca' : 
+                                              stockStatus.class === 'stock-bajo' ? '#fed7aa' : 
+                                              stockStatus.class === 'stock-medio' ? '#fdba74' : '#bbf7d0'};
+                        ">
+                            <span>${stockStatus.icon}</span>
+                            <span>${stockStatus.text}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="producto-detalles" style="
+                        border: 1px solid #e5e7eb;
+                        border-radius: 6px;
+                        background: #ffffff;
+                    ">
+                        <!-- Información Básica -->
+                        <div class="detalle-seccion" style="padding: 1rem; border-bottom: 1px solid #f3f4f6;">
+                            <h4 style="font-size: 0.9rem; color: #374151; margin: 0 0 0.8rem 0; font-weight: 600;">📋 Información Básica</h4>
+                            <div class="detalle-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 0.85rem;">
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Categoría:</span>
+                                    <span style="color: #374151; font-weight: 500;">${categoriaNombre}</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Temporada:</span>
+                                    <span style="color: #374151; font-weight: 500;">${this.getTemporadaText(producto.temporada)}</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Creado:</span>
+                                    <span style="color: #374151; font-weight: 500;">${this.formatDate(producto.created_at)}</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Actualizado:</span>
+                                    <span style="color: #374151; font-weight: 500;">${this.formatDate(producto.updated_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de Stock -->
+                        <div class="detalle-seccion" style="padding: 1rem; border-bottom: 1px solid #f3f4f6;">
+                            <h4 style="font-size: 0.9rem; color: #374151; margin: 0 0 0.8rem 0; font-weight: 600;">📦 Inventario</h4>
+                            <div class="detalle-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 0.85rem;">
+                                <div class="detalle-item destacado" style="
+                                    padding: 0.5rem;
+                                    background: #f8fafc;
+                                    border-radius: 4px;
+                                    border-left: 3px solid #3b82f6;
+                                ">
+                                    <span style="color: #6b7280;">Stock Actual:</span>
+                                    <span style="color: #374151; font-weight: 600; font-size: 1rem;">${producto.stock_actual || 0} unidades</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Stock Mínimo:</span>
+                                    <span style="color: #374151; font-weight: 500;">${producto.stock_minimo || 5} unidades</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de Precios -->
+                        <div class="detalle-seccion" style="padding: 1rem; ${producto.descripcion ? 'border-bottom: 1px solid #f3f4f6;' : ''}">
+                            <h4 style="font-size: 0.9rem; color: #374151; margin: 0 0 0.8rem 0; font-weight: 600;">💰 Precios y Márgenes</h4>
+                            <div class="detalle-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; font-size: 0.85rem;">
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Precio Compra:</span>
+                                    <span style="color: #374151; font-weight: 500;">${this.formatCurrency(producto.precio_compra)}</span>
+                                </div>
+                                <div class="detalle-item destacado" style="
+                                    padding: 0.5rem;
+                                    background: #f0fdf4;
+                                    border-radius: 4px;
+                                    border-left: 3px solid #16a34a;
+                                ">
+                                    <span style="color: #6b7280;">Precio Venta:</span>
+                                    <span style="color: #16a34a; font-weight: 600; font-size: 1rem;">${this.formatCurrency(producto.precio_venta)}</span>
+                                </div>
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Margen:</span>
+                                    <span style="color: #7c3aed; font-weight: 600;">${margenGanancia}${margenGanancia !== 'N/A' ? '%' : ''}</span>
+                                </div>
+                                ${producto.precio_compra && producto.precio_venta ? `
+                                <div class="detalle-item">
+                                    <span style="color: #6b7280;">Ganancia/ud:</span>
+                                    <span style="color: #16a34a; font-weight: 600;">${this.formatCurrency(producto.precio_venta - producto.precio_compra)}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${producto.descripcion ? `
+                        <!-- Descripción -->
+                        <div class="detalle-seccion" style="padding: 1rem;">
+                            <h4 style="font-size: 0.9rem; color: #374151; margin: 0 0 0.8rem 0; font-weight: 600;">📝 Descripción</h4>
+                            <div style="
+                                background: #f8fafc;
+                                padding: 0.8rem;
+                                border-radius: 4px;
+                                border-left: 3px solid #3b82f6;
+                                color: #374151;
+                                line-height: 1.5;
+                                font-size: 0.85rem;
+                            ">
+                                ${producto.descripcion}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 0.8rem 1.8rem 1.2rem 1.8rem;">
+                    <button type="button" class="btn btn-primary" onclick="app.editarProducto(${producto.id}); app.hideModal('modal-view-producto');" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                        ✏️ Editar Producto
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Event listeners
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeViewProductModal(modal);
+            }
+        });
+        
+        modal.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.closeViewProductModal(modal);
+            });
+        });
+        
+        return modal;
+    }
+
+    closeViewProductModal(modal) {
+        modal.style.display = 'none';
+        modal.remove();
+    }
+
+    getStockStatus(stockActual, stockMinimo) {
+        const stock = stockActual || 0;
+        const minimo = stockMinimo || 5;
+        
+        if (stock === 0) {
+            return { class: 'sin-stock', icon: '🔴', text: 'Sin Stock' };
+        } else if (stock <= minimo) {
+            return { class: 'stock-bajo', icon: '🟡', text: 'Stock Bajo' };
+        } else if (stock <= minimo * 2) {
+            return { class: 'stock-medio', icon: '🟠', text: 'Stock Medio' };
+        } else {
+            return { class: 'stock-alto', icon: '🟢', text: 'Stock Bueno' };
+        }
+    }
+
+    getCategoryName(categoriaId) {
+        // Mapeo de categorías - puedes expandir esto según tus categorías
+        const categorias = {
+            1: 'Flores Frescas',
+            2: 'Plantas de Interior',
+            3: 'Plantas de Exterior',
+            4: 'Arreglos Florales',
+            5: 'Accesorios',
+            6: 'Herramientas'
+        };
+        return categorias[categoriaId] || 'Sin Categoría';
+    }
+
+    getTemporadaText(temporada) {
+        const temporadas = {
+            'primavera': '🌸 Primavera',
+            'verano': '☀️ Verano',
+            'otoño': '🍂 Otoño',
+            'invierno': '❄️ Invierno',
+            'todo_año': '🌿 Todo el Año'
+        };
+        return temporadas[temporada] || '🌿 Todo el Año';
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return 'No disponible';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (error) {
+            return 'Fecha inválida';
+        }
+    }
+
+    formatCurrency(amount) {
+        if (!amount && amount !== 0) return 'No especificado';
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(amount);
     }
 
     async eliminarProducto(id) {
@@ -4299,8 +4597,110 @@ class FlowerShopApp {
     }
 
     async eliminarEvento(id) {
-        if (confirm('¿Eliminar este evento?')) {
-            this.showNotification(`Evento ${id} eliminado`, 'success');
+        try {
+            // Obtener datos del evento
+            const eventos = await window.flowerShopAPI.getEventos();
+            const evento = eventos.find(e => e.id === id);
+            
+            if (!evento) {
+                this.showNotification('Evento no encontrado', 'error');
+                return;
+            }
+
+            // Capturar el contexto de this
+            const self = this;
+
+            // Mostrar confirmación
+            this.mostrarConfirmacionEliminar({
+                tipo: 'evento',
+                nombre: evento.nombre,
+                mensaje: `¿Estás seguro de que deseas eliminar el evento "${evento.nombre}"?\n\nEsta acción eliminará:\n• El evento y su configuración\n• Descuentos asociados\n• Predicciones de demanda\n\nEsta acción no se puede deshacer.`,
+                onConfirm: async () => {
+                    try {
+                        await window.flowerShopAPI.eliminarEvento(id);
+                        self.showNotification('Evento eliminado correctamente', 'success');
+                        await self.loadEventosData();
+                    } catch (error) {
+                        console.error('Error eliminando evento:', error);
+                        self.showNotification('Error al eliminar evento', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error preparando eliminación:', error);
+            this.showNotification('Error al cargar datos del evento', 'error');
+        }
+    }
+
+    async eliminarCliente(id) {
+        try {
+            // Obtener datos del cliente
+            const clientes = await window.flowerShopAPI.getClientes();
+            const cliente = clientes.find(c => c.id === id);
+            
+            if (!cliente) {
+                this.showNotification('Cliente no encontrado', 'error');
+                return;
+            }
+
+            // Capturar el contexto de this
+            const self = this;
+
+            // Mostrar confirmación
+            this.mostrarConfirmacionEliminar({
+                tipo: 'cliente',
+                nombre: cliente.nombre || cliente.nombre_completo,
+                mensaje: `¿Estás seguro de que deseas eliminar el cliente "${cliente.nombre || cliente.nombre_completo}"?\n\nEsta acción eliminará:\n• Los datos del cliente\n• Su historial de compras\n• Pedidos asociados\n\nEsta acción no se puede deshacer.`,
+                onConfirm: async () => {
+                    try {
+                        await window.flowerShopAPI.eliminarCliente(id);
+                        self.showNotification('Cliente eliminado correctamente', 'success');
+                        await self.loadClientesData();
+                    } catch (error) {
+                        console.error('Error eliminando cliente:', error);
+                        self.showNotification('Error al eliminar cliente', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error preparando eliminación:', error);
+            this.showNotification('Error al cargar datos del cliente', 'error');
+        }
+    }
+
+    async eliminarPedido(id) {
+        try {
+            // Obtener datos del pedido
+            const pedidos = await window.flowerShopAPI.getPedidos();
+            const pedido = pedidos.find(p => p.id === id);
+            
+            if (!pedido) {
+                this.showNotification('Pedido no encontrado', 'error');
+                return;
+            }
+
+            // Capturar el contexto de this
+            const self = this;
+
+            // Mostrar confirmación
+            this.mostrarConfirmacionEliminar({
+                tipo: 'pedido',
+                nombre: `#${pedido.numero_pedido || pedido.id}`,
+                mensaje: `¿Estás seguro de que deseas eliminar el pedido #${pedido.numero_pedido || pedido.id}?\n\nEsta acción eliminará:\n• El pedido y sus detalles\n• Los productos asociados\n• El historial del cliente\n\nEsta acción no se puede deshacer.`,
+                onConfirm: async () => {
+                    try {
+                        await window.flowerShopAPI.eliminarPedido(id);
+                        self.showNotification('Pedido eliminado correctamente', 'success');
+                        await self.loadPedidosData();
+                    } catch (error) {
+                        console.error('Error eliminando pedido:', error);
+                        self.showNotification('Error al eliminar pedido', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error preparando eliminación:', error);
+            this.showNotification('Error al cargar datos del pedido', 'error');
         }
     }
 
@@ -4308,6 +4708,91 @@ class FlowerShopApp {
     async loadConfiguracionData() {
         console.log('⚙️ Cargando configuración...');
         this.showNotification('Configuración cargada', 'info');
+    }
+
+    // ========== MODAL DE CONFIRMACIÓN DE ELIMINACIÓN ==========
+    
+    /**
+     * Muestra el modal de confirmación de eliminación
+     * @param {Object} config - Configuración del modal
+     * @param {string} config.tipo - Tipo de elemento (producto, cliente, evento, etc.)
+     * @param {string} config.nombre - Nombre del elemento a eliminar
+     * @param {Function} config.onConfirm - Función a ejecutar al confirmar
+     * @param {string} [config.mensaje] - Mensaje personalizado (opcional)
+     */
+    mostrarConfirmacionEliminar(config) {
+        const { tipo, nombre, onConfirm, mensaje } = config;
+        
+        // Configurar el título y mensaje
+        const titulo = document.getElementById('confirmacion-titulo');
+        const mensajeEl = document.getElementById('confirmacion-mensaje');
+        const btnConfirmar = document.getElementById('btn-confirmar-eliminar');
+        
+        if (titulo) {
+            titulo.textContent = `¿Eliminar ${tipo}?`;
+        }
+        
+        if (mensajeEl) {
+            const mensajePersonalizado = mensaje || 
+                `¿Estás seguro de que deseas eliminar ${tipo.toLowerCase()} "${nombre}"? Esta acción no se puede deshacer.`;
+            mensajeEl.textContent = mensajePersonalizado;
+        }
+        
+        // Configurar el botón de confirmar
+        if (btnConfirmar) {
+            // Remover eventos anteriores
+            const nuevoBtn = btnConfirmar.cloneNode(true);
+            btnConfirmar.parentNode.replaceChild(nuevoBtn, btnConfirmar);
+            
+            // Agregar nuevo evento
+            nuevoBtn.addEventListener('click', () => {
+                this.hideModal('modal-confirmacion-eliminar');
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+            });
+        }
+        
+        // Mostrar el modal
+        this.showModal('modal-confirmacion-eliminar');
+    }
+
+    // ========== FUNCIONES DE ELIMINACIÓN ACTUALIZADAS ==========
+    
+    async eliminarProducto(id) {
+        try {
+            // Obtener datos del producto
+            const productos = await window.flowerShopAPI.getProductos();
+            const producto = productos.find(p => p.id === id);
+            
+            if (!producto) {
+                this.showNotification('Producto no encontrado', 'error');
+                return;
+            }
+
+            // Capturar el contexto de this
+            const self = this;
+
+            // Mostrar confirmación
+            this.mostrarConfirmacionEliminar({
+                tipo: 'producto',
+                nombre: producto.nombre,
+                mensaje: `¿Estás seguro de que deseas eliminar el producto "${producto.nombre}"?\n\nEsta acción eliminará:\n• El producto del inventario\n• Todo su historial de movimientos\n• Referencias en pedidos futuros\n\nEsta acción no se puede deshacer.`,
+                onConfirm: async () => {
+                    try {
+                        await window.flowerShopAPI.eliminarProducto(id);
+                        self.showNotification('Producto eliminado correctamente', 'success');
+                        await self.loadProductosData();
+                    } catch (error) {
+                        console.error('Error eliminando producto:', error);
+                        self.showNotification('Error al eliminar producto', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error preparando eliminación:', error);
+            this.showNotification('Error al cargar datos del producto', 'error');
+        }
     }
 }
 

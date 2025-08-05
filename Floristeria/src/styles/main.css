@@ -98,13 +98,15 @@
     min-height: 60px;
     resize: vertical;
 }
-/* ====== MODALES UNIFICADOS (producto, cliente, evento, historial, nuevo-pedido) ====== */
+/* ====== MODALES UNIFICADOS (producto, cliente, evento, historial, nuevo-pedido, confirmacion) ====== */
 #modal-producto .modal-content,
 #modal-cliente .modal-content,
 #modal-evento .modal-content,
 #modal-proveedor .modal-content,
 #modal-historial-cliente .modal-content,
-#modal-nuevo-pedido .modal-content {
+#modal-nuevo-pedido .modal-content,
+#modal-view-producto .modal-content,
+#modal-confirmacion-eliminar .modal-content {
   background: rgba(255,255,255,0.97);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
@@ -6613,5 +6615,72 @@ body::after {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+    }
+}
+
+/* ========================================
+   ESTILOS AUXILIARES PARA MODAL VISTA PRODUCTO
+======================================== */
+
+.detalle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.detalle-item.destacado {
+    border-radius: 4px;
+}
+
+/* Clases de estado para productos */
+.sin-stock {
+    color: #dc2626 !important;
+}
+
+.stock-bajo {
+    color: #d97706 !important;
+}
+
+.stock-medio {
+    color: #ea580c !important;
+}
+
+.stock-alto {
+    color: #16a34a !important;
+}
+
+/* Estilo para botón de peligro */
+.btn-danger {
+    background-color: #dc2626;
+    border-color: #dc2626;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+    color: white;
+}
+
+/* Responsive para modal vista producto */
+@media (max-width: 768px) {
+    .detalle-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+    
+    .producto-stats {
+        flex-direction: column !important;
+        gap: 0.3rem !important;
+    }
+    
+    .producto-info-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .producto-status-badge {
+        align-self: flex-start !important;
     }
 }
