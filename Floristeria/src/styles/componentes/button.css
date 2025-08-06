@@ -1,3 +1,32 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.btn-icon {
+    font-size: 0.9rem;
+}
+
+.btn-lg {
+    padding: 0.7rem 1.4rem;
+    font-size: 0.9rem;
+}
+
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
 /* ============================================ */
 /* =========== BOTÓN PRIMARIO VERDE =========== */
 /* ============================================ */
@@ -55,4 +84,268 @@
 .btn-logs {
     background: #d1fae5; /* green-100 */
     color: #059669;      /* green-600 */
+}
+
+/* ========== BOTONES DE ACCIÓN DE LAS TABLAS PRINCIPALMENTE ========== */
+.action-buttons {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+}
+
+.action-buttons .btn {
+    padding: var(--space-2);
+    min-width: 32px;
+    height: 32px;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+}
+
+
+/* No sé si sirve */
+/* Botón cancelar: rojo fuerte, moderno, sin transparencia */
+.btn-cancelar, button.btn-cancelar, input.btn-cancelar {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 160px !important;
+  flex: 0 0 160px !important;
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+  color: #fff !important;
+  border: 1.5px solid #23272f !important;
+  font-weight: 700;
+  font-family: var(--font-sans, 'Segoe UI', Arial, sans-serif);
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px 0 #b91c1c44 !important;
+  padding: 0.55em 1.5em !important;
+  border-radius: 0.8em !important;
+  filter: none !important;
+  letter-spacing: 0.025em;
+  opacity: 1 !important;
+  transition: background 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.btn-cancelar:hover, .btn-cancelar:focus, button.btn-cancelar:hover, button.btn-cancelar:focus {
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%) !important;
+  color: #fff !important;
+  border-color: #ef4444 !important;
+  box-shadow: 0 4px 16px 0 #b91c1c77 !important;
+  outline: none !important;
+}
+/* Botón guardar: verde fuerte, moderno */
+.btn-guardar {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  width: 160px !important;
+  flex: 0 0 160px !important;
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+  color: #fff !important;
+  border: 1.5px solid #23272f !important;
+  font-weight: 700;
+  font-family: var(--font-sans, 'Segoe UI', Arial, sans-serif);
+  font-size: 0.95rem !important;
+  box-shadow: 0 2px 8px 0 #b91c1c44 !important;
+  padding: 0.55em 1.5em !important;
+  border-radius: 0.8em !important;
+  letter-spacing: 0.025em;
+  transition: background 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.btn-guardar:hover, .btn-guardar:focus {
+  background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
+  color: #fff !important;
+  border-color: #22c55e;
+  box-shadow: 0 4px 16px 0 #15803d55;
+  outline: none;
+}
+
+/* ============================================= */
+/* ===========   BOTONES DE EVENTOS  =========== */
+/* ============================================= */
+.evento-card .evento-actions .btn {
+    min-width: 90px;
+    max-width: 140px;
+    flex: 1 1 0;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+.evento-card .evento-actions .btn-primary {
+    background: linear-gradient(135deg, #d946ef, #a21caf);
+    color: #fff;
+    border: none;
+}
+.evento-card .evento-actions .btn-primary:hover {
+    background: linear-gradient(135deg, #a21caf, #86198f);
+}
+.evento-card .evento-actions .btn-success {
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    color: #fff;
+    border: none;
+}
+.evento-card .evento-actions .btn-success:hover {
+    background: linear-gradient(135deg, #15803d, #166534);
+}
+
+
+
+/* ============================================ */
+/* ===========  BOTONES DE MODALES  =========== */
+/* ============================================ */
+#modal-producto .btn-primary,
+#modal-cliente .btn-primary,
+#modal-evento .btn-primary,
+#modal-historial-cliente .btn-primary,
+#modal-nuevo-pedido .btn-primary {
+  background: #7c3aed;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.1rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#modal-producto .btn-secondary,
+#modal-cliente .btn-secondary,
+#modal-evento .btn-secondary,
+#modal-historial-cliente .btn-secondary,
+#modal-nuevo-pedido .btn-secondary {
+  background: #64748b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.1rem;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+
+
+
+
+
+
+
+/* No sé si sirve */
+#modal-nuevo-pedido .btn-quitar-producto {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  line-height: 1;
+}
+
+#modal-nuevo-pedido .btn-quitar-producto:hover {
+  background: #c82333;
+}
+#modal-nuevo-pedido .btn-agregar-producto {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#modal-nuevo-pedido .btn-agregar-producto:hover {
+  background: #0056b3;
+}
+
+/* ============================================ */
+/* ===========   OTROS BOTONES   ============== */
+/* ============================================ */
+.search-btn {
+    position: absolute;
+    left: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: var(--gray-400);
+}
+
+.nav-action-btn {
+    position: relative;
+    background: none;
+    border: none;
+    padding: var(--space-2);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: var(--transition-all);
+    color: var(--gray-600);
+}
+
+.nav-action-btn:hover {
+    background: rgba(167, 85, 247, 0.1);
+    color: var(--primary-600);
+}
+
+.nav-action-btn .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--error-500);
+    color: white;
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-full);
+    min-width: 1rem;
+    text-align: center;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    padding: 0.875rem 1.75rem;
+    border-radius: var(--radius-xl);
+    font-weight: 500;
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    font-size: 0.875rem;
+    min-width: fit-content;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* INVENTARIO - Dashboard tab button styles */
+.tab-btn:hover {
+    background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+    color: var(--primary-700);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: white;
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid var(--primary-500);
 }

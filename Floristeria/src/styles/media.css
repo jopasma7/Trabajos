@@ -1,0 +1,256 @@
+/* Responsive */
+@media (max-width: 768px) {
+    .app-main {
+        flex-direction: column;
+    }
+    
+    /* .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    } */
+    
+    .nav-menu {
+        padding: 1rem;
+    }
+    
+    .nav-menu ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .nav-menu li {
+        margin-bottom: 0;
+    }
+    
+    /* .content {
+        padding: 1rem;
+    } */
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .inventory-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .app-header {
+        padding: 1rem;
+    }
+    
+    .app-header h1 {
+        font-size: 1.2rem;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* Mejoras responsive adicionales */
+@media (max-width: 768px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-section h2 {
+        font-size: 1.5rem;
+        margin-bottom: var(--space-6);
+    }
+    
+    .content-section h2::after {
+        display: none;
+    }
+}
+
+/* Ensure no flexbox is interfering */
+.content-section * {
+    position: relative !important;
+}
+
+/* Mobile responsive enhancements */
+@media (max-width: 768px) {
+    .table-header {
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: stretch;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .filters-row {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .search-input .form-input {
+        min-width: 100%;
+    }
+    
+    .table-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Responsive para modal vista producto */
+@media (max-width: 768px) {
+    .detalle-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.5rem !important;
+    }
+    
+    .producto-stats {
+        flex-direction: column !important;
+        gap: 0.3rem !important;
+    }
+    
+    .producto-info-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .producto-status-badge {
+        align-self: flex-start !important;
+    }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .inventory-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .prediction-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .providers-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .inventory-tabs {
+        overflow-x: scroll;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .inventory-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .alerts-header,
+    .prediction-header,
+    .orders-header,
+    .movements-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alert-filters,
+    .prediction-controls,
+    .orders-actions,
+    .movements-filters {
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .inventory-kpis {
+        grid-template-columns: 1fr;
+    }
+    
+    .alerts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .alert-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .provider-stats {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 1200px) {
+    .reports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-card.large {
+        grid-column: span 1;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .section-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .reports-kpis {
+        grid-template-columns: 1fr;
+    }
+    
+    .kpi-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .chart-controls {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .chart-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

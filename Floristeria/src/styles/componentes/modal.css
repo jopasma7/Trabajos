@@ -1,0 +1,9 @@
+/* --- MODAL DE EDICIÓN DE RESERVA: sin blur, sin escala, fondo sólido --- */
+#modal-editar-reserva .modal-content {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  transform: none !important;
+  opacity: 1 !important;
+}
