@@ -343,49 +343,26 @@
 
                 <!-- Pedidos Section -->
                 <section id="pedidos-section" class="content-section" style="display: none;">
-                    <h2>📋 Gestión de Pedidos</h2>
-                    <div class="card">
-                        <div class="table-header">
-                            <h3 class="table-title">Lista de Pedidos</h3>
-                            <div class="table-actions">
-                                <div class="filters-row">
-                                    <select id="filter-estado" class="form-select">
-                                        <option value="">Todos los estados</option>
-                                        <option value="pendiente">Pendiente</option>
-                                        <option value="confirmado">Confirmado</option>
-                                        <option value="preparando">Preparando</option>
-                                        <option value="listo">Listo</option>
-                                        <option value="entregado">Entregado</option>
-                                        <option value="cancelado">Cancelado</option>
-                                    </select>
-                                    <input type="date" id="filter-fecha" class="form-input">
-                                </div>
-                                <button id="btn-nuevo-pedido-section" class="btn btn-primary">
-                                    ➕ Nuevo Pedido
-                                </button>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table class="table" id="pedidos-table">
-                                <thead>
-                                    <tr>
-                                        <th>Número</th>
-                                        <th>Cliente</th>
-                                        <th>Fecha</th>
-                                        <th>Entrega</th>
-                                        <th>Estado</th>
-                                        <th>Total</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="7" class="text-center">Cargando pedidos...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <iframe src="./pedidos.html" title="Gestión de Pedidos" style="width:100%;min-height:900px;border:none;overflow:auto;background:transparent;"></iframe>
+                    <iframe id="pedidos-iframe" src="./pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
+                    <script>
+                    // Ajustar altura del iframe de pedidos automáticamente
+                    function resizePedidosIframe() {
+                        var iframe = document.getElementById('pedidos-iframe');
+                        if (!iframe) return;
+                        try {
+                            var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (innerDoc && innerDoc.body) {
+                                // Sumar un pequeño margen extra
+                                iframe.style.height = (innerDoc.body.scrollHeight + 20) + 'px';
+                            }
+                        } catch (e) {
+                            // Puede fallar por cross-origin, pero en local no debería
+                        }
+                    }
+                    document.getElementById('pedidos-iframe').addEventListener('load', resizePedidosIframe);
+                    window.addEventListener('resize', resizePedidosIframe);
+                    </script>
                 </section>
 
                 <!-- Inventario Avanzado Section -->

@@ -1,0 +1,105 @@
+/* ========== CONTENEDOR DE LA TABLA ========== */
+.table-container {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 1rem;
+    overflow-x: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+}
+
+/* ========== CABECERA ========== */
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.table-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #1f2937; /* gray-900 */
+}
+
+/* ========== BARRA DE BÚSQUEDA Y BOTÓN ========== */
+.table-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.table-actions input, .table-actions select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db; /* gray-300 */
+    border-radius: 9999px;
+    outline: none;
+    width: 250px;
+}
+
+.table-actions input::placeholder, .table-actions select::placeholder {
+    color: #6b7280; /* gray-500 */
+}
+
+/* ========== TABLA ========== */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.table thead {
+    background: #f9fafb; /* gray-50 */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table thead th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #6b7280; /* gray-600 */
+    border-bottom: 1px solid #e5e7eb; /* gray-200 */
+    font-size: 0.75rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6; /* gray-100 */
+    color: #111827; /* gray-900 */
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb; /* light hover */
+    transform: translateY(-1px);
+    transition: 0.2s;
+}
+
+
+/* Mobile responsive enhancements */
+@media (max-width: 768px) {
+    .table-header {
+        flex-direction: column;
+        gap: var(--space-4);
+        align-items: stretch;
+    }
+    
+    .table-actions {
+        flex-direction: column;
+        gap: var(--space-3);
+    }
+    
+    .table-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+
+
