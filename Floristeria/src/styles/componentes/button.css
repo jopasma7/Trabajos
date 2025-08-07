@@ -53,6 +53,38 @@
 }
 
 /* ============================================ */
+/* ========== BOTÓN SECUNDARIO MORADO ========== */
+/* ============================================ */
+
+.btn-secondary {
+  background: #646169;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.1rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* ============================================ */
+/* ========== BOTÓN TERCIOARIO MORADO ========== */
+/* ============================================ */
+
+.btn-tertiary {
+  background: #a82698;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.1rem;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+/* ============================================ */
 /* =========== BOTONES DE LA TABLA =========== */
 /* ============================================ */
 .table td .btn-group {
@@ -203,23 +235,6 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-
-#modal-producto .btn-secondary,
-#modal-cliente .btn-secondary,
-#modal-evento .btn-secondary,
-#modal-historial-cliente .btn-secondary,
-#modal-nuevo-pedido .btn-secondary {
-  background: #64748b;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.4rem 1.1rem;
-  font-size: 1rem;
-  margin-right: 0.5rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
 
 
 

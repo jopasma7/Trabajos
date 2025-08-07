@@ -1,9 +1,130 @@
-/* --- MODAL DE EDICIÓN DE RESERVA: sin blur, sin escala, fondo sólido --- */
-#modal-editar-reserva .modal-content {
-  background: #fff !important;
-  backdrop-filter: none !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-  transform: none !important;
-  opacity: 1 !important;
+
+
+/* ====== MODALES UNIFICADOS (producto, cliente, evento, historial, nuevo-pedido, confirmacion) ====== */
+.modal-content {
+  background: rgba(255,255,255,0.97);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 0;
+  position: relative;
+  width: 90%;
+  max-width: 850px;
+  margin: 40px auto;
+  font-family: inherit;
+}
+
+/* Encabezados profesionales */
+.modal-header {
+  padding: 2rem 2.5rem 0.5rem 2.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* Cuerpos de modales */
+.modal-body {
+  padding: 1.5rem 2.5rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  font-weight: 600;
+  color: #3a3a3a;
+  margin-bottom: 0.3rem;
+  display: block;
+}
+
+/* Pies de modales */
+.modal-footer {
+  padding: 1.5rem 2.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.7rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 120px;
+}
+.form-group input,
+.form-group select {
+  margin-top: 0.2rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+}
+.form-group label {
+  font-size: 0.97rem;
+  font-weight: 500;
+  color: #333;
+}
+textarea {
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  resize: vertical;
+}
+.modal-footer {
+  padding: 0.8rem 2rem 1.2rem 0;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #e5e7eb;
+}
+
+#modal-producto .modal-content,
+#modal-cliente .modal-content {
+  max-width: 1200px;
+}
+
+
+/* ========================================
+   ESTILOS AUXILIARES PARA MODAL VISTA PRODUCTO
+======================================== */
+
+.detalle-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+}
+
+.detalle-item.destacado {
+    border-radius: 4px;
+}
+
+/* Clases de estado para productos */
+.sin-stock {
+    color: #dc2626 !important;
+}
+
+.stock-bajo {
+    color: #d97706 !important;
+}
+
+.stock-medio {
+    color: #ea580c !important;
+}
+
+.stock-alto {
+    color: #16a34a !important;
 }

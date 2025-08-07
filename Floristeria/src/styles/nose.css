@@ -624,3 +624,868 @@
     color: white;
     border-color: var(--primary-color);
 }
+
+
+
+
+
+
+
+
+
+
+/* Modal styles */
+#modal-proveedor .modal-header {
+  padding: 2rem 2.5rem 0.2rem 2.5rem;
+}
+
+#modal-proveedor .modal-body {
+  padding: 1rem 2.5rem 1rem 2.5rem;
+}
+
+#modal-proveedor .modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  background: transparent;
+  border-radius: 0 0 16px 16px;
+  margin: 0;
+}
+
+/* --- MODAL DE EDICIÓN DE RESERVA: sin blur, sin escala, fondo sólido --- */
+#modal-editar-reserva .modal-content {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ====== BOTONES DE CERRAR UNIFICADOS ====== */
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  line-height: 1;
+  padding: 0.2rem;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  color: #374151;
+}
+
+.modal-close:active {
+  color: #1f2937;
+}
+
+
+
+
+
+
+
+/* ========== MODAL DE ÓRDENES DE PROVEEDOR - ESTILO PROFESIONAL ========== */
+
+/* Content específico para modal de órdenes - tamaño reducido */
+#modal-provider-orders .modal-content {
+    max-width: 800px !important;
+    width: 85% !important;
+    max-height: 80vh !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Header profesional */
+#modal-provider-orders .modal-header {
+    padding: 2rem 2.5rem 0.2rem 2.5rem !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: white !important;
+    border-radius: 16px 16px 0 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+}
+
+#modal-provider-orders .header-content {
+    flex: 1 !important;
+}
+
+#modal-provider-orders .modal-close {
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    font-size: 1.5rem !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
+    padding: 0.5rem !important;
+    width: 36px !important;
+    height: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    align-self: flex-start !important;
+    font-weight: normal !important;
+}
+
+#modal-provider-orders .modal-close:hover {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    border-color: #9ca3af !important;
+}
+
+/* Body profesional - más compacto */
+#modal-provider-orders .modal-body {
+    padding: 0.75rem 1.5rem !important;
+    max-height: calc(80vh - 140px) !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+    flex: 1 !important;
+}
+
+/* Footer profesional - más compacto y siempre visible */
+#modal-provider-orders .modal-footer {
+    padding: 1rem 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    display: flex !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+    background: #f9fafb !important;
+    border-radius: 0 0 16px 16px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    min-height: 70px !important;
+}
+
+
+/* Secciones profesionales - más compactas */
+#modal-provider-orders .section-pro {
+    margin-bottom: 1.25rem !important;
+}
+
+#modal-provider-orders .section-title-pro {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+    margin: 0 0 0.75rem 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+}
+
+/* Grid de información del proveedor */
+#modal-provider-orders .info-grid-pro {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+}
+
+/* Nueva tarjeta profesional de información del proveedor */
+#modal-provider-orders .provider-info-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 1.25rem !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+#modal-provider-orders .provider-name {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 1rem !important;
+    text-align: center !important;
+    padding-bottom: 0.75rem !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
+
+#modal-provider-orders .provider-details {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+}
+
+#modal-provider-orders .provider-detail-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 0.5rem !important;
+    background: white !important;
+    border-radius: 8px !important;
+    border: 1px solid #f1f5f9 !important;
+}
+
+#modal-provider-orders .detail-icon {
+    font-size: 1.1rem !important;
+    width: 24px !important;
+    text-align: center !important;
+}
+
+#modal-provider-orders .detail-text {
+    font-size: 0.9rem !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    flex: 1 !important;
+}
+
+#modal-provider-orders .detail-text.status-active {
+    color: #059669 !important;
+    font-weight: 600 !important;
+}
+
+#modal-provider-orders .detail-text.status-inactive {
+    color: #dc2626 !important;
+    font-weight: 600 !important;
+}
+
+#modal-provider-orders .info-item-pro {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+#modal-provider-orders .info-label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+#modal-provider-orders .info-value {
+    font-size: 0.95rem !important;
+    color: #1f2937 !important;
+    font-weight: 500 !important;
+}
+
+/* Grid de estadísticas profesional */
+#modal-provider-orders .stats-grid-pro {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+}
+
+#modal-provider-orders .stat-card-pro {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    padding: 1.25rem !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+}
+
+#modal-provider-orders .stat-card-pro:hover {
+    border-color: #d1d5db !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+#modal-provider-orders .stat-number-pro {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #15803d !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1 !important;
+}
+
+#modal-provider-orders .stat-label-pro {
+    font-size: 0.8rem !important;
+    color: #6b7280 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+/* Container de órdenes profesional */
+#modal-provider-orders .orders-container-pro {
+    max-height: 350px !important;
+    overflow-y: auto !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    background: white !important;
+}
+
+/* Items de órdenes profesionales - más compacto */
+#modal-provider-orders .order-item-pro {
+    border-bottom: 1px solid #f3f4f6 !important;
+    padding: 0.75rem 1rem !important;
+    transition: background-color 0.2s ease !important;
+}
+
+#modal-provider-orders .order-item-pro:last-child {
+    border-bottom: none !important;
+}
+
+#modal-provider-orders .order-item-pro:hover {
+    background: #f9fafb !important;
+}
+
+#modal-provider-orders .order-header-pro {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 0.5rem !important;
+}
+
+#modal-provider-orders .order-main-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.25rem !important;
+}
+
+#modal-provider-orders .order-number {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: #1f2937 !important;
+}
+
+#modal-provider-orders .order-date {
+    font-size: 0.75rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+    #modal-provider-orders .order-details-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+}
+
+#modal-provider-orders .order-detail-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1rem !important;
+}
+
+#modal-provider-orders .order-detail {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    font-size: 0.8rem !important;
+}
+
+#modal-provider-orders .order-detail .label {
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+#modal-provider-orders .order-detail .value {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+}
+
+#modal-provider-orders .order-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0.35rem 0.75rem !important;
+    border-radius: 12px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.025em !important;
+}
+
+#modal-provider-orders .order-status.pending {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+}
+
+#modal-provider-orders .order-status.completed {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+#modal-provider-orders .order-status.cancelled {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    margin-bottom: 1rem !important;
+}
+
+#modal-provider-orders .order-main-info {
+    flex: 1 !important;
+}
+
+#modal-provider-orders .order-number {
+    font-weight: 700 !important;
+    color: #1f2937 !important;
+    font-size: 1rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+#modal-provider-orders .order-date {
+    font-size: 0.85rem !important;
+    color: #6b7280 !important;
+    font-weight: 500 !important;
+}
+
+/* Status badges profesionales */
+#modal-provider-orders .status-badge-pro {
+    padding: 0.35rem 0.9rem !important;
+    border-radius: 9999px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+
+#modal-provider-orders .status-badge-pro.pendiente {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border: 1px solid #f59e0b !important;
+}
+
+#modal-provider-orders .status-badge-pro.enviada {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    border: 1px solid #3b82f6 !important;
+}
+
+#modal-provider-orders .status-badge-pro.recibida {
+    background: #d1fae5 !important;
+    color: #065f46 !important;
+    border: 1px solid #10b981 !important;
+}
+
+#modal-provider-orders .status-badge-pro.cancelada {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #ef4444 !important;
+}
+
+/* Detalles de órdenes profesionales */
+#modal-provider-orders .order-details-pro {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+}
+
+#modal-provider-orders .detail-row {
+    display: flex !important;
+    gap: 1.5rem !important;
+    flex-wrap: wrap !important;
+}
+
+#modal-provider-orders .detail-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    flex: 1 !important;
+    min-width: 120px !important;
+}
+
+#modal-provider-orders .detail-item.full-width {
+    flex: 1 1 100% !important;
+}
+
+#modal-provider-orders .detail-label {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    white-space: nowrap !important;
+}
+
+#modal-provider-orders .detail-value {
+    font-size: 0.9rem !important;
+    color: #1f2937 !important;
+    font-weight: 500 !important;
+}
+
+#modal-provider-orders .detail-amount {
+    font-weight: 700 !important;
+    color: #059669 !important;
+}
+
+#modal-provider-orders .detail-notes {
+    font-style: italic !important;
+    color: #6b7280 !important;
+    font-size: 0.85rem !important;
+}
+
+/* Estado sin datos profesional */
+#modal-provider-orders .no-data-message {
+    text-align: center !important;
+    padding: 3rem 2rem !important;
+    color: #6b7280 !important;
+}
+
+#modal-provider-orders .no-data-icon {
+    font-size: 3rem !important;
+    margin-bottom: 1rem !important;
+    opacity: 0.5 !important;
+}
+
+#modal-provider-orders .no-data-message p {
+    margin: 0 !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+}
+
+/* Responsive profesional */
+@media (max-width: 768px) {
+    #modal-provider-orders .modal-header,
+    #modal-provider-orders .modal-body {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+    
+    #modal-provider-orders .info-grid-pro {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #modal-provider-orders .stats-grid-pro {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #modal-provider-orders .order-header-pro {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+    
+    #modal-provider-orders .detail-row {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+    
+    #modal-provider-orders .detail-item {
+        min-width: auto !important;
+    }
+}
+
+/* ========== DISEÑO DE DOS COLUMNAS PARA MODAL DE ÓRDENES DE PROVEEDOR ========== */
+
+/* Layout de dos columnas */
+#modal-provider-orders .two-column-layout {
+    display: grid !important;
+    grid-template-columns: 35% 1fr !important;
+    gap: 2rem !important;
+    align-items: start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#modal-provider-orders .left-column {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    min-width: 0 !important;
+}
+
+#modal-provider-orders .right-column {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+}
+
+/* Ajustes para estadísticas compactas en columna izquierda */
+#modal-provider-orders .stats-grid-pro.compact {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+}
+
+#modal-provider-orders .stats-grid-pro.horizontal {
+    display: flex !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+}
+
+#modal-provider-orders .stats-grid-pro.compact .stat-card-pro.full-width {
+    grid-column: auto !important;
+}
+
+#modal-provider-orders .stats-grid-pro .stat-card-pro.compact {
+    padding: 0.75rem !important;
+    flex: 1 !important;
+    min-width: 80px !important;
+    text-align: center !important;
+}
+
+#modal-provider-orders .stats-grid-pro.compact .stat-card-pro {
+    padding: 1rem !important;
+}
+
+#modal-provider-orders .stats-grid-pro .stat-card-pro.compact .stat-number-pro {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.2rem !important;
+}
+
+#modal-provider-orders .stats-grid-pro .stat-card-pro.compact .stat-label-pro {
+    font-size: 0.7rem !important;
+}
+
+#modal-provider-orders .stats-grid-pro.compact .stat-number-pro {
+    font-size: 1.4rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+#modal-provider-orders .stats-grid-pro.compact .stat-label-pro {
+    font-size: 0.75rem !important;
+}
+
+/* Ajustes para columna derecha con órdenes */
+#modal-provider-orders .right-column .orders-container-pro {
+    max-height: 400px !important;
+}
+
+#modal-provider-orders .right-column .section-pro {
+    margin-bottom: 0 !important;
+}
+
+/* Sección que ocupa toda la anchura debajo de las dos columnas */
+#modal-provider-orders .full-width-section {
+    margin-top: 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    padding-top: 1.5rem !important;
+}
+
+#modal-provider-orders .full-width-section .orders-container-pro {
+    max-height: 300px !important;
+}
+
+/* Responsive para dos columnas */
+@media (max-width: 1024px) {
+    #modal-provider-orders .two-column-layout {
+        grid-template-columns: 40% 1fr !important;
+        gap: 1.5rem !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #modal-provider-orders .two-column-layout {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+    
+    #modal-provider-orders .stats-grid-pro.horizontal {
+        flex-direction: column !important;
+    }
+    
+    #modal-provider-orders .stats-grid-pro .stat-card-pro.compact {
+        min-width: auto !important;
+    }
+    
+    #modal-provider-orders .stats-grid-pro.compact {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    #modal-provider-orders .stats-grid-pro.compact .stat-card-pro.full-width {
+        grid-column: auto !important;
+    }
+    
+    #modal-provider-orders .right-column .orders-container-pro {
+        max-height: 300px !important;
+    }
+}
+
+
+/* Estilos para el modal de nuevo pedido */
+.cliente-selected {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.cliente-info-display {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.cliente-nombre {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.cliente-email {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+#modal-nuevo-pedido .modal-content {
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .cliente-info-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .cliente-stats {
+        justify-content: center;
+    }
+    
+    .historial-filtros {
+        flex-direction: column;
+    }
+    
+    .pedido-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .pedido-detalles {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+
+
+
+
+
+.form-control {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+}
+
+/* ========== FORMULARIOS MODERNOS ========== */
+.form-group {
+    margin-bottom: var(--space-5);
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    margin-bottom: var(--space-2);
+    text-transform: capitalize;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.875rem;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    transition: var(--transition-all);
+    color: var(--gray-900);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
+    background: white;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+/* Mejoras para accesibilidad */
+.form-input:focus-visible,
+.form-select:focus-visible,
+.nav-link:focus-visible {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+}
+.form-control-pro {
+    flex: 1;
+    min-width: 250px;
+    padding: 0.6rem 0.8rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+
+.form-control-pro:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.form-control-small {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.form-section {
+    margin-bottom: 1.2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.8rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    padding-top: 0.8rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 1.2rem;
+}
