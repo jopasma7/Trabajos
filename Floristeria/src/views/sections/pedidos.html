@@ -4,23 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Pedidos</title>
-  <link rel="stylesheet" href="../styles/pedidos.css">
-  <link rel="stylesheet" href="../styles/componentes/tables.css">
-  <link rel="stylesheet" href="../styles/componentes/button.css">
-  <link rel="stylesheet" href="../styles/global.css">
+  <link rel="stylesheet" href="../../styles/pedidos.css">
+  <link rel="stylesheet" href="../../styles/componentes/tables.css">
+  <link rel="stylesheet" href="../../styles/componentes/button.css">
+  <link rel="stylesheet" href="../../styles/global.css">
 </head>
 <body>
-  <h1>📦 Gestión de Pedidos</h1>
   <main class="pedidos-main">
     <div class="pedidos-tabs">
       <button class="tab-btn active" data-tab="entrantes">Entrantes</button>
       <button class="tab-btn" data-tab="resumen">Resumen</button>
     </div>
-    <section id="pedidos-entrantes" class="pedidos-section active">
-      <h2>Pedidos Entrantes</h2>
+    <section id="pedidos-entrantes" class="pedidos-section active"> 
       <div class="card">
         <div class="table-header">
-          <h3 class="table-title">Lista de Pedidos</h3>
+          <h3 class="table-title">Lista de Pedidos Entrantes</h3>
           <div class="table-actions">
             <div class="filters-row">
               <select id="filter-estado" class="form-select">
@@ -40,24 +38,26 @@
           </div>
         </div>
         <div class="table-container">
-          <table class="table" id="pedidos-table">
-            <thead>
-              <tr>
-                <th>Número</th>
-                <th>Cliente</th>
-                <th>Fecha</th>
-                <th>Entrega</th>
-                <th>Estado</th>
-                <th>Total</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="7" class="text-center">Cargando pedidos...</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="tabla-scrollable" style="max-height: 450px; overflow-y: auto;">
+            <table class="table" id="pedidos-table" style="margin-bottom:0;">
+              <thead>
+                <tr>
+                  <th>Número</th>
+                  <th>Cliente</th>
+                  <th>Fecha</th>
+                  <th>Entrega</th>
+                  <th>Estado</th>
+                  <th>Total</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" class="text-center">Cargando pedidos...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -83,6 +83,6 @@
       </div>
     </section>
   </main>
-  <script src="../js/pedidos.js"></script>
+  <script src="../../js/pedidos.js"></script>
 </body>
 </html>

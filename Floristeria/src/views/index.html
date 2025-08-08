@@ -347,26 +347,41 @@
 
                 <!-- Pedidos Section -->
                 <section id="pedidos-section" class="content-section" style="display: none;">
-                    <iframe src="./pedidos.html" title="Gestión de Pedidos" style="width:100%;min-height:900px;border:none;overflow:auto;background:transparent;"></iframe>
-                    <iframe id="pedidos-iframe" src="./pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
-                    <script>
-                    // Ajustar altura del iframe de pedidos automáticamente
-                    function resizePedidosIframe() {
-                        var iframe = document.getElementById('pedidos-iframe');
-                        if (!iframe) return;
-                        try {
-                            var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            if (innerDoc && innerDoc.body) {
-                                // Sumar un pequeño margen extra
-                                iframe.style.height = (innerDoc.body.scrollHeight + 20) + 'px';
-                            }
-                        } catch (e) {
-                            // Puede fallar por cross-origin, pero en local no debería
-                        }
-                    }
-                    document.getElementById('pedidos-iframe').addEventListener('load', resizePedidosIframe);
-                    window.addEventListener('resize', resizePedidosIframe);
-                    </script>
+                    <div class="card">
+                        <iframe id="pedidos-iframe" src="./sections/pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
+                                                <script>
+                                                // Ajustar altura del iframe de pedidos automáticamente
+                                                function resizePedidosIframe() {
+                                                        var iframe = document.getElementById('pedidos-iframe');
+                                                        if (!iframe) return;
+                                                        try {
+                                                                var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+                                                                if (innerDoc && innerDoc.body) {
+                                                                        // Sumar un pequeño margen extra
+                                                                        iframe.style.height = (innerDoc.body.scrollHeight + 20) + 'px';
+                                                                }
+                                                        } catch (e) {
+                                                                // Puede fallar por cross-origin, pero en local no debería
+                                                        }
+                                                }
+                                                document.getElementById('pedidos-iframe').addEventListener('load', resizePedidosIframe);
+                                                window.addEventListener('resize', resizePedidosIframe);
+                                                // También ajustar al mostrar la sección de pedidos
+                                                document.addEventListener('DOMContentLoaded', function() {
+                                                    var observer = new MutationObserver(function(mutations) {
+                                                        var pedidosSection = document.getElementById('pedidos-section');
+                                                        if (pedidosSection && pedidosSection.style.display !== 'none') {
+                                                            resizePedidosIframe();
+                                                        }
+                                                    });
+                                                    var pedidosSection = document.getElementById('pedidos-section');
+                                                    if (pedidosSection) {
+                                                        observer.observe(pedidosSection, { attributes: true, attributeFilter: ['style'] });
+                                                    }
+                                                });
+                                                </script>
+                    </div>
+                    
                 </section>
 
                 <!-- Inventario Avanzado Section -->
@@ -1115,7 +1130,6 @@
         });
         </script>
         </div>
-    </div>
     </div>
 
     <!-- Modal Cliente -->

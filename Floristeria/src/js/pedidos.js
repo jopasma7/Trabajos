@@ -17,34 +17,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Datos de ejemplo para pedidos
   const pedidos = [
-    {
-      id: 1,
-      cliente: 'Ana Torres',
-      fecha: '2024-06-10',
-      productos: 'Ramo de rosas',
-      estado: 'pendiente',
-    },
-    {
-      id: 2,
-      cliente: 'Carlos Ruiz',
-      fecha: '2024-06-09',
-      productos: 'Orquídea blanca',
-      estado: 'realizado',
-    },
-    {
-      id: 3,
-      cliente: 'Lucía Gómez',
-      fecha: '2024-06-08',
-      productos: 'Centro de mesa',
-      estado: 'entregado',
-    },
-    {
-      id: 4,
-      cliente: 'Pedro Díaz',
-      fecha: '2024-06-07',
-      productos: 'Ramo variado',
-      estado: 'cancelado',
-    },
+    { id: 1, cliente: 'Ana Torres', fecha: '2024-06-10', productos: 'Ramo de rosas', estado: 'pendiente' },
+    { id: 2, cliente: 'Carlos Ruiz', fecha: '2024-06-09', productos: 'Orquídea blanca', estado: 'realizado' },
+    { id: 3, cliente: 'Lucía Gómez', fecha: '2024-06-08', productos: 'Centro de mesa', estado: 'entregado' },
+    { id: 4, cliente: 'Pedro Díaz', fecha: '2024-06-07', productos: 'Ramo variado', estado: 'cancelado' },
+    { id: 5, cliente: 'María López', fecha: '2024-06-06', productos: 'Bouquet primaveral', estado: 'pendiente' },
+    { id: 6, cliente: 'Javier Martín', fecha: '2024-06-05', productos: 'Caja de tulipanes', estado: 'pendiente' },
+    { id: 7, cliente: 'Sofía Pérez', fecha: '2024-06-04', productos: 'Ramo de girasoles', estado: 'entregado' },
+    { id: 8, cliente: 'Miguel Ángel', fecha: '2024-06-03', productos: 'Centro de orquídeas', estado: 'realizado' },
+    { id: 9, cliente: 'Laura Sánchez', fecha: '2024-06-02', productos: 'Ramo de margaritas', estado: 'pendiente' },
+    { id: 10, cliente: 'Raúl Fernández', fecha: '2024-06-01', productos: 'Bouquet elegante', estado: 'entregado' },
+    { id: 11, cliente: 'Elena Romero', fecha: '2024-05-31', productos: 'Ramo de lirios', estado: 'pendiente' },
+    { id: 12, cliente: 'Pablo García', fecha: '2024-05-30', productos: 'Ramo de rosas rojas', estado: 'realizado' },
+    { id: 13, cliente: 'Carmen Ruiz', fecha: '2024-05-29', productos: 'Centro de flores silvestres', estado: 'pendiente' },
+    { id: 14, cliente: 'Alberto Torres', fecha: '2024-05-28', productos: 'Ramo de peonías', estado: 'entregado' },
+    { id: 15, cliente: 'Isabel Díaz', fecha: '2024-05-27', productos: 'Bouquet romántico', estado: 'pendiente' },
+    { id: 16, cliente: 'Manuel López', fecha: '2024-05-26', productos: 'Ramo de flores mixtas', estado: 'cancelado' },
+    { id: 17, cliente: 'Patricia Gómez', fecha: '2024-05-25', productos: 'Caja de rosas', estado: 'pendiente' },
+    { id: 18, cliente: 'Francisco Pérez', fecha: '2024-05-24', productos: 'Ramo de tulipanes', estado: 'realizado' },
+    { id: 19, cliente: 'Lucía Martín', fecha: '2024-05-23', productos: 'Centro de mesa elegante', estado: 'pendiente' },
+    { id: 20, cliente: 'David Sánchez', fecha: '2024-05-22', productos: 'Bouquet de temporada', estado: 'entregado' }
   ];
 
   // Renderizar pedidos en la tabla de pedidos entrantes
