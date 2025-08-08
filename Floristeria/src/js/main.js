@@ -2181,6 +2181,7 @@ class FlowerShopApp {
 
     async editarEvento(id) {
         console.log('✏️ Editar evento:', id);
+    //
         try {
             // Obtener todos los eventos y buscar el que corresponde
             const eventos = await window.flowerShopAPI.getEventos();
@@ -2189,12 +2190,17 @@ class FlowerShopApp {
                 this.showNotification('No se encontró el evento', 'error');
                 return;
             }
+            //
             // Rellenar el formulario
             const form = document.getElementById('form-evento');
+            //
             if (!form) return;
             form.reset();
             form.setAttribute('data-edit-id', id);
-            document.getElementById('evento-nombre').value = evento.nombre || '';
+            const inputNombre = document.getElementById('evento-nombre');
+            if (inputNombre) {
+                inputNombre.value = evento.nombre || evento.evento_nombre || '';
+            }
             document.getElementById('evento-fecha-inicio').value = evento.fecha_inicio || '';
             document.getElementById('evento-fecha-fin').value = evento.fecha_fin || '';
             document.getElementById('evento-tipo').value = evento.tipo_evento || '';
@@ -2202,7 +2208,9 @@ class FlowerShopApp {
             document.getElementById('evento-descuento').value = evento.descuento_especial || '';
             document.getElementById('evento-preparacion').value = evento.preparacion_dias || 7;
             document.getElementById('evento-descripcion').value = evento.descripcion || '';
-            document.getElementById('evento-notas').value = evento.notas || '';
+            // Solo asignar notas si el campo existe
+            const notasField = document.getElementById('evento-notas');
+            if (notasField) notasField.value = evento.notas || '';
             this.showModal('modal-evento');
         } catch (error) {
             console.error('❌ Error editando evento:', error);
@@ -2224,8 +2232,15 @@ class FlowerShopApp {
     }
 
     async gestionarEventoStock(id) {
-        console.log('📦 Gestionar stock del evento:', id);
-        this.showNotification('Gestión de stock en desarrollo', 'info');
+        // Redirigir a la sección de Stock en Inventario
+        this.showSection('inventario');
+        this.switchInventoryTab && this.switchInventoryTab('stock');
+        // Cargar y seleccionar el evento específico
+        setTimeout(() => {
+            if (typeof this.seleccionarEventoStock === 'function') {
+                this.seleccionarEventoStock(id);
+            }
+        }, 100);
     }
 
     async nuevoPedido(desdeCliente = false) {
@@ -4817,12 +4832,15 @@ class FlowerShopApp {
 
     async gestionarEventoStock(id) {
         // Redirigir a la sección de Stock en Inventario
-        this.showContent('inventario');
-        this.switchInventoryTab('stock');
-        
+        this.showSection('inventario');
+        if (typeof this.switchInventoryTab === 'function') {
+            this.switchInventoryTab('stock');
+        }
         // Cargar y seleccionar el evento específico
         setTimeout(() => {
-            this.seleccionarEventoStock(id);
+            if (typeof this.seleccionarEventoStock === 'function') {
+                this.seleccionarEventoStock(id);
+            }
         }, 100);
     }
 
@@ -4991,7 +5009,7 @@ class FlowerShopApp {
 
     mostrarInfoEvento(evento) {
         // Actualizar información básica
-        document.getElementById('evento-nombre').textContent = evento.nombre;
+    document.getElementById('evento-nombre-header').textContent = evento.nombre;
         document.getElementById('evento-fecha').textContent = this.formatDate(evento.fecha_inicio);
         document.getElementById('evento-tipo').textContent = this.getEventTypeText(evento.tipo_evento);
         document.getElementById('evento-demanda').textContent = this.getDemandaText(evento.demanda_esperada);
