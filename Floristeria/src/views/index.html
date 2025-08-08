@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌸 Gestión de Floristería</title>
     <link rel="stylesheet" href="../styles/main.css">
+    <link rel="stylesheet" href="../styles/global.css">
+    <link rel="stylesheet" href="../styles/componentes/modal.css">
     <link rel="stylesheet" href="../styles/componentes/tables.css">
     <link rel="stylesheet" href="../styles/componentes/button.css">
-    <link rel="stylesheet" href="../styles/componentes/modal.css">
-    <link rel="stylesheet" href="../styles/global.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -249,10 +249,14 @@
 
                 <!-- Productos Section -->
                 <section id="productos-section" class="content-section" style="display: none;">
-                    <h2>🌺 Gestión de Productos</h2>
+                                                                                                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                                                                                                            <span style="font-size:1.3em; margin-right:0.2em;">🌺</span>
+                                                                                                                            <span style="color:#1f2937;">Gestión de Productos</span>
+                                                                                                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Inventario y catálogo</span>
+                                                                                                                        </h2>
                     <div class="card">
                         <div class="table-header">
-                            <h3 class="table-title">Lista de Productos</h3>
+                            <h3 class="table-title">🌺 <span style="color:#2563eb;font-weight:700;">Productos</span> <span style="font-size:0.95em;font-weight:400;color:#64748b;">| Lista general</span></h3>
                             <div class="table-actions">
                                 <div class="search-input">
                                     <input type="text" id="search-productos" placeholder="Buscar productos..." class="form-input">
@@ -292,10 +296,14 @@
 
                 <!-- Clientes Section -->
                 <section id="clientes-section" class="content-section" style="display: none;">
-                    <h2>👥 Gestión de Clientes</h2>
+                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                            <span style="font-size:1.3em; margin-right:0.2em;">👥</span>
+                                            <span style="color:#1f2937;">Gestión de Clientes</span>
+                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Base de datos y contactos</span>
+                                        </h2>
                     <div class="card">
                         <div class="table-header">
-                            <h3 class="table-title">Lista de Clientes</h3>
+                            <h3 class="table-title">👥 <span style="color:#2563eb;font-weight:700;">Clientes</span> <span style="font-size:0.95em;font-weight:400;color:#64748b;">| Lista general</span></h3>
                             <div class="table-actions">
                                 <div class="search-input">
                                     <input type="text" id="search-clientes" placeholder="Buscar clientes..." class="form-input">
@@ -330,10 +338,14 @@
 
                 <!-- Eventos Section -->
                 <section id="eventos-section" class="content-section" style="display: none;">
-                    <div class="card">
-                        <div class="table-header">
-                            <h3 class="table-title">🎉 Gestión de Eventos</h3>
-                            <div class="table-actions">
+                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                            <span style="font-size:1.3em; margin-right:0.2em;">🎉</span>
+                                            <span style="color:#1f2937;">Gestión de Eventos</span>
+                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Fechas y celebraciones</span>
+                                        </h2>
+                                        <div class="card">
+                                                <div class="table-header">
+                                                        <div class="table-actions">
                                 <button id="btn-nuevo-evento" class="btn btn-success">
                                     <span style="font-size:1.1em;vertical-align:middle;">➕</span> <span style="vertical-align:middle;">Nuevo Evento</span>
                                 </button>
@@ -347,8 +359,13 @@
 
                 <!-- Pedidos Section -->
                 <section id="pedidos-section" class="content-section" style="display: none;">
-                    <div class="card">
-                        <iframe id="pedidos-iframe" src="./sections/pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
+                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                            <span style="font-size:1.3em; margin-right:0.2em;">📋</span>
+                                            <span style="color:#1f2937;">Gestión de Pedidos</span>
+                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Registro y seguimiento</span>
+                                        </h2>
+                                        <div class="card">
+                                                <iframe id="pedidos-iframe" src="./sections/pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
                                                 <script>
                                                 // Ajustar altura del iframe de pedidos automáticamente
                                                 function resizePedidosIframe() {
@@ -940,7 +957,11 @@
 
                 <!-- Reportes Section -->
                 <section id="reportes-section" class="content-section" style="display: none;">
-                    <h2>� Reportes y Análisis</h2>
+                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                            <span style="font-size:1.3em; margin-right:0.2em;">📈</span>
+                                            <span style="color:#1f2937;">Reportes y Análisis</span>
+                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Estadísticas y resultados</span>
+                                        </h2>
                     <div class="reports-grid">
                         <div class="report-card">
                             <h3>💰 Ventas por Período</h3>

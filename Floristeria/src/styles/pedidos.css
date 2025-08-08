@@ -1,24 +1,4 @@
-/* Scroll solo en la tabla de pedidos */
-.tabla-scrollable {
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-}
 
-.tabla-scrollable table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.tabla-scrollable thead th {
-  position: sticky;
-  top: 0;
-  background: #f3f4f6;
-  z-index: 2;
-}
 body {
   font-family: 'Segoe UI', Arial, sans-serif;
   background: none;
@@ -134,3 +114,11 @@ body {
     gap: 0.7rem;
   }
 }
+
+/* Scroll solo en el tbody de la tabla de pedidos 
+.table-container tbody {
+  display: block;
+  max-height: 400px;
+  overflow-y: auto;
+  width: 100%;
+}*/

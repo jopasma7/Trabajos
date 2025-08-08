@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Pedidos</title>
   <link rel="stylesheet" href="../../styles/pedidos.css">
-  <link rel="stylesheet" href="../../styles/componentes/tables.css">
   <link rel="stylesheet" href="../../styles/componentes/button.css">
-  <link rel="stylesheet" href="../../styles/global.css">
+  <!--<link rel="stylesheet" href="../../styles/global.css">-->
+  <link rel="stylesheet" href="../../styles/componentes/tables.css">
 </head>
 <body>
   <main class="pedidos-main">
@@ -18,7 +18,7 @@
     <section id="pedidos-entrantes" class="pedidos-section active"> 
       <div class="card">
         <div class="table-header">
-          <h3 class="table-title">Lista de Pedidos Entrantes</h3>
+          <h3 class="table-title">📋 <span style="color:#2563eb;font-weight:700;">Pedidos Entrantes</span> <span style="font-size:0.95em;font-weight:400;color:#64748b;">| Lista general</span></h3>
           <div class="table-actions">
             <div class="filters-row">
               <select id="filter-estado" class="form-select">
@@ -38,26 +38,24 @@
           </div>
         </div>
         <div class="table-container">
-          <div class="tabla-scrollable" style="max-height: 450px; overflow-y: auto;">
-            <table class="table" id="pedidos-table" style="margin-bottom:0;">
-              <thead>
-                <tr>
-                  <th>Número</th>
-                  <th>Cliente</th>
-                  <th>Fecha</th>
-                  <th>Entrega</th>
-                  <th>Estado</th>
-                  <th>Total</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colspan="7" class="text-center">Cargando pedidos...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <table class="table" id="pedidos-table">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Entrega</th>
+                <th>Estado</th>
+                <th>Total</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="text-center">Cargando pedidos...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
