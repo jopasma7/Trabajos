@@ -1,3 +1,12 @@
+<script>
+// Listeners para filtros de pedidos
+document.addEventListener('DOMContentLoaded', function() {
+    const estado = document.getElementById('filter-estado-pedidos');
+    const fecha = document.getElementById('filter-fecha-pedidos');
+    if (estado) estado.addEventListener('change', () => app.loadPedidosData());
+    if (fecha) fecha.addEventListener('change', () => app.loadPedidosData());
+});
+</script>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -359,45 +368,82 @@
 
                 <!-- Pedidos Section -->
                 <section id="pedidos-section" class="content-section" style="display: none;">
-                                        <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
-                                            <span style="font-size:1.3em; margin-right:0.2em;">📋</span>
-                                            <span style="color:#1f2937;">Gestión de Pedidos</span>
-                                            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Registro y seguimiento</span>
-                                        </h2>
-                                        <div class="card">
-                                                <iframe id="pedidos-iframe" src="./sections/pedidos.html" title="Gestión de Pedidos" style="width:100%;border:none;overflow:auto;background:transparent;"></iframe>
-                                                <script>
-                                                // Ajustar altura del iframe de pedidos automáticamente
-                                                function resizePedidosIframe() {
-                                                        var iframe = document.getElementById('pedidos-iframe');
-                                                        if (!iframe) return;
-                                                        try {
-                                                                var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-                                                                if (innerDoc && innerDoc.body) {
-                                                                        // Sumar un pequeño margen extra
-                                                                        iframe.style.height = (innerDoc.body.scrollHeight + 20) + 'px';
-                                                                }
-                                                        } catch (e) {
-                                                                // Puede fallar por cross-origin, pero en local no debería
-                                                        }
-                                                }
-                                                document.getElementById('pedidos-iframe').addEventListener('load', resizePedidosIframe);
-                                                window.addEventListener('resize', resizePedidosIframe);
-                                                // También ajustar al mostrar la sección de pedidos
-                                                document.addEventListener('DOMContentLoaded', function() {
-                                                    var observer = new MutationObserver(function(mutations) {
-                                                        var pedidosSection = document.getElementById('pedidos-section');
-                                                        if (pedidosSection && pedidosSection.style.display !== 'none') {
-                                                            resizePedidosIframe();
-                                                        }
-                                                    });
-                                                    var pedidosSection = document.getElementById('pedidos-section');
-                                                    if (pedidosSection) {
-                                                        observer.observe(pedidosSection, { attributes: true, attributeFilter: ['style'] });
-                                                    }
-                                                });
-                                                </script>
+                    <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                        <span style="font-size:1.3em; margin-right:0.2em;">📋</span>
+                        <span style="color:#1f2937;">Gestión de Pedidos</span>
+                        <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Registro y seguimiento</span>
+                    </h2>
+                    <div class="card">
+                        <div class="table-header">
+                            <h3 class="table-title">📋 <span style="color:#2563eb;font-weight:700;">Pedidos</span> <span style="font-size:0.95em;font-weight:400;color:#64748b;">| Gestión avanzada</span></h3>
+                            <div class="table-actions">
+                                <div class="filters-row">
+                                    <select id="filter-estado-pedidos" class="form-select">
+                                        <option value="">Todos los estados</option>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="confirmado">Confirmado</option>
+                                        <option value="preparando">Preparando</option>
+                                        <option value="listo">Listo</option>
+                                        <option value="entregado">Entregado</option>
+                                        <option value="cancelado">Cancelado</option>
+                                    </select>
+                                    <input type="date" id="filter-fecha-pedidos" class="form-input">
+                                </div>
+                                <button id="btn-nuevo-pedido" class="btn btn-primary">
+                                    ➕ Nuevo Pedido
+                                </button>
+                            </div>
+                        </div>
+                        <div class="pedidos-tabs" style="display: flex; flex-direction: row; padding-left: 25px; margin-bottom: 1rem;">
+                            <button class="tab-btn active" id="tab-pedidos-pendientes-btn" data-tab="pendientes">Pendientes de aprobar</button>
+                            <button class="tab-btn" id="tab-pedidos-todos-btn" data-tab="todos">Todos los pedidos</button>
+                        </div>
+                        <div id="tab-pedidos-pendientes" class="tab-content active">
+                            <div class="table-container">
+                                <table class="table" id="pedidos-pendientes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Número</th>
+                                            <th>Cliente</th>
+                                            <th>Fecha</th>
+                                            <th>Entrega</th>
+                                            <th>Estado</th>
+                                            <th>Total</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="7" class="text-center">Cargando pedidos pendientes...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="tab-pedidos-todos" class="tab-content" style="display:none;">
+                            <div class="table-container">
+                                <table class="table" id="pedidos-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Número</th>
+                                            <th>Cliente</th>
+                                            <th>Fecha</th>
+                                            <th>Entrega</th>
+                                            <th>Estado</th>
+                                            <th>Total</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="7" class="text-center">Cargando pedidos...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
+                </section>
                     
                 </section>
 
@@ -1503,6 +1549,83 @@
                     color: white;
                 ">
                     🗑️ Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Aprobación de Pedido -->
+    <div id="modal-confirmacion-aprobar" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header" style="padding: 1.2rem 1.8rem 0.8rem 1.8rem;">
+                <div>
+                    <h2 class="modal-title-pro" style="font-size: 1.4rem; margin-bottom: 0.2rem; color: #16a34a;">✅ Confirmar Aprobación</h2>
+                    <p class="modal-subtitle-pro" style="font-size: 0.85rem; color: #16a34a;">¿Deseas aprobar este pedido?</p>
+                </div>
+                <button type="button" class="modal-close" onclick="app.hideModal('modal-confirmacion-aprobar')" style="
+                    position: absolute;
+                    top: 1rem;
+                    right: 1.2rem;
+                    background: none;
+                    border: none;
+                    font-size: 1.8rem;
+                    cursor: pointer;
+                    color: #6b7280;
+                    transition: color 0.2s;
+                    line-height: 1;
+                    padding: 0.2rem;
+                ">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 1rem 1.8rem;">
+                <div class="confirmacion-content" style="
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 1rem;
+                    padding: 1rem;
+                    background: #f0fdf4;
+                    border-radius: 8px;
+                    border: 1px solid #bbf7d0;
+                ">
+                    <div class="confirmacion-icon" style="
+                        width: 48px;
+                        height: 48px;
+                        background: #16a34a;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.5rem;
+                        color: white;
+                        flex-shrink: 0;
+                    ">✅</div>
+                    <div class="confirmacion-text" style="flex: 1;">
+                        <h3 id="confirmacion-aprobar-titulo" style="
+                            font-size: 1rem;
+                            font-weight: 600;
+                            color: #16a34a;
+                            margin: 0 0 0.5rem 0;
+                        ">¿Aprobar pedido?</h3>
+                        <p id="confirmacion-aprobar-mensaje" style="
+                            font-size: 0.9rem;
+                            color: #6b7280;
+                            margin: 0;
+                            line-height: 1.4;
+                        ">Esta acción aprobará el pedido seleccionado y lo marcará como confirmado.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 0.8rem 1.8rem 1.2rem 1.8rem;">
+                <button type="button" class="btn btn-secondary" onclick="app.hideModal('modal-confirmacion-aprobar')" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirmar-aprobar" class="btn btn-success" style="
+                    padding: 0.5rem 1rem; 
+                    font-size: 0.9rem;
+                    background: #16a34a;
+                    border-color: #16a34a;
+                    color: white;
+                ">
+                    ✅ Aprobar
                 </button>
             </div>
         </div>

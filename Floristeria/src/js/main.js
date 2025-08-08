@@ -35,13 +35,14 @@ class FlowerShopApp {
     }
 
     async init() {
-        console.log('🌸 Iniciando aplicación de floristería...');
-        this.setupNavigation();
-        this.setupModals();
-        this.setupEventListeners();
-        await this.updateSidebarBadges();
-        await this.loadInitialData();
-        this.showSection('dashboard');
+    console.log('🌸 Iniciando aplicación de floristería...');
+    this.setupNavigation();
+    this.setupModals();
+    this.setupEventListeners();
+    this.setupPedidosTabs();
+    await this.updateSidebarBadges();
+    await this.loadInitialData();
+    this.showSection('dashboard');
     }
 
     // ========== NAVEGACIÓN ==========
@@ -114,6 +115,8 @@ class FlowerShopApp {
                     await this.loadEventosData();
                     break;
                 case 'pedidos':
+                    // Cargar ambas tablas al entrar en la sección
+                    await this.loadPedidosPendientes();
                     await this.loadPedidosData();
                     break;
                 case 'inventario':
@@ -377,30 +380,99 @@ class FlowerShopApp {
         }).join('');
     }
     // ========== PEDIDOS ==========
-    async loadPedidosData() {
-        try {
-            console.log('📋 Cargando pedidos...');
-            const pedidos = await window.flowerShopAPI.getPedidos();
-            this.displayPedidos(pedidos);
-            await this.updateSidebarBadges();
-        } catch (error) {
-            console.error('❌ Error cargando pedidos:', error);
-            this.showNotification('Error cargando pedidos', 'error');
+    setupPedidosTabs() {
+        // Solo agregar listeners una vez
+        if (this.pedidosTabsInitialized) return;
+        this.pedidosTabsInitialized = true;
+        const tabPendientesBtn = document.getElementById('tab-pedidos-pendientes-btn');
+        const tabTodosBtn = document.getElementById('tab-pedidos-todos-btn');
+        const tabPendientes = document.getElementById('tab-pedidos-pendientes');
+        const tabTodos = document.getElementById('tab-pedidos-todos');
+        if (tabPendientesBtn && tabTodosBtn && tabPendientes && tabTodos) {
+            tabPendientesBtn.addEventListener('click', () => {
+                tabPendientesBtn.classList.add('active');
+                tabTodosBtn.classList.remove('active');
+                tabPendientes.classList.add('active');
+                tabPendientes.style.display = '';
+                tabTodos.classList.remove('active');
+                tabTodos.style.display = 'none';
+                this.loadPedidosPendientes();
+            });
+            tabTodosBtn.addEventListener('click', () => {
+                tabTodosBtn.classList.add('active');
+                tabPendientesBtn.classList.remove('active');
+                tabTodos.classList.add('active');
+                tabTodos.style.display = '';
+                tabPendientes.classList.remove('active');
+                tabPendientes.style.display = 'none';
+                this.loadPedidosData();
+            });
         }
     }
 
-    displayPedidos(pedidos) {
-        const tbody = document.querySelector('#pedidos-table tbody');
-        if (!tbody) return;
-
-        if (!pedidos || pedidos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos registrados</td></tr>';
-            return;
+        // Cargar y mostrar todos los pedidos en la pestaña "Todos los pedidos"
+        async loadPedidosData() {
+            try {
+                const pedidos = await window.flowerShopAPI.getPedidos();
+                this.displayPedidosTodos(pedidos);
+            } catch (error) {
+                console.error('❌ Error cargando todos los pedidos:', error);
+                const tbody = document.querySelector('#pedidos-todos-table tbody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error cargando todos los pedidos</td></tr>';
+            }
         }
 
+        // Mostrar todos los pedidos en la tabla correspondiente
+        displayPedidosTodos(pedidos) {
+            const tbody = document.querySelector('#pedidos-table tbody');
+            if (!tbody) return;
+
+            // Filtrar solo los pedidos que NO están en estado 'pendiente'
+            const pedidosNoPendientes = (pedidos || []).filter(p => (p.estado || '').toLowerCase() !== 'pendiente');
+
+            if (!pedidosNoPendientes || pedidosNoPendientes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos registrados</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pedidosNoPendientes.map(pedido => `
+                <tr data-id="${pedido.id}">
+                    <td>${pedido.numero || pedido.id}</td>
+                    <td>${pedido.cliente_nombre || 'N/A'}</td>
+                    <td>${pedido.fecha || 'N/A'}</td>
+                    <td>${pedido.entrega || pedido.fecha_entrega || 'N/A'}</td>
+                    <td><span class="badge-estado badge-estado-${pedido.estado?.toLowerCase() || 'otro'}">${pedido.estado || 'N/A'}</span></td>
+                    <td>${window.flowerShopAPI.formatCurrency ? window.flowerShopAPI.formatCurrency(pedido.total || 0) : (pedido.total || 0)}</td>
+                    <td>
+                        ${pedido.estado && pedido.estado.toLowerCase() === 'pendiente' ? `<button class="btn btn-sm btn-primary" onclick="app.aprobarPedido(${pedido.id})" title="Aprobar">✔️</button>` : ''}
+                        <button class="btn btn-sm btn-secondary" onclick="app.verPedido(${pedido.id})" title="Ver detalles">👁️</button>
+                        ${pedido.estado && pedido.estado.toLowerCase() === 'pendiente' ? `<button class="btn btn-sm btn-danger" onclick="app.cancelarPedido(${pedido.id})" title="Cancelar">✖️</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+    async loadPedidosPendientes() {
+        try {
+            const pedidos = await window.flowerShopAPI.getPedidos();
+            const pendientes = pedidos.filter(p => p.estado && p.estado.toLowerCase() === 'pendiente');
+            this.displayPedidosPendientes(pendientes);
+        } catch (error) {
+            console.error('❌ Error cargando pedidos pendientes:', error);
+            const tbody = document.querySelector('#pedidos-pendientes-table tbody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error cargando pedidos pendientes</td></tr>';
+        }
+    }
+
+    displayPedidosPendientes(pedidos) {
+        const tbody = document.querySelector('#pedidos-pendientes-table tbody');
+        if (!tbody) return;
+        if (!pedidos || pedidos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos pendientes</td></tr>';
+            return;
+        }
         tbody.innerHTML = pedidos.map(pedido => {
             const estadoBadge = `<span class="badge-estado badge-estado-${(pedido.estado || '').toLowerCase()}">${pedido.estado || 'N/A'}</span>`;
-            // Usar los nombres correctos de los campos según la base de datos
             const numeroPedido = pedido.numero_pedido || pedido.numero || pedido.id;
             const cliente = (pedido.cliente_nombre ? pedido.cliente_nombre : '') + (pedido.cliente_apellidos ? ' ' + pedido.cliente_apellidos : '');
             const fechaPedido = pedido.fecha_pedido ? (window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_pedido) : pedido.fecha_pedido) : 'N/A';
@@ -416,9 +488,9 @@ class FlowerShopApp {
                     <td>${totalPedido}</td>
                     <td>
                         <div class="action-buttons">
+                            <button class="btn btn-sm btn-primary" onclick="app.aprobarPedido(${pedido.id})" title="Aprobar">✔️</button>
                             <button class="btn btn-sm btn-secondary" onclick="app.verPedido(${pedido.id})" title="Ver detalles">👁️</button>
-                            ${pedido.estado && pedido.estado.toLowerCase() === 'pendiente' ? `<button class="btn btn-sm btn-success" onclick="app.aprobarPedido(${pedido.id})" title="Aprobar">✔️</button>` : ''}
-                            ${pedido.estado && pedido.estado.toLowerCase() !== 'cancelado' && pedido.estado.toLowerCase() !== 'entregado' ? `<button class="btn btn-sm btn-danger" onclick="app.cancelarPedido(${pedido.id})" title="Cancelar">🗑️</button>` : ''}
+                            <button class="btn btn-sm btn-danger" onclick="app.cancelarPedido(${pedido.id})" title="Cancelar">🗑️</button>
                         </div>
                     </td>
                 </tr>
@@ -500,9 +572,29 @@ class FlowerShopApp {
         `;
     }
 
-    async aprobarPedido(id) {
+    aprobarPedido(id) {
+        // Mostrar modal de confirmación verde
+        const modal = document.getElementById('modal-confirmacion-aprobar');
+        if (!modal) {
+            // Fallback si no existe el modal
+            if (confirm('¿Aprobar este pedido?')) {
+                this.confirmarAprobarPedido(id);
+            }
+            return;
+        }
+        // Guardar el id temporalmente en el botón
+        const btnConfirmar = document.getElementById('btn-confirmar-aprobar');
+        if (btnConfirmar) {
+            btnConfirmar.onclick = () => {
+                this.confirmarAprobarPedido(id);
+                this.hideModal('modal-confirmacion-aprobar');
+            };
+        }
+        this.showModal('modal-confirmacion-aprobar');
+    }
+
+    async confirmarAprobarPedido(id) {
         try {
-            if (!confirm('¿Aprobar este pedido?')) return;
             await window.flowerShopAPI.actualizarEstadoPedido(id, 'confirmado');
             this.showNotification('Pedido aprobado', 'success');
             await this.loadPedidosData();
@@ -2315,7 +2407,16 @@ class FlowerShopApp {
             await window.flowerShopAPI.crearPedido(pedido);
             this.showNotification('Pedido creado correctamente', 'success');
             this.limpiarYCerrarModalPedido();
-            await this.loadPedidosData();
+            // Si estamos en la sección de pedidos, actualizar ambas tablas y el badge
+            if (this.currentSection === 'pedidos') {
+                await Promise.all([
+                    this.loadPedidosPendientes(),
+                    this.loadPedidosData(),
+                    this.updateSidebarBadges()
+                ]);
+            } else {
+                await this.updateSidebarBadges();
+            }
         } catch (error) {
             this.showNotification('Error guardando pedido', 'error');
         }
