@@ -1,3 +1,4 @@
+
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const FlowerShopDatabase = require('./src/database/database');
@@ -161,6 +162,15 @@ ipcMain.handle('get-productos', async () => {
         return await dbManager.getProductos();
     } catch (error) {
         console.error('Error obteniendo productos:', error);
+        throw error;
+    }
+});
+
+ipcMain.handle('actualizar-estado-pedido', async (event, pedidoId, nuevoEstado) => {
+    try {
+        return await dbManager.actualizarEstadoPedido(pedidoId, nuevoEstado);
+    } catch (error) {
+        console.error('Error actualizando estado del pedido:', error);
         throw error;
     }
 });

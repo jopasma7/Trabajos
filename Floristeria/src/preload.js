@@ -1,4 +1,5 @@
-const { contextBridge, ipcRenderer } = require('electron');
+
+    const { contextBridge, ipcRenderer } = require('electron');
 
 // Exponer APIs seguras al renderer process
 contextBridge.exposeInMainWorld('flowerShopAPI', {
@@ -20,6 +21,7 @@ contextBridge.exposeInMainWorld('flowerShopAPI', {
     actualizarProducto: (id, producto) => ipcRenderer.invoke('actualizar-producto', id, producto),
     actualizarCliente: (id, cliente) => ipcRenderer.invoke('actualizar-cliente', id, cliente),
     actualizarEvento: (id, evento) => ipcRenderer.invoke('actualizar-evento', id, evento),
+    
     
     // Métodos de eliminación
     eliminarProducto: (id) => ipcRenderer.invoke('eliminar-producto', id),
@@ -51,6 +53,9 @@ contextBridge.exposeInMainWorld('flowerShopAPI', {
     actualizarStockMinimo: (productoId, stockMinimo) => ipcRenderer.invoke('actualizar-stock-minimo', productoId, stockMinimo),
     registrarMovimientoInventario: (movimiento) => ipcRenderer.invoke('registrar-movimiento-inventario', movimiento),
     getMovimientosInventario: (filtros) => ipcRenderer.invoke('get-movimientos-inventario', filtros),
+    descontarStockProducto: (productoId, cantidad) => ipcRenderer.invoke('descontar-stock-producto', productoId, cantidad),
+    actualizarEstadoPedido: (pedidoId, nuevoEstado) => ipcRenderer.invoke('actualizar-estado-pedido', pedidoId, nuevoEstado),
+    
     
     // Eventos del menú
     onMenuAction: (callback) => {

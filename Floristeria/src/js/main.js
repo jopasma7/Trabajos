@@ -16,9 +16,9 @@ class FlowerShopApp {
             if (badgeClientes) badgeClientes.textContent = clientes.length;
             if (badgeEventos) badgeEventos.textContent = eventos.length;
             if (badgePedidos) {
-                badgePedidos.textContent = pedidos.length;
-                // Buscar pedidos pendientes
+                // Mostrar solo la cantidad de pedidos pendientes
                 const pendientes = pedidos.filter(p => p.estado && p.estado.toLowerCase() === 'pendiente');
+                badgePedidos.textContent = pendientes.length;
                 if (pendientes.length > 0) {
                     badgePedidos.classList.add('new');
                 } else {
@@ -219,6 +219,19 @@ class FlowerShopApp {
             console.log('🌺 Cargando productos...');
             const productos = await window.flowerShopAPI.getProductos();
             this.displayProductos(productos);
+            // Cargar categorías y poblar el filtro
+            const categorias = await window.flowerShopAPI.getCategorias();
+            const selectFiltro = document.getElementById('filter-categoria');
+            if (selectFiltro) {
+                // Guardar valor actual para no perder selección
+                const valorActual = selectFiltro.value;
+                selectFiltro.innerHTML = '<option value="">Todas las categorías</option>' +
+                    categorias.map(cat => `<option value="${cat.nombre}">${cat.nombre}</option>`).join('');
+                // Restaurar selección si es posible
+                if (Array.from(selectFiltro.options).some(opt => opt.value === valorActual)) {
+                    selectFiltro.value = valorActual;
+                }
+            }
             await this.updateSidebarBadges();
         } catch (error) {
             console.error('❌ Error cargando productos:', error);
@@ -414,7 +427,27 @@ class FlowerShopApp {
         async loadPedidosData() {
             try {
                 const pedidos = await window.flowerShopAPI.getPedidos();
-                this.displayPedidosTodos(pedidos);
+                // Obtener valores de los filtros
+                const estadoFiltro = document.getElementById('filter-estado-pedidos')?.value?.toLowerCase() || '';
+                const fechaFiltro = document.getElementById('filter-fecha-pedidos')?.value || '';
+
+                let pedidosFiltrados = pedidos;
+                if (estadoFiltro) {
+                    pedidosFiltrados = pedidosFiltrados.filter(p => (p.estado || '').toLowerCase() === estadoFiltro);
+                }
+                if (fechaFiltro) {
+                    pedidosFiltrados = pedidosFiltrados.filter(p => {
+                        // Considera p.fecha o p.fecha_pedido
+                        const fechaPedido = p.fecha || p.fecha_pedido;
+                        if (!fechaPedido) return false;
+                        // Normaliza formato a yyyy-mm-dd
+                        const fechaStr = (fechaPedido instanceof Date)
+                            ? fechaPedido.toISOString().slice(0,10)
+                            : (typeof fechaPedido === 'string' ? fechaPedido.slice(0,10) : '');
+                        return fechaStr === fechaFiltro;
+                    });
+                }
+                this.displayPedidosTodos(pedidosFiltrados);
             } catch (error) {
                 console.error('❌ Error cargando todos los pedidos:', error);
                 const tbody = document.querySelector('#pedidos-todos-table tbody');
@@ -438,8 +471,8 @@ class FlowerShopApp {
             tbody.innerHTML = pedidosNoPendientes.map(pedido => `
                 <tr data-id="${pedido.id}">
                     <td>${pedido.numero || pedido.id}</td>
-                    <td>${pedido.cliente_nombre || 'N/A'}</td>
-                    <td>${pedido.fecha || 'N/A'}</td>
+                    <td>${((pedido.cliente_nombre ? pedido.cliente_nombre : '') + (pedido.cliente_apellidos ? ' ' + pedido.cliente_apellidos : '')).trim() || 'N/A'}</td>
+                    <td>${window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_pedido || pedido.fecha) : (pedido.fecha_pedido || pedido.fecha || 'N/A')}</td>
                     <td>${pedido.entrega || pedido.fecha_entrega || 'N/A'}</td>
                     <td><span class="badge-estado badge-estado-${pedido.estado?.toLowerCase() || 'otro'}">${pedido.estado || 'N/A'}</span></td>
                     <td>${window.flowerShopAPI.formatCurrency ? window.flowerShopAPI.formatCurrency(pedido.total || 0) : (pedido.total || 0)}</td>
@@ -466,10 +499,26 @@ class FlowerShopApp {
 
     displayPedidosPendientes(pedidos) {
         const tbody = document.querySelector('#pedidos-pendientes-table tbody');
+        const thead = document.querySelector('#pedidos-pendientes-table thead');
         if (!tbody) return;
         if (!pedidos || pedidos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos pendientes</td></tr>';
+            if (thead) thead.style.display = 'none';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 2.5rem 0; background: #f9fafb;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.7rem;">
+                            <div style="font-size: 2.5rem; color: #a3a3a3;">📋</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; color: #64748b;">No hay pedidos pendientes</div>
+                            <div style="font-size: 0.95rem; color: #94a3b8; max-width: 350px; text-align: center;">
+                                ¡Genial! No tienes pedidos pendientes de aprobación.<br>Cuando recibas nuevos pedidos aparecerán aquí para que los gestiones fácilmente.
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
             return;
+        } else {
+            if (thead) thead.style.display = '';
         }
         tbody.innerHTML = pedidos.map(pedido => {
             const estadoBadge = `<span class="badge-estado badge-estado-${(pedido.estado || '').toLowerCase()}">${pedido.estado || 'N/A'}</span>`;
@@ -595,11 +644,67 @@ class FlowerShopApp {
 
     async confirmarAprobarPedido(id) {
         try {
-            await window.flowerShopAPI.actualizarEstadoPedido(id, 'confirmado');
-            this.showNotification('Pedido aprobado', 'success');
-            await this.loadPedidosData();
+            // 1. Obtener el pedido y sus productos
+            const pedidos = await window.flowerShopAPI.getPedidos();
+            const pedido = pedidos.find(p => p.id === id);
+            if (!pedido) {
+                this.showNotification('No se encontró el pedido', 'error');
+                return;
+            }
+            let productosPedido = pedido.productos || [];
+            if (!productosPedido.length && window.flowerShopAPI.getProductosPedido) {
+                productosPedido = await window.flowerShopAPI.getProductosPedido(id);
+            }
+
+            // Validar funciones necesarias
+            if (!window.flowerShopAPI.descontarStockProducto) {
+                this.showNotification('Error: No existe la función descontarStockProducto en la API.', 'error');
+                console.error('Falta window.flowerShopAPI.descontarStockProducto. No se puede descontar stock al aprobar el pedido.');
+                return;
+            }
+            if (!window.flowerShopAPI.registrarMovimientoInventario) {
+                this.showNotification('Error: No existe la función registrarMovimientoInventario en la API.', 'error');
+                console.error('Falta window.flowerShopAPI.registrarMovimientoInventario. No se puede registrar movimiento de inventario al aprobar el pedido.');
+                return;
+            }
+
+            // 2. Descontar stock de cada producto y registrar movimiento
+            for (const prod of productosPedido) {
+                try {
+                    await window.flowerShopAPI.descontarStockProducto(prod.producto_id || prod.id, prod.cantidad);
+                } catch (e) {
+                    this.showNotification(`Error descontando stock del producto ${prod.producto_id || prod.id}: ${e.message}`, 'error');
+                    console.error('Error descontando stock:', prod, e);
+                    return;
+                }
+                try {
+                    await window.flowerShopAPI.registrarMovimientoInventario({
+                        producto_id: prod.producto_id || prod.id,
+                        cantidad: prod.cantidad,
+                        tipo_movimiento: 'salida',
+                        motivo: 'Venta por pedido',
+                        referencia: `Pedido #${pedido.numero || pedido.id}`
+                    });
+                } catch (e) {
+                    this.showNotification(`Error registrando movimiento de inventario para producto ${prod.producto_id || prod.id}: ${e.message}`, 'error');
+                    console.error('Error registrando movimiento inventario:', prod, e);
+                    return;
+                }
+            }
+
+            // 3. Actualizar estado del pedido
+            await window.flowerShopAPI.actualizarEstadoPedido(id, 'completado');
+
+            // 4. Notificar y refrescar tablas/badges
+            this.showNotification('Pedido aprobado y stock actualizado', 'success');
+            await Promise.all([
+                this.loadPedidosData(),
+                this.loadPedidosPendientes(),
+                this.updateSidebarBadges()
+            ]);
         } catch (error) {
-            this.showNotification('Error aprobando pedido', 'error');
+            this.showNotification('Error aprobando pedido: ' + (error.message || error), 'error');
+            console.error('Error en confirmarAprobarPedido:', error);
         }
     }
 
@@ -608,7 +713,11 @@ class FlowerShopApp {
             if (!confirm('¿Cancelar este pedido?')) return;
             await window.flowerShopAPI.actualizarEstadoPedido(id, 'cancelado');
             this.showNotification('Pedido cancelado', 'success');
-            await this.loadPedidosData();
+            await Promise.all([
+                this.loadPedidosData(),
+                this.loadPedidosPendientes(),
+                this.updateSidebarBadges()
+            ]);
         } catch (error) {
             this.showNotification('Error cancelando pedido', 'error');
         }
@@ -2195,9 +2304,29 @@ class FlowerShopApp {
                 // Limpiar formulario completamente DESPUÉS de cargar datos
                 setTimeout(() => {
                     this.limpiarFormularioPedido();
+                    // Volver a poner la fecha de hoy tras limpiar
+                    const fechaEntregaInput = document.getElementById('pedido-entrega');
+                    if (fechaEntregaInput) {
+                        const today = new Date();
+                        const yyyy = today.getFullYear();
+                        const mm = String(today.getMonth() + 1).padStart(2, '0');
+                        const dd = String(today.getDate()).padStart(2, '0');
+                        fechaEntregaInput.value = `${yyyy}-${mm}-${dd}`;
+                        fechaEntregaInput.placeholder = `${dd}/${mm}/${yyyy}`;
+                    }
                 }, 100);
+            } else {
+                // Si viene desde cliente, poner la fecha de hoy directamente
+                const fechaEntregaInput = document.getElementById('pedido-entrega');
+                if (fechaEntregaInput) {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    fechaEntregaInput.value = `${yyyy}-${mm}-${dd}`;
+                    fechaEntregaInput.placeholder = `${dd}/${mm}/${yyyy}`;
+                }
             }
-            
             // Mostrar modal
             this.showModal('modal-nuevo-pedido');
         } catch (error) {

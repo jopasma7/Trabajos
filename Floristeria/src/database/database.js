@@ -3,6 +3,19 @@ const path = require('path');
 const fs = require('fs');
 
 class FlowerShopDatabase {
+    // Actualizar estado de un pedido
+    async actualizarEstadoPedido(pedidoId, nuevoEstado) {
+        return this.runQuery('UPDATE pedidos SET estado = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [nuevoEstado, pedidoId]);
+    }
+    // Descontar stock de un producto
+    async descontarStockProducto(productoId, cantidad) {
+        // Obtener stock actual
+        const producto = await this.getQuery('SELECT stock_actual FROM productos WHERE id = ?', [productoId]);
+        if (!producto) throw new Error('Producto no encontrado');
+        const nuevoStock = Math.max(0, (producto.stock_actual || 0) - cantidad);
+        await this.runQuery('UPDATE productos SET stock_actual = ? WHERE id = ?', [nuevoStock, productoId]);
+        return nuevoStock;
+    }
     constructor() {
         this.dbPath = path.join(__dirname, '..', '..', 'data', 'floristeria.db');
         this.db = null;
