@@ -1,0 +1,20 @@
+#toast-perfil {
+  display: none;
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 350px;
+  padding: 1rem 1.5rem;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px 0 rgba(37,99,235,0.13);
+  font-size: 1.08rem;
+  transition: opacity 0.3s, transform 0.3s;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}

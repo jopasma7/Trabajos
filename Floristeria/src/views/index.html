@@ -1,7 +1,7 @@
 <script>
-// Toast notification function
-function showToast(message, duration = 2500) {
-    var toast = document.getElementById('toast-notification');
+// Toast notification función para perfil
+function showToastPerfil(message, duration = 2500) {
+    var toast = document.getElementById('toast-perfil');
     if (!toast) return;
     toast.textContent = message;
     toast.style.display = 'block';
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
         perfilForm.addEventListener('submit', function(e) {
             e.preventDefault();
             // Aquí iría la lógica real de guardado...
-            showToast('¡Perfil actualizado correctamente!');
+            showToastPerfil('¡Perfil actualizado correctamente!');
         });
     }
 });
@@ -90,7 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
 </head>
 <body>
     <!-- Toast Notification -->
-    <div id="toast-notification" style="display:none;position:fixed;top:32px;right:32px;z-index:9999;min-width:220px;max-width:350px;padding:1rem 1.5rem;background:#2563eb;color:#fff;font-weight:600;border-radius:10px;box-shadow:0 4px 24px 0 rgba(37,99,235,0.13);font-size:1.08rem;transition:opacity 0.3s,transform 0.3s;opacity:0;cursor:pointer;pointer-events:auto;"></div>
+    <div id="toast-perfil"></div>
+    <link rel="stylesheet" href="../styles/componentes/toast.css">
     <div class="app-container">
         <!-- Floating Action Button -->
         <div class="fab-container">
