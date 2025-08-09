@@ -115,6 +115,38 @@
     transition: background 0.3s;
 }
 
+.btn-editar{
+    padding: 0.4rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.btn-stock{
+    padding: 0.4rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.btn-eliminar{
+    padding: 0.4rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.btn-editar .evento-action-icon {
+    background: #f3e8ff;
+    color: #a21caf;
+}
+.btn-stock .evento-action-icon {
+    background: #bbf7d0;
+    color: #22c55e;
+}
+.btn-eliminar .evento-action-icon {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+
 /* ============================================ */
 /* =========== BOTONES DE LA TABLA =========== */
 /* ============================================ */

@@ -1189,9 +1189,14 @@ document.addEventListener('DOMContentLoaded', function() {
         <form id="form-producto" class="form">
             <!-- Fila 1: Nombre y Código -->
             <div class="form-row">
-            <div class="form-group" style="flex:2 1 60%; min-width:180px;">
-                <label for="producto-nombre">Nombre *</label>
-                <input type="text" id="producto-nombre" name="nombre" required>
+                <div class="form-group" style="flex:2 1 60%; min-width:180px;">
+                    <label for="producto-nombre">Nombre *</label>
+                    <input type="text" id="producto-nombre" name="nombre" required>
+                </div>
+                <div class="form-group" style="flex:1 1 40%; min-width:120px;">
+                    <label for="producto-codigo">Código</label>
+                    <input type="text" id="producto-codigo" name="codigo_producto" readonly style="background:#f3f4f6; color:#374151;">
+                </div>
             </div>
             <!-- Fila 2: Categoría, Temporada, Precio Compra, Precio Venta -->
             <div class="form-row">

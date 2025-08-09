@@ -578,15 +578,24 @@ class FlowerShopApp {
                         <p class="evento-descripcion">${evento.descripcion}</p>
                     </div>
                     <div class="evento-actions">
-                        <button class="btn btn-sm btn-primary" onclick="app.editarEvento(${evento.id})">
-                            ✏️ Editar
-                        </button>
-                        <button class="btn btn-sm btn-success" onclick="app.gestionarEventoStock(${evento.id})">
-                            📦 Stock
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="app.eliminarEvento(${evento.id})">
-                            🗑️ Eliminar
-                        </button>
+                        <div class="evento-action-btn-wrap">
+                            <button class="btn btn-sm btn-editar evento-action-btn" style="background: none;" onclick="app.editarEvento(${evento.id})">
+                                <span class="evento-action-icon">✏️</span>
+                            </button>
+                            <span class="evento-action-text">Editar</span>
+                        </div>
+                        <div class="evento-action-btn-wrap">
+                            <button class="btn btn-sm btn-stock evento-action-btn" style="background: none;" onclick="app.gestionarEventoStock(${evento.id})">
+                                <span class="evento-action-icon">📦</span>
+                            </button>
+                            <span class="evento-action-text">Stock</span>
+                        </div>
+                        <div class="evento-action-btn-wrap">
+                            <button class="btn btn-sm btn-eliminar evento-action-btn" style="background: none;" onclick="app.eliminarEvento(${evento.id})">
+                                <span class="evento-action-icon">🗑️</span>
+                            </button>
+                            <span class="evento-action-text">Eliminar</span>
+                        </div>
                     </div>
                 </div>
             `;

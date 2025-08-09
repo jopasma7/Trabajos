@@ -1,3 +1,21 @@
+/* Wrapper para acción de evento: icono arriba, texto debajo */
+.evento-action-btn-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: flex-start;
+    min-width: 0;
+    max-width: 48px;
+    margin: 0 0.05rem;
+    padding: 0;
+}
+.evento-action-btn {
+    margin: 0;
+}
+.evento-action-text {
+    margin-top: 0.2em;
+    pointer-events: none;
+}
 .reserva-item {
   width: 100%;
   max-width: 100%;
@@ -265,16 +283,44 @@
 }
 .evento-card .evento-actions {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.7rem;
+    justify-content: left;
+    align-items: flex-end;
     margin-top: auto;
-    padding: 1.2rem 0 0 0;
-    border-top: 1px solid #f3e8ff;
-    background: none;
     width: 100%;
+    gap: 0.2rem;
     box-sizing: border-box;
 }
+
+.evento-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    white-space: normal;
+    min-width: 36px;
+    min-height: 32px;
+    padding: 0.1rem 0.4rem;
+    gap: 0.05rem;
+}
+.evento-action-icon {
+    background: #f3e8ff; /* morado claro por defecto (editar) */
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2em;
+    transition: background 0.2s, color 0.2s;
+}
+
+.evento-action-text {
+    font-size: 0.90em;
+    line-height: 1.1;
+    text-align: center;
+}
+
+
 
 /* ========== VARIABLES MODERNAS ========== */
 :root {
@@ -787,6 +833,7 @@
     border-radius: var(--radius-lg);
     font-size: 0.75rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .stock-badge.normal-stock {
@@ -969,20 +1016,53 @@
     justify-content: space-between;
     padding: 0.5rem 0;
     border-bottom: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.2rem;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 1.2rem 1rem;
-  border-radius: 16px;
-  background: #fff;
-  position: relative;
-  margin: 0;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    white-space: normal;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.1rem 0.2rem;
+    gap: 0.05rem;
+    background: none;
+    border: none;
+    box-shadow: none;
+    margin: 0 0.15rem;
+    cursor: pointer;
+}
+.evento-action-btn:hover .evento-action-icon {
+    filter: brightness(1.1) drop-shadow(0 2px 6px #a21caf22);
+}
+.evento-action-btn.btn-danger:hover .evento-action-icon {
+    filter: brightness(1.1) drop-shadow(0 2px 6px #dc262622);
+}
+.evento-action-btn.btn-success:hover .evento-action-icon {
+    filter: brightness(1.1) drop-shadow(0 2px 6px #22c55e22);
+}
+.evento-action-btn.btn-danger .evento-action-icon {
+    color: #dc2626;
+    background: #fee2e2;
+}
+.evento-action-btn.btn-success .evento-action-icon {
+    color: #22c55e;
+    background: #bbf7d0;
+}
+
+.evento-action-btn.btn-danger .evento-action-icon {
+    color: #dc2626;
+}
+.evento-action-btn.btn-success .evento-action-icon {
+    color: #22c55e;
+}
+.evento-action-text {
+    font-size: 0.80em;
+    line-height: 1.1;
+    text-align: center;
+    color: #374151;
+    font-weight: 500;
+    margin-top: 0.15em;
+    background: none;
 }
 
 .records-table {
