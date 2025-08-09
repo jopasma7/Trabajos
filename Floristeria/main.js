@@ -161,6 +161,22 @@ function createMenu() {
                     click: () => {
                         mainWindow.webContents.send('menu-action', 'acerca-de');
                     }
+                },
+                {
+                    label: 'Abrir DevTools',
+                    accelerator: 'F12',
+                    click: () => {
+                        const win = BrowserWindow.getFocusedWindow() || mainWindow;
+                        if (win) {
+                            try {
+                                win.webContents.openDevTools({ mode: 'detach' });
+                            } catch (err) {
+                                console.error('Error abriendo DevTools:', err);
+                            }
+                        } else {
+                            console.error('No hay ventana activa para abrir DevTools');
+                        }
+                    }
                 }
             ]
         }
@@ -234,6 +250,70 @@ ipcMain.handle('get-categorias', async () => {
     }
 });
 
+// ================= PERFIL DE USUARIO =================
+const fs = require('fs');
+
+// Utilidad: guardar archivo de avatar
+function saveAvatarFile(avatarFile) {
+    if (!avatarFile || !avatarFile.name || !avatarFile.data) return null;
+    const ext = path.extname(avatarFile.name) || '.png';
+    const avatarDir = path.join(__dirname, 'data', 'avatars');
+    if (!fs.existsSync(avatarDir)) fs.mkdirSync(avatarDir, { recursive: true });
+    const fileName = 'user_avatar' + ext;
+    const filePath = path.join(avatarDir, fileName);
+    // avatarFile.data puede venir como array, convertir a Buffer
+    const buffer = Buffer.isBuffer(avatarFile.data) ? avatarFile.data : Buffer.from(avatarFile.data);
+    fs.writeFileSync(filePath, buffer);
+    return filePath;
+}
+
+// Handler: guardar perfil de usuario
+ipcMain.handle('guardar-perfil-usuario', async (event, perfil, avatarFile) => {
+    try {
+        let avatarPath = null;
+        if (avatarFile && avatarFile.data) {
+            avatarPath = saveAvatarFile(avatarFile);
+            perfil.avatar = avatarPath;
+        }
+        // Guardar cada campo en la tabla de configuración
+        for (const [clave, valor] of Object.entries(perfil)) {
+            await dbManager.runQuery(
+                `INSERT INTO configuracion (clave, valor, descripcion, tipo, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(clave) DO UPDATE SET valor=excluded.valor, updated_at=CURRENT_TIMESTAMP`,
+                [
+                    'perfil_' + clave,
+                    valor,
+                    'Campo de perfil de usuario',
+                    typeof valor === 'string' ? 'text' : 'json'
+                ]
+            );
+        }
+        return { ok: true, perfil };
+    } catch (error) {
+        console.error('Error guardando perfil de usuario:', error);
+        throw error;
+    }
+});
+
+// Handler: cargar perfil de usuario
+ipcMain.handle('cargar-perfil-usuario', async () => {
+    try {
+        const filas = await dbManager.allQuery(`SELECT clave, valor FROM configuracion WHERE clave LIKE 'perfil_%'`);
+        const perfil = {};
+        for (const fila of filas) {
+            const key = fila.clave.replace('perfil_', '');
+            perfil[key] = fila.valor;
+        }
+        // Si hay avatar, verificar que exista
+        if (perfil.avatar && !fs.existsSync(perfil.avatar)) {
+            perfil.avatar = null;
+        }
+        return perfil;
+    } catch (error) {
+        console.error('Error cargando perfil de usuario:', error);
+        throw error;
+    }
+});
 // Métodos de actualización
 ipcMain.handle('actualizar-producto', async (event, id, producto) => {
     try {

@@ -6481,3 +6481,119 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Avatar preview y lógica de subida en configuración
+// Avatar preview y lógica de subida en perfil
+document.addEventListener('DOMContentLoaded', () => {
+    const avatarInput = document.getElementById('avatar-upload');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const perfilForm = document.getElementById('perfil-form');
+    if (avatarInput && avatarPreview) {
+        avatarInput.addEventListener('change', (e) => {
+            const file = avatarInput.files && avatarInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    avatarPreview.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    if (perfilForm) {
+        perfilForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const file = avatarInput && avatarInput.files && avatarInput.files[0];
+        });
+    }
+});
+
+// Lógica de perfil de usuario: previsualización de avatar, carga y guardado de datos reales
+
+document.addEventListener('DOMContentLoaded', () => {
+    const perfilForm = document.getElementById('perfil-form');
+    const avatarInput = document.getElementById('avatar-upload');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const headerAvatar = document.querySelector('.user-avatar');
+
+    // Cargar datos actuales del perfil
+    if (window.flowerShopAPI && window.flowerShopAPI.cargarPerfilUsuario) {
+        window.flowerShopAPI.cargarPerfilUsuario().then(perfil => {
+            if (perfil) {
+                document.getElementById('perfil-nombre').value = perfil.nombre || '';
+                document.getElementById('perfil-usuario').value = perfil.usuario || '';
+                document.getElementById('perfil-email').value = perfil.email || '';
+                document.getElementById('perfil-telefono').value = perfil.telefono || '';
+                document.getElementById('perfil-rol').value = perfil.rol || 'Administrador';
+                if (perfil.avatarPath && avatarPreview) {
+                    avatarPreview.src = perfil.avatarPath;
+                }
+                // Cambiar avatar del header
+                if (headerAvatar) {
+                    if (perfil.avatarPath) {
+                        headerAvatar.src = perfil.avatarPath;
+                    } else {
+                        headerAvatar.src = 'https://randomuser.me/api/portraits/men/1.jpg';
+                    }
+                }
+            }
+        });
+    }
+
+    if (avatarInput && avatarPreview) {
+        avatarInput.addEventListener('change', (e) => {
+            const file = avatarInput.files && avatarInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    avatarPreview.src = ev.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    if (perfilForm) {
+        perfilForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const data = {
+                nombre: document.getElementById('perfil-nombre').value,
+                usuario: document.getElementById('perfil-usuario').value,
+                email: document.getElementById('perfil-email').value,
+                telefono: document.getElementById('perfil-telefono').value,
+                rol: document.getElementById('perfil-rol').value,
+                password: document.getElementById('perfil-password').value,
+            };
+            const file = avatarInput && avatarInput.files && avatarInput.files[0];
+            let avatarFile = null;
+            if (file) {
+                // Convertir el archivo a ArrayBuffer para que sea serializable por IPC
+                avatarFile = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    data: await file.arrayBuffer()
+                };
+            }
+            try {
+                await window.flowerShopAPI.guardarPerfilUsuario(data, avatarFile);
+                // Actualizar avatar del header inmediatamente
+                const headerAvatar = document.querySelector('.user-avatar');
+                if (headerAvatar) {
+                    if (file) {
+                        // Si se subió un nuevo archivo, usar la preview local
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            headerAvatar.src = ev.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    } else if (avatarInput && avatarInput.value === '') {
+                        // Si se eliminó el avatar, poner el default
+                        headerAvatar.src = 'https://randomuser.me/api/portraits/men/1.jpg';
+                    }
+                }
+            } catch (err) {
+                alert('Error guardando el perfil: ' + (err?.message || err));
+            }
+        });
+    }
+});

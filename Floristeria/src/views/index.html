@@ -1,4 +1,70 @@
 <script>
+// Toast notification function
+function showToast(message, duration = 2500) {
+    var toast = document.getElementById('toast-notification');
+    if (!toast) return;
+    toast.textContent = message;
+    toast.style.display = 'block';
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    // Limpiar cualquier timeout anterior
+    if (toast._toastTimeout) {
+        clearTimeout(toast._toastTimeout);
+        toast._toastTimeout = null;
+    }
+    function closeToast() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(function() {
+            toast.style.display = 'none';
+        }, 350);
+        if (toast._toastTimeout) {
+            clearTimeout(toast._toastTimeout);
+            toast._toastTimeout = null;
+        }
+        toast.onclick = null;
+    }
+    toast.onclick = closeToast;
+    toast._toastTimeout = setTimeout(closeToast, duration);
+}
+// Hacer que el botón de editar avatar en el header abra el input file de avatar
+document.addEventListener('DOMContentLoaded', function() {
+    var editBtn = document.getElementById('edit-avatar-header-btn');
+    var avatarInput = document.getElementById('avatar-upload');
+    var avatarImg = document.getElementById('avatar-header-profile');
+    if (editBtn && avatarInput) {
+        editBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            avatarInput.click();
+        });
+    }
+    if (avatarImg && avatarInput) {
+         avatarImg.style.cursor = 'pointer';
+         avatarImg.addEventListener('click', function(e) {
+             e.preventDefault();
+             avatarInput.click();
+         });
+         avatarInput.addEventListener('change', function(e) {
+             if (avatarInput.files && avatarInput.files[0]) {
+                 var reader = new FileReader();
+                 reader.onload = function(ev) {
+                     avatarImg.src = ev.target.result;
+                 };
+                 reader.readAsDataURL(avatarInput.files[0]);
+             }
+         });
+    }
+
+    // Interceptar el submit del formulario de perfil para mostrar toast
+    var perfilForm = document.getElementById('perfil-form');
+    if (perfilForm) {
+        perfilForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Aquí iría la lógica real de guardado...
+            showToast('¡Perfil actualizado correctamente!');
+        });
+    }
+});
 // Listeners para filtros de pedidos
 document.addEventListener('DOMContentLoaded', function() {
     const estado = document.getElementById('filter-estado-pedidos');
@@ -19,9 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
     <link rel="stylesheet" href="../styles/componentes/tables.css">
     <link rel="stylesheet" href="../styles/componentes/button.css">
     <link rel="stylesheet" href="../styles/sections/notificaciones.css">
+    <link rel="stylesheet" href="../styles/sections/profile.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div id="toast-notification" style="display:none;position:fixed;top:32px;right:32px;z-index:9999;min-width:220px;max-width:350px;padding:1rem 1.5rem;background:#2563eb;color:#fff;font-weight:600;border-radius:10px;box-shadow:0 4px 24px 0 rgba(37,99,235,0.13);font-size:1.08rem;transition:opacity 0.3s,transform 0.3s;opacity:0;cursor:pointer;pointer-events:auto;"></div>
     <div class="app-container">
         <!-- Floating Action Button -->
         <div class="fab-container">
@@ -73,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="icon">⚙️</span>
                     </button>
                     <div class="user-menu">
-                        <img src="https://via.placeholder.com/32x32/4f46e5/white?text=U" alt="Usuario" class="user-avatar">
+                        <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Usuario" class="user-avatar">
                         <span class="user-name">Admin</span>
                     </div>
                 </div>
@@ -249,28 +318,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 <!-- Perfil Section -->
                 <section id="perfil-section" class="content-section" style="display: none;">
-                    <h2>👤 Perfil de Usuario</h2>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Información de tu perfil</h3>
+                    <div class="profile-card-flor redesigned-profile" style="padding-top:2.5rem;">
+                        <div class="profile-header" style="margin-bottom:0.5rem;">
+                            <span class="profile-header-icon" style="margin-right:0.7rem;">
+                                <div style="position:relative;display:inline-block;">
+                                    <img id="avatar-header-profile" src="https://randomuser.me/api/portraits/men/1.jpg" alt="Avatar" class="profile-avatar-preview" style="width:72px;height:72px;border:2.5px solid #2563eb;box-shadow:0 2px 12px 0 rgba(37,99,235,0.13);background:#f1f5f9;object-fit:cover;vertical-align:middle;">
+                                    <button id="edit-avatar-header-btn" title="Editar avatar" style="position:absolute;bottom:-10px;right:-10px;width:38px;height:38px;border-radius:50%;background:#2563eb;border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px 0 rgba(37,99,235,0.15);cursor:pointer;padding:0;">
+                                        <svg width="22" height="22" fill="#fff" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12.146 2.854a.5.5 0 0 1 .708 0l.292.292a.5.5 0 0 1 0 .708l-8.5 8.5a.5.5 0 0 1-.168.11l-3 1a.5.5 0 0 1-.637-.637l1-3a.5.5 0 0 1 .11-.168l8.5-8.5zM11.207 3.5L12.5 4.793 13.793 3.5 12.5 2.207 11.207 3.5zM2.5 11.793l8.5-8.5 1.293 1.293-8.5 8.5-1.293-1.293z"/>
+                                        </svg>
+                                    </button>
+                                    <input type="file" id="avatar-upload" accept="image/*" style="display:none;">
+                                </div>
+                            </span>
+                            <h2 class="profile-title">Perfil de Usuario</h2>
                         </div>
-                        <div class="card-body">
-                            <form id="perfil-form" class="form">
+                        <!-- Avatar flotante eliminado, solo queda el avatar en el header -->
+                        <form id="perfil-form" class="profile-form-flor">
+                            <div class="profile-fields-grid redesigned-fields-grid" style="margin-top:0.5rem;">
                                 <div class="form-group">
-                                    <label>Nombre de usuario</label>
-                                    <input type="text" id="perfil-nombre" class="form-control" value="Admin" readonly>
+                                    <label for="perfil-nombre">Nombre completo</label>
+                                    <input type="text" id="perfil-nombre" class="form-control" value="Admin" autocomplete="name" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" id="perfil-email" class="form-control" value="admin@floristeria.com" readonly>
+                                    <label for="perfil-usuario">Usuario</label>
+                                    <input type="text" id="perfil-usuario" class="form-control" value="admin" autocomplete="username" required>
                                 </div>
                                 <div class="form-group">
-                                    <label>Rol</label>
+                                    <label for="perfil-email">Email</label>
+                                    <input type="email" id="perfil-email" class="form-control" value="admin@floristeria.com" autocomplete="email" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="perfil-telefono">Teléfono</label>
+                                    <input type="tel" id="perfil-telefono" class="form-control" value="" autocomplete="tel">
+                                </div>
+                                <div class="form-group">
+                                    <label for="perfil-rol">Rol</label>
                                     <input type="text" id="perfil-rol" class="form-control" value="Administrador" readonly>
                                 </div>
-                                <button type="button" class="btn btn-secondary" disabled>Editar Perfil (próximamente)</button>
-                            </form>
-                        </div>
+                                <div class="form-group">
+                                    <label for="perfil-password">Contraseña</label>
+                                    <input type="password" id="perfil-password" class="form-control" placeholder="••••••••" autocomplete="new-password">
+                                </div>
+                            </div>
+                            <div class="profile-actions redesigned-actions" style="margin-top:1.2rem;">
+                                <button type="submit" class="btn btn-primary" style="display:block;margin:2.2rem auto 0 auto;">💾 Guardar Cambios</button>
+                            </div>
+                        </form>
                     </div>
                 </section>
 
@@ -1097,11 +1191,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="form-group" style="flex:2 1 60%; min-width:180px;">
                 <label for="producto-nombre">Nombre *</label>
                 <input type="text" id="producto-nombre" name="nombre" required>
-            </div>
-            <div class="form-group" style="flex:1 1 35%; min-width:120px;">
-                <label for="producto-codigo">Código de Producto</label>
-                <input type="text" id="producto-codigo" name="codigo_producto" readonly style="background:#f3f4f6;cursor:not-allowed;" value="">
-            </div>
             </div>
             <!-- Fila 2: Categoría, Temporada, Precio Compra, Precio Venta -->
             <div class="form-row">

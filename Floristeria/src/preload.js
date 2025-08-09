@@ -3,6 +3,9 @@
 
 // Exponer APIs seguras al renderer process
 contextBridge.exposeInMainWorld('flowerShopAPI', {
+    // ================= PERFIL DE USUARIO =================
+    guardarPerfilUsuario: (perfil, avatarFile) => ipcRenderer.invoke('guardar-perfil-usuario', perfil, avatarFile),
+    cargarPerfilUsuario: () => ipcRenderer.invoke('cargar-perfil-usuario'),
     // ================= NOTIFICACIONES MULTIUSUARIO =================
     crearNotificacion: (notificacion) => ipcRenderer.invoke('crear-notificacion', notificacion),
     listarNotificaciones: (filtros = {}) => ipcRenderer.invoke('listar-notificaciones', filtros),
