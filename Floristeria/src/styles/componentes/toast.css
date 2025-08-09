@@ -1,3 +1,83 @@
+
+#toast-global, .toast-global {
+  display: flex;
+  align-items: center;
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  z-index: 9999;
+  min-width: 260px;
+  max-width: 400px;
+  padding: 1.15rem 2rem 1.15rem 1.3rem;
+  font-family: 'Segoe UI', 'Inter', 'Roboto', Arial, sans-serif;
+  font-weight: 500;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(30,41,59,0.13), 0 1.5px 6px 0 rgba(30,41,59,0.07);
+  font-size: 1.09rem;
+  letter-spacing: 0.01em;
+  transition: opacity 0.35s cubic-bezier(.4,1.4,.6,1), transform 0.35s cubic-bezier(.4,1.4,.6,1);
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  gap: 1em;
+  transform: translateY(-24px) scale(0.98);
+  visibility: hidden;
+  border: none;
+}
+
+#toast-global.show, .toast-global.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  visibility: visible;
+  box-shadow: 0 12px 36px 0 rgba(30,41,59,0.18), 0 2px 8px 0 rgba(30,41,59,0.10);
+}
+
+.toast-global .toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  margin-right: 0.7em;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.03);
+  box-shadow: 0 1px 4px 0 rgba(30,41,59,0.04);
+}
+
+.toast-global .toast-message {
+  flex: 1;
+  word-break: break-word;
+  font-size: 1.07em;
+  line-height: 1.5;
+  padding-right: 0.2em;
+}
+
+
+/* Color variants */
+.toast-global.toast-global-success {
+  background: #fff;
+  color: #217a47;
+  border-left: 8px solid #15803d !important;
+  box-shadow: 0 2px 8px 0 rgba(52,199,89,0.08), 0 1.5px 6px 0 rgba(30,41,59,0.07);
+}
+.toast-global.toast-global-error {
+  background: #fff;
+  color: #b91c1c;
+  border-left: 8px solid #b91c1c !important;
+  box-shadow: 0 2px 8px 0 rgba(239,68,68,0.08), 0 1.5px 6px 0 rgba(30,41,59,0.07);
+}
+.toast-global.toast-global-info {
+  background: #fff;
+  color: #2563eb;
+  border-left: 8px solid #1d4ed8 !important;
+  box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08), 0 1.5px 6px 0 rgba(30,41,59,0.07);
+}
+.toast-global.toast-global-warning {
+  background: #fff;
+  color: #b45309;
+  border-left: 8px solid #d97706 !important;
+  box-shadow: 0 2px 8px 0 rgba(245,158,11,0.08), 0 1.5px 6px 0 rgba(30,41,59,0.07);
+}
 #toast-perfil {
   display: none;
   position: fixed;

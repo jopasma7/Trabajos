@@ -146,7 +146,7 @@ class FlowerShopApp {
             }
         } catch (error) {
             console.error(`❌ Error cargando datos de ${sectionId}:`, error);
-            this.showNotification('Error cargando datos de la sección', 'error');
+            this.showToastGlobal('Error cargando datos de la sección', 'error', 'toast-global');
         }
     }
 
@@ -183,7 +183,7 @@ class FlowerShopApp {
             }, 0);
         } catch (error) {
             console.error('❌ Error cargando notificaciones:', error);
-            this.showNotification('Error cargando notificaciones', 'error');
+            this.showToastGlobal('Error cargando notificaciones', 'error', 'toast-global');
         }
     }
 
@@ -364,7 +364,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error cargando dashboard:', error);
-            this.showNotification('Error cargando el dashboard', 'error');
+            this.showToastGlobal('Error cargando el dashboard', 'error', 'toast-global');
         }
     }
 
@@ -435,7 +435,7 @@ class FlowerShopApp {
             await this.updateSidebarBadges();
         } catch (error) {
             console.error('❌ Error cargando productos:', error);
-            this.showNotification('Error cargando productos', 'error');
+            this.showToastGlobal('Error cargando productos', 'error', 'toast-global');
         }
     }
 
@@ -495,7 +495,7 @@ class FlowerShopApp {
             await this.updateSidebarBadges();
         } catch (error) {
             console.error('❌ Error cargando clientes:', error);
-            this.showNotification('Error cargando clientes', 'error');
+            this.showToastGlobal('Error cargando clientes', 'error', 'toast-global');
         }
     }
 
@@ -544,7 +544,7 @@ class FlowerShopApp {
             await this.updateSidebarBadges();
         } catch (error) {
             console.error('❌ Error cargando eventos:', error);
-            this.showNotification('Error cargando eventos', 'error');
+            this.showToastGlobal('Error cargando eventos', 'error', 'toast-global');
         }
     }
 
@@ -754,7 +754,7 @@ class FlowerShopApp {
             const pedidos = await window.flowerShopAPI.getPedidos();
             const pedido = pedidos.find(p => p.id === id);
             if (!pedido) {
-                this.showNotification('No se encontró el pedido', 'error');
+                this.showToastGlobal('No se encontró el pedido', 'error', 'toast-global');
                 return;
             }
             // Obtener detalles de productos del pedido si existe la función
@@ -766,7 +766,7 @@ class FlowerShopApp {
             this.renderPedidoDetallesModal(pedido, productosPedido);
             this.showModal('modal-pedido-detalles');
         } catch (error) {
-            this.showNotification('Error mostrando detalles del pedido', 'error');
+            this.showToastGlobal('Error mostrando detalles del pedido', 'error', 'toast-global');
         }
     }
 
@@ -848,7 +848,7 @@ class FlowerShopApp {
             const pedidos = await window.flowerShopAPI.getPedidos();
             const pedido = pedidos.find(p => p.id === id);
             if (!pedido) {
-                this.showNotification('No se encontró el pedido', 'error');
+                this.showToastGlobal('No se encontró el pedido', 'error', 'toast-global');
                 return;
             }
             let productosPedido = pedido.productos || [];
@@ -858,12 +858,12 @@ class FlowerShopApp {
 
             // Validar funciones necesarias
             if (!window.flowerShopAPI.descontarStockProducto) {
-                this.showNotification('Error: No existe la función descontarStockProducto en la API.', 'error');
+                this.showToastGlobal('Error: No existe la función descontarStockProducto en la API.', 'error', 'toast-global');
                 console.error('Falta window.flowerShopAPI.descontarStockProducto. No se puede descontar stock al aprobar el pedido.');
                 return;
             }
             if (!window.flowerShopAPI.registrarMovimientoInventario) {
-                this.showNotification('Error: No existe la función registrarMovimientoInventario en la API.', 'error');
+                this.showToastGlobal('Error: No existe la función registrarMovimientoInventario en la API.', 'error', 'toast-global');
                 console.error('Falta window.flowerShopAPI.registrarMovimientoInventario. No se puede registrar movimiento de inventario al aprobar el pedido.');
                 return;
             }
@@ -873,7 +873,7 @@ class FlowerShopApp {
                 try {
                     await window.flowerShopAPI.descontarStockProducto(prod.producto_id || prod.id, prod.cantidad);
                 } catch (e) {
-                    this.showNotification(`Error descontando stock del producto ${prod.producto_id || prod.id}: ${e.message}`, 'error');
+                    this.showToastGlobal(`Error descontando stock del producto ${prod.producto_id || prod.id}: ${e.message}`, 'error', 'toast-global');
                     console.error('Error descontando stock:', prod, e);
                     return;
                 }
@@ -886,7 +886,7 @@ class FlowerShopApp {
                         referencia: `Pedido #${pedido.numero || pedido.id}`
                     });
                 } catch (e) {
-                    this.showNotification(`Error registrando movimiento de inventario para producto ${prod.producto_id || prod.id}: ${e.message}`, 'error');
+                    this.showToastGlobal(`Error registrando movimiento de inventario para producto ${prod.producto_id || prod.id}: ${e.message}`, 'error', 'toast-global');
                     console.error('Error registrando movimiento inventario:', prod, e);
                     return;
                 }
@@ -896,14 +896,14 @@ class FlowerShopApp {
             await window.flowerShopAPI.actualizarEstadoPedido(id, 'completado');
 
             // 4. Notificar y refrescar tablas/badges
-            this.showNotification('Pedido aprobado y stock actualizado', 'success');
+            this.showToastGlobal('Pedido aprobado y stock actualizado', 'success', 'toast-global');
             await Promise.all([
                 this.loadPedidosData(),
                 this.loadPedidosPendientes(),
                 this.updateSidebarBadges()
             ]);
         } catch (error) {
-            this.showNotification('Error aprobando pedido: ' + (error.message || error), 'error');
+            this.showToastGlobal('Error aprobando pedido: ' + (error.message || error), 'error', 'toast-global');
             console.error('Error en confirmarAprobarPedido:', error);
         }
     }
@@ -912,14 +912,14 @@ class FlowerShopApp {
         try {
             if (!confirm('¿Cancelar este pedido?')) return;
             await window.flowerShopAPI.actualizarEstadoPedido(id, 'cancelado');
-            this.showNotification('Pedido cancelado', 'success');
+            this.showToastGlobal('Pedido cancelado', 'success', 'toast-global');
             await Promise.all([
                 this.loadPedidosData(),
                 this.loadPedidosPendientes(),
                 this.updateSidebarBadges()
             ]);
         } catch (error) {
-            this.showNotification('Error cancelando pedido', 'error');
+            this.showToastGlobal('Error cancelando pedido', 'error', 'toast-global');
         }
     }
 
@@ -1040,7 +1040,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error cargando dashboard de inventario:', error);
-            this.showNotification('Error cargando dashboard de inventario', 'error');
+            this.showToastGlobal('Error cargando dashboard de inventario', 'error', 'toast-global');
         }
     }
     
@@ -1234,7 +1234,7 @@ class FlowerShopApp {
             this.displayStockAlerts(alertas);
         } catch (error) {
             console.error('Error cargando alertas de stock:', error);
-            this.showNotification('Error cargando alertas de stock', 'error');
+            this.showToastGlobal('Error cargando alertas de stock', 'error', 'toast-global');
         }
     }
 
@@ -1280,7 +1280,7 @@ class FlowerShopApp {
             this.displayPredictionTable(predicciones);
         } catch (error) {
             console.error('Error cargando predicción de demanda:', error);
-            this.showNotification('Error cargando predicción de demanda', 'error');
+            this.showToastGlobal('Error cargando predicción de demanda', 'error', 'toast-global');
         }
     }
 
@@ -1403,7 +1403,7 @@ class FlowerShopApp {
             const alertas = await window.flowerShopAPI.getAlertasStock();
             
             if (alertas.length === 0) {
-                this.showNotification('No hay productos que requieran reabastecimiento', 'info');
+                this.showToastGlobal('No hay productos que requieran reabastecimiento', 'info', 'toast-global');
                 return;
             }
 
@@ -1415,15 +1415,15 @@ class FlowerShopApp {
             const ordenes = await window.flowerShopAPI.generarOrdenCompra(productos);
             
             if (ordenes.length > 0) {
-                this.showNotification(`✅ Se generaron ${ordenes.length} órdenes de compra automáticamente`, 'success');
+                this.showToastGlobal(`✅ Se generaron ${ordenes.length} órdenes de compra automáticamente`, 'success', 'toast-global');
                 // Cambiar a la pestaña de órdenes
                 document.querySelector('[data-tab="ordenes"]').click();
             } else {
-                this.showNotification('No se pudieron generar órdenes automáticas. Verifica los proveedores.', 'warning');
+                this.showToastGlobal('No se pudieron generar órdenes automáticas. Verifica los proveedores.', 'warning', 'toast-global');
             }
         } catch (error) {
             console.error('Error generando orden automática:', error);
-            this.showNotification('Error generando orden automática', 'error');
+            this.showToastGlobal('Error generando orden automática', 'error', 'toast-global');
         }
     }
 
@@ -1433,7 +1433,7 @@ class FlowerShopApp {
             this.displayProviders(proveedores);
         } catch (error) {
             console.error('Error cargando proveedores:', error);
-            this.showNotification('Error cargando proveedores', 'error');
+            this.showToastGlobal('Error cargando proveedores', 'error', 'toast-global');
         }
     }
 
@@ -1490,7 +1490,7 @@ class FlowerShopApp {
             this.displayPurchaseOrders(ordenes);
         } catch (error) {
             console.error('Error cargando órdenes de compra:', error);
-            this.showNotification('Error cargando órdenes de compra', 'error');
+            this.showToastGlobal('Error cargando órdenes de compra', 'error', 'toast-global');
         }
     }
 
@@ -1531,7 +1531,7 @@ class FlowerShopApp {
             this.displayInventoryMovements(movimientos);
         } catch (error) {
             console.error('Error cargando movimientos de inventario:', error);
-            this.showNotification('Error cargando movimientos de inventario', 'error');
+            this.showToastGlobal('Error cargando movimientos de inventario', 'error', 'toast-global');
         }
     }
 
@@ -1606,7 +1606,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error cargando reportes:', error);
-            this.showNotification('Error cargando reportes', 'error');
+            this.showToastGlobal('Error cargando reportes', 'error', 'toast-global');
         }
     }
 
@@ -1922,7 +1922,7 @@ class FlowerShopApp {
 
     exportReports() {
         // TODO: Implementar exportación de reportes
-        this.showNotification('Funcionalidad de exportación en desarrollo', 'info');
+    this.showToastGlobal('Funcionalidad de exportación en desarrollo', 'info', 'toast-global');
     }
 
     async loadConfiguracionData() {
@@ -1944,7 +1944,7 @@ class FlowerShopApp {
             this.showModal('modal-producto');
         } catch (error) {
             console.error('❌ Error abriendo modal de producto:', error);
-            this.showNotification('Error abriendo formulario', 'error');
+            this.showToastGlobal('Error abriendo formulario', 'error', 'toast-global');
         }
     }
 
@@ -1958,7 +1958,7 @@ class FlowerShopApp {
             }
         } catch (error) {
             console.error('❌ Error cargando categorías:', error);
-            this.showNotification('Error cargando categorías', 'error');
+            this.showToastGlobal('Error cargando categorías', 'error', 'toast-global');
         }
     }
 
@@ -1979,7 +1979,7 @@ class FlowerShopApp {
             const productos = await window.flowerShopAPI.getProductos();
             const producto = productos.find(p => p.id === id);
             if (!producto) {
-                this.showNotification('No se encontró el producto', 'error');
+                this.showToastGlobal('No se encontró el producto', 'error', 'toast-global');
                 return;
             }
             // Rellenar el formulario
@@ -2000,14 +2000,14 @@ class FlowerShopApp {
             this.showModal('modal-producto');
         } catch (error) {
             console.error('❌ Error editando producto:', error);
-            this.showNotification('Error abriendo editor', 'error');
+            this.showToastGlobal('Error abriendo editor', 'error', 'toast-global');
         }
     }
 
     async verProducto(id) {
         console.log('👁️ Ver producto:', id);
         // TODO: Implementar vista de detalles del producto
-        this.showNotification('Vista de detalles en desarrollo', 'info');
+    this.showToastGlobal('Vista de detalles en desarrollo', 'info', 'toast-global');
     }
 
     async eliminarProducto(id) {
@@ -2016,10 +2016,10 @@ class FlowerShopApp {
                 console.log('🗑️ Eliminar producto:', id);
                 await window.flowerShopAPI.eliminarProducto(id);
                 await this.loadProductosData();
-                this.showNotification('Producto eliminado correctamente', 'success');
+                this.showToastGlobal('Producto eliminado correctamente', 'success', 'toast-global');
             } catch (error) {
                 console.error('❌ Error eliminando producto:', error);
-                this.showNotification('Error eliminando producto: ' + error.message, 'error');
+                this.showToastGlobal('Error eliminando producto: ' + error.message, 'error', 'toast-global');
             }
         }
     }
@@ -2044,7 +2044,7 @@ class FlowerShopApp {
             console.log('✅ Modal abierto exitosamente');
         } catch (error) {
             console.error('❌ Error abriendo modal de cliente:', error);
-            this.showNotification('Error abriendo formulario', 'error');
+            this.showToastGlobal('Error abriendo formulario', 'error', 'toast-global');
         }
     }
 
@@ -2062,7 +2062,7 @@ class FlowerShopApp {
             
             if (!cliente) {
                 console.error('❌ No se encontró el cliente con ID:', id);
-                this.showNotification('No se encontró el cliente', 'error');
+                this.showToastGlobal('No se encontró el cliente', 'error', 'toast-global');
                 return;
             }
             
@@ -2105,7 +2105,7 @@ class FlowerShopApp {
             console.log('✅ Modal de edición abierto exitosamente');
         } catch (error) {
             console.error('❌ Error editando cliente:', error);
-            this.showNotification('Error abriendo editor', 'error');
+            this.showToastGlobal('Error abriendo editor', 'error', 'toast-global');
         }
     }
 
@@ -2117,7 +2117,7 @@ class FlowerShopApp {
             const modal = document.getElementById('modal-historial-cliente');
             if (!modal) {
                 console.error('❌ Modal historial-cliente no encontrado en el DOM');
-                this.showNotification('Error: Modal de historial no encontrado', 'error');
+                this.showToastGlobal('Error: Modal de historial no encontrado', 'error', 'toast-global');
                 return;
             }
             
@@ -2126,7 +2126,7 @@ class FlowerShopApp {
             const cliente = clientes.find(c => c.id === parseInt(id));
             
             if (!cliente) {
-                this.showNotification('Cliente no encontrado', 'error');
+                this.showToastGlobal('Cliente no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -2201,7 +2201,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error cargando historial del cliente:', error);
-            this.showNotification('Error cargando historial del cliente', 'error');
+            this.showToastGlobal('Error cargando historial del cliente', 'error', 'toast-global');
         }
     }
 
@@ -2262,7 +2262,7 @@ class FlowerShopApp {
             const cliente = clientes.find(c => c.id === parseInt(id));
             
             if (!cliente) {
-                this.showNotification('Cliente no encontrado', 'error');
+                this.showToastGlobal('Cliente no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -2281,7 +2281,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error abriendo formulario de pedido:', error);
-            this.showNotification('Error abriendo formulario de pedido', 'error');
+            this.showToastGlobal('Error abriendo formulario de pedido', 'error', 'toast-global');
         }
     }
 
@@ -2358,13 +2358,13 @@ class FlowerShopApp {
     // Función auxiliar para ver detalles de un pedido desde el historial
     async verDetallePedido(pedidoId) {
         console.log('👁️ Ver detalles del pedido:', pedidoId);
-        this.showNotification('Vista de detalles del pedido en desarrollo', 'info');
+    this.showToastGlobal('Vista de detalles del pedido en desarrollo', 'info', 'toast-global');
     }
 
     // Función para exportar historial del cliente
     async exportarHistorialCliente() {
         console.log('📄 Exportar historial del cliente');
-        this.showNotification('Exportación de PDF en desarrollo', 'info');
+    this.showToastGlobal('Exportación de PDF en desarrollo', 'info', 'toast-global');
     }
 
     // Eventos
@@ -2375,7 +2375,7 @@ class FlowerShopApp {
             this.showModal('modal-evento');
         } catch (error) {
             console.error('❌ Error abriendo modal de evento:', error);
-            this.showNotification('Error abriendo formulario', 'error');
+            this.showToastGlobal('Error abriendo formulario', 'error', 'toast-global');
         }
     }
 
@@ -2387,7 +2387,7 @@ class FlowerShopApp {
             const eventos = await window.flowerShopAPI.getEventos();
             const evento = eventos.find(ev => ev.id === id);
             if (!evento) {
-                this.showNotification('No se encontró el evento', 'error');
+                this.showToastGlobal('No se encontró el evento', 'error', 'toast-global');
                 return;
             }
             //
@@ -2414,7 +2414,7 @@ class FlowerShopApp {
             this.showModal('modal-evento');
         } catch (error) {
             console.error('❌ Error editando evento:', error);
-            this.showNotification('Error abriendo editor', 'error');
+            this.showToastGlobal('Error abriendo editor', 'error', 'toast-global');
         }
     }
     // Eliminar evento
@@ -2422,10 +2422,10 @@ class FlowerShopApp {
         if (confirm('🗑️ ¿Estás seguro de que deseas eliminar este evento?\n\nEsta acción no se puede deshacer.')) {
             try {
                 await window.flowerShopAPI.eliminarEvento(id);
-                this.showNotification('Evento eliminado correctamente', 'success');
+                this.showToastGlobal('Evento eliminado correctamente', 'success', 'toast-global');
                 await this.loadEventosData();
             } catch (error) {
-                this.showNotification('Error al eliminar el evento', 'error');
+                this.showToastGlobal('Error al eliminar el evento', 'error', 'toast-global');
                 console.error('❌ Error eliminando evento:', error);
             }
         }
@@ -2545,7 +2545,7 @@ class FlowerShopApp {
             // Mostrar modal
             this.showModal('modal-nuevo-pedido');
         } catch (error) {
-            this.showNotification('Error abriendo formulario de pedido', 'error');
+            this.showToastGlobal('Error abriendo formulario de pedido', 'error', 'toast-global');
         }
     }
 
@@ -2698,7 +2698,7 @@ class FlowerShopApp {
                 };
             }).filter(p => p.producto_id && p.cantidad > 0);
             if (!clienteId || !entrega || productos.length === 0) {
-                this.showNotification('Completa todos los campos obligatorios y agrega al menos un producto', 'warning');
+                this.showToastGlobal('Completa todos los campos obligatorios y agrega al menos un producto', 'warning', 'toast-global');
                 return;
             }
 
@@ -2771,7 +2771,7 @@ class FlowerShopApp {
             // Actualizar badge de notificaciones inmediatamente
             const notificacionesActualizadas = await window.flowerShopAPI.listarNotificaciones();
             this.updateNotificacionesBadge(notificacionesActualizadas);
-            this.showNotification('Pedido creado correctamente', 'success');
+            this.showToastGlobal('Pedido creado correctamente', 'success', 'toast-global');
             this.limpiarYCerrarModalPedido();
             // Si estamos en la sección de pedidos, actualizar ambas tablas y el badge
             if (this.currentSection === 'pedidos') {
@@ -2784,7 +2784,7 @@ class FlowerShopApp {
                 await this.updateSidebarBadges();
             }
         } catch (error) {
-            this.showNotification('Error guardando pedido', 'error');
+            this.showToastGlobal('Error guardando pedido', 'error', 'toast-global');
         }
     }
 
@@ -2875,7 +2875,7 @@ class FlowerShopApp {
 
             // Validación básica
             if (!producto.nombre || !producto.precio_venta || !producto.categoria_id) {
-                this.showNotification('Por favor completa los campos obligatorios', 'warning');
+                this.showToastGlobal('Por favor completa los campos obligatorios', 'warning', 'toast-global');
                 return;
             }
 
@@ -2884,16 +2884,16 @@ class FlowerShopApp {
             if (editId) {
                 await window.flowerShopAPI.actualizarProducto(Number(editId), producto);
                 form.removeAttribute('data-edit-id');
-                this.showNotification('Producto actualizado correctamente', 'success');
+                this.showToastGlobal('Producto actualizado correctamente', 'success', 'toast-global');
             } else {
                 await window.flowerShopAPI.crearProducto(producto);
-                this.showNotification('Producto guardado correctamente', 'success');
+                this.showToastGlobal('Producto guardado correctamente', 'success', 'toast-global');
             }
             this.hideModal('modal-producto');
             await this.loadProductosData();
         } catch (error) {
             console.error('❌ Error guardando producto:', error);
-            this.showNotification('Error guardando producto: ' + error.message, 'error');
+            this.showToastGlobal('Error guardando producto: ' + error.message, 'error', 'toast-global');
         }
     }
 
@@ -2921,24 +2921,24 @@ class FlowerShopApp {
             console.log('📝 Guardando cliente:', cliente);
 
             if (!cliente.nombre) {
-                this.showNotification('El nombre completo es obligatorio', 'warning');
+                this.showToastGlobal('El nombre completo es obligatorio', 'warning', 'toast-global');
                 return;
             }
 
             // Validar email si se proporciona
             if (cliente.email && !cliente.email.includes('@')) {
-                this.showNotification('El formato del email no es válido', 'warning');
+                this.showToastGlobal('El formato del email no es válido', 'warning', 'toast-global');
                 return;
             }
 
             if (editId) {
                 console.log('✏️ Actualizando cliente existente con ID:', editId);
                 await window.flowerShopAPI.actualizarCliente(editId, cliente);
-                this.showNotification('Cliente actualizado correctamente', 'success');
+                this.showToastGlobal('Cliente actualizado correctamente', 'success', 'toast-global');
             } else {
                 console.log('➕ Creando nuevo cliente');
                 await window.flowerShopAPI.crearCliente(cliente);
-                this.showNotification('Cliente creado correctamente', 'success');
+                this.showToastGlobal('Cliente creado correctamente', 'success', 'toast-global');
             }
             
             this.hideModal('modal-cliente');
@@ -2946,7 +2946,7 @@ class FlowerShopApp {
 
         } catch (error) {
             console.error('❌ Error guardando cliente:', error);
-            this.showNotification('Error guardando cliente: ' + error.message, 'error');
+            this.showToastGlobal('Error guardando cliente: ' + error.message, 'error', 'toast-global');
         }
     }
 
@@ -2969,7 +2969,7 @@ class FlowerShopApp {
             console.log('📝 Guardando evento:', evento);
 
             if (!evento.nombre || !evento.fecha_inicio || !evento.fecha_fin) {
-                this.showNotification('Por favor completa los campos obligatorios', 'warning');
+                this.showToastGlobal('Por favor completa los campos obligatorios', 'warning', 'toast-global');
                 return;
             }
 
@@ -2978,17 +2978,17 @@ class FlowerShopApp {
                 // Actualizar evento existente
                 await window.flowerShopAPI.actualizarEvento(Number(editId), evento);
                 form.removeAttribute('data-edit-id');
-                this.showNotification('Evento actualizado correctamente', 'success');
+                this.showToastGlobal('Evento actualizado correctamente', 'success', 'toast-global');
             } else {
                 // Crear nuevo evento
                 await window.flowerShopAPI.crearEvento(evento);
-                this.showNotification('Evento guardado correctamente', 'success');
+                this.showToastGlobal('Evento guardado correctamente', 'success', 'toast-global');
             }
             this.hideModal('modal-evento');
             await this.loadEventosData();
         } catch (error) {
             console.error('❌ Error guardando evento:', error);
-            this.showNotification('Error guardando evento: ' + error.message, 'error');
+            this.showToastGlobal('Error guardando evento: ' + error.message, 'error', 'toast-global');
         }
     }
 
@@ -3132,7 +3132,7 @@ class FlowerShopApp {
         
         console.log('🔍 Búsqueda global:', termino);
         // TODO: Implementar búsqueda global en todas las secciones
-        this.showNotification(`Buscando: "${termino}"`, 'info');
+    this.showToastGlobal(`Buscando: "${termino}"`, 'info', 'toast-global');
     }
 
     updateBreadcrumbs(section) {
@@ -3215,72 +3215,57 @@ class FlowerShopApp {
         alert('🌸 Floristería Manager v1.0.0\nSistema de gestión integral para floristerías\n\n© 2025 - Desarrollado con ❤️');
     }
 
-    showNotification(message, type = 'info') {
-        console.log(`${type.toUpperCase()}: ${message}`);
-        
-        // Crear elemento de notificación
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <span class="notification-icon">${this.getNotificationIcon(type)}</span>
-                <span class="notification-message">${message}</span>
-            </div>
-        `;
-        
-        // Estilos
-        Object.assign(notification.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '1rem 1.5rem',
-            borderRadius: '8px',
-            color: 'white',
-            backgroundColor: this.getNotificationColor(type),
-            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-            zIndex: '2000',
-            transform: 'translateX(100%)',
-            transition: 'transform 0.3s ease-out',
-            minWidth: '300px',
-            maxWidth: '500px'
-        });
+    /**
+     * Muestra un toast global en la esquina superior derecha.
+     * @param {string} message - Mensaje a mostrar
+     * @param {string} type - Tipo: 'success', 'error', 'info', 'warning'
+     * @param {string} [id] - ID único opcional para el toast (por defecto 'toast-global')
+     */
+    showToastGlobal(message, type = 'info', id = 'toast-global') {
+        // Eliminar cualquier toast global existente
+        const prev = document.getElementById(id);
+        if (prev) prev.remove();
 
-        document.body.appendChild(notification);
+        // Crear el toast
+        const toast = document.createElement('div');
+        toast.id = id;
+    toast.className = `toast-global toast-global-${type}`;
+        toast.innerHTML = `
+            <span class="toast-icon">${this.getToastIcon(type)}</span>
+            <span class="toast-message">${message}</span>
+        `;
+
+    // Cerrar al hacer click en el toast
+    toast.onclick = () => toast.remove();
+
+        // Insertar en el body
+        document.body.appendChild(toast);
 
         // Animación de entrada
-        setTimeout(() => {
-            notification.style.transform = 'translateX(0)';
-        }, 10);
+        setTimeout(() => toast.classList.add('show'), 10);
 
-        // Remover después de 4 segundos
+        // Auto-cerrar tras 4s
         setTimeout(() => {
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
+            if (document.getElementById(id)) toast.remove();
         }, 4000);
     }
 
-    getNotificationIcon(type) {
-        const icons = {
-            success: '✅',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️'
-        };
-        return icons[type] || 'ℹ️';
-    }
-
-    getNotificationColor(type) {
-        const colors = {
-            success: '#4caf50',
-            error: '#f44336',
-            warning: '#ff9800',
-            info: '#2196f3'
-        };
-        return colors[type] || '#2196f3';
+    /**
+     * Devuelve el icono adecuado para el tipo de toast
+     */
+    getToastIcon(type) {
+        // SVG icons for a more professional look
+        switch (type) {
+            case 'success':
+                return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34c759" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="#e6f4ea"/><path d="M8 12l2.5 2.5L16 9"/></svg>`;
+            case 'error':
+                return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="#fbeaea"/><path d="M15 9l-6 6M9 9l6 6"/></svg>`;
+            case 'warning':
+                return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="#fff7e6"/><path d="M12 8v4M12 16h.01"/></svg>`;
+            case 'info':
+            default:
+                return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="#eaf1fb"/><path d="M12 8h.01M12 12v4"/></svg>`;
+        }
     }
 
     // ========== FUNCIONES DE INVENTARIO AVANZADO ==========
@@ -3351,7 +3336,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error al crear proveedor:', error);
-            this.showNotification('Error al abrir formulario de proveedor', 'error');
+            this.showToastGlobal('Error al abrir formulario de proveedor', 'error', 'toast-global');
         }
     }
 
@@ -3494,10 +3479,10 @@ class FlowerShopApp {
             if (isEdit) {
                 const id = parseInt(formData.get('id'));
                 await window.flowerShopAPI.actualizarProveedor(id, proveedor);
-                this.showNotification('Proveedor actualizado correctamente', 'success');
+                this.showToastGlobal('Proveedor actualizado correctamente', 'success', 'toast-global');
             } else {
                 await window.flowerShopAPI.crearProveedor(proveedor);
-                this.showNotification('Proveedor creado correctamente', 'success');
+                this.showToastGlobal('Proveedor creado correctamente', 'success', 'toast-global');
             }
             
             // Cerrar modal usando el método estándar
@@ -3506,24 +3491,24 @@ class FlowerShopApp {
             await this.loadProviders();
         } catch (error) {
             console.error('Error guardando proveedor:', error);
-            this.showNotification('Error al guardar proveedor', 'error');
+            this.showToastGlobal('Error al guardar proveedor', 'error', 'toast-global');
         }
     }
 
     async generarOrdenAutomatica() {
         try {
-            this.showNotification('Generando orden automática...', 'info');
+            this.showToastGlobal('Generando orden automática...', 'info', 'toast-global');
             const ordenAutomatica = await window.flowerShopAPI.generarOrdenAutomatica();
             
             if (ordenAutomatica && ordenAutomatica.productos && ordenAutomatica.productos.length > 0) {
-                this.showNotification(`Orden automática generada con ${ordenAutomatica.productos.length} productos`, 'success');
+                this.showToastGlobal(`Orden automática generada con ${ordenAutomatica.productos.length} productos`, 'success', 'toast-global');
                 await this.loadOrdenesCompra();
             } else {
-                this.showNotification('No se necesitan órdenes automáticas en este momento', 'info');
+                this.showToastGlobal('No se necesitan órdenes automáticas en este momento', 'info', 'toast-global');
             }
         } catch (error) {
             console.error('Error generando orden automática:', error);
-            this.showNotification('Error al generar orden automática', 'error');
+            this.showToastGlobal('Error al generar orden automática', 'error', 'toast-global');
         }
     }
 
@@ -3668,7 +3653,7 @@ class FlowerShopApp {
             modal.style.display = 'flex';
         } catch (error) {
             console.error('Error al crear orden:', error);
-            this.showNotification('Error al abrir formulario de orden', 'error');
+            this.showToastGlobal('Error al abrir formulario de orden', 'error', 'toast-global');
         }
     }
 
@@ -3680,7 +3665,7 @@ class FlowerShopApp {
             modal.style.display = 'flex';
         } catch (error) {
             console.error('Error al crear movimiento:', error);
-            this.showNotification('Error al abrir formulario de movimiento', 'error');
+            this.showToastGlobal('Error al abrir formulario de movimiento', 'error', 'toast-global');
         }
     }
 
@@ -3790,7 +3775,7 @@ class FlowerShopApp {
             };
 
             await window.electronAPI.createMovimientoInventario(movimiento);
-            this.showNotification('Movimiento registrado correctamente', 'success');
+            this.showToastGlobal('Movimiento registrado correctamente', 'success', 'toast-global');
             
             const modal = document.getElementById('modal-nuevo-movimiento');
             if (modal) {
@@ -3801,7 +3786,7 @@ class FlowerShopApp {
             await this.loadMovimientosInventario();
         } catch (error) {
             console.error('Error guardando movimiento:', error);
-            this.showNotification('Error al registrar movimiento', 'error');
+            this.showToastGlobal('Error al registrar movimiento', 'error', 'toast-global');
         }
     }
 
@@ -3816,7 +3801,7 @@ class FlowerShopApp {
             
             if (!proveedor) {
                 console.error('❌ Proveedor no encontrado');
-                this.showNotification('Proveedor no encontrado', 'error');
+                this.showToastGlobal('Proveedor no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -3831,7 +3816,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('❌ Error al editar proveedor:', error);
-            this.showNotification('Error al cargar datos del proveedor', 'error');
+            this.showToastGlobal('Error al cargar datos del proveedor', 'error', 'toast-global');
         }
     }
 
@@ -3842,7 +3827,7 @@ class FlowerShopApp {
             const proveedor = proveedores.find(p => p.id === id);
             
             if (!proveedor) {
-                this.showNotification('Proveedor no encontrado', 'error');
+                this.showToastGlobal('Proveedor no encontrado', 'error', 'toast-global');
                 return;
             }
             
@@ -3851,18 +3836,18 @@ class FlowerShopApp {
             
             if (confirm(confirmMessage)) {
                 await window.flowerShopAPI.eliminarProveedor(id);
-                this.showNotification(`Proveedor "${proveedor.nombre}" eliminado correctamente`, 'success');
+                this.showToastGlobal(`Proveedor "${proveedor.nombre}" eliminado correctamente`, 'success', 'toast-global');
                 await this.loadProviders(); // Recargar lista
             }
             
         } catch (error) {
             console.error('❌ Error eliminando proveedor:', error);
-            this.showNotification('Error al eliminar proveedor: ' + error.message, 'error');
+            this.showToastGlobal('Error al eliminar proveedor: ' + error.message, 'error', 'toast-global');
         }
     }
 
     verOrden(id) {
-        this.showNotification(`Viendo orden ${id}`, 'info');
+    this.showToastGlobal(`Viendo orden ${id}`, 'info', 'toast-global');
     }
 
     createOrdenModal(orden = null) {
@@ -3972,10 +3957,10 @@ class FlowerShopApp {
             if (isEdit) {
                 orden.id = parseInt(formData.get('id'));
                 await window.electronAPI.updateOrdenCompra(orden);
-                this.showNotification('Orden actualizada correctamente', 'success');
+                this.showToastGlobal('Orden actualizada correctamente', 'success', 'toast-global');
             } else {
                 await window.electronAPI.createOrdenCompra(orden);
-                this.showNotification('Orden creada correctamente', 'success');
+                this.showToastGlobal('Orden creada correctamente', 'success', 'toast-global');
             }
             
             const modal = document.getElementById('modal-orden');
@@ -3987,7 +3972,7 @@ class FlowerShopApp {
             await this.loadOrdenesCompra();
         } catch (error) {
             console.error('Error guardando orden:', error);
-            this.showNotification('Error al guardar orden', 'error');
+            this.showToastGlobal('Error al guardar orden', 'error', 'toast-global');
         }
     }
 
@@ -3998,7 +3983,7 @@ class FlowerShopApp {
             const orden = ordenes.find(o => o.id === id);
             
             if (!orden) {
-                this.showNotification('Orden no encontrada', 'error');
+                this.showToastGlobal('Orden no encontrada', 'error', 'toast-global');
                 return;
             }
 
@@ -4009,7 +3994,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('Error al editar orden:', error);
-            this.showNotification('Error al cargar datos de la orden', 'error');
+            this.showToastGlobal('Error al cargar datos de la orden', 'error', 'toast-global');
         }
     }
 
@@ -4020,7 +4005,7 @@ class FlowerShopApp {
             const movimiento = movimientos.find(m => m.id === id);
             
             if (!movimiento) {
-                this.showNotification('Movimiento no encontrado', 'error');
+                this.showToastGlobal('Movimiento no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -4078,7 +4063,7 @@ class FlowerShopApp {
             
         } catch (error) {
             console.error('Error al ver movimiento:', error);
-            this.showNotification('Error al cargar datos del movimiento', 'error');
+            this.showToastGlobal('Error al cargar datos del movimiento', 'error', 'toast-global');
         }
     }
 
@@ -4089,7 +4074,7 @@ class FlowerShopApp {
             const producto = productos.find(p => p.id === productoId);
             
             if (!producto) {
-                this.showNotification('Producto no encontrado', 'error');
+                this.showToastGlobal('Producto no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -4165,19 +4150,19 @@ class FlowerShopApp {
                 
                 try {
                     await window.electronAPI.createOrdenCompra(orden);
-                    this.showNotification('Orden generada correctamente', 'success');
+                    this.showToastGlobal('Orden generada correctamente', 'success', 'toast-global');
                     modal.style.display = 'none';
                     modal.remove();
                     await this.loadOrdenesCompra();
                 } catch (error) {
                     console.error('Error creando orden:', error);
-                    this.showNotification('Error al generar orden', 'error');
+                    this.showToastGlobal('Error al generar orden', 'error', 'toast-global');
                 }
             });
             
         } catch (error) {
             console.error('Error al generar orden:', error);
-            this.showNotification('Error al cargar datos del producto', 'error');
+            this.showToastGlobal('Error al cargar datos del producto', 'error', 'toast-global');
         }
     }
 
@@ -4495,7 +4480,7 @@ class FlowerShopApp {
             console.log('✅ Datos iniciales cargados correctamente');
         } catch (error) {
             console.error('❌ Error cargando datos iniciales:', error);
-            this.showNotification('Error cargando datos iniciales', 'error');
+            this.showToastGlobal('Error cargando datos iniciales', 'error', 'toast-global');
         }
     }
 
@@ -4507,7 +4492,7 @@ class FlowerShopApp {
             const producto = productos.find(p => p.id === id);
             
             if (!producto) {
-                this.showNotification('Producto no encontrado', 'error');
+                this.showToastGlobal('Producto no encontrado', 'error', 'toast-global');
                 return;
             }
 
