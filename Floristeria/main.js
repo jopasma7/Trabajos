@@ -20,7 +20,7 @@ function createMainWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'src', 'preload.js')
         },
-        show: false
+    show: false
     });
     
     // Cargar la página principal
@@ -28,6 +28,7 @@ function createMainWindow() {
 
     // Mostrar ventana cuando esté lista
     mainWindow.once('ready-to-show', () => {
+        mainWindow.maximize();
         mainWindow.show();
         mainWindow.focus();
     });
