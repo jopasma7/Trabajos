@@ -150,22 +150,6 @@ class FlowerShopApp {
             this.renderNotificaciones(notificaciones);
             this.updateNotificacionesBadge(notificaciones);
             this.setupNotificacionesActions();
-            // Botón para añadir notificaciones demo
-            const btnDemo = document.getElementById('add-demo-notifications-btn');
-            if (btnDemo) {
-                btnDemo.onclick = async () => {
-                    const demoNotificaciones = [
-                        { titulo: 'Bienvenido a la Floristería', mensaje: '¡Gracias por usar la app!', tipo: 'success' },
-                        { titulo: 'Stock bajo', mensaje: 'El producto "Rosas Rojas" está por debajo del stock mínimo.', tipo: 'warning' },
-                        { titulo: 'Nuevo pedido', mensaje: 'Se ha registrado un nuevo pedido para el cliente Ana.', tipo: 'info' },
-                        { titulo: 'Error de conexión', mensaje: 'No se pudo sincronizar con el servidor.', tipo: 'error' }
-                    ];
-                    for (const n of demoNotificaciones) {
-                        await window.flowerShopAPI.crearNotificacion(n);
-                    }
-                    await this.loadNotificacionesData();
-                };
-            }
 
             // Tabs de notificaciones y papelera
             const tabNotificaciones = document.getElementById('tab-notificaciones');
@@ -366,12 +350,18 @@ class FlowerShopApp {
     }
 
     async updateNotificacionesBadge(notificaciones) {
-        // Actualiza el badge de notificaciones en el topbar
-        const badge = document.getElementById('badge-notificaciones');
-        if (!badge) return;
+        // Actualiza el badge de notificaciones en el header y en la sección
+        const badgeHeader = document.getElementById('badge-notificaciones');
+        const badgeSection = document.getElementById('notifications-badge');
         const noLeidas = (notificaciones || []).filter(n => !n.leida).length;
-        badge.textContent = noLeidas > 0 ? noLeidas : '';
-        badge.style.display = noLeidas > 0 ? 'inline-block' : 'none';
+        if (badgeHeader) {
+            badgeHeader.textContent = noLeidas > 0 ? noLeidas : '';
+            badgeHeader.style.display = noLeidas > 0 ? 'inline-block' : 'none';
+        }
+        if (badgeSection) {
+            badgeSection.textContent = noLeidas > 0 ? noLeidas : '';
+            badgeSection.style.display = noLeidas > 0 ? 'inline-block' : 'none';
+        }
     }
 
     // ========== DASHBOARD ==========

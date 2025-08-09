@@ -1,40 +1,4 @@
 .reserva-item {
-  display: grid;
-  grid-template-columns: auto 1.5fr 1fr auto auto auto;
-  gap: 1.2rem;
-  align-items: center;
-  width: 100%;
-  box-sizing: border-box;
-  padding: 1.2rem 1rem;
-  border-radius: 16px;
-  background: #fff;
-  position: relative;
-  margin: 0;
-}
-
-@media (max-width: 700px) {
-  .reserva-item {
-    grid-template-columns: 1fr;
-    gap: 0.7rem;
-    padding: 1rem 0.5rem;
-  }
-  .reserva-item > div {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-}
-
-.reservas-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  padding: 1.5rem 1rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.reserva-item {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -798,15 +762,6 @@
     color: var(--success-800);
 }
 
-.badge-warning {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #92400e;
-}
-
-.badge-danger {
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
-    color: #991b1b;
-}
 
 .status-badge {
     padding: var(--space-2) var(--space-3);

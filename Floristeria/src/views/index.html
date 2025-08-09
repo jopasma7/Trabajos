@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="nav-actions">
                     <button class="nav-action-btn" title="Notificaciones">
                         <span class="icon">🔔</span>
-                        <span class="badge">3</span>
+                        <span class="badge notifications-badge" id="badge-notificaciones"></span>
                     </button>
                     <button class="nav-action-btn" title="Configuración">
                         <span class="icon">⚙️</span>
@@ -231,9 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <button class="tab-btn" id="tab-papelera">Papelera</button>
                                         </div>
                                         <div class="notifications-actions-bar">
-                                            <button id="add-demo-notifications-btn" class="action-btn info" title="Añadir notificaciones demo">
-                                                <span>➕</span> Añadir notificaciones demo
-                                            </button>
                                         </div>
                                         <div class="notifications-tabs-content">
                                             <div id="tab-content-notificaciones" class="tab-content active">
