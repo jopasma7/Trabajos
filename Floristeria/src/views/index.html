@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <link rel="stylesheet" href="../styles/componentes/modal.css">
     <link rel="stylesheet" href="../styles/componentes/tables.css">
     <link rel="stylesheet" href="../styles/componentes/button.css">
+    <link rel="stylesheet" href="../styles/sections/notificaciones.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -215,19 +216,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </section>
                 <!-- Notificaciones Section -->
-                <section id="notificaciones-section" class="content-section" style="display: none;">
-                    <h2>🔔 Notificaciones</h2>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Tus notificaciones</h3>
-                        </div>
-                        <div class="card-body">
-                            <ul id="notificaciones-list" class="notifications-list">
-                                <li>✅ No tienes notificaciones nuevas.</li>
-                            </ul>
-                        </div>
-                    </div>
-                </section>
+                <!-- Notificaciones Section -->
+                <link rel="stylesheet" href="../styles/sections/notificaciones.css">
+                                <section id="notificaciones-section" class="content-section" style="display: none;">
+                                    <h2 style="font-size:1.7rem; font-weight:800; color:#1f2937; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.7rem;">
+                                        <span style="font-size:1.3em; margin-right:0.2em;">🔔</span>
+                                        <span style="color:#1f2937;">Notificaciones</span>
+                                        <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Avisos y alertas</span>
+                                        <span id="notifications-badge" class="notifications-badge" style="display:none; margin-left:0.7rem;">0</span>
+                                    </h2>
+                                    <div class="notifications-card">
+                                        <div class="notifications-tabs">
+                                            <button class="tab-btn active" id="tab-notificaciones">Notificaciones</button>
+                                            <button class="tab-btn" id="tab-papelera">Papelera</button>
+                                        </div>
+                                        <div class="notifications-actions-bar">
+                                            <button id="add-demo-notifications-btn" class="action-btn info" title="Añadir notificaciones demo">
+                                                <span>➕</span> Añadir notificaciones demo
+                                            </button>
+                                        </div>
+                                        <div class="notifications-tabs-content">
+                                            <div id="tab-content-notificaciones" class="tab-content active">
+                                                <ul id="notificaciones-list" class="notifications-list">
+                                                    <li class="notifications-empty">Cargando notificaciones...</li>
+                                                </ul>
+                                            </div>
+                                            <div id="tab-content-papelera" class="tab-content">
+                                                <ul id="notificaciones-trash-list" class="notifications-list">
+                                                    <li class="notifications-empty">No hay notificaciones eliminadas.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
 
                 <!-- Perfil Section -->
                 <section id="perfil-section" class="content-section" style="display: none;">

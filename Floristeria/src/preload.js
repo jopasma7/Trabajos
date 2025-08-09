@@ -3,6 +3,14 @@
 
 // Exponer APIs seguras al renderer process
 contextBridge.exposeInMainWorld('flowerShopAPI', {
+    // ================= NOTIFICACIONES MULTIUSUARIO =================
+    crearNotificacion: (notificacion) => ipcRenderer.invoke('crear-notificacion', notificacion),
+    listarNotificaciones: (filtros = {}) => ipcRenderer.invoke('listar-notificaciones', filtros),
+    marcarNotificacionLeida: (id) => ipcRenderer.invoke('marcar-notificacion-leida', id),
+    eliminarNotificacion: (id) => ipcRenderer.invoke('eliminar-notificacion', id),
+    marcarTodasNotificacionesLeidas: (usuario_id = null) => ipcRenderer.invoke('marcar-todas-leidas', usuario_id),
+    eliminarTodasNotificaciones: (usuario_id = null) => ipcRenderer.invoke('eliminar-todas-notificaciones', usuario_id),
+    listarNotificacionesEliminadas: (filtros = {}) => ipcRenderer.invoke('listar-notificaciones-eliminadas', filtros),
     // Métodos de consulta
     getProductos: () => ipcRenderer.invoke('get-productos'),
     getClientes: () => ipcRenderer.invoke('get-clientes'),

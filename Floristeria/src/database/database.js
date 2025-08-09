@@ -3,6 +3,110 @@ const path = require('path');
 const fs = require('fs');
 
 class FlowerShopDatabase {
+    /**
+     * Listar notificaciones eliminadas (papelera)
+     * @param {Object} filtros { usuario_id, tipo }
+     */
+    async listarNotificacionesEliminadas({ usuario_id = null, tipo = null } = {}) {
+        let sql = `SELECT * FROM notificaciones WHERE eliminada = 1`;
+        const params = [];
+        if (usuario_id !== null) {
+            sql += ` AND (usuario_id = ? OR usuario_id IS NULL)`;
+            params.push(usuario_id);
+        }
+        if (tipo) {
+            sql += ` AND tipo = ?`;
+            params.push(tipo);
+        }
+        sql += ` ORDER BY fecha_creada DESC`;
+        return this.allQuery(sql, params);
+    }
+    // ================= NOTIFICACIONES MULTIUSUARIO =================
+
+    /**
+     * Crear una nueva notificación
+     * @param {Object} notificacion { usuario_id, titulo, mensaje, tipo, origen, datos_extra }
+     */
+    async crearNotificacion(notificacion) {
+        const { usuario_id = null, titulo, mensaje, tipo = 'info', origen = null, datos_extra = null } = notificacion;
+        return this.runQuery(
+            `INSERT INTO notificaciones (usuario_id, titulo, mensaje, tipo, origen, datos_extra, eliminada) VALUES (?, ?, ?, ?, ?, ?, 0)`,
+            [usuario_id, titulo, mensaje, tipo, origen, datos_extra ? JSON.stringify(datos_extra) : null]
+        );
+    }
+
+    /**
+     * Listar notificaciones de un usuario (puede filtrar por leídas/no leídas, tipo, etc.)
+     * @param {Object} filtros { usuario_id, soloNoLeidas, tipo }
+     */
+    async listarNotificaciones({ usuario_id = null, soloNoLeidas = false, tipo = null } = {}) {
+    let sql = `SELECT * FROM notificaciones WHERE (eliminada IS NULL OR eliminada = 0)`;
+        const params = [];
+        if (usuario_id !== null) {
+            sql += ` AND (usuario_id = ? OR usuario_id IS NULL)`; // Notificaciones generales o del usuario
+            params.push(usuario_id);
+        }
+        if (soloNoLeidas) {
+            sql += ` AND leida = 0`;
+        }
+        if (tipo) {
+            sql += ` AND tipo = ?`;
+            params.push(tipo);
+        }
+        sql += ` ORDER BY fecha_creada DESC`;
+        return this.allQuery(sql, params);
+    }
+
+    /**
+     * Marcar una notificación como leída
+     * @param {number} id
+     */
+    async marcarNotificacionLeida(id) {
+        return this.runQuery(
+            `UPDATE notificaciones SET leida = 1, fecha_leida = CURRENT_TIMESTAMP WHERE id = ?`,
+            [id]
+        );
+    }
+
+    /**
+     * Eliminar una notificación
+     * @param {number} id
+     */
+    async eliminarNotificacion(id) {
+    return this.runQuery(`UPDATE notificaciones SET eliminada = 1 WHERE id = ?`, [id]);
+    }
+
+    /**
+     * Marcar todas las notificaciones como leídas para un usuario
+     * @param {number|null} usuario_id
+     */
+    async marcarTodasLeidas(usuario_id = null) {
+        if (usuario_id !== null) {
+            return this.runQuery(
+                `UPDATE notificaciones SET leida = 1, fecha_leida = CURRENT_TIMESTAMP WHERE (usuario_id = ? OR usuario_id IS NULL) AND leida = 0`,
+                [usuario_id]
+            );
+        } else {
+            return this.runQuery(
+                `UPDATE notificaciones SET leida = 1, fecha_leida = CURRENT_TIMESTAMP WHERE leida = 0`
+            );
+        }
+    }
+
+    /**
+     * Eliminar todas las notificaciones de un usuario
+     * @param {number|null} usuario_id
+     */
+    async eliminarTodasNotificaciones(usuario_id = null) {
+        if (usuario_id !== null) {
+            return this.runQuery(
+                `UPDATE notificaciones SET eliminada = 1 WHERE usuario_id = ? OR usuario_id IS NULL`,
+                [usuario_id]
+            );
+        } else {
+            return this.runQuery(`UPDATE notificaciones SET eliminada = 1`);
+        }
+    }
     // Actualizar estado de un pedido
     async actualizarEstadoPedido(pedidoId, nuevoEstado) {
         return this.runQuery('UPDATE pedidos SET estado = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [nuevoEstado, pedidoId]);
@@ -42,7 +146,7 @@ class FlowerShopDatabase {
     }
 
     async initializeTables() {
-        const tables = [
+    const tables = [
             // Tabla de categorías de productos
             `CREATE TABLE IF NOT EXISTS categorias (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -296,13 +400,28 @@ class FlowerShopDatabase {
                 fecha_resolucion DATETIME,
                 notas_resolucion TEXT,
                 FOREIGN KEY (producto_id) REFERENCES productos (id)
+            )`,
+
+            // Tabla de notificaciones multiusuario
+            `CREATE TABLE IF NOT EXISTS notificaciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario_id INTEGER,
+                titulo TEXT NOT NULL,
+                mensaje TEXT NOT NULL,
+                tipo TEXT DEFAULT 'info', -- 'info', 'warning', 'success', 'error', etc.
+                leida BOOLEAN DEFAULT 0,
+                fecha_creada DATETIME DEFAULT CURRENT_TIMESTAMP,
+                fecha_leida DATETIME,
+                origen TEXT, -- módulo o funcionalidad que generó la notificación
+                datos_extra TEXT, -- JSON opcional para datos adicionales
+                eliminada BOOLEAN DEFAULT 0,
+                FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
             )`
         ];
 
         for (const tableSQL of tables) {
             await this.runQuery(tableSQL);
         }
-        
         console.log('Tablas inicializadas correctamente');
     }
 

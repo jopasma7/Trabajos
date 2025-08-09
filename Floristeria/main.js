@@ -1,7 +1,20 @@
-
+// Recarga automática en desarrollo con electron-reload
+try {
+    require('electron-reload')(__dirname, {
+        electron: require(`${__dirname}/node_modules/electron`),
+        ignored: [
+            /data\\/,    // Ignora carpeta data en Windows
+            /data\//,    // Ignora carpeta data en Linux/Mac
+            /\.db$/,     // Ignora archivos .db
+            /floristeria\.db$/ // Ignora específicamente tu base de datos
+        ]
+    });
+} catch (_) {}
 const { app, BrowserWindow, Menu, ipcMain } = require('electron');
 const path = require('path');
 const FlowerShopDatabase = require('./src/database/database');
+
+
 
 // Variables globales
 let mainWindow;
@@ -356,6 +369,48 @@ ipcMain.handle('crear-cliente', async (event, cliente) => {
         console.error('Error creando cliente:', error);
         throw error;
     }
+});
+
+// Handler para marcar todas las notificaciones como leídas
+ipcMain.handle('marcar-todas-leidas', async (event, usuario_id = null) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.marcarTodasLeidas(usuario_id);
+});
+
+// Handler para listar notificaciones
+ipcMain.handle('listar-notificaciones', async (event, filtros = {}) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.listarNotificaciones(filtros);
+});
+
+// Handler para crear notificaciones (para pruebas)
+ipcMain.handle('crear-notificacion', async (event, notificacion) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.crearNotificacion(notificacion);
+});
+
+// Handler para marcar notificación como leída
+ipcMain.handle('marcar-notificacion-leida', async (event, id) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.marcarNotificacionLeida(id);
+});
+
+// Handler para eliminar todas las notificaciones
+ipcMain.handle('eliminar-todas-notificaciones', async (event, usuario_id = null) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.eliminarTodasNotificaciones(usuario_id);
+});
+
+// Handler para eliminar notificación
+ipcMain.handle('eliminar-notificacion', async (event, id) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.eliminarNotificacion(id);
+});
+
+// Handler para listar notificaciones eliminadas (papelera)
+ipcMain.handle('listar-notificaciones-eliminadas', async (event, filtros = {}) => {
+    if (!dbManager) throw new Error('DB no inicializada');
+    return dbManager.listarNotificacionesEliminadas(filtros);
 });
 
 ipcMain.handle('crear-evento', async (event, evento) => {

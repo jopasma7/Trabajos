@@ -133,11 +133,245 @@ class FlowerShopApp {
                 case 'configuracion':
                     await this.loadConfiguracionData();
                     break;
+                case 'notificaciones':
+                    await this.loadNotificacionesData();
+                    break;
             }
         } catch (error) {
             console.error(`❌ Error cargando datos de ${sectionId}:`, error);
             this.showNotification('Error cargando datos de la sección', 'error');
         }
+    }
+
+    // ========== NOTIFICACIONES ========== 
+    async loadNotificacionesData() {
+        try {
+            const notificaciones = await window.flowerShopAPI.listarNotificaciones();
+            this.renderNotificaciones(notificaciones);
+            this.updateNotificacionesBadge(notificaciones);
+            this.setupNotificacionesActions();
+            // Botón para añadir notificaciones demo
+            const btnDemo = document.getElementById('add-demo-notifications-btn');
+            if (btnDemo) {
+                btnDemo.onclick = async () => {
+                    const demoNotificaciones = [
+                        { titulo: 'Bienvenido a la Floristería', mensaje: '¡Gracias por usar la app!', tipo: 'success' },
+                        { titulo: 'Stock bajo', mensaje: 'El producto "Rosas Rojas" está por debajo del stock mínimo.', tipo: 'warning' },
+                        { titulo: 'Nuevo pedido', mensaje: 'Se ha registrado un nuevo pedido para el cliente Ana.', tipo: 'info' },
+                        { titulo: 'Error de conexión', mensaje: 'No se pudo sincronizar con el servidor.', tipo: 'error' }
+                    ];
+                    for (const n of demoNotificaciones) {
+                        await window.flowerShopAPI.crearNotificacion(n);
+                    }
+                    await this.loadNotificacionesData();
+                };
+            }
+
+            // Tabs de notificaciones y papelera
+            const tabNotificaciones = document.getElementById('tab-notificaciones');
+            const tabPapelera = document.getElementById('tab-papelera');
+            const tabContentNotificaciones = document.getElementById('tab-content-notificaciones');
+            const tabContentPapelera = document.getElementById('tab-content-papelera');
+            if (tabNotificaciones && tabPapelera && tabContentNotificaciones && tabContentPapelera) {
+                tabNotificaciones.onclick = async () => {
+                    tabNotificaciones.classList.add('active');
+                    tabPapelera.classList.remove('active');
+                    tabContentNotificaciones.classList.add('active');
+                    tabContentPapelera.classList.remove('active');
+                };
+                tabPapelera.onclick = async () => {
+                    tabNotificaciones.classList.remove('active');
+                    tabPapelera.classList.add('active');
+                    tabContentNotificaciones.classList.remove('active');
+                    tabContentPapelera.classList.add('active');
+                    // Cargar papelera si no está cargada
+                    await this.loadNotificacionesTrash();
+                };
+            }
+        } catch (error) {
+            console.error('❌ Error cargando notificaciones:', error);
+            this.showNotification('Error cargando notificaciones', 'error');
+        }
+    }
+
+    async loadNotificacionesTrash() {
+        const trashList = document.getElementById('notificaciones-trash-list');
+        if (!trashList) return;
+        trashList.innerHTML = '<li class="notifications-empty">Cargando papelera...</li>';
+        try {
+            const eliminadas = await window.flowerShopAPI.listarNotificacionesEliminadas();
+            if (!eliminadas || eliminadas.length === 0) {
+                trashList.innerHTML = `
+                    <li class="notifications-empty" style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 1.5rem 0 1.1rem 0;
+                        gap: 0.6rem;
+                        list-style: none;
+                        min-height: 120px;
+                        border-radius: 14px;
+                        box-shadow: 0 2px 12px 0 rgba(37,99,235,0.08), 0 1px 3px 0 rgba(37,99,235,0.05);
+                        border: 1px solid #e0e7ef;
+                        background: linear-gradient(120deg, #f8fafc 80%, #e0e7ef 100%);
+                    ">
+                        <div style="font-size:2.1rem;color:#60a5fa;filter:drop-shadow(0 1px 4px #bae6fd);">🗑️</div>
+                        <div style="font-size:1.05rem;font-weight:700;color:#2563eb;letter-spacing:0.01em;">Papelera vacía</div>
+                        <div style="font-size:0.93rem;color:#64748b;max-width:320px;text-align:center;font-weight:400;line-height:1.4;">
+                            No hay notificaciones eliminadas.<br><span style='font-size:1.2em;opacity:0.7;'>✨</span>
+                        </div>
+                    </li>
+                `;
+                return;
+            }
+            trashList.innerHTML = eliminadas.map(n => `
+                <li class="notification-card deleted" data-id="${n.id}">
+                    <div class="notification-header">
+                        <span class="notification-title">${n.titulo}</span>
+                        <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
+                    </div>
+                    <div class="notification-message">${n.mensaje}</div>
+                </li>
+            `).join('');
+        } catch (error) {
+            trashList.innerHTML = '<li class="notifications-empty">Error cargando papelera.</li>';
+        }
+    }
+
+    renderNotificaciones(notificaciones) {
+        const container = document.getElementById('notificaciones-list');
+        if (!container) return;
+        const noLeidas = (notificaciones || []).filter(n => !n.leida);
+    if (!noLeidas || noLeidas.length === 0) {
+            container.innerHTML = `
+                <li class="notifications-empty" style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1.5rem 0 1.1rem 0;
+                    gap: 0.6rem;
+                    list-style: none;
+                    min-height: 120px;
+                    border-radius: 14px;
+                    box-shadow: 0 2px 12px 0 rgba(37,99,235,0.08), 0 1px 3px 0 rgba(37,99,235,0.05);
+                    border: 1px solid #e0e7ef;
+                    background: linear-gradient(120deg, #f8fafc 80%, #e0e7ef 100%);
+                ">
+                    <div style="font-size:2.1rem;color:#60a5fa;filter:drop-shadow(0 1px 4px #bae6fd);">🔔</div>
+                    <div style="font-size:1.05rem;font-weight:700;color:#2563eb;letter-spacing:0.01em;">¡Sin notificaciones!</div>
+                    <div style="font-size:0.93rem;color:#64748b;max-width:320px;text-align:center;font-weight:400;line-height:1.4;">
+                        Todo está al día. Cuando recibas nuevas notificaciones aparecerán aquí automáticamente.<br><span style='font-size:1.2em;opacity:0.7;'>✨</span>
+                    </div>
+                </li>
+            `;
+            return;
+        }
+        container.innerHTML = noLeidas.map(n => `
+            <li class="notification-card unread" data-id="${n.id}">
+                <div class="notification-header">
+                    <span class="notification-title">${n.titulo}</span>
+                    <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
+                </div>
+                <div class="notification-message">${n.mensaje}</div>
+                <div class="notification-actions">
+                    <button class="notification-btn mark-read" data-id="${n.id}" title="Marcar como leída">
+                        <span class="icon-check" aria-label="Marcar como leída"></span>
+                    </button>
+                </div>
+            </li>
+        `).join('');
+    }
+
+    async loadNotificacionesTrash() {
+        const trashList = document.getElementById('notificaciones-trash-list');
+        if (!trashList) return;
+        trashList.innerHTML = '<li class="notifications-empty">Cargando papelera...</li>';
+        try {
+            // Mostrar todas las notificaciones leídas (no eliminadas)
+            const todas = await window.flowerShopAPI.listarNotificaciones();
+            const leidas = (todas || []).filter(n => n.leida && (!n.eliminada || n.eliminada === 0));
+            if (!leidas || leidas.length === 0) {
+                trashList.innerHTML = `
+                    <li class="notifications-empty" style="
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 1.5rem 0 1.1rem 0;
+                        gap: 0.6rem;
+                        list-style: none;
+                        min-height: 120px;
+                        border-radius: 14px;
+                        box-shadow: 0 2px 12px 0 rgba(37,99,235,0.08), 0 1px 3px 0 rgba(37,99,235,0.05);
+                        border: 1px solid #e0e7ef;
+                        background: linear-gradient(120deg, #f8fafc 80%, #e0e7ef 100%);
+                    ">
+                        <div style="font-size:2.1rem;color:#60a5fa;filter:drop-shadow(0 1px 4px #bae6fd);">🗑️</div>
+                        <div style="font-size:1.05rem;font-weight:700;color:#2563eb;letter-spacing:0.01em;">Papelera vacía</div>
+                        <div style="font-size:0.93rem;color:#64748b;max-width:320px;text-align:center;font-weight:400;line-height:1.4;">
+                            No hay notificaciones leídas.<br><span style='font-size:1.2em;opacity:0.7;'>✨</span>
+                        </div>
+                    </li>
+                `;
+                return;
+            }
+            trashList.innerHTML = leidas.map(n => `
+                <li class="notification-card deleted" data-id="${n.id}">
+                    <div class="notification-header">
+                        <span class="notification-title">${n.titulo}</span>
+                        <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
+                    </div>
+                    <div class="notification-message">${n.mensaje}</div>
+                    <div class="notification-actions">
+                        <button class="notification-btn delete" data-id="${n.id}" title="Eliminar">
+                            <span class="icon-trash" aria-label="Eliminar"></span>
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+            // Asignar eventos para eliminar (lógica)
+            document.querySelectorAll('.notification-btn.delete').forEach(btn => {
+                btn.onclick = async (e) => {
+                    const id = btn.getAttribute('data-id');
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="icon-wait"></span>';
+                    await window.flowerShopAPI.eliminarNotificacion(parseInt(id));
+                    await this.loadNotificacionesTrash();
+                };
+            });
+        } catch (error) {
+            trashList.innerHTML = '<li class="notifications-empty">Error cargando papelera.</li>';
+        }
+    }
+    
+
+    formatFechaNotificacion(fecha) {
+        if (!fecha) return '';
+        const d = new Date(fecha);
+        return d.toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    setupNotificacionesActions() {
+        // Marcar como leída y ocultar de la lista
+        document.querySelectorAll('.notification-btn.mark-read').forEach(btn => {
+            btn.onclick = async (e) => {
+                const id = btn.getAttribute('data-id');
+                btn.disabled = true;
+                await window.flowerShopAPI.marcarNotificacionLeida(parseInt(id));
+                await this.loadNotificacionesData();
+            };
+        });
+    }
+
+    async updateNotificacionesBadge(notificaciones) {
+        // Actualiza el badge de notificaciones en el topbar
+        const badge = document.getElementById('badge-notificaciones');
+        if (!badge) return;
+        const noLeidas = (notificaciones || []).filter(n => !n.leida).length;
+        badge.textContent = noLeidas > 0 ? noLeidas : '';
+        badge.style.display = noLeidas > 0 ? 'inline-block' : 'none';
     }
 
     // ========== DASHBOARD ==========
