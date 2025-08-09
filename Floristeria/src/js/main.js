@@ -35,14 +35,21 @@ class FlowerShopApp {
     }
 
     async init() {
-    console.log('🌸 Iniciando aplicación de floristería...');
-    this.setupNavigation();
-    this.setupModals();
-    this.setupEventListeners();
-    this.setupPedidosTabs();
-    await this.updateSidebarBadges();
-    await this.loadInitialData();
-    this.showSection('dashboard');
+        console.log('🌸 Iniciando aplicación de floristería...');
+        this.setupNavigation();
+        this.setupModals();
+        this.setupEventListeners();
+        this.setupPedidosTabs();
+        await this.updateSidebarBadges();
+        // Actualizar badge de notificaciones al iniciar
+        try {
+            const notificaciones = await window.flowerShopAPI.listarNotificaciones();
+            this.updateNotificacionesBadge(notificaciones);
+        } catch (e) {
+            console.error('No se pudo actualizar el badge de notificaciones al iniciar:', e);
+        }
+        await this.loadInitialData();
+        this.showSection('dashboard');
     }
 
     // ========== NAVEGACIÓN ==========
@@ -151,83 +158,42 @@ class FlowerShopApp {
             this.updateNotificacionesBadge(notificaciones);
             this.setupNotificacionesActions();
 
-            // Tabs de notificaciones y papelera
-            const tabNotificaciones = document.getElementById('tab-notificaciones');
-            const tabPapelera = document.getElementById('tab-papelera');
-            const tabContentNotificaciones = document.getElementById('tab-content-notificaciones');
-            const tabContentPapelera = document.getElementById('tab-content-papelera');
-            if (tabNotificaciones && tabPapelera && tabContentNotificaciones && tabContentPapelera) {
-                tabNotificaciones.onclick = async () => {
-                    tabNotificaciones.classList.add('active');
-                    tabPapelera.classList.remove('active');
-                    tabContentNotificaciones.classList.add('active');
-                    tabContentPapelera.classList.remove('active');
-                };
-                tabPapelera.onclick = async () => {
-                    tabNotificaciones.classList.remove('active');
-                    tabPapelera.classList.add('active');
-                    tabContentNotificaciones.classList.remove('active');
-                    tabContentPapelera.classList.add('active');
-                    // Cargar papelera si no está cargada
-                    await this.loadNotificacionesTrash();
-                };
-            }
+            // Tabs de notificaciones y papelera (asignación robusta)
+            setTimeout(() => {
+                const tabNotificaciones = document.getElementById('tab-notificaciones');
+                const tabPapelera = document.getElementById('tab-papelera');
+                const tabContentNotificaciones = document.getElementById('tab-content-notificaciones');
+                const tabContentPapelera = document.getElementById('tab-content-papelera');
+                if (tabNotificaciones && tabPapelera && tabContentNotificaciones && tabContentPapelera) {
+                    tabNotificaciones.onclick = async () => {
+                        tabNotificaciones.classList.add('active');
+                        tabPapelera.classList.remove('active');
+                        tabContentNotificaciones.classList.add('active');
+                        tabContentPapelera.classList.remove('active');
+                    };
+                    tabPapelera.onclick = async () => {
+                        tabNotificaciones.classList.remove('active');
+                        tabPapelera.classList.add('active');
+                        tabContentNotificaciones.classList.remove('active');
+                        tabContentPapelera.classList.add('active');
+                        // Siempre cargar papelera al hacer clic
+                        await this.loadNotificacionesTrash();
+                    };
+                }
+            }, 0);
         } catch (error) {
             console.error('❌ Error cargando notificaciones:', error);
             this.showNotification('Error cargando notificaciones', 'error');
         }
     }
 
-    async loadNotificacionesTrash() {
-        const trashList = document.getElementById('notificaciones-trash-list');
-        if (!trashList) return;
-        trashList.innerHTML = '<li class="notifications-empty">Cargando papelera...</li>';
-        try {
-            const eliminadas = await window.flowerShopAPI.listarNotificacionesEliminadas();
-            if (!eliminadas || eliminadas.length === 0) {
-                trashList.innerHTML = `
-                    <li class="notifications-empty" style="
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        padding: 1.5rem 0 1.1rem 0;
-                        gap: 0.6rem;
-                        list-style: none;
-                        min-height: 120px;
-                        border-radius: 14px;
-                        box-shadow: 0 2px 12px 0 rgba(37,99,235,0.08), 0 1px 3px 0 rgba(37,99,235,0.05);
-                        border: 1px solid #e0e7ef;
-                        background: linear-gradient(120deg, #f8fafc 80%, #e0e7ef 100%);
-                    ">
-                        <div style="font-size:2.1rem;color:#60a5fa;filter:drop-shadow(0 1px 4px #bae6fd);">🗑️</div>
-                        <div style="font-size:1.05rem;font-weight:700;color:#2563eb;letter-spacing:0.01em;">Papelera vacía</div>
-                        <div style="font-size:0.93rem;color:#64748b;max-width:320px;text-align:center;font-weight:400;line-height:1.4;">
-                            No hay notificaciones eliminadas.<br><span style='font-size:1.2em;opacity:0.7;'>✨</span>
-                        </div>
-                    </li>
-                `;
-                return;
-            }
-            trashList.innerHTML = eliminadas.map(n => `
-                <li class="notification-card deleted" data-id="${n.id}">
-                    <div class="notification-header">
-                        <span class="notification-title">${n.titulo}</span>
-                        <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
-                    </div>
-                    <div class="notification-message">${n.mensaje}</div>
-                </li>
-            `).join('');
-        } catch (error) {
-            trashList.innerHTML = '<li class="notifications-empty">Error cargando papelera.</li>';
-        }
-    }
+
 
     renderNotificaciones(notificaciones) {
         const container = document.getElementById('notificaciones-list');
         if (!container) return;
         const noLeidas = (notificaciones || []).filter(n => !n.leida);
-    if (!noLeidas || noLeidas.length === 0) {
+        if (!noLeidas || noLeidas.length === 0) {
             container.innerHTML = `
                 <li class="notifications-empty" style="
                     display: flex;
@@ -252,8 +218,10 @@ class FlowerShopApp {
             `;
             return;
         }
-        container.innerHTML = noLeidas.map(n => `
-            <li class="notification-card unread" data-id="${n.id}">
+        container.innerHTML = noLeidas.map(n => {
+            const pedidoClass = n.origen && n.origen.toLowerCase() === 'pedidos' ? 'pedido' : '';
+            return `
+            <li class="notification-card unread ${pedidoClass}" data-id="${n.id}">
                 <div class="notification-header">
                     <span class="notification-title">${n.titulo}</span>
                     <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
@@ -265,7 +233,8 @@ class FlowerShopApp {
                     </button>
                 </div>
             </li>
-        `).join('');
+            `;
+        }).join('');
     }
 
     async loadNotificacionesTrash() {
@@ -301,8 +270,14 @@ class FlowerShopApp {
                 `;
                 return;
             }
-            trashList.innerHTML = leidas.map(n => `
-                <li class="notification-card deleted" data-id="${n.id}">
+            trashList.innerHTML = leidas.map(n => {
+                // Detectar si es de pedido por origen o mensaje
+                const origen = (n.origen || '').toLowerCase();
+                const mensaje = (n.mensaje || '').toLowerCase();
+                const esPedido = origen.includes('pedido') || mensaje.includes('pedido');
+                const pedidoClass = esPedido ? 'pedido' : '';
+                return `
+                <li class="notification-card deleted ${pedidoClass}" data-id="${n.id}">
                     <div class="notification-header">
                         <span class="notification-title">${n.titulo}</span>
                         <span class="notification-meta">${this.formatFechaNotificacion(n.fecha_creacion)}</span>
@@ -314,7 +289,8 @@ class FlowerShopApp {
                         </button>
                     </div>
                 </li>
-            `).join('');
+                `;
+            }).join('');
             // Asignar eventos para eliminar (lógica)
             document.querySelectorAll('.notification-btn.delete').forEach(btn => {
                 btn.onclick = async (e) => {
@@ -2772,7 +2748,29 @@ class FlowerShopApp {
                 notas,
                 detalles
             };
-            await window.flowerShopAPI.crearPedido(pedido);
+            const pedidoResult = await window.flowerShopAPI.crearPedido(pedido);
+            // Crear notificación real
+            let clienteNombre = '';
+            try {
+                const clientes = await window.flowerShopAPI.getClientes();
+                const cliente = clientes.find(c => c.id === pedido.cliente_id);
+                clienteNombre = cliente ? cliente.nombre : '';
+            } catch {}
+            const notificacion = {
+                titulo: 'Nuevo pedido creado',
+                mensaje: clienteNombre ? `Se ha creado un nuevo pedido para el cliente ${clienteNombre}.` : 'Se ha creado un nuevo pedido.',
+                tipo: 'info',
+                origen: 'pedidos',
+                datos_extra: {
+                    pedido_id: pedidoResult.id,
+                    numero_pedido: pedidoResult.numero_pedido,
+                    cliente_id: pedido.cliente_id
+                }
+            };
+            await window.flowerShopAPI.crearNotificacion(notificacion);
+            // Actualizar badge de notificaciones inmediatamente
+            const notificacionesActualizadas = await window.flowerShopAPI.listarNotificaciones();
+            this.updateNotificacionesBadge(notificacionesActualizadas);
             this.showNotification('Pedido creado correctamente', 'success');
             this.limpiarYCerrarModalPedido();
             // Si estamos en la sección de pedidos, actualizar ambas tablas y el badge
@@ -6468,3 +6466,18 @@ window.markOrderReceived = (id) => window.app?.markOrderReceived(id);
 window.ajustarStockMinimo = (id) => window.app?.ajustarStockMinimo(id);
 window.crearOrdenCompra = (productos) => window.app?.crearOrdenCompra(productos);
 window.generarOrdenProducto = (id) => window.app?.generarOrdenProducto(id);
+
+// Refuerzo: Asignar evento al tab de papelera tras DOMContentLoaded para asegurar ejecución
+document.addEventListener('DOMContentLoaded', () => {
+    const tabPapelera = document.getElementById('tab-papelera');
+    if (tabPapelera) {
+        tabPapelera.addEventListener('click', async () => {
+            if (window.app && typeof window.app.loadNotificacionesTrash === 'function') {
+                console.log('[DEBUG] Click en tab-papelera: llamando a loadNotificacionesTrash');
+                await window.app.loadNotificacionesTrash();
+            } else {
+                console.log('[DEBUG] window.app.loadNotificacionesTrash no está disponible');
+            }
+        });
+    }
+});
