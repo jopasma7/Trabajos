@@ -1,0 +1,69 @@
+# Node modules y dependencias
+node_modules/
+package-lock.json
+yarn.lock
+
+# Archivos temporales y logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.cache
+
+# Archivos de entorno y configuración local
+.env
+.env.*
+.DS_Store
+Thumbs.db
+
+# VSCode y editores
+.vscode/
+.idea/
+.history/
+
+# Electron build/outputs
+dist/
+out/
+build/
+release/
+
+# Otros
+*.local
+*.sqlite
+*.sqlite3
+*.db
+*.pid
+*.seed
+*.tgz
+coverage/
+test-results/
+tmp/
+# Node
+node_modules/
+.env
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# VSCode
+.vscode/
+
+# Electron
+/dist/
+/out/
+
+# Sistema
+Thumbs.db
+*.swp
+
+# Otros
+*.local
+*.cache
+*.tmp
