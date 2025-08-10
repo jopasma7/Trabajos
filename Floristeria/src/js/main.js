@@ -6272,7 +6272,7 @@ class FlowerShopApp {
             const evento = eventos.find(e => e.id === id);
             
             if (!evento) {
-                this.showNotification('Evento no encontrado', 'error');
+                this.showToastGlobal('Evento no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -6287,17 +6287,17 @@ class FlowerShopApp {
                 onConfirm: async () => {
                     try {
                         await window.flowerShopAPI.eliminarEvento(id);
-                        self.showNotification('Evento eliminado correctamente', 'success');
+                        self.showToastGlobal('Evento eliminado correctamente', 'success', 'toast-global');
                         await self.loadEventosData();
                     } catch (error) {
                         console.error('Error eliminando evento:', error);
-                        self.showNotification('Error al eliminar evento', 'error');
+                        self.showToastGlobal('Error al eliminar evento', 'error', 'toast-global');
                     }
                 }
             });
         } catch (error) {
             console.error('Error preparando eliminación:', error);
-            this.showNotification('Error al cargar datos del evento', 'error');
+            this.showToastGlobal('Error al cargar datos del evento', 'error', 'toast-global');
         }
     }
 
@@ -6308,7 +6308,7 @@ class FlowerShopApp {
             const cliente = clientes.find(c => c.id === id);
             
             if (!cliente) {
-                this.showNotification('Cliente no encontrado', 'error');
+                this.showToastGlobal('Cliente no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -6323,17 +6323,17 @@ class FlowerShopApp {
                 onConfirm: async () => {
                     try {
                         await window.flowerShopAPI.eliminarCliente(id);
-                        self.showNotification('Cliente eliminado correctamente', 'success');
+                        self.showToastGlobal('Cliente eliminado correctamente', 'success', 'toast-global');
                         await self.loadClientesData();
                     } catch (error) {
                         console.error('Error eliminando cliente:', error);
-                        self.showNotification('Error al eliminar cliente', 'error');
+                        self.showToastGlobal('Error al eliminar cliente', 'error', 'toast-global');
                     }
                 }
             });
         } catch (error) {
             console.error('Error preparando eliminación:', error);
-            this.showNotification('Error al cargar datos del cliente', 'error');
+            this.showToastGlobal('Error al cargar datos del cliente', 'error', 'toast-global');
         }
     }
 
@@ -6344,7 +6344,7 @@ class FlowerShopApp {
             const pedido = pedidos.find(p => p.id === id);
             
             if (!pedido) {
-                this.showNotification('Pedido no encontrado', 'error');
+                this.showToastGlobal('Pedido no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -6359,17 +6359,17 @@ class FlowerShopApp {
                 onConfirm: async () => {
                     try {
                         await window.flowerShopAPI.eliminarPedido(id);
-                        self.showNotification('Pedido eliminado correctamente', 'success');
+                        self.showToastGlobal('Pedido eliminado correctamente', 'success', 'toast-global');
                         await self.loadPedidosData();
                     } catch (error) {
                         console.error('Error eliminando pedido:', error);
-                        self.showNotification('Error al eliminar pedido', 'error');
+                        self.showToastGlobal('Error al eliminar pedido', 'error', 'toast-global');
                     }
                 }
             });
         } catch (error) {
             console.error('Error preparando eliminación:', error);
-            this.showNotification('Error al cargar datos del pedido', 'error');
+            this.showToastGlobal('Error al cargar datos del pedido', 'error', 'toast-global');
         }
     }
 
@@ -6435,7 +6435,7 @@ class FlowerShopApp {
             const producto = productos.find(p => p.id === id);
             
             if (!producto) {
-                this.showNotification('Producto no encontrado', 'error');
+                this.showToastGlobal('Producto no encontrado', 'error', 'toast-global');
                 return;
             }
 
@@ -6450,17 +6450,17 @@ class FlowerShopApp {
                 onConfirm: async () => {
                     try {
                         await window.flowerShopAPI.eliminarProducto(id);
-                        self.showNotification('Producto eliminado correctamente', 'success');
+                        self.showToastGlobal('Producto eliminado correctamente', 'success', 'toast-global');
                         await self.loadProductosData();
                     } catch (error) {
                         console.error('Error eliminando producto:', error);
-                        self.showNotification('Error al eliminar producto', 'error');
+                        self.showToastGlobal('Error al eliminar producto', 'error', 'toast-global');
                     }
                 }
             });
         } catch (error) {
             console.error('Error preparando eliminación:', error);
-            this.showNotification('Error al cargar datos del producto', 'error');
+            this.showToastGlobal('Error al cargar datos del producto', 'error', 'toast-global');
         }
     }
 }
