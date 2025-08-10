@@ -3084,6 +3084,19 @@ class FlowerShopApp {
         }
     }
 
+        // Filtrar clientes por término de búsqueda
+    filtrarClientes(termino) {
+        const filas = document.querySelectorAll('#clientes-table tbody tr');
+        filas.forEach(fila => {
+            const texto = fila.textContent.toLowerCase();
+            if (texto.includes(termino.toLowerCase())) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
     // ========== EVENT LISTENERS ==========
     setupEventListeners() {
         // Botones principales
@@ -3117,6 +3130,11 @@ class FlowerShopApp {
         // Búsqueda global
         document.querySelector('.global-search-input')?.addEventListener('input', (e) => {
             this.busquedaGlobal(e.target.value);
+        });
+
+        // Filtro de búsqueda de clientes
+        document.getElementById('search-clientes')?.addEventListener('input', (e) => {
+            this.filtrarClientes(e.target.value);
         });
         
         // Eventos del menú
