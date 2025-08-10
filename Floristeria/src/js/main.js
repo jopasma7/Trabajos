@@ -790,14 +790,14 @@ class FlowerShopApp {
             const fechaPedido = pedido.fecha_pedido ? (window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_pedido) : pedido.fecha_pedido) : 'N/A';
             const fechaEntrega = pedido.fecha_entrega ? (window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_entrega) : pedido.fecha_entrega) : 'N/A';
             const totalPedido = (typeof pedido.total !== 'undefined' && pedido.total !== null) ? (window.flowerShopAPI.formatCurrency ? window.flowerShopAPI.formatCurrency(pedido.total) : pedido.total) : 'N/A';
-            // Mostrar el primer producto del pedido (puedes ajustar si hay varios)
+            // Mostrar todos los productos del pedido (igual que en Todos los Pedidos)
             let productoHtml = 'N/A';
-            if (pedido.productos && pedido.productos.length > 0) {
-                const prod = pedido.productos[0];
-                const icono = prod.categoria_icono ? `<span style=\"font-size:1.2em;vertical-align:middle;\">${prod.categoria_icono}</span>` : '';
-                // Usar producto_nombre si existe, si no, usar nombre
-                const nombre = prod.producto_nombre || prod.nombre || '';
-                productoHtml = `${nombre} ${icono} <span style=\"color:#64748b;font-size:0.95em;\">${prod.categoria_nombre || ''}</span>`;
+            if (Array.isArray(pedido.productos) && pedido.productos.length > 0) {
+                productoHtml = pedido.productos.map(prod => {
+                    const icono = prod.categoria_icono ? `<span style=\"font-size:1.2em;vertical-align:middle;\">${prod.categoria_icono}</span>` : '';
+                    const nombre = prod.producto_nombre || prod.nombre || '';
+                    return `${nombre} ${icono} <span style=\"color:#64748b;font-size:0.95em;\">${prod.categoria_nombre || ''}</span>`;
+                }).join('<br>');
             }
             return `
                 <tr data-id="${pedido.id}">
@@ -5543,7 +5543,18 @@ class FlowerShopApp {
     }
 
     updateReservasBadge(count) {
-        const badge = document.getElementById('reservas-count');
+        let badge = document.getElementById('reservas-count');
+        if (!badge) {
+            // Intentar encontrar la pestaña de reservas y agregar el badge si no existe
+            const tab = document.querySelector('.stock-nav-tab[data-subtab="reservas"]');
+            if (tab) {
+                badge = document.createElement('span');
+                badge.id = 'reservas-count';
+                badge.className = 'badge badge-reservas';
+                badge.style.marginLeft = '0.4em';
+                tab.appendChild(badge);
+            }
+        }
         if (badge) {
             badge.textContent = count || 0;
         }
