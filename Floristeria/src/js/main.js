@@ -3036,7 +3036,9 @@ class FlowerShopApp {
     showModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = 'block';
+            // Cerrar cualquier otro modal abierto
+            document.querySelectorAll('.modal.open').forEach(m => m.classList.remove('open'));
+            modal.classList.add('open');
             document.body.style.overflow = 'hidden';
             console.log(`🔄 Modal abierto: ${modalId}`);
         }
@@ -3045,7 +3047,7 @@ class FlowerShopApp {
     hideModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.style.display = 'none';
+            modal.classList.remove('open');
             document.body.style.overflow = 'auto';
             console.log(`🔄 Modal cerrado: ${modalId}`);
         }

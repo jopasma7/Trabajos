@@ -1,3 +1,22 @@
+/* Overlay y centrado profesional para modals */
+.modal {
+  display: none;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: rgba(60, 60, 80, 0.66);
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.modal.open {
+  display: flex !important;
+}
 
 
 /* ====== MODALES UNIFICADOS (producto, cliente, evento, historial, nuevo-pedido, confirmacion) ====== */
@@ -9,8 +28,24 @@
   position: relative;
   width: 90%;
   max-width: 850px;
-  margin: 40px auto;
+  margin: auto;
   font-family: inherit;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Centrado vertical y horizontal del modal */
+.modal-overlay {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000;
+  background: rgba(0,0,0,0.18);
 }
 
 /* Encabezados profesionales */
