@@ -1,0 +1,29 @@
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f6fbf7;
+  color: #1a2e1a;
+}
+
+/* Colores personalizados para Bootstrap */
+.bg-emerald {
+  background-color: #34c759 !important;
+}
+.bg-forest {
+  background-color: #14532d !important;
+}
+
+/* Sidebar Bootstrap override */
+.sidebar {
+  min-height: 100vh;
+}
+.sidebar .nav-link.active, .sidebar .nav-link:hover {
+  background: #e6f4ea !important;
+  color: #14532d !important;
+  font-weight: 600;
+}
+
+/* Secciones ocultas */
+.section.d-none {
+  display: none !important;
+}
