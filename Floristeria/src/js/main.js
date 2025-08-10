@@ -564,18 +564,50 @@ class FlowerShopApp {
             const esActivo = fechaInicio <= hoy && fechaFin >= hoy;
             const esProximo = fechaInicio > hoy;
             
+            // Icono según tipo de evento
+            let icono = '🎉';
+            if (evento.tipo_evento) {
+                const tipo = evento.tipo_evento.toLowerCase();
+                if (tipo.includes('boda')) icono = '💍';
+                else if (tipo.includes('cumple')) icono = '🎂';
+                else if (tipo.includes('aniversario')) icono = '💐';
+                else if (tipo.includes('funeral')) icono = '🕊️';
+                else if (tipo.includes('corporativo')) icono = '🏢';
+                else if (tipo.includes('navidad')) icono = '🎄';
+                else if (tipo.includes('san valentín')) icono = '❤️';
+                else if (tipo.includes('bautizo')) icono = '👶';
+                else if (tipo.includes('comunión')) icono = '🕊️';
+                else if (tipo.includes('graduación')) icono = '🎓';
+                else if (tipo.includes('baby')) icono = '🍼';
+                else if (tipo.includes('evento')) icono = '🎟️';
+            }
             return `
                 <div class="evento-card ${esActivo ? 'activo' : ''} ${esProximo ? 'proximo' : ''}" data-id="${evento.id}">
                     <div class="evento-header">
+                        <span class="evento-header-icon" title="${evento.tipo_evento || ''}">${icono}</span>
                         <h3>${evento.nombre}</h3>
                     </div>
                     <hr class="evento-header-hr" />
                     <div class="evento-details">
-                        <p><strong>Tipo:</strong> ${evento.tipo_evento}</p>
-                        <p><strong>Fechas:</strong> ${window.flowerShopAPI.formatDate(evento.fecha_inicio)} - ${window.flowerShopAPI.formatDate(evento.fecha_fin)}</p>
-                        <p><strong>Demanda esperada:</strong> ${evento.demanda_esperada}</p>
-                        ${evento.descuento_especial > 0 ? `<p><strong>Descuento:</strong> ${evento.descuento_especial}%</p>` : ''}
-                        <p class="evento-descripcion">${evento.descripcion}</p>
+                        <div class="evento-details-row">
+                            <span class="evento-details-label"><span class="evento-details-icon">🏷️</span>Tipo:</span>
+                            <span class="evento-details-value">${evento.tipo_evento}</span>
+                        </div>
+                        <div class="evento-details-row evento-details-row-fechas">
+                            <span class="evento-details-label"><span class="evento-details-icon">📅</span>Fechas:</span>
+                            <span class="evento-details-value">${window.flowerShopAPI.formatDate(evento.fecha_inicio)} - ${window.flowerShopAPI.formatDate(evento.fecha_fin)}</span>
+                        </div>
+                        <div class="evento-details-row">
+                            <span class="evento-details-label"><span class="evento-details-icon">📈</span>Demanda:</span>
+                            <span class="evento-details-value">${evento.demanda_esperada}</span>
+                        </div>
+                        ${evento.descuento_especial > 0 ? `
+                        <div class="evento-details-row">
+                            <span class="evento-details-label"><span class="evento-details-icon">🏷️</span>Descuento:</span>
+                            <span class="evento-details-value">${evento.descuento_especial}%</span>
+                        </div>
+                        ` : ''}
+                        <div class="evento-descripcion">${evento.descripcion}</div>
                     </div>
                     <div class="evento-actions">
                         <div class="evento-action-btn-wrap">
