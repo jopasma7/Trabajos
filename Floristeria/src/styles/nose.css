@@ -1489,3 +1489,222 @@
     border-top: 1px solid #e2e8f0;
     margin-top: 1.2rem;
 }
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-warning {
+    background: #fcd34d;
+    color: #92400e;
+}
+
+/* ========== BADGES Y INDICADORES ========== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.badge-primary {
+    background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+    color: var(--primary-800);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, var(--success-100), var(--success-200));
+    color: var(--success-800);
+}
+
+
+
+.nav-indicator {
+    width: 4px;
+    height: 4px;
+    background: currentColor;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-2);
+    opacity: 0;
+    transition: var(--transition-all);
+}
+
+.info-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+
+.alert-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.alert-badge.sin_stock {
+    background: #ef4444;
+    color: white;
+}
+
+.alert-badge.critico {
+    background: #f59e0b;
+    color: white;
+}
+
+.alert-badge.bajo {
+    background: #eab308;
+    color: white;
+}
+
+.alert-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.alert-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+
+/* Scroll vertical para la tabla de productos */
+#tabla-productos-wrapper {
+  width: 100%;
+  max-height: 60vh;
+  min-height: 0;
+  overflow-y: auto;
+  background: transparent;
+  margin-bottom: 1rem;
+}
+
+#tabla-productos {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#tabla-productos th, #tabla-productos td {
+  padding: 0.7em 1em;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+#tabla-productos tr:last-child td {
+  border-bottom: none;
+}
+
+/* Selectores de productos en formularios */
+.productos-selector {
+    border: 2px dashed var(--gray-200);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    background: var(--gray-50);
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.producto-selector-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: white;
+    padding: var(--space-3);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.producto-selector-item select,
+.producto-selector-item input {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Estilos para información de producto en orden */
+.producto-info {
+    background: var(--bg-primary);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0  !important;
+}
+
+.producto-info h3 {
+    margin: 0 0 1rem 0;
+    color: var(--primary-color);
+}
+
+.producto-info p {
+    margin: 0.5rem 0;
+    color: var(--text-color);
+}
+
+.producto-nombre {
+    font-size: 0.8rem;
+    color: #374151;
+}
+
+/* ========== ESTILOS PARA HISTORIAL DE CLIENTE ========== */
+
+.cliente-info-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e2e8f0;
+}
+
+.cliente-avatar {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.cliente-details h3 {
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.cliente-details p {
+    margin: 0 0 1rem 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.cliente-stats {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}

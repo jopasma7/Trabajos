@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <link rel="stylesheet" href="../styles/componentes/badge.css">
     <link rel="stylesheet" href="../styles/sections/notificaciones.css">
     <link rel="stylesheet" href="../styles/sections/profile.css">
+    <link rel="stylesheet" href="../styles/sections/eventos.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -242,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="stat-card primary dashboard-link" data-section="eventos" title="Ver eventos">
                             <div class="stat-icon">🎉</div>
                             <div class="stat-content">
-                                <h3>Eventos Activos</h3>
+                                <h3>Eventos Guardados</h3>
                                 <div class="stat-number" id="eventos-activos">0</div>
                             </div>
                         </div>
@@ -467,15 +468,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     </h2>
                     <div class="card">
                         <div class="table-header">
-                            <h3 class="table-title">🎉 <span style="color:#2563eb;font-weight:700;">Eventos</span> <span style="font-size:0.95em;font-weight:400;color:#64748b;">| Lista y gestión</span></h3>
+                            <h3 class="table-title">🎉 <span>Eventos</span> <span style="font-size:0.95em;font-weight:400;color:var(--gray-500);">| Lista y gestión</span></h3>
                             <div class="table-actions">
-                                <button id="btn-nuevo-evento" class="btn btn-primary">
+                                <button id="btn-nuevo-evento" class="btn">
                                     <span style="font-size:1.1em;vertical-align:middle;">➕</span> <span style="vertical-align:middle;">Nuevo Evento</span>
                                 </button>
                             </div>
                         </div>
-                        <div class="eventos-grid" id="eventos-grid">
-                            <p class="text-center">Cargando eventos...</p>
+                        <div class="eventos-timeline" id="eventos-timeline">
+                            <!-- Ejemplo de timeline, reemplazar dinámicamente con JS -->
+                            <div class="evento-timeline-item">
+                                <div class="evento-timeline-dot"></div>
+                                <div class="evento-timeline-content">
+                                    <div class="evento-timeline-header">
+                                        <span class="evento-timeline-date">15/08/2025</span>
+                                        <span class="evento-timeline-title">Boda de Ana & Luis</span>
+                                    </div>
+                                    <div class="evento-timeline-desc">Decoración floral para boda en Jardines del Sol. Incluye arcos, centros de mesa y ramo especial.</div>
+                                    <div class="evento-timeline-actions">
+                                        <button class="btn-edit">Editar</button>
+                                        <button class="btn-delete">Eliminar</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="evento-timeline-item">
+                                <div class="evento-timeline-dot"></div>
+                                <div class="evento-timeline-content">
+                                    <div class="evento-timeline-header">
+                                        <span class="evento-timeline-date">22/08/2025</span>
+                                        <span class="evento-timeline-title">Cumpleaños Sofía</span>
+                                    </div>
+                                    <div class="evento-timeline-desc">Montaje de mesa dulce y arreglos florales temáticos para fiesta infantil.</div>
+                                    <div class="evento-timeline-actions">
+                                        <button class="btn-edit">Editar</button>
+                                        <button class="btn-delete">Eliminar</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Fin ejemplo, mostrar dinámicamente -->
                         </div>
                     </div>
                 </section>

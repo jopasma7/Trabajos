@@ -1,0 +1,298 @@
+/* =========================
+	 TIMELINE DE EVENTOS
+========================= */
+.eventos-timeline {
+	position: relative;
+	margin: var(--space-6) 0;
+	padding-left: 2.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+}
+
+.evento-timeline-item {
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--space-4);
+	min-height: 70px;
+}
+
+.evento-timeline-dot {
+	width: 1.2rem;
+	height: 1.2rem;
+	background: linear-gradient(135deg, var(--primary-400), var(--success-400));
+	border-radius: 50%;
+	border: 3px solid #fff;
+	box-shadow: 0 2px 8px 0 rgb(233 121 249 / 0.15);
+	position: absolute;
+	left: -2.2rem;
+	top: 0.2rem;
+	z-index: 2;
+}
+
+.eventos-timeline:before {
+	content: '';
+	position: absolute;
+	left: -1.6rem;
+	top: 0;
+	width: 4px;
+	height: 100%;
+	background: linear-gradient(180deg, var(--primary-100), var(--success-100));
+	border-radius: var(--radius-full);
+	z-index: 1;
+}
+
+.evento-timeline-content {
+	background: #fff;
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+	padding: var(--space-4) var(--space-5);
+	border: 1px solid var(--gray-200);
+	width: 100%;
+	transition: box-shadow 0.18s;
+}
+.evento-timeline-content:hover {
+	box-shadow: var(--shadow-lg);
+}
+.evento-timeline-header {
+	display: flex;
+	align-items: center;
+	gap: var(--space-4);
+	margin-bottom: var(--space-2);
+}
+.evento-timeline-date {
+	font-size: 1.05rem;
+	font-weight: 700;
+	color: var(--primary-700);
+	background: var(--primary-50);
+	border-radius: var(--radius-full);
+	padding: 0.2em 0.9em;
+	margin-right: var(--space-2);
+}
+.evento-timeline-title {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: var(--gray-800);
+}
+.evento-timeline-desc {
+	color: var(--gray-700);
+	font-size: 1rem;
+	margin-bottom: var(--space-2);
+}
+.evento-timeline-actions {
+	display: flex;
+	gap: var(--space-2);
+}
+.evento-timeline-actions .btn-edit, .evento-timeline-actions .btn-delete {
+	border: none;
+	border-radius: var(--radius-full);
+	padding: var(--space-2) var(--space-4);
+	font-size: 0.98rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.18s;
+}
+.evento-timeline-actions .btn-edit {
+	background: var(--primary-100);
+	color: var(--primary-700);
+}
+.evento-timeline-actions .btn-edit:hover {
+	background: var(--primary-200);
+}
+.evento-timeline-actions .btn-delete {
+	background: var(--error-500);
+	color: #fff;
+}
+.evento-timeline-actions .btn-delete:hover {
+	background: #b91c1c;
+}
+
+@media (max-width: 700px) {
+	.eventos-timeline {
+		padding-left: 1.2rem;
+		gap: var(--space-4);
+	}
+	.evento-timeline-content {
+		padding: var(--space-3) var(--space-2);
+	}
+	.evento-timeline-header {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--space-1);
+	}
+}
+/* =========================
+	 EVENTOS SECTION STYLES
+	 Profesional, moderno y visualmente atractivo
+========================= */
+
+#eventos-section {
+	padding: var(--space-8) var(--space-4);
+	min-height: 80vh;
+	animation: fadeIn 0.7s cubic-bezier(0.4,0,0.2,1);
+}
+
+#eventos-section h2 {
+	margin-bottom: var(--space-6);
+	font-family: var(--font-sans);
+	letter-spacing: -0.5px;
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+#eventos-section .card {
+	background: #fff;
+	border-radius: var(--radius-xl);
+	box-shadow: var(--shadow-lg);
+	padding: var(--space-6);
+	margin-bottom: var(--space-8);
+	border: 1px solid var(--gray-200);
+	transition: box-shadow 0.2s;
+}
+
+#eventos-section .card:hover {
+	box-shadow: var(--shadow-2xl);
+}
+
+#eventos-section .table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+    padding: 0 0 20px 0;
+	margin-bottom: var(--space-4);
+}
+
+#eventos-section .table-title {
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: var(--primary-700);
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+#eventos-section .table-actions .btn {
+	background: var(--primary-500);
+	color: #fff;
+	border: none;
+	border-radius: var(--radius-lg);
+	padding: var(--space-2) var(--space-5);
+	font-size: 1rem;
+	font-weight: 600;
+	box-shadow: var(--shadow-sm);
+	cursor: pointer;
+	transition: background 0.2s, box-shadow 0.2s;
+}
+
+#eventos-section .table-actions .btn:hover {
+	background: var(--primary-600);
+	box-shadow: var(--shadow-md);
+}
+
+.eventos-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: var(--space-6);
+	margin-top: var(--space-4);
+}
+
+.evento-card {
+	background: linear-gradient(120deg, var(--primary-50) 60%, var(--success-50) 100%);
+	border-radius: var(--radius-xl);
+	box-shadow: var(--shadow-md);
+	padding: var(--space-5) var(--space-6);
+	border: 1.5px solid var(--primary-100);
+	position: relative;
+	transition: box-shadow 0.2s, transform 0.15s;
+	overflow: hidden;
+	min-height: 180px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.evento-card:hover {
+	box-shadow: var(--shadow-xl);
+	transform: translateY(-4px) scale(1.02);
+}
+
+.evento-card .evento-header {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	margin-bottom: var(--space-2);
+}
+
+.evento-card .evento-title {
+	font-size: 1.15rem;
+	font-weight: 700;
+	color: var(--primary-700);
+	letter-spacing: -0.5px;
+}
+
+.evento-card .evento-date {
+	font-size: 0.98rem;
+	color: var(--gray-500);
+	font-weight: 500;
+	margin-left: auto;
+}
+
+.evento-card .evento-desc {
+	color: var(--gray-700);
+	font-size: 1rem;
+	margin-bottom: var(--space-3);
+	margin-top: var(--space-1);
+}
+
+.evento-card .evento-footer {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	margin-top: var(--space-2);
+}
+
+.evento-card .btn-edit, .evento-card .btn-delete {
+	border: none;
+	border-radius: var(--radius-full);
+	padding: var(--space-2) var(--space-4);
+	font-size: 0.98rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background 0.18s;
+}
+.evento-card .btn-edit {
+	background: var(--primary-100);
+	color: var(--primary-700);
+}
+.evento-card .btn-edit:hover {
+	background: var(--primary-200);
+}
+.evento-card .btn-delete {
+	background: var(--error-500);
+	color: #fff;
+	margin-left: 0.5rem;
+}
+.evento-card .btn-delete:hover {
+	background: #b91c1c;
+}
+
+/* Animación de fadeIn */
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(20px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+	#eventos-section {
+		padding: var(--space-4) var(--space-1);
+	}
+	.eventos-grid {
+		grid-template-columns: 1fr;
+	}
+	#eventos-section .card {
+		padding: var(--space-4);
+	}
+}

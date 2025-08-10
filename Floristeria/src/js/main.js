@@ -49,7 +49,9 @@ class FlowerShopApp {
             console.error('No se pudo actualizar el badge de notificaciones al iniciar:', e);
         }
         await this.loadInitialData();
-        this.showSection('dashboard');
+    this.showSection('dashboard');
+    // Forzar recarga de datos del dashboard al iniciar
+    await this.loadDashboardData();
     }
 
     // ========== NAVEGACIÓN ==========
@@ -548,10 +550,11 @@ class FlowerShopApp {
     }
 
     displayEventos(eventos) {
-        const container = document.getElementById('eventos-grid');
+        // Usar el timeline
+        const container = document.getElementById('eventos-timeline');
         if (!container) return;
 
-        if (eventos.length === 0) {
+        if (!eventos || eventos.length === 0) {
             container.innerHTML = '<p class="text-center">No hay eventos registrados</p>';
             return;
         }
@@ -562,7 +565,6 @@ class FlowerShopApp {
             const hoy = new Date();
             const esActivo = fechaInicio <= hoy && fechaFin >= hoy;
             const esProximo = fechaInicio > hoy;
-            
             // Icono según tipo de evento
             let icono = '🎉';
             if (evento.tipo_evento) {
@@ -581,51 +583,17 @@ class FlowerShopApp {
                 else if (tipo.includes('evento')) icono = '🎟️';
             }
             return `
-                <div class="evento-card ${esActivo ? 'activo' : ''} ${esProximo ? 'proximo' : ''}" data-id="${evento.id}">
-                    <div class="evento-header">
-                        <span class="evento-header-icon" title="${evento.tipo_evento || ''}">${icono}</span>
-                        <h3>${evento.nombre}</h3>
-                    </div>
-                    <hr class="evento-header-hr" />
-                    <div class="evento-details">
-                        <div class="evento-details-row">
-                            <span class="evento-details-label"><span class="evento-details-icon">🏷️</span>Tipo:</span>
-                            <span class="evento-details-value">${evento.tipo_evento}</span>
+                <div class="evento-timeline-item ${esActivo ? 'activo' : ''} ${esProximo ? 'proximo' : ''}" data-id="${evento.id}">
+                    <div class="evento-timeline-dot"></div>
+                    <div class="evento-timeline-content">
+                        <div class="evento-timeline-header">
+                            <span class="evento-timeline-date">${window.flowerShopAPI.formatDate(evento.fecha_inicio)}</span>
+                            <span class="evento-timeline-title">${icono} ${evento.nombre}</span>
                         </div>
-                        <div class="evento-details-row evento-details-row-fechas">
-                            <span class="evento-details-label"><span class="evento-details-icon">📅</span>Fechas:</span>
-                            <span class="evento-details-value">${window.flowerShopAPI.formatDate(evento.fecha_inicio)} - ${window.flowerShopAPI.formatDate(evento.fecha_fin)}</span>
-                        </div>
-                        <div class="evento-details-row">
-                            <span class="evento-details-label"><span class="evento-details-icon">📈</span>Demanda:</span>
-                            <span class="evento-details-value">${evento.demanda_esperada}</span>
-                        </div>
-                        ${evento.descuento_especial > 0 ? `
-                        <div class="evento-details-row">
-                            <span class="evento-details-label"><span class="evento-details-icon">🏷️</span>Descuento:</span>
-                            <span class="evento-details-value">${evento.descuento_especial}%</span>
-                        </div>
-                        ` : ''}
-                        <div class="evento-descripcion">${evento.descripcion}</div>
-                    </div>
-                    <div class="evento-actions">
-                        <div class="evento-action-btn-wrap">
-                            <button class="btn btn-sm btn-editar evento-action-btn" style="background: none;" onclick="app.editarEvento(${evento.id})">
-                                <span class="evento-action-icon">✏️</span>
-                            </button>
-                            <span class="evento-action-text">Editar</span>
-                        </div>
-                        <div class="evento-action-btn-wrap">
-                            <button class="btn btn-sm btn-stock evento-action-btn" style="background: none;" onclick="app.gestionarEventoStock(${evento.id})">
-                                <span class="evento-action-icon">📦</span>
-                            </button>
-                            <span class="evento-action-text">Stock</span>
-                        </div>
-                        <div class="evento-action-btn-wrap">
-                            <button class="btn btn-sm btn-eliminar evento-action-btn" style="background: none;" onclick="app.eliminarEvento(${evento.id})">
-                                <span class="evento-action-icon">🗑️</span>
-                            </button>
-                            <span class="evento-action-text">Eliminar</span>
+                        <div class="evento-timeline-desc">${evento.descripcion || ''}</div>
+                        <div class="evento-timeline-actions">
+                            <button class="btn-edit" onclick="app.editarEvento(${evento.id})">Editar</button>
+                            <button class="btn-delete" onclick="app.eliminarEvento(${evento.id})">Eliminar</button>
                         </div>
                     </div>
                 </div>

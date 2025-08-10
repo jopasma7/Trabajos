@@ -265,3 +265,262 @@
     width: 100%;
   }
 }
+
+/* ========== RESPONSIVE DESIGN FINAL ========== */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 250px;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .app-main {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .content {
+        padding: var(--space-4);
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-4);
+    }
+}
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1024px) {
+    .app-container {
+        grid-template-areas: 
+            "topnav"
+            "main";
+        grid-template-columns: 1fr;
+        grid-template-rows: var(--top-nav-height) 1fr;
+    }
+    
+    .modern-sidebar {
+        position: fixed;
+        left: 0;
+        top: var(--top-nav-height);
+        height: calc(100vh - var(--top-nav-height));
+        transform: translateX(-100%);
+        transition: var(--transition-all);
+        z-index: 200;
+    }
+    
+    .modern-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .nav-center {
+        margin: 0 var(--space-4);
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-nav {
+        padding: 0 var(--space-4);
+    }
+    
+    .nav-center {
+        display: none;
+    }
+    
+    .brand-name {
+        font-size: 1rem;
+    }
+    
+    .brand-subtitle {
+        display: none;
+    }
+    
+    .modern-main-content {
+        padding: var(--space-4);
+    }
+    
+    .fab-container {
+        bottom: var(--space-6);
+        right: var(--space-6);
+    }
+}
+
+/* Responsive para inventario */
+@media (max-width: 768px) {
+    .inventory-charts {
+        grid-template-columns: 1fr;
+    }
+    
+    .alerts-grid,
+    .providers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .alert-filters,
+    .orders-actions,
+    .movements-filters,
+    .prediction-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .alerts-header,
+    .providers-header,
+    .orders-header,
+    .movements-header,
+    .prediction-header {
+        flex-direction: column;
+        gap: var(--space-3);
+        align-items: stretch;
+    }
+}
+/* Responsive para leyenda */
+@media (max-width: 768px) {
+    .chart-legend {
+        padding: 0.75rem;
+    }
+    
+    .legend-item {
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .legend-text {
+        font-size: 0.8rem;
+    }
+}
+
+/* Responsive para modal de órdenes */
+@media (max-width: 768px) {
+    .provider-summary {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .orders-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
+
+/* Vista responsiva mejorada para reservas */
+@media (max-width: 768px) {
+    .reserva-item {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 0.8rem;
+    }
+    
+    .reserva-producto {
+        text-align: left;
+        order: 1;
+    }
+    
+    .reserva-cantidad {
+        order: 2;
+    }
+    
+    .reserva-prioridad {
+        order: 3;
+    }
+    
+    .reserva-estado {
+        order: 4;
+    }
+    
+    .reserva-acciones {
+        order: 5;
+        justify-content: center;
+    }
+}
+
+/* Responsive Design Compacto */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .selector-row {
+        flex-direction: column;
+    }
+    
+    .evento-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .evento-status-section {
+        align-items: center;
+    }
+    
+    .panel-header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+    }
+    
+    .panel-stats {
+        justify-content: center;
+    }
+    
+    .demanda-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .generation-actions {
+        flex-direction: column;
+    }
+    
+    .panel-actions {
+        justify-content: center;
+    }
+    
+    .stock-nav-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .stock-nav-tab {
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+        padding: 0.6rem 0.8rem;
+    }
+    
+    .header-title h3 {
+        font-size: 1.2rem;
+    }
+    
+    .evento-header {
+        font-size: 1.1rem;
+    }
+}

@@ -75,12 +75,6 @@
     border-bottom: none;
 }
 
-.table tbody tr:hover {
-    background-color: #f9fafb; /* light hover */
-    transform: translateY(-1px);
-    transition: 0.2s;
-}
-
 
 /* Mobile responsive enhancements */
 @media (max-width: 768px) {

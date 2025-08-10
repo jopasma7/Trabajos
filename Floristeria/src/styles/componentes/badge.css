@@ -68,6 +68,27 @@
     color: #dc2626;
 }
 
+/* Badges del Producto */
+
+.stock-badge {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.stock-badge.normal-stock {
+    background: linear-gradient(135deg, var(--success-100), var(--success-200));
+    color: var(--success-800);
+}
+
+.stock-badge.low-stock {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    animation: pulse 2s infinite;
+}
+
 /* Badges de Cliente */
 
 .cliente-tipo.nuevo {
@@ -117,4 +138,134 @@
     color: #01a597;
     white-space: nowrap;
 
+}
+
+/* Badges del estado de las Ordenes de Compra (Inventario) */
+.estado-badge {
+    padding: 0.3rem 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border: 1px solid;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.estado-badge.pendiente {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.estado-badge.confirmado {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.estado-badge.en_preparacion {
+    background: #fde68a;
+    color: #92400e;
+}
+
+.estado-badge.listo {
+    background: #bbf7d0;
+    color: #166534;
+}
+
+.estado-badge.entregado {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.estado-badge.cancelado {
+    background: #fecaca;
+    color: #dc2626;
+}
+
+/* Badges de Stock (Inventario) Reservas. Botón pequeño al lado de Reservas*/
+.tab-badge {
+    background: #e2e8f0;
+    color: #64748b;
+    padding: 0.2rem 0.4rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    min-width: 1.2rem;
+    text-align: center;
+}
+
+.stock-nav-tab.active .tab-badge {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+/* Badges de Stock - Reservas (Inventario) */
+.prioridad-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+}
+
+.prioridad-badge.alta {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+.prioridad-badge.normal {
+    background: #fef3c7;
+    color: #d97706;
+    border-color: #fcd34d;
+}
+
+.prioridad-badge.baja {
+    background: #dcfce7;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+.prioridad-badge.critica {
+    background: #7c2d12;
+    color: white;
+    border-color: #dc2626;
+    animation: pulse 2s infinite;
+}
+
+.estado-badge.reservado {
+    background: #dcfce7;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+.estado-badge.insuficiente {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+    animation: warning-blink 3s infinite;
+}
+
+
+/* Badges del Sidebar (Botoncitos) */
+
+.nav-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-full);
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.nav-badge.new {
+    background: var(--error-500);
+    color: white;
+    animation: pulse 2s infinite;
 }

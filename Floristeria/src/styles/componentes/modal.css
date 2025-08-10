@@ -163,3 +163,94 @@ textarea {
 .stock-alto {
     color: #16a34a !important;
 }
+
+
+/* Historial de Cliente Modal */
+.historial-lista {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+}
+
+.pedido-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+}
+
+.pedido-item:hover {
+    background: #f9fafb;
+}
+
+.pedido-item:last-child {
+    border-bottom: none;
+}
+
+.pedido-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.pedido-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.pedido-numero {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.pedido-fecha {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.pedido-detalles {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.pedido-total {
+    color: #1f2937;
+    font-size: 1rem;
+}
+
+.pedido-notas {
+    background: #f3f4f6;
+    padding: 0.6rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 0.8rem;
+}
+
+.pedido-acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.no-pedidos {
+    padding: 2rem;
+    text-align: center;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--gray-500);
+    font-size: 1.1rem;
+    background: var(--gray-50);
+    border-radius: 0.75rem;
+    border: 2px dashed var(--gray-300);
+}

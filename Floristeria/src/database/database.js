@@ -1380,7 +1380,7 @@ class FlowerShopDatabase {
         stats.totalProductos = (await this.getQuery("SELECT COUNT(*) as count FROM productos WHERE activo = TRUE")).count;
         stats.totalClientes = (await this.getQuery("SELECT COUNT(*) as count FROM clientes WHERE activo = TRUE")).count;
         stats.pedidosPendientes = (await this.getQuery("SELECT COUNT(*) as count FROM pedidos WHERE estado IN ('pendiente', 'confirmado', 'preparando')")).count;
-        stats.eventosActivos = (await this.getQuery("SELECT COUNT(*) as count FROM eventos WHERE activo = TRUE AND fecha_fin >= date('now')")).count;
+    stats.eventosActivos = (await this.getQuery("SELECT COUNT(*) as count FROM eventos WHERE activo = TRUE")).count;
         
         // Productos con stock bajo
         stats.stockBajo = await this.allQuery(`
