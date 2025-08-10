@@ -457,7 +457,6 @@ class FlowerShopApp {
                         <small class="producto-categoria">${producto.categoria_icono} ${producto.categoria_nombre}</small>
                     </div>
                 </td>
-                <td>${producto.categoria_nombre}</td>
                 <td>
                     <span class="stock-badge ${producto.stock_actual <= producto.stock_minimo ? 'low-stock' : 'normal-stock'}">
                         ${producto.stock_actual} ${producto.unidad_medida}
