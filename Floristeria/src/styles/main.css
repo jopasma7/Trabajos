@@ -922,26 +922,6 @@
     color: var(--success-800);
 }
 
-
-.status-badge {
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-lg);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.status-badge.active {
-    background: linear-gradient(135deg, var(--success-100), var(--success-200));
-    color: var(--success-800);
-}
-
-.status-badge.inactive {
-    background: linear-gradient(135deg, var(--gray-100), var(--gray-200));
-    color: var(--gray-700);
-}
-
 .stock-badge {
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-lg);
@@ -3585,34 +3565,6 @@ body::after {
     overflow: auto;
 }
 
-.status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: capitalize;
-}
-
-.status-badge.pendiente {
-    background: rgba(234, 179, 8, 0.1);
-    color: #a16207;
-}
-
-.status-badge.enviada {
-    background: rgba(59, 130, 246, 0.1);
-    color: #1d4ed8;
-}
-
-.status-badge.recibida {
-    background: rgba(34, 197, 94, 0.1);
-    color: #059669;
-}
-
-.status-badge.cancelada {
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
-}
-
 /* Movimientos de inventario */
 .movements-header {
     display: flex;
@@ -4408,6 +4360,7 @@ body::after {
 .status-badge {
     display: flex;
     align-items: center;
+    max-width: 75px;
     gap: 0.4rem;
     padding: 0.5rem 0.8rem;
     border-radius: 8px;
@@ -4415,6 +4368,61 @@ body::after {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, var(--success-100), var(--success-200));
+    color: var(--success-800);
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, var(--gray-100), var(--gray-200));
+    color: var(--gray-700);
+}
+
+.badge-estado-pendiente {
+    display: flex;
+    align-items: center;
+    max-width: 95px;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: rgba(59, 130, 246, 0.1);
+    color: #1d4ed8;
+}
+
+.badge-estado-completado {
+    display: flex;
+    align-items: center;
+    max-width: 110px;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: rgba(34, 197, 94, 0.1);
+    color: #059669;
+}
+
+.badge-estado-cancelado {
+    display: flex;
+    align-items: center;
+    max-width: 105px;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
 }
 
 .countdown-info {
