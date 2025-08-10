@@ -705,14 +705,34 @@ class FlowerShopApp {
             const pedidosNoPendientes = (pedidos || []).filter(p => (p.estado || '').toLowerCase() !== 'pendiente');
 
             if (!pedidosNoPendientes || pedidosNoPendientes.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay pedidos registrados</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No hay pedidos registrados</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = pedidosNoPendientes.map(pedido => `
+            tbody.innerHTML = pedidosNoPendientes.map(pedido => {
+                let productoHtml = 'N/A';
+                if (Array.isArray(pedido.productos) && pedido.productos.length > 0) {
+                    productoHtml = pedido.productos.map(prod => {
+                        const icono = prod.categoria_icono ? `<span style=\"font-size:1.2em;vertical-align:middle;\">${prod.categoria_icono}</span>` : '';
+                        const nombre = prod.producto_nombre || prod.nombre || '';
+                        return `${nombre} ${icono} <span style=\"color:#64748b;font-size:0.95em;\">${prod.categoria_nombre || ''}</span>`;
+                    }).join('<br>');
+                }
+                // Mostrar nombre completo del cliente o 'N/A' si no hay datos
+                let clienteNombre = '';
+                if (pedido.cliente_nombre && pedido.cliente_apellidos) {
+                    clienteNombre = `${pedido.cliente_nombre} ${pedido.cliente_apellidos}`;
+                } else if (pedido.cliente_nombre) {
+                    clienteNombre = pedido.cliente_nombre;
+                } else if (pedido.cliente_apellidos) {
+                    clienteNombre = pedido.cliente_apellidos;
+                } else {
+                    clienteNombre = 'N/A';
+                }
+                return `
                 <tr data-id="${pedido.id}">
-                    <td>${pedido.numero || pedido.id}</td>
-                    <td>${((pedido.cliente_nombre ? pedido.cliente_nombre : '') + (pedido.cliente_apellidos ? ' ' + pedido.cliente_apellidos : '')).trim() || 'N/A'}</td>
+                    <td>${productoHtml}</td>
+                    <td>${clienteNombre}</td>
                     <td>${window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_pedido || pedido.fecha) : (pedido.fecha_pedido || pedido.fecha || 'N/A')}</td>
                     <td>${pedido.entrega || pedido.fecha_entrega || 'N/A'}</td>
                     <td><span class="badge-estado badge-estado-${pedido.estado?.toLowerCase() || 'otro'}">${pedido.estado || 'N/A'}</span></td>
@@ -723,7 +743,8 @@ class FlowerShopApp {
                         ${pedido.estado && pedido.estado.toLowerCase() === 'pendiente' ? `<button class="btn btn-sm btn-danger" onclick="app.cancelarPedido(${pedido.id})" title="Cancelar">✖️</button>` : ''}
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
     async loadPedidosPendientes() {
@@ -734,7 +755,10 @@ class FlowerShopApp {
         } catch (error) {
             console.error('❌ Error cargando pedidos pendientes:', error);
             const tbody = document.querySelector('#pedidos-pendientes-table tbody');
-            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error cargando pedidos pendientes</td></tr>';
+            if (!tbody) {
+                console.error('No se encontró el tbody para la tabla de pedidos.');
+                return;
+            }
         }
     }
 
@@ -763,14 +787,22 @@ class FlowerShopApp {
         }
         tbody.innerHTML = pedidos.map(pedido => {
             const estadoBadge = `<span class="badge-estado badge-estado-${(pedido.estado || '').toLowerCase()}">${pedido.estado || 'N/A'}</span>`;
-            const numeroPedido = pedido.numero_pedido || pedido.numero || pedido.id;
             const cliente = (pedido.cliente_nombre ? pedido.cliente_nombre : '') + (pedido.cliente_apellidos ? ' ' + pedido.cliente_apellidos : '');
             const fechaPedido = pedido.fecha_pedido ? (window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_pedido) : pedido.fecha_pedido) : 'N/A';
             const fechaEntrega = pedido.fecha_entrega ? (window.flowerShopAPI.formatDate ? window.flowerShopAPI.formatDate(pedido.fecha_entrega) : pedido.fecha_entrega) : 'N/A';
             const totalPedido = (typeof pedido.total !== 'undefined' && pedido.total !== null) ? (window.flowerShopAPI.formatCurrency ? window.flowerShopAPI.formatCurrency(pedido.total) : pedido.total) : 'N/A';
+            // Mostrar el primer producto del pedido (puedes ajustar si hay varios)
+            let productoHtml = 'N/A';
+            if (pedido.productos && pedido.productos.length > 0) {
+                const prod = pedido.productos[0];
+                const icono = prod.categoria_icono ? `<span style=\"font-size:1.2em;vertical-align:middle;\">${prod.categoria_icono}</span>` : '';
+                // Usar producto_nombre si existe, si no, usar nombre
+                const nombre = prod.producto_nombre || prod.nombre || '';
+                productoHtml = `${nombre} ${icono} <span style=\"color:#64748b;font-size:0.95em;\">${prod.categoria_nombre || ''}</span>`;
+            }
             return `
                 <tr data-id="${pedido.id}">
-                    <td>${numeroPedido}</td>
+                    <td>${productoHtml}</td>
                     <td>${cliente.trim() || 'N/A'}</td>
                     <td>${fechaPedido}</td>
                     <td>${fechaEntrega}</td>

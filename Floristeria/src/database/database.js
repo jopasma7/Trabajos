@@ -1339,7 +1339,9 @@ class FlowerShopDatabase {
     }
 
     async getPedidos() {
-        return this.allQuery(`
+    //
+        // Primero obtenemos los pedidos principales
+        const pedidosRaw = await this.allQuery(`
             SELECT p.*, c.nombre as cliente_nombre, c.apellidos as cliente_apellidos,
                    e.nombre as evento_nombre
             FROM pedidos p
@@ -1347,6 +1349,29 @@ class FlowerShopDatabase {
             LEFT JOIN eventos e ON p.evento_id = e.id
             ORDER BY p.fecha_pedido DESC
         `);
+
+        // Clonamos a objetos planos y agregamos productos
+        const pedidos = [];
+        for (const pedidoRaw of pedidosRaw) {
+            // Construir objeto plano con todas las propiedades enumerables
+            const pedido = {};
+            for (const key of Object.keys(pedidoRaw)) {
+                pedido[key] = pedidoRaw[key];
+            }
+            // Asegurar que el campo id existe (puede venir como pedido_id)
+            if (!pedido.id && pedido.pedido_id) pedido.id = pedido.pedido_id;
+            const productos = await this.allQuery(`
+                SELECT pd.producto_id, pr.nombre as producto_nombre, pd.cantidad, pd.precio_unitario,
+                       c.nombre as categoria_nombre, c.icono as categoria_icono
+                FROM pedido_detalles pd
+                JOIN productos pr ON pd.producto_id = pr.id
+                LEFT JOIN categorias c ON pr.categoria_id = c.id
+                WHERE pd.pedido_id = ?
+            `, [pedido.id]);
+            pedido.productos = productos;
+            pedidos.push(pedido);
+        }
+        return pedidos;
     }
 
     async getEstadisticasGenerales() {
