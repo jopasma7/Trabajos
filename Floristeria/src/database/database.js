@@ -508,12 +508,12 @@ class FlowerShopDatabase {
                 );
             }
 
-            // Clientes de ejemplo
+            // Clientes de ejemplo (con nuevos tipos)
             const clientes = [
-                ['María', 'González López', '123456789', 'maria@email.com', 'Calle Principal 123', '1980-05-15', 'frecuente', 5.00, 150.00, '2024-12-15'],
-                ['Juan', 'Pérez Martín', '987654321', 'juan@email.com', 'Avenida Central 456', '1975-08-22', 'vip', 10.00, 300.00, '2024-12-20'],
-                ['Ana', 'Rodríguez Silva', '456789123', 'ana@email.com', 'Plaza Mayor 789', '1990-03-10', 'regular', 0.00, 75.00, '2024-11-30'],
-                ['Carlos', 'López García', '789123456', 'carlos@email.com', 'Calle Flores 321', '1985-12-05', 'frecuente', 5.00, 200.00, '2024-12-18']
+                ['María', 'González López', '123456789', 'maria@email.com', 'Calle Principal 123', '1980-05-15', '🆕 Nuevo', 5.00, 150.00, '2024-12-15'],
+                ['Juan', 'Pérez Martín', '987654321', 'juan@email.com', 'Avenida Central 456', '1975-08-22', '👥 Regular', 10.00, 300.00, '2024-12-20'],
+                ['Ana', 'Rodríguez Silva', '456789123', 'ana@email.com', 'Plaza Mayor 789', '1990-03-10', '⭐ Frecuente', 0.00, 75.00, '2024-11-30'],
+                ['Carlos', 'López García', '789123456', 'carlos@email.com', 'Calle Flores 321', '1985-12-05', '💎 VIP', 5.00, 200.00, '2024-12-18']
             ];
 
             for (const cliente of clientes) {
@@ -578,15 +578,15 @@ class FlowerShopDatabase {
             return;
         }
 
-        // Pedidos de ejemplo de los últimos 30 días
+        // Pedidos de ejemplo de los últimos 30 días (solo estados cancelado y completado)
         const pedidosEjemplo = [
             {
                 numero_pedido: 'FL1675089600001',
                 cliente_id: clientes[0].id,
                 evento_id: null,
-                fecha_pedido: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // Hace 5 días
+                fecha_pedido: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
                 fecha_entrega: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                estado: 'entregado',
+                estado: 'completado',
                 tipo_pedido: 'regular',
                 subtotal: 45.00,
                 descuento: 0,
@@ -604,9 +604,9 @@ class FlowerShopDatabase {
                 numero_pedido: 'FL1675089600002',
                 cliente_id: clientes[1].id,
                 evento_id: null,
-                fecha_pedido: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // Hace 8 días
+                fecha_pedido: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
                 fecha_entrega: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                estado: 'entregado',
+                estado: 'cancelado',
                 tipo_pedido: 'regular',
                 subtotal: 78.50,
                 descuento: 5.00,
@@ -624,9 +624,9 @@ class FlowerShopDatabase {
                 numero_pedido: 'FL1675089600003',
                 cliente_id: clientes[2].id,
                 evento_id: null,
-                fecha_pedido: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(), // Hace 12 días
+                fecha_pedido: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
                 fecha_entrega: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                estado: 'confirmado',
+                estado: 'completado',
                 tipo_pedido: 'urgente',
                 subtotal: 92.00,
                 descuento: 0,
@@ -644,9 +644,9 @@ class FlowerShopDatabase {
                 numero_pedido: 'FL1675089600004',
                 cliente_id: clientes[0].id,
                 evento_id: null,
-                fecha_pedido: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // Hace 15 días
+                fecha_pedido: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
                 fecha_entrega: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                estado: 'entregado',
+                estado: 'cancelado',
                 tipo_pedido: 'regular',
                 subtotal: 125.75,
                 descuento: 12.58,
@@ -664,9 +664,9 @@ class FlowerShopDatabase {
                 numero_pedido: 'FL1675089600005',
                 cliente_id: clientes[1].id,
                 evento_id: null,
-                fecha_pedido: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // Hace 2 días
-                fecha_entrega: new Date().toISOString().split('T')[0], // Hoy
-                estado: 'preparando',
+                fecha_pedido: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                fecha_entrega: new Date().toISOString().split('T')[0],
+                estado: 'completado',
                 tipo_pedido: 'regular',
                 subtotal: 67.25,
                 descuento: 0,

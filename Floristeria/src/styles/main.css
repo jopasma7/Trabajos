@@ -4425,6 +4425,55 @@ body::after {
     color: #dc2626;
 }
 
+.cliente-tipo.nuevo {
+    max-width: 105px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    background: rgba(68, 239, 99, 0.256);
+    color: #044200;
+    white-space: nowrap;
+}
+
+.cliente-tipo.regular {
+    max-width: 105px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    background: rgba(239, 171, 68, 0.256);
+    color: #a56601;
+    white-space: nowrap;
+}
+
+.cliente-tipo.frecuente {
+    max-width: 105px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    background: rgba(88, 68, 239, 0.256);
+    color: #1c01a5;
+    white-space: nowrap;
+}
+
+.cliente-tipo.vip {
+    max-width: 105px;
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    background: rgba(68, 210, 239, 0.256);
+    color: #01a597;
+    white-space: nowrap;
+
+}
+
 .countdown-info {
     text-align: center;
     padding: 0.8rem;
