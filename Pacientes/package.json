@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "rebuild": "electron-rebuild",
-  "build": "cmd /c \"echo Cerrando instancias abiertas... & taskkill /IM 'Hospital App.exe' /F >nul 2>&1 & echo Ejecutando postinstall... & npm run postinstall & echo Ejecutando dist... & npm run dist\"",
+    "build": "cmd /c \"echo Cerrando instancias abiertas... & taskkill /IM 'Hospital App.exe' /F >nul 2>&1 & echo Ejecutando postinstall... & npm run postinstall & echo Ejecutando dist... & npm run dist\"",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
