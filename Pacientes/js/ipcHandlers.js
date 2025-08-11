@@ -11,7 +11,6 @@ const db = require('./data/db');
 const perfilPath = path.join(app.getPath('userData'), 'perfil.json');
 
 // --- Agenda: persistencia de eventos en base de datos (usando db.js) ---
-ipcMain.handle('agenda-guardar', (event, eventos) => db.upsertEventos(eventos));
 ipcMain.handle('agenda-cargar', () => db.getAllEventos());
 ipcMain.handle('agenda-guardar', (event, eventos) => db.upsertEventos(eventos));
 
