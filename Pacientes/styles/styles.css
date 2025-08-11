@@ -1,4 +1,6 @@
-/* Alertas personalizadas agenda */
+
+
+/* Alertas personalizadas */
 .custom-alert {
   border-radius: 1.3em;
   box-shadow: 0 8px 32px 0 rgba(0,0,0,0.18), 0 2px 8px 0 rgba(0,0,0,0.10);
@@ -55,6 +57,9 @@
   color: #0c5460;
   border-left: 6px solid #1e90ff;
 }
+
+
+
 /* Sidebar sticky: siempre visible al hacer scroll */
 nav.bg-dark {
   position: sticky;
@@ -65,6 +70,8 @@ nav.bg-dark {
   overflow-y: auto;
   z-index: 10;
 }
+
+
 /* Fecha de instalación en tabla pacientes: mantener en una sola línea */
 /* Acciones de la tabla pacientes: mantener botones en línea */
 td:last-child, td:nth-child(4) {

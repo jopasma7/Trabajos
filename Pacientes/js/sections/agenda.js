@@ -5,12 +5,12 @@ function mostrarMensaje(texto, tipo = 'success') {
   let alerta = document.createElement('div');
   alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
   alerta.style.zIndex = 9999;
-    let icon = '';
-    if (tipo === 'success') icon = '<span class="alert-icon">✔️</span>';
-    else if (tipo === 'danger') icon = '<span class="alert-icon">❌</span>';
-    else if (tipo === 'warning') icon = '<span class="alert-icon">⚠️</span>';
-    else if (tipo === 'info') icon = '<span class="alert-icon">ℹ️</span>';
-    alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
+  let icon = '';
+  if (tipo === 'success') icon = '<span class="alert-icon">✨</span>';
+  else if (tipo === 'danger') icon = '<span class="alert-icon">❌</span>';
+  else if (tipo === 'warning') icon = '<span class="alert-icon">⚠️</span>';
+  else if (tipo === 'info') icon = '<span class="alert-icon">ℹ️</span>';
+  alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
   document.body.appendChild(alerta);
   // Cerrar al hacer click en la alerta
   alerta.onclick = () => alerta.remove();
@@ -39,18 +39,6 @@ function setupAgendaSection() {
   const formEvento = document.getElementById('form-evento');
 	// Render y acciones
 // Función global para mostrar mensajes flotantes
-function mostrarMensaje(texto, tipo = 'success') {
-  let alerta = document.createElement('div');
-  alerta.className = `alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
-  alerta.style.zIndex = 9999;
-  alerta.innerHTML = texto;
-  document.body.appendChild(alerta);
-  setTimeout(() => {
-    alerta.classList.remove('show');
-    alerta.classList.add('hide');
-    setTimeout(() => alerta.remove(), 500);
-  }, 1800);
-}
   function openModalEditar(id) {
     const ev = agenda.getEventos().find(e => e.id === id);
     if (!ev) return;
@@ -167,7 +155,7 @@ function mostrarMensaje(texto, tipo = 'success') {
               renderEventosDia(contenedor, eventosFiltrados);
               mostrarMensaje('Evento eliminado correctamente', 'success');
             } else {
-              mostrarMensaje('Evento eliminado correctamente', 'success');
+                mostrarMensaje('Evento eliminado correctamente', 'success');
             }
           });
         }
@@ -499,7 +487,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
             };
             renderColumna(diaOrigen);
             renderColumna(diaNuevo);
-            mostrarMensaje('Evento movido correctamente', 'success');
+            mostrarMensaje('Evento movido correctamente', 'info');
             // Reasignar listeners drag & drop solo en las dos columnas actualizadas
             setTimeout(() => {
               [diaOrigen, diaNuevo].forEach(diaKey => {
