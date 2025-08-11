@@ -1,5 +1,5 @@
-  // Contador de eventos próximos (próxima hora)
-  setTimeout(() => {
+// Contador de eventos próximos (próxima hora)
+ setTimeout(() => {
     const badge = document.getElementById('contador-proximos');
     if (badge) {
       const ahora = new Date();
@@ -18,7 +18,7 @@
         badge.style.display = 'none';
       }
     }
-  }, 10);
+}, 10);
 // js/sections/agenda.js
 // Lógica profesional de la sección Agenda
 const { ipcRenderer } = require('electron');
@@ -58,23 +58,109 @@ function setupAgendaSection() {
     modalEvento.show();
   }
   function eliminarEvento(id) {
-    // Animación de eliminación
-    const row = agendaBody.querySelector(`[data-delete="${id}"]`)?.closest('.agenda-evento');
+    // Animación de desvanecimiento al eliminar
+    const row = agendaBody.querySelector(`[data-delete="${id}"]`)?.closest('.agenda-evento-calendario');
+    const diaCol = row?.closest('.agenda-dia-col');
+    const diaKey = row?.getAttribute('data-dia');
     if (row) {
-      row.style.transition = 'opacity 0.4s, height 0.4s';
-      row.style.opacity = '0';
-      row.style.height = '0px';
-      setTimeout(() => {
-        const nuevos = agenda.getEventos().filter(e => e.id !== id);
-        agenda.setEventos(nuevos);
-        agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-        mostrarMensaje('Evento eliminado correctamente', 'success');
-      }, 400);
-    } else {
-      const nuevos = agenda.getEventos().filter(e => e.id !== id);
-      agenda.setEventos(nuevos);
-      agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-      mostrarMensaje('Evento eliminado correctamente', 'success');
+      row.classList.add('evento-eliminando');
+      // Esperar a que termine la transición de opacity
+      row.addEventListener('transitionend', function handler(e) {
+        if (e.propertyName === 'opacity') {
+          row.removeEventListener('transitionend', handler);
+          // Eliminar de datos y re-renderizar columna
+          const nuevos = agenda.getEventos().filter(e => e.id !== id);
+          agenda.setEventos(nuevos);
+          agenda.guardarEventos(() => {
+            if (row && diaCol && diaKey) {
+              // Además, eliminar cualquier nodo .agenda-evento-calendario.evento-eliminando que haya quedado en el DOM
+              diaCol.querySelectorAll('.agenda-evento-calendario.evento-eliminando').forEach(n => n.remove());
+              // Re-renderizar solo la columna del día usando la misma lógica/HTML que en renderAgenda
+              const eventosPorDia = {};
+              nuevos.forEach(ev => {
+                if (!eventosPorDia[ev.fecha]) eventosPorDia[ev.fecha] = [];
+                eventosPorDia[ev.fecha].push(ev);
+              });
+              let eventosFiltrados = eventosPorDia[diaKey] || [];
+              const ahora = new Date();
+              if (window._agendaFiltroEventos === 'futuros') {
+                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
+              } else if (window._agendaFiltroEventos === 'pasados') {
+                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
+              }
+              const contenedor = diaCol.querySelector('.flex-grow-1');
+              // Eliminar todos los hijos del contenedor (más seguro que innerHTML)
+              while (contenedor.firstChild) contenedor.removeChild(contenedor.firstChild);
+              // Forzar reflow
+              void contenedor.offsetHeight;
+              if (eventosFiltrados.length === 0) {
+                contenedor.innerHTML = '<div class="text-muted small text-center">—</div>';
+              } else {
+                const eventosHtml = eventosFiltrados
+                  .sort((a, b) => a.hora.localeCompare(b.hora))
+                  .map((ev, idx, arr) => {
+                    let claseNuevo = '';
+                    if (window._ultimoEventoCreado && ev.id === window._ultimoEventoCreado) {
+                      claseNuevo = '';
+                      setTimeout(() => { window._ultimoEventoCreado = null; }, 1000);
+                    }
+                    // Quitar mb-1 al último evento
+                    const mbClass = (idx === arr.length - 1) ? '' : 'mb-1';
+                    return `
+                      <div class="agenda-evento-calendario bg-white border-end border-3 px-2 py-1 ${mbClass} position-relative ${claseNuevo} ${(() => {
+                        const ahora = new Date();
+                        const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                        if (fechaHoraEv < ahora) return 'evento-pasado';
+                        const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                        if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) return 'evento-proximo';
+                        if (ev.categoria === 'importante') return 'evento-categoria-importante';
+                        if (ev.categoria === 'personal') return 'evento-categoria-personal';
+                        if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
+                        return '';
+                      })()}" data-id="${ev.id}" data-dia="${ev.fecha}" title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
+                        <div class="fw-bold text-success small">
+                          <i class="bi bi-clock me-1"></i> ${ev.hora}
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            if (fechaHoraEv < ahora) {
+                              return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                            }
+                            return '';
+                          })()}
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                            if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
+                              return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
+                            }
+                            return '';
+                          })()}
+                        </div>
+                        <div class="fw-semibold small">${ev.titulo}</div>
+                        <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+                        <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                      </div>
+                    `;
+                  }).join('');
+                contenedor.innerHTML = eventosHtml;
+              }
+              // Volver a asociar listeners de editar y eliminar solo en esa columna
+              contenedor.querySelectorAll('[data-delete]').forEach(btn => {
+                btn.onclick = () => eliminarEvento(btn.getAttribute('data-delete'));
+              });
+              contenedor.querySelectorAll('[data-edit]').forEach(btn => {
+                btn.onclick = () => openModalEditar(btn.getAttribute('data-edit'));
+              });
+              mostrarMensaje('Evento eliminado correctamente', 'success');
+            } else {
+              mostrarMensaje('Evento eliminado correctamente', 'success');
+            }
+          });
+        }
+      });
     }
   }
   // Botón nuevo evento
@@ -377,6 +463,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                         if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
                         return '';
                       })()}"
+                      data-id="${ev.id}" data-dia="${ev.fecha}"
                       title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
                         <div class="fw-bold text-success small">
                           <i class="bi bi-clock me-1"></i> ${ev.hora}
@@ -456,15 +543,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   });
   agendaBody.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const eventoDiv = btn.closest('.agenda-evento-calendario');
-      if (eventoDiv) {
-        eventoDiv.classList.add('evento-eliminando');
-        setTimeout(() => {
-          eliminarEvento(btn.getAttribute('data-delete'));
-        }, 300);
-      } else {
-        eliminarEvento(btn.getAttribute('data-delete'));
-      }
+      eliminarEvento(btn.getAttribute('data-delete'));
     });
   });
 }
