@@ -58,7 +58,7 @@
   border-left: none !important;
 }
 .evento-proximo {
-  border-color: #ffc107 !important;
+  border-left: 4px solid #ffc107 !important;
   box-shadow: 0 0 0 2px #fff3cd;
 }
 .evento-pasado {
