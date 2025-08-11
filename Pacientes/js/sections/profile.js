@@ -4,6 +4,38 @@
 const { ipcRenderer } = require('electron');
 
 function setupProfileSection() {
+    // --- Cargar datos de usuario y avatar en header al iniciar la app ---
+    function cargarPerfilHeaderSolo() {
+        ipcRenderer.invoke('perfil-cargar').then(data => {
+            const sexo = (data && data.sexo) ? data.sexo : 'hombre';
+            const headerAvatar = document.querySelector('header img.rounded-circle');
+            const headerName = document.querySelector('header .header-username');
+            if (headerAvatar) {
+                if (data && data.avatar) {
+                    headerAvatar.src = data.avatar;
+                } else {
+                    headerAvatar.src = sexo === 'mujer' ? '../assets/mujer.jpg' : '../assets/hombre.jpg';
+                }
+            }
+            if (headerName) {
+                if (data && ((data.nombre && data.nombre.trim() !== '') || (data.apellido && data.apellido.trim() !== ''))) {
+                    let nombreCompleto = '';
+                    if (data.nombre && data.nombre.trim() !== '') nombreCompleto += data.nombre.trim();
+                    if (data.apellido && data.apellido.trim() !== '') nombreCompleto += (nombreCompleto ? ' ' : '') + data.apellido.trim();
+                    let cargo = data.cargo && data.cargo.trim() !== '' ? data.cargo.trim() : '';
+                    if (cargo) {
+                        headerName.innerHTML = `<span class="header-cargo" style="color:#16a34a;font-weight:600;"> ${cargo}</span> | ${nombreCompleto}`;
+                    } else {
+                        headerName.textContent = nombreCompleto;
+                    }
+                } else {
+                    headerName.textContent = 'Usuario';
+                }
+            }
+        });
+    }
+    // Ejecutar al cargar el módulo
+    cargarPerfilHeaderSolo();
     // Cambiar el título del header al entrar en la sección de perfil
     const perfilNav = document.querySelector('[data-section="perfil"]');
     if (perfilNav) {
