@@ -97,37 +97,236 @@ function setupAgendaSection() {
     agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
     modalEvento.hide();
   };
+  // Al iniciar, poner el filtro de fecha al día de hoy
+  const picker = document.getElementById('agendaSemanaPicker');
+  if (picker) {
+    const hoy = new Date();
+    const yyyy = hoy.getFullYear();
+    const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dd = String(hoy.getDate()).padStart(2, '0');
+    picker.value = `${yyyy}-${mm}-${dd}`;
+  }
   // Cargar y renderizar eventos solo al iniciar
   agenda.cargarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
 }
 
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
-  if (!agendaBody) return;
-  if (!eventos.length) {
-    agendaBody.innerHTML = `
-      <div class="text-center text-muted py-5">
-        <i class="bi bi-calendar-event display-4 mb-3"></i>
-        <h4 class="fw-bold mb-2">Sin eventos programados</h4>
-        <p class="mb-0">Aquí aparecerán tus turnos, citas y eventos importantes.</p>
-      </div>
-    `;
-    return;
+  // --- AGREGAR 5 EVENTOS EXTRA DE EJEMPLO EL LUNES DE LA SEMANA ACTUAL ---
+  if (!window._ejemploLunesExtraAgregado) {
+    const lunesKey = (() => {
+      let semanaBase = window._agendaSemanaBase;
+      if (!semanaBase) semanaBase = new Date();
+      if (!(semanaBase instanceof Date)) semanaBase = new Date(semanaBase);
+      const diaSemana = semanaBase.getDay() === 0 ? 7 : semanaBase.getDay();
+      const lunes = new Date(semanaBase);
+      lunes.setDate(semanaBase.getDate() - diaSemana + 1);
+      return lunes.toISOString().slice(0,10);
+    })();
+    const eventosLunesExtra = [
+      { titulo: "Cita 6", descripcion: "Sexta cita del día.", fecha: lunesKey, hora: "16:00" },
+      { titulo: "Cita 7", descripcion: "Séptima cita del día.", fecha: lunesKey, hora: "17:00" },
+      { titulo: "Cita 8", descripcion: "Octava cita del día.", fecha: lunesKey, hora: "18:00" },
+      { titulo: "Cita 9", descripcion: "Novena cita del día.", fecha: lunesKey, hora: "19:00" },
+      { titulo: "Cita 10", descripcion: "Décima cita del día.", fecha: lunesKey, hora: "20:00" }
+    ];
+    let eventosReal = agenda.getEventos();
+    let agregado = false;
+    eventosLunesExtra.forEach(ev => {
+      if (!eventosReal.some(e => e.titulo === ev.titulo && e.fecha === ev.fecha && e.hora === ev.hora)) {
+        eventosReal.push({
+          id: 'ejemplo-lunes-extra-' + Math.random().toString(36).slice(2),
+          ...ev
+        });
+        agregado = true;
+      }
+    });
+    if (agregado) {
+      agenda.setEventos(eventosReal);
+      agenda.guardarEventos();
+    }
+    window._ejemploLunesExtraAgregado = true;
   }
-  agendaBody.innerHTML = eventos
-    .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora))
-    .map(ev => `
-      <div class="agenda-evento d-flex align-items-center justify-content-between py-3 border-bottom">
-        <div>
-          <div class="fw-bold text-success mb-1"><i class="bi bi-clock me-1"></i> ${ev.fecha} ${ev.hora}</div>
-          <div class="fs-5 fw-semibold">${ev.titulo}</div>
-          <div class="text-muted small">${ev.descripcion || ''}</div>
-        </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary btn-sm" data-edit="${ev.id}"><i class="bi bi-pencil"></i></button>
-          <button class="btn btn-outline-danger btn-sm" data-delete="${ev.id}"><i class="bi bi-trash"></i></button>
-        </div>
+  // --- AGREGAR 5 EVENTOS DE EJEMPLO EL LUNES DE LA SEMANA ACTUAL ---
+  if (!window._ejemploLunesAgregado) {
+    const lunesKey = (() => {
+      // Calcular lunes de la semana base
+      let semanaBase = window._agendaSemanaBase;
+      if (!semanaBase) semanaBase = new Date();
+      if (!(semanaBase instanceof Date)) semanaBase = new Date(semanaBase);
+      const diaSemana = semanaBase.getDay() === 0 ? 7 : semanaBase.getDay();
+      const lunes = new Date(semanaBase);
+      lunes.setDate(semanaBase.getDate() - diaSemana + 1);
+      return lunes.toISOString().slice(0,10);
+    })();
+    const eventosLunes = [
+      { titulo: "Cita 1", descripcion: "Primera cita del día.", fecha: lunesKey, hora: "08:00" },
+      { titulo: "Cita 2", descripcion: "Segunda cita del día.", fecha: lunesKey, hora: "09:30" },
+      { titulo: "Cita 3", descripcion: "Tercera cita del día.", fecha: lunesKey, hora: "11:00" },
+      { titulo: "Cita 4", descripcion: "Cuarta cita del día.", fecha: lunesKey, hora: "13:00" },
+      { titulo: "Cita 5", descripcion: "Quinta cita del día.", fecha: lunesKey, hora: "15:00" }
+    ];
+    let eventosReal = agenda.getEventos();
+    let agregado = false;
+    eventosLunes.forEach(ev => {
+      if (!eventosReal.some(e => e.titulo === ev.titulo && e.fecha === ev.fecha && e.hora === ev.hora)) {
+        eventosReal.push({
+          id: 'ejemplo-lunes-' + Math.random().toString(36).slice(2),
+          ...ev
+        });
+        agregado = true;
+      }
+    });
+    if (agregado) {
+      agenda.setEventos(eventosReal);
+      agenda.guardarEventos();
+    }
+    window._ejemploLunesAgregado = true;
+  }
+  if (!agendaBody) return;
+
+  // Estado de la semana mostrada
+  if (!window._agendaSemanaBase) {
+    window._agendaSemanaBase = new Date();
+  }
+  let semanaBase = window._agendaSemanaBase;
+  if (!(semanaBase instanceof Date)) semanaBase = new Date(semanaBase);
+
+  // Calcular lunes de la semana base
+  const diaSemana = semanaBase.getDay() === 0 ? 7 : semanaBase.getDay(); // Lunes=1, Domingo=7
+  const lunes = new Date(semanaBase);
+  lunes.setDate(semanaBase.getDate() - diaSemana + 1);
+  const dias = Array.from({length: 7}, (_, i) => {
+    const d = new Date(lunes);
+    d.setDate(lunes.getDate() + i);
+    return d;
+  });
+
+  // --- EJEMPLOS DE EVENTOS PARA ESTA SEMANA ---
+  if (!window._ejemploEventosAgregados) {
+    const ejemploEventos = [
+      {
+        titulo: "Consulta médica",
+        descripcion: "Chequeo general con el Dr. Pérez.",
+        fecha: dias[1].toISOString().slice(0,10),
+        hora: "09:00"
+      },
+      {
+        titulo: "Reunión de equipo",
+        descripcion: "Planificación semanal de tareas.",
+        fecha: dias[2].toISOString().slice(0,10),
+        hora: "11:30"
+      },
+      {
+        titulo: "Llamada paciente",
+        descripcion: "Seguimiento telefónico a paciente Juan.",
+        fecha: dias[4].toISOString().slice(0,10),
+        hora: "16:00"
+      },
+      {
+        titulo: "Vacunación",
+        descripcion: "Aplicación de vacuna antigripal.",
+        fecha: dias[0].toISOString().slice(0,10),
+        hora: "13:00"
+      },
+      {
+        titulo: "Entrega de informes",
+        descripcion: "Enviar resultados de laboratorio.",
+        fecha: dias[6].toISOString().slice(0,10),
+        hora: "10:00"
+      }
+    ];
+    ejemploEventos.forEach(ev => {
+      if (!eventos.some(e => e.titulo === ev.titulo && e.fecha === ev.fecha && e.hora === ev.hora)) {
+        eventos.push({
+          id: 'ejemplo-' + Math.random().toString(36).slice(2),
+          ...ev
+        });
+      }
+    });
+    window._ejemploEventosAgregados = true;
+  }
+
+  // Agrupar eventos por día (YYYY-MM-DD)
+  const eventosPorDia = {};
+  dias.forEach(d => {
+    const key = d.toISOString().slice(0,10);
+    eventosPorDia[key] = [];
+  });
+  eventos.forEach(ev => {
+    if (eventosPorDia[ev.fecha]) {
+      eventosPorDia[ev.fecha].push(ev);
+    }
+  });
+
+  // Barra de navegación tipo Google Calendar
+  const semanaInicio = dias[0];
+  const semanaFin = dias[6];
+  const semanaLabel = `${semanaInicio.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${semanaFin.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+  const hoy = new Date();
+  const hoyKey = hoy.toISOString().slice(0,10);
+
+  agendaBody.innerHTML = `
+    <div class="mb-4">
+      <div class="fw-bold text-secondary mb-1">Semana actual</div>
+      <div class="agenda-semana-horizontal d-flex flex-row flex-nowrap gap-1" style="min-height: 260px;">
+        ${dias.map(dia => {
+          const key = dia.toISOString().slice(0,10);
+          const nombreDia = dia.toLocaleDateString('es-ES', { weekday: 'short' });
+          const numDia = dia.getDate();
+          const isToday = key === hoyKey;
+          return `
+            <div class="agenda-dia-col bg-light border rounded-3 h-100 d-flex flex-column p-1 flex-grow-1" style="min-width: 140px; max-width: 1fr;">
+              <div class="agenda-dia-header text-center small fw-bold mb-1 ${isToday ? 'agenda-dia-hoy' : ''}">
+                <div class="agenda-dia-nombre">${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)}</div>
+                <div class="agenda-dia-numero">${numDia}</div>
+              </div>
+              <div class="flex-grow-1 d-flex flex-column gap-1">
+                ${eventosPorDia[key].length === 0
+                  ? '<div class="text-muted small text-center">—</div>'
+                  : eventosPorDia[key]
+                      .sort((a, b) => a.hora.localeCompare(b.hora))
+                      .map(ev => `
+                        <div class="agenda-evento-calendario bg-white border-start border-3 border-success px-2 py-1 mb-1 position-relative">
+                          <div class="fw-bold text-success small"><i class="bi bi-clock me-1"></i> ${ev.hora}</div>
+                          <div class="fw-semibold small">${ev.titulo}</div>
+                          <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+                          <button class="btn btn-link btn-sm text-primary p-0 position-absolute end-0 top-0" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                          <button class="btn btn-link btn-sm text-danger p-0 position-absolute end-0 bottom-0" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                        </div>
+                      `).join('')
+                }
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
-    `).join('');
+    </div>
+  `;
+
+  // Listeners para navegación
+  setTimeout(() => {
+    const prevBtn = document.getElementById('agendaSemanaPrev');
+    const nextBtn = document.getElementById('agendaSemanaNext');
+    const hoyBtn = document.getElementById('agendaSemanaHoy');
+    const picker = document.getElementById('agendaSemanaPicker');
+    if (prevBtn) prevBtn.onclick = () => {
+      window._agendaSemanaBase = new Date(lunes.getTime() - 7 * 24 * 60 * 60 * 1000);
+      renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+    };
+    if (nextBtn) nextBtn.onclick = () => {
+      window._agendaSemanaBase = new Date(lunes.getTime() + 7 * 24 * 60 * 60 * 1000);
+      renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+    };
+    if (hoyBtn) hoyBtn.onclick = () => {
+      window._agendaSemanaBase = new Date();
+      renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+    };
+    if (picker) picker.onchange = (e) => {
+      window._agendaSemanaBase = new Date(e.target.value);
+      renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+    };
+  }, 10);
   // Acciones editar/borrar
   agendaBody.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openModalEditar(btn.getAttribute('data-edit')));

@@ -1,53 +1,49 @@
-/* styles/sections/agenda.css */
-
-#agenda-section .agenda-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
+/* Encabezado de día en calendario semanal */
+.agenda-dia-header {
+  background: #f0f4fa;
+  border-radius: 8px 8px 0 0;
+  padding: 0.5em 0.2em 0.2em 0.2em;
+  color: #2563eb;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e0e7ef;
 }
-#agenda-section .agenda-header h2 {
-  color: #16a34a;
+.agenda-dia-nombre {
+  font-size: 0.95em;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.agenda-dia-numero {
+  font-size: 1.3em;
   font-weight: 700;
-  margin-bottom: 0;
+  color: #1e293b;
+  margin-top: -2px;
 }
-#agenda-section .agenda-actions .btn {
-  min-width: 120px;
-}
-#agenda-section .agenda-card {
-  border-radius: 1rem;
-  box-shadow: 0 2px 12px rgba(22,163,74,0.08);
-  border: none;
+.agenda-dia-hoy {
+  background: linear-gradient(90deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #fff !important;
+  border-bottom: 2px solid #6366f1;
+  box-shadow: 0 2px 8px 0 #6366f133;
 }
 #agenda-section .agenda-empty {
   color: #64748b;
-  font-size: 1.1rem;
-  padding: 2.5rem 0;
+  font-size: 1.15rem;
+  padding: 3rem 0;
+  text-align: center;
 }
-#agenda-section .agenda-evento {
-  transition: background 0.2s;
-}
-#agenda-section .agenda-evento:hover {
+#modal-evento .modal-header {
   background: #f0fdf4;
+  border-bottom: 1px solid #d1fae5;
 }
-#agenda-section .agenda-evento .btn {
-  min-width: 36px;
-}
-#agenda-section .agenda-evento .btn-outline-primary {
-  border-color: #16a34a;
+#modal-evento .modal-title {
   color: #16a34a;
+  font-weight: 700;
 }
-#agenda-section .agenda-evento .btn-outline-primary:hover {
+#modal-evento .btn-success {
   background: #16a34a;
-  color: #fff;
+  border: none;
 }
-#agenda-section .agenda-evento .btn-outline-danger {
-  border-color: #dc2626;
-  color: #dc2626;
-}
-#agenda-section .agenda-evento .btn-outline-danger:hover {
-  background: #dc2626;
-  color: #fff;
+#modal-evento .btn-success:hover {
+  background: #15803d;
 }
 #modal-evento .modal-header {
   background: #f0fdf4;

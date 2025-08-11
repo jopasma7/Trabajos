@@ -1,3 +1,13 @@
+/* Sidebar sticky: siempre visible al hacer scroll */
+nav.bg-dark {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  z-index: 10;
+}
 /* Fecha de instalación en tabla pacientes: mantener en una sola línea */
 /* Acciones de la tabla pacientes: mantener botones en línea */
 td:last-child, td:nth-child(4) {
