@@ -410,10 +410,105 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
         let eventos = agenda.getEventos();
         const idx = eventos.findIndex(ev => ev.id === eventoId);
         if (idx >= 0 && eventos[idx].fecha !== diaNuevo) {
+          const diaOrigen = eventos[idx].fecha;
           eventos[idx].fecha = diaNuevo;
           agenda.setEventos(eventos);
-          agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-          mostrarMensaje('Evento movido correctamente', 'success');
+          agenda.guardarEventos(() => {
+            // Solo recargar las columnas de origen y destino
+            const renderColumna = (diaKey) => {
+              const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${diaKey}"]`);
+              let eventosPorDia = {};
+              eventos.forEach(ev => {
+                if (!eventosPorDia[ev.fecha]) eventosPorDia[ev.fecha] = [];
+                eventosPorDia[ev.fecha].push(ev);
+              });
+              let eventosFiltrados = eventosPorDia[diaKey] || [];
+              const ahora = new Date();
+              if (window._agendaFiltroEventos === 'futuros') {
+                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
+              } else if (window._agendaFiltroEventos === 'pasados') {
+                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
+              }
+              if (dropzone) {
+                if (eventosFiltrados.length === 0) {
+                  dropzone.innerHTML = '<div class="text-muted small text-center" style="min-height:40px;display:flex;align-items:center;justify-content:center;pointer-events:none;">—</div>' +
+                                     '<div style="min-height:20px;pointer-events:none;"></div>';
+                } else {
+                  dropzone.innerHTML = eventosFiltrados
+                    .sort((a, b) => a.hora.localeCompare(b.hora))
+                    .map(ev => {
+                      let claseNuevo = '';
+                      if (window._ultimoEventoCreado && ev.id === window._ultimoEventoCreado) {
+                        claseNuevo = 'nuevo-evento';
+                        setTimeout(() => { window._ultimoEventoCreado = null; }, 1000);
+                      }
+                      return `
+                        <div class="agenda-evento-calendario bg-white border-end border-3 px-2 py-1 mb-1 position-relative ${claseNuevo} ${(() => {
+                        const ahora = new Date();
+                        const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                        if (fechaHoraEv < ahora) return 'evento-pasado';
+                        const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                        if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) return 'evento-proximo';
+                        if (ev.categoria === 'importante') return 'evento-categoria-importante';
+                        if (ev.categoria === 'personal') return 'evento-categoria-personal';
+                        if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
+                        return '';
+                      })()}"
+                        data-id="${ev.id}" data-dia="${ev.fecha}"
+                        draggable="true"
+                        title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
+                          <div class="fw-bold text-success small">
+                            <i class="bi bi-clock me-1"></i> ${ev.hora}
+                            ${(() => {
+                              const ahora = new Date();
+                              const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                              if (fechaHoraEv < ahora) {
+                                return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                              }
+                              return '';
+                            })()}
+                            ${(() => {
+                              const ahora = new Date();
+                              const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                              const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                              if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
+                                return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
+                              }
+                              return '';
+                            })()}
+                          </div>
+                          <div class="fw-semibold small">${ev.titulo}</div>
+                          <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+                          <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                          <button class="btn btn-link btn-sm text-success p-0 position-absolute" style="right: 1.8rem; top: 0;" data-completar="${ev.id}" title="Marcar como completado"><i class="bi bi-check-circle${ev.completado ? '-fill' : ''}"></i></button>
+                          <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                        </div>
+                      `;
+                    }).join('');
+                }
+              }
+            };
+            renderColumna(diaOrigen);
+            renderColumna(diaNuevo);
+            mostrarMensaje('Evento movido correctamente', 'success');
+            // Reasignar listeners drag & drop solo en las dos columnas actualizadas
+            setTimeout(() => {
+              [diaOrigen, diaNuevo].forEach(diaKey => {
+                const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${diaKey}"]`);
+                if (!dropzone) return;
+                dropzone.querySelectorAll('.agenda-evento-calendario[draggable="true"]').forEach(evEl => {
+                  evEl.addEventListener('dragstart', function(e) {
+                    e.stopPropagation();
+                    evEl.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'none');
+                    e.dataTransfer.setData('text/plain', evEl.getAttribute('data-id'));
+                  });
+                  evEl.addEventListener('dragend', function(e) {
+                    evEl.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'auto');
+                  });
+                });
+              });
+            }, 0);
+          });
         }
       });
     });
