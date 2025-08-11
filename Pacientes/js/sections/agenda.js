@@ -12,24 +12,51 @@ function setupAgendaSection() {
   const modalEvento = new bootstrap.Modal(document.getElementById('modal-evento'));
   const formEvento = document.getElementById('form-evento');
 	// Render y acciones
-	function openModalEditar(id) {
-		const ev = agenda.getEventos().find(e => e.id === id);
-		if (!ev) return;
-		document.getElementById('modalEventoLabel').textContent = 'Editar Evento';
-		document.getElementById('evento-fecha').value = ev.fecha;
-		document.getElementById('evento-hora').value = ev.hora;
-		document.getElementById('evento-titulo').value = ev.titulo;
-		document.getElementById('evento-descripcion').value = ev.descripcion || '';
-		document.getElementById('evento-id').value = ev.id;
-		modalEvento.show();
-	}
-	function eliminarEvento(id) {
-		if (confirm('¿Seguro que deseas eliminar este evento?')) {
-			const nuevos = agenda.getEventos().filter(e => e.id !== id);
-			agenda.setEventos(nuevos);
-			agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-		}
-	}
+  function mostrarMensaje(texto, tipo = 'success') {
+    let alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
+    alerta.style.zIndex = 9999;
+    alerta.innerHTML = texto;
+    document.body.appendChild(alerta);
+    setTimeout(() => {
+      alerta.classList.remove('show');
+      alerta.classList.add('hide');
+      setTimeout(() => alerta.remove(), 500);
+    }, 1800);
+  }
+  function openModalEditar(id) {
+    const ev = agenda.getEventos().find(e => e.id === id);
+    if (!ev) return;
+    document.getElementById('modalEventoLabel').textContent = 'Editar Evento';
+    document.getElementById('evento-fecha').value = ev.fecha;
+    document.getElementById('evento-hora').value = ev.hora;
+    document.getElementById('evento-titulo').value = ev.titulo;
+    document.getElementById('evento-descripcion').value = ev.descripcion || '';
+    document.getElementById('evento-id').value = ev.id;
+    modalEvento.show();
+  }
+  function eliminarEvento(id) {
+    if (confirm('¿Seguro que deseas eliminar este evento?')) {
+      // Animación de eliminación
+      const row = agendaBody.querySelector(`[data-delete="${id}"]`)?.closest('.agenda-evento');
+      if (row) {
+        row.style.transition = 'opacity 0.4s, height 0.4s';
+        row.style.opacity = '0';
+        row.style.height = '0px';
+        setTimeout(() => {
+          const nuevos = agenda.getEventos().filter(e => e.id !== id);
+          agenda.setEventos(nuevos);
+          agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+          mostrarMensaje('Evento eliminado correctamente', 'success');
+        }, 400);
+      } else {
+        const nuevos = agenda.getEventos().filter(e => e.id !== id);
+        agenda.setEventos(nuevos);
+        agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+        mostrarMensaje('Evento eliminado correctamente', 'success');
+      }
+    }
+  }
   // Botón nuevo evento
   btnNuevoEvento.onclick = () => {
     formEvento.reset();
@@ -48,26 +75,28 @@ function setupAgendaSection() {
   };
 	// Guardar evento (nuevo o editado)
 	formEvento.onsubmit = (e) => {
-		e.preventDefault();
-		const id = document.getElementById('evento-id').value || crypto.randomUUID();
-		const nuevoEvento = {
-			id,
-			fecha: document.getElementById('evento-fecha').value,
-			hora: document.getElementById('evento-hora').value,
-			titulo: document.getElementById('evento-titulo').value,
-			descripcion: document.getElementById('evento-descripcion').value
-		};
-		let eventos = agenda.getEventos();
-		const idx = eventos.findIndex(ev => ev.id === id);
-		if (idx >= 0) {
-			eventos[idx] = nuevoEvento;
-		} else {
-			eventos.push(nuevoEvento);
-		}
-		agenda.setEventos(eventos);
-		agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-		modalEvento.hide();
-	};
+    e.preventDefault();
+    const id = document.getElementById('evento-id').value || crypto.randomUUID();
+    const nuevoEvento = {
+      id,
+      fecha: document.getElementById('evento-fecha').value,
+      hora: document.getElementById('evento-hora').value,
+      titulo: document.getElementById('evento-titulo').value,
+      descripcion: document.getElementById('evento-descripcion').value
+    };
+    let eventos = agenda.getEventos();
+    const idx = eventos.findIndex(ev => ev.id === id);
+    if (idx >= 0) {
+      eventos[idx] = nuevoEvento;
+      mostrarMensaje('Evento editado correctamente', 'success');
+    } else {
+      eventos.push(nuevoEvento);
+      mostrarMensaje('Evento creado correctamente', 'success');
+    }
+    agenda.setEventos(eventos);
+    agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+    modalEvento.hide();
+  };
   // Cargar y renderizar eventos solo al iniciar
   agenda.cargarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
 }
