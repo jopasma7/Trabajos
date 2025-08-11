@@ -42,7 +42,7 @@ function setupAgendaSection() {
   function openModalEditar(id) {
     const ev = agenda.getEventos().find(e => e.id === id);
     if (!ev) return;
-    document.getElementById('modalEventoLabel').textContent = 'Editar Evento';
+  document.getElementById('modalEventoTitulo').textContent = 'Editar Evento';
     document.getElementById('evento-fecha').value = ev.fecha;
     document.getElementById('evento-hora').value = ev.hora;
     document.getElementById('evento-titulo').value = ev.titulo;
@@ -165,7 +165,7 @@ function setupAgendaSection() {
   // Botón nuevo evento
   btnNuevoEvento.onclick = () => {
     formEvento.reset();
-    document.getElementById('modalEventoLabel').textContent = 'Nuevo Evento';
+  document.getElementById('modalEventoTitulo').textContent = 'Nuevo Evento';
     document.getElementById('evento-id').value = '';
   // Poner fecha y hora actual por defecto
   const hoy = new Date();

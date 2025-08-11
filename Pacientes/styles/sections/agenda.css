@@ -115,36 +115,6 @@
   padding: 3rem 0;
   text-align: center;
 }
-#modal-evento .modal-header {
-  background: #f0fdf4;
-  border-bottom: 1px solid #d1fae5;
-}
-#modal-evento .modal-title {
-  color: #16a34a;
-  font-weight: 700;
-}
-#modal-evento .btn-success {
-  background: #16a34a;
-  border: none;
-}
-#modal-evento .btn-success:hover {
-  background: #15803d;
-}
-#modal-evento .modal-header {
-  background: #f0fdf4;
-  border-bottom: 1px solid #d1fae5;
-}
-#modal-evento .modal-title {
-  color: #16a34a;
-  font-weight: 700;
-}
-#modal-evento .btn-success {
-  background: #16a34a;
-  border: none;
-}
-#modal-evento .btn-success:hover {
-  background: #15803d;
-}
 .d-grid.grid-template {
   display: grid;
   grid-auto-flow: column;

@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="../styles/styles.css">
   <link rel="stylesheet" href="../styles/sections/profile.css">
   <link rel="stylesheet" href="../styles/sections/agenda.css">
+  <link rel="stylesheet" href="../styles/sections/modal-global.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -179,37 +180,45 @@
               <!-- Modal Evento -->
               <div class="modal fade" id="modal-evento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
                 <div class="modal-dialog">
-                  <div class="modal-content">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="max-width:700px;width:90vw;margin-top:5vh;">
                     <form id="form-evento">
                       <div class="modal-header">
-                        <h5 class="modal-title" id="modalEventoLabel">Nuevo Evento</h5>
+                        <div class="w-100">
+                          <h5 class="modal-title mb-1" style="font-size:2em;font-weight:900;letter-spacing:1px;">
+                            <span style="font-size:1.2em;vertical-align:-0.1em;">🗓️</span> <span id="modalEventoTitulo">Nuevo Evento</span>
+                          </h5>
+                          <div class="modal-subtitle text-secondary mt-1" style="font-size:1.05em; font-weight:400;">Crea y organiza tus actividades importantes</div>
+                        </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                       </div>
                       <div class="modal-body">
-                        <div class="mb-3">
-                          <label for="evento-fecha" class="form-label">Fecha</label>
-                          <input type="date" class="form-control" id="evento-fecha" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="evento-hora" class="form-label">Hora</label>
-                          <input type="time" class="form-control" id="evento-hora" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="evento-titulo" class="form-label">Título</label>
-                          <input type="text" class="form-control" id="evento-titulo" maxlength="60" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="evento-categoria" class="form-label">Categoría</label>
-                          <select class="form-select" id="evento-categoria">
-                            <option value="">Sin categoría</option>
-                            <option value="importante">Importante</option>
-                            <option value="personal">Personal</option>
-                            <option value="trabajo">Trabajo</option>
-                          </select>
-                        </div>
-                        <div class="mb-3">
-                          <label for="evento-descripcion" class="form-label">Descripción</label>
-                          <textarea class="form-control" id="evento-descripcion" rows="2" maxlength="200"></textarea>
+                        <div class="row g-3 justify-content-center" style="max-width:600px;margin:0 auto;">
+                          <div class="col-md-6">
+                            <label for="evento-titulo" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="evento-titulo" maxlength="60" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="evento-categoria">
+                              <option value="">🔖 Sin categoría</option>
+                                <option value="importante">❗ Importante</option>
+                                <option value="personal">👤 Personal</option>
+                                <option value="trabajo">💼 Trabajo</option>
+                            </select>
+                          </div>
+                          <div class="col-12">
+                            <label for="evento-descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="evento-descripcion" rows="2" maxlength="200"></textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-fecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="evento-fecha" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-hora" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="evento-hora" required>
+                          </div>
                         </div>
                       </div>
                       <div class="modal-footer">
