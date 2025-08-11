@@ -17,8 +17,16 @@ db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   fecha TEXT NOT NULL,
   hora TEXT NOT NULL,
   titulo TEXT NOT NULL,
-  descripcion TEXT
+  descripcion TEXT,
+  categoria TEXT
 )`).run();
+
+// Añadir columna categoria si no existe (migración)
+try {
+  db.prepare('ALTER TABLE agenda ADD COLUMN categoria TEXT').run();
+} catch (e) {
+  // Si ya existe, ignorar error
+}
 
 // --- Métodos de agenda ---
 db.getAllEventos = function() {
@@ -33,10 +41,10 @@ db.upsertEventos = function(eventos) {
   const deleteStmt = db.prepare('DELETE FROM agenda WHERE id = ?');
   idsAEliminar.forEach(id => deleteStmt.run(id));
   // Insertar o actualizar
-  const upsertStmt = db.prepare(`INSERT INTO agenda (id, fecha, hora, titulo, descripcion) VALUES (?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET fecha=excluded.fecha, hora=excluded.hora, titulo=excluded.titulo, descripcion=excluded.descripcion`);
+  const upsertStmt = db.prepare(`INSERT INTO agenda (id, fecha, hora, titulo, descripcion, categoria) VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET fecha=excluded.fecha, hora=excluded.hora, titulo=excluded.titulo, descripcion=excluded.descripcion, categoria=excluded.categoria`);
   eventos.forEach(ev => {
-    upsertStmt.run(ev.id, ev.fecha, ev.hora, ev.titulo, ev.descripcion);
+    upsertStmt.run(ev.id, ev.fecha, ev.hora, ev.titulo, ev.descripcion, ev.categoria || null);
   });
   return true;
 };

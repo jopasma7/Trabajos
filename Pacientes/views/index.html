@@ -160,6 +160,7 @@
                     <button class="btn btn-light btn-sm border" id="agendaSemanaNext" title="Semana siguiente"><i class="bi bi-chevron-right"></i></button>
                     <span class="ms-2 fw-semibold" id="agendaSemanaLabel"></span>
                     <span class="fw-bold text-secondary">Semana actual</span>
+                    <span id="contador-proximos" class="badge bg-warning text-dark ms-2" style="font-size:0.95em;display:none;"></span>
                   </div>
                   <div class="d-flex align-items-center gap-2">
                     <select id="agendaFiltroEventos" class="form-select form-select-sm w-auto">
@@ -196,6 +197,15 @@
                         <div class="mb-3">
                           <label for="evento-titulo" class="form-label">Título</label>
                           <input type="text" class="form-control" id="evento-titulo" maxlength="60" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="evento-categoria" class="form-label">Categoría</label>
+                          <select class="form-select" id="evento-categoria">
+                            <option value="">Sin categoría</option>
+                            <option value="importante">Importante</option>
+                            <option value="personal">Personal</option>
+                            <option value="trabajo">Trabajo</option>
+                          </select>
                         </div>
                         <div class="mb-3">
                           <label for="evento-descripcion" class="form-label">Descripción</label>

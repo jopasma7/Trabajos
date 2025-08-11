@@ -1,3 +1,23 @@
+.evento-categoria-indicador {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.bg-brown {
+  background-color: #8B5C2A !important;
+}
+.agenda-evento-calendario.nuevo-evento {
+  animation: popInEvento 0.5s;
+}
+
+@keyframes popInEvento {
+  0% { transform: scale(0.9); opacity: 0.2; }
+  80% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
 .agenda-evento-calendario {
   animation: fadeInEvento 0.5s;
   transition: opacity 0.3s;
@@ -21,8 +41,21 @@
   background: #e7f1ff !important;
 }
 .evento-categoria-trabajo {
-  border-color: #198754 !important;
-  background: #e9fbe7 !important;
+  border-right: 4px solid #8B5C2A !important;
+  border-left: none !important;
+  background: #f7f1ea !important;
+}
+.evento-categoria-importante {
+  border-right: 4px solid #dc3545 !important;
+  border-left: none !important;
+}
+.evento-categoria-personal {
+  border-right: 4px solid #0d6efd !important;
+  border-left: none !important;
+}
+.evento-categoria-trabajo {
+  border-right: 4px solid #8B5C2A !important;
+  border-left: none !important;
 }
 .evento-proximo {
   border-color: #ffc107 !important;

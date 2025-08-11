@@ -1,3 +1,24 @@
+  // Contador de eventos próximos (próxima hora)
+  setTimeout(() => {
+    const badge = document.getElementById('contador-proximos');
+    if (badge) {
+      const ahora = new Date();
+      const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+      let totalProximos = 0;
+      Object.values(eventosPorDia).forEach(evList => {
+        totalProximos += evList.filter(ev => {
+          const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+          return fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues;
+        }).length;
+      });
+      if (totalProximos > 0) {
+        badge.style.display = '';
+        badge.textContent = `Próximos: ${totalProximos}`;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }, 10);
 // js/sections/agenda.js
 // Lógica profesional de la sección Agenda
 const { ipcRenderer } = require('electron');
@@ -32,7 +53,8 @@ function setupAgendaSection() {
     document.getElementById('evento-hora').value = ev.hora;
     document.getElementById('evento-titulo').value = ev.titulo;
     document.getElementById('evento-descripcion').value = ev.descripcion || '';
-    document.getElementById('evento-id').value = ev.id;
+  document.getElementById('evento-id').value = ev.id;
+  document.getElementById('evento-categoria').value = ev.categoria || '';
     modalEvento.show();
   }
   function eliminarEvento(id) {
@@ -82,7 +104,8 @@ function setupAgendaSection() {
       fecha: document.getElementById('evento-fecha').value,
       hora: document.getElementById('evento-hora').value,
       titulo: document.getElementById('evento-titulo').value,
-      descripcion: document.getElementById('evento-descripcion').value
+      descripcion: document.getElementById('evento-descripcion').value,
+      categoria: document.getElementById('evento-categoria').value
     };
     let eventos = agenda.getEventos();
     const idx = eventos.findIndex(ev => ev.id === id);
@@ -111,6 +134,20 @@ function setupAgendaSection() {
 }
 
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
+  // Listener para marcar como completado (fuera del template)
+  setTimeout(() => {
+    agendaBody.querySelectorAll('[data-completar]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-completar');
+        const evento = eventos.find(ev => ev.id == id);
+        if (evento) {
+          evento.completado = !evento.completado;
+          agenda.setEventos(eventos);
+          renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+        }
+      });
+    });
+  }, 10);
   // --- AGREGAR 5 EVENTOS EXTRA DE EJEMPLO EL LUNES DE LA SEMANA ACTUAL ---
   if (!window._ejemploLunesExtraAgregado) {
     const lunesKey = (() => {
@@ -278,7 +315,17 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
           return `
             <div class="agenda-dia-col bg-light border rounded-3 h-100 d-flex flex-column p-1 flex-grow-1" style="min-width: 140px; max-width: 1fr;">
               <div class="agenda-dia-header text-center small fw-bold mb-1 ${isToday ? 'agenda-dia-hoy' : ''}">
-                <div class="agenda-dia-nombre">${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)}</div>
+                <div class="agenda-dia-nombre d-flex align-items-center justify-content-center gap-1">
+                  ${(() => {
+                    // Indicador de evento importante
+                    const eventosImportantes = eventosPorDia[key].some(ev => ev.categoria === 'importante');
+                    if (eventosImportantes) {
+                      return '<span class="badge rounded-pill bg-danger me-1" title="Evento importante" style="width:10px;height:10px;padding:0;"></span>';
+                    }
+                    return '';
+                  })()}
+                  ${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)}
+                </div>
                 <div class="d-flex justify-content-center align-items-center gap-1">
                   <div class="agenda-dia-numero">${numDia}</div>
                   <div class="agenda-dia-total-eventos text-secondary small" style="min-width:1.5em;">
@@ -311,8 +358,14 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                   }
                   return eventosFiltrados
                     .sort((a, b) => a.hora.localeCompare(b.hora))
-                    .map(ev => `
-                      <div class="agenda-evento-calendario bg-white border-start border-3 px-2 py-1 mb-1 position-relative ${(() => {
+                    .map(ev => {
+                      let claseNuevo = '';
+                      if (window._ultimoEventoCreado && ev.id === window._ultimoEventoCreado) {
+                        claseNuevo = 'nuevo-evento';
+                        setTimeout(() => { window._ultimoEventoCreado = null; }, 1000);
+                      }
+                      return `
+                        <div class="agenda-evento-calendario bg-white border-end border-3 px-2 py-1 mb-1 position-relative ${claseNuevo} ${(() => {
                         // Determinar si el evento ya ha pasado o es próximo
                         const ahora = new Date();
                         const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
@@ -320,7 +373,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                         // Evento en la próxima hora
                         const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
                         if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) return 'evento-proximo';
-                        // Color por tipo/categoría
+                        // Color por tipo/categoría (aplica al borde derecho)
                         if (ev.categoria === 'importante') return 'evento-categoria-importante';
                         if (ev.categoria === 'personal') return 'evento-categoria-personal';
                         if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
@@ -351,10 +404,12 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                         </div>
                         <div class="fw-semibold small">${ev.titulo}</div>
                         <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
-                        <button class="btn btn-link btn-sm text-primary p-0 position-absolute end-0 top-0" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-link btn-sm text-danger p-0 position-absolute end-0 bottom-0" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-link btn-sm text-success p-0 position-absolute" style="right: 1.8rem; top: 0;" data-completar="${ev.id}" title="Marcar como completado"><i class="bi bi-check-circle${ev.completado ? '-fill' : ''}"></i></button>
+                        <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
                       </div>
-                    `).join('');
+                      `;
+                    }).join('');
                 })()}
               </div>
             </div>
