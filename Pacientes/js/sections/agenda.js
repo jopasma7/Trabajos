@@ -266,10 +266,10 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   const hoy = new Date();
   const hoyKey = hoy.toISOString().slice(0,10);
 
+  // Filtro de eventos (todos, futuros, pasados) tomado del select del HTML
+  let filtroEventos = window._agendaFiltroEventos || 'todos';
   agendaBody.innerHTML = `
-    <div class="mb-4">
-      <div class="fw-bold text-secondary mb-1">Semana actual</div>
-      <div class="agenda-semana-horizontal d-flex flex-row flex-nowrap gap-1" style="min-height: 260px;">
+    <div class="agenda-semana-horizontal d-flex flex-row flex-nowrap gap-1" style="min-height: 260px;">
         ${dias.map(dia => {
           const key = dia.toISOString().slice(0,10);
           const nombreDia = dia.toLocaleDateString('es-ES', { weekday: 'short' });
@@ -279,23 +279,83 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
             <div class="agenda-dia-col bg-light border rounded-3 h-100 d-flex flex-column p-1 flex-grow-1" style="min-width: 140px; max-width: 1fr;">
               <div class="agenda-dia-header text-center small fw-bold mb-1 ${isToday ? 'agenda-dia-hoy' : ''}">
                 <div class="agenda-dia-nombre">${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)}</div>
-                <div class="agenda-dia-numero">${numDia}</div>
+                <div class="d-flex justify-content-center align-items-center gap-1">
+                  <div class="agenda-dia-numero">${numDia}</div>
+                  <div class="agenda-dia-total-eventos text-secondary small" style="min-width:1.5em;">
+                    ${(() => {
+                      // Contar eventos según el filtro seleccionado
+                      let eventosFiltrados = eventosPorDia[key];
+                      const ahora = new Date();
+                      if (filtroEventos === 'futuros') {
+                        eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
+                      } else if (filtroEventos === 'pasados') {
+                        eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
+                      }
+                      return eventosFiltrados.length > 0 ? `<i class='bi bi-calendar-event'></i> ${eventosFiltrados.length}` : '';
+                    })()}
+                  </div>
+                </div>
               </div>
               <div class="flex-grow-1 d-flex flex-column gap-1">
-                ${eventosPorDia[key].length === 0
-                  ? '<div class="text-muted small text-center">—</div>'
-                  : eventosPorDia[key]
-                      .sort((a, b) => a.hora.localeCompare(b.hora))
-                      .map(ev => `
-                        <div class="agenda-evento-calendario bg-white border-start border-3 border-success px-2 py-1 mb-1 position-relative">
-                          <div class="fw-bold text-success small"><i class="bi bi-clock me-1"></i> ${ev.hora}</div>
-                          <div class="fw-semibold small">${ev.titulo}</div>
-                          <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
-                          <button class="btn btn-link btn-sm text-primary p-0 position-absolute end-0 top-0" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-                          <button class="btn btn-link btn-sm text-danger p-0 position-absolute end-0 bottom-0" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                ${(() => {
+                  // Filtrar eventos según el filtro seleccionado
+                  let eventosFiltrados = eventosPorDia[key];
+                  const ahora = new Date();
+                  if (filtroEventos === 'futuros') {
+                    eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
+                  } else if (filtroEventos === 'pasados') {
+                    eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
+                  }
+                  if (eventosFiltrados.length === 0) {
+                    return '<div class="text-muted small text-center">—</div>';
+                  }
+                  return eventosFiltrados
+                    .sort((a, b) => a.hora.localeCompare(b.hora))
+                    .map(ev => `
+                      <div class="agenda-evento-calendario bg-white border-start border-3 px-2 py-1 mb-1 position-relative ${(() => {
+                        // Determinar si el evento ya ha pasado o es próximo
+                        const ahora = new Date();
+                        const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                        if (fechaHoraEv < ahora) return 'evento-pasado';
+                        // Evento en la próxima hora
+                        const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                        if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) return 'evento-proximo';
+                        // Color por tipo/categoría
+                        if (ev.categoria === 'importante') return 'evento-categoria-importante';
+                        if (ev.categoria === 'personal') return 'evento-categoria-personal';
+                        if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
+                        return '';
+                      })()}"
+                      title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
+                        <div class="fw-bold text-success small">
+                          <i class="bi bi-clock me-1"></i> ${ev.hora}
+                          <!-- Icono de reloj para eventos pasados -->
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            if (fechaHoraEv < ahora) {
+                              return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                            }
+                            return '';
+                          })()}
+                          <!-- Icono de rayo para eventos próximos -->
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                            if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
+                              return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
+                            }
+                            return '';
+                          })()}
                         </div>
-                      `).join('')
-                }
+                        <div class="fw-semibold small">${ev.titulo}</div>
+                        <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+                        <button class="btn btn-link btn-sm text-primary p-0 position-absolute end-0 top-0" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-link btn-sm text-danger p-0 position-absolute end-0 bottom-0" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                      </div>
+                    `).join('');
+                })()}
               </div>
             </div>
           `;
@@ -303,6 +363,16 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       </div>
     </div>
   `;
+  // Listener para filtro de eventos
+  setTimeout(() => {
+    const filtro = document.getElementById('agendaFiltroEventos');
+    if (filtro) {
+      filtro.onchange = (e) => {
+        window._agendaFiltroEventos = e.target.value;
+        renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+      };
+    }
+  }, 10);
 
   // Listeners para navegación
   setTimeout(() => {
@@ -332,7 +402,17 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
     btn.addEventListener('click', () => openModalEditar(btn.getAttribute('data-edit')));
   });
   agendaBody.querySelectorAll('[data-delete]').forEach(btn => {
-    btn.addEventListener('click', () => eliminarEvento(btn.getAttribute('data-delete')));
+    btn.addEventListener('click', () => {
+      const eventoDiv = btn.closest('.agenda-evento-calendario');
+      if (eventoDiv) {
+        eventoDiv.classList.add('evento-eliminando');
+        setTimeout(() => {
+          eliminarEvento(btn.getAttribute('data-delete'));
+        }, 300);
+      } else {
+        eliminarEvento(btn.getAttribute('data-delete'));
+      }
+    });
   });
 }
 

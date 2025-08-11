@@ -1,3 +1,39 @@
+.agenda-evento-calendario {
+  animation: fadeInEvento 0.5s;
+  transition: opacity 0.3s;
+}
+
+@keyframes fadeInEvento {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.evento-eliminando {
+  opacity: 0 !important;
+  transition: opacity 0.3s;
+}
+.evento-categoria-importante {
+  border-color: #dc3545 !important;
+  background: #fff0f3 !important;
+}
+.evento-categoria-personal {
+  border-color: #0d6efd !important;
+  background: #e7f1ff !important;
+}
+.evento-categoria-trabajo {
+  border-color: #198754 !important;
+  background: #e9fbe7 !important;
+}
+.evento-proximo {
+  border-color: #ffc107 !important;
+  box-shadow: 0 0 0 2px #fff3cd;
+}
+.evento-pasado {
+  background: #f1f1f1 !important;
+  color: #a0a0a0 !important;
+  opacity: 0.7;
+  text-decoration: line-through;
+}
 /* Encabezado de día en calendario semanal */
 .agenda-dia-header {
   background: #f0f4fa;
