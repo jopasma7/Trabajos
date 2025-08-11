@@ -4,6 +4,65 @@ const { ipcRenderer } = require('electron');
 
 let eventos = [];
 
+function setupAgendaSection() {
+  const agendaSection = document.getElementById('agenda-section');
+  if (!agendaSection) return;
+  const agendaBody = document.getElementById('agenda-body');
+  const btnNuevoEvento = document.getElementById('btn-nuevo-evento');
+  const modalEvento = new bootstrap.Modal(document.getElementById('modal-evento'));
+  const formEvento = document.getElementById('form-evento');
+	// Render y acciones
+	function openModalEditar(id) {
+		const ev = agenda.getEventos().find(e => e.id === id);
+		if (!ev) return;
+		document.getElementById('modalEventoLabel').textContent = 'Editar Evento';
+		document.getElementById('evento-fecha').value = ev.fecha;
+		document.getElementById('evento-hora').value = ev.hora;
+		document.getElementById('evento-titulo').value = ev.titulo;
+		document.getElementById('evento-descripcion').value = ev.descripcion || '';
+		document.getElementById('evento-id').value = ev.id;
+		modalEvento.show();
+	}
+	function eliminarEvento(id) {
+		if (confirm('¿Seguro que deseas eliminar este evento?')) {
+			const nuevos = agenda.getEventos().filter(e => e.id !== id);
+			agenda.setEventos(nuevos);
+			agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+		}
+	}
+	// Botón nuevo evento
+	btnNuevoEvento.onclick = () => {
+		formEvento.reset();
+		document.getElementById('modalEventoLabel').textContent = 'Nuevo Evento';
+		document.getElementById('evento-id').value = '';
+		modalEvento.show();
+	};
+	// Guardar evento (nuevo o editado)
+	formEvento.onsubmit = (e) => {
+		e.preventDefault();
+		const id = document.getElementById('evento-id').value || crypto.randomUUID();
+		const nuevoEvento = {
+			id,
+			fecha: document.getElementById('evento-fecha').value,
+			hora: document.getElementById('evento-hora').value,
+			titulo: document.getElementById('evento-titulo').value,
+			descripcion: document.getElementById('evento-descripcion').value
+		};
+		let eventos = agenda.getEventos();
+		const idx = eventos.findIndex(ev => ev.id === id);
+		if (idx >= 0) {
+			eventos[idx] = nuevoEvento;
+		} else {
+			eventos.push(nuevoEvento);
+		}
+		agenda.setEventos(eventos);
+		agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+		modalEvento.hide();
+	};
+	// Cargar y renderizar eventos
+	agenda.cargarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+}
+
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   if (!agendaBody) return;
   if (!eventos.length) {
@@ -62,9 +121,10 @@ function setEventos(nuevos) {
 }
 
 module.exports = {
-  renderAgenda,
-  cargarEventos,
-  guardarEventos,
-  getEventos,
-  setEventos
+    setupAgendaSection,
+    renderAgenda,
+    cargarEventos,
+    guardarEventos,
+    getEventos,
+    setEventos
 };
