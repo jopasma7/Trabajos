@@ -1,12 +1,31 @@
 {
   "name": "electron-app",
+  "author": "Alejandro Pastor",
   "version": "1.0.0",
   "description": "Esqueleto de aplicación Electron con JavaScript",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild": "electron-rebuild",
+  "build": "cmd /c \"echo Cerrando instancias abiertas... & taskkill /IM 'Hospital App.exe' /F >nul 2>&1 & echo Ejecutando postinstall... & npm run postinstall & echo Ejecutando dist... & npm run dist\"",
+    "dist": "electron-builder",
+    "postinstall": "electron-builder install-app-deps"
   },
   "devDependencies": {
-    "electron": "^30.0.0"
+    "electron": "^30.5.1",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0"
+  },
+  "build": {
+    "appId": "alejandro.hospitalapp",
+    "productName": "Hospital App",
+    "win": {
+      "target": "nsis"
+    },
+    "directories": {
+      "output": "dist"
+    }
   }
 }

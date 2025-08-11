@@ -1,5 +1,11 @@
 
-// Navegación entre secciones con Bootstrap
+
+
+// Importar módulos de secciones
+require('./sections/dashboard');
+require('./sections/pacientes');
+
+// Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
 	const navLinks = document.querySelectorAll('.nav-link[data-section]');
 	const sections = {

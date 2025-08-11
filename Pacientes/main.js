@@ -1,6 +1,11 @@
 
+
 // Importamos los módulos principales de Electron
 const { app, BrowserWindow } = require('electron');
+
+// Inicializamos la base de datos y los handlers de IPC
+require('./js/data/db');
+require('./js/ipcHandlers');
 
 
 // Función para crear la ventana principal de la aplicación
