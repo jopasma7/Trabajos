@@ -155,11 +155,49 @@
               <div class="agenda-header mb-3">
                 <h2 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Agenda</h2>
                 <div class="agenda-actions">
-                  <button class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Nuevo Evento</button>
+                  <button class="btn btn-success" id="btn-nuevo-evento"><i class="bi bi-plus-circle me-1"></i>Nuevo Evento</button>
                 </div>
               </div>
               <div class="card agenda-card shadow-sm p-4">
-                <div id="agenda-body"></div>
+                <div id="agenda-body">
+                  <!-- Aquí se renderiza la lista de eventos -->
+                </div>
+              </div>
+              <!-- Modal Evento -->
+              <div class="modal fade" id="modal-evento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <form id="form-evento">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="modalEventoLabel">Nuevo Evento</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label for="evento-fecha" class="form-label">Fecha</label>
+                          <input type="date" class="form-control" id="evento-fecha" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="evento-hora" class="form-label">Hora</label>
+                          <input type="time" class="form-control" id="evento-hora" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="evento-titulo" class="form-label">Título</label>
+                          <input type="text" class="form-control" id="evento-titulo" maxlength="60" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="evento-descripcion" class="form-label">Descripción</label>
+                          <textarea class="form-control" id="evento-descripcion" rows="2" maxlength="200"></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                      </div>
+                      <input type="hidden" id="evento-id">
+                    </form>
+                  </div>
+                </div>
               </div>
             </section>
             <!-- Historial Clínico Section -->

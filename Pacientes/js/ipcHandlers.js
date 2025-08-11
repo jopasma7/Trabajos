@@ -1,11 +1,18 @@
+
+// Eliminar require innecesario de agendaData
 const { app, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
 const db = require('./data/db');
 
+
 // Ruta del archivo de perfil en la carpeta de usuario de la app
 const perfilPath = path.join(app.getPath('userData'), 'perfil.json');
+
+// --- Agenda: persistencia de eventos en base de datos (usando db.js) ---
+ipcMain.handle('agenda-cargar', () => db.getAllEventos());
+ipcMain.handle('agenda-guardar', (event, eventos) => db.upsertEventos(eventos));
 
 // Handler: cargar perfil
 ipcMain.handle('perfil-cargar', () => {
@@ -59,4 +66,6 @@ ipcMain.handle('add-paciente', (event, paciente) => {
   return { id: info.lastInsertRowid };
 });
 
-// Puedes agregar más handlers para incidentes, renovaciones, etc.
+
+// Eliminado código de persistencia JSON de agenda
+

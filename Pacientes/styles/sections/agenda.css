@@ -24,3 +24,43 @@
   font-size: 1.1rem;
   padding: 2.5rem 0;
 }
+#agenda-section .agenda-evento {
+  transition: background 0.2s;
+}
+#agenda-section .agenda-evento:hover {
+  background: #f0fdf4;
+}
+#agenda-section .agenda-evento .btn {
+  min-width: 36px;
+}
+#agenda-section .agenda-evento .btn-outline-primary {
+  border-color: #16a34a;
+  color: #16a34a;
+}
+#agenda-section .agenda-evento .btn-outline-primary:hover {
+  background: #16a34a;
+  color: #fff;
+}
+#agenda-section .agenda-evento .btn-outline-danger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+#agenda-section .agenda-evento .btn-outline-danger:hover {
+  background: #dc2626;
+  color: #fff;
+}
+#modal-evento .modal-header {
+  background: #f0fdf4;
+  border-bottom: 1px solid #d1fae5;
+}
+#modal-evento .modal-title {
+  color: #16a34a;
+  font-weight: 700;
+}
+#modal-evento .btn-success {
+  background: #16a34a;
+  border: none;
+}
+#modal-evento .btn-success:hover {
+  background: #15803d;
+}
