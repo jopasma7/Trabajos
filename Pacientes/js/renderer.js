@@ -2,8 +2,8 @@
 
 
 // Importar módulos de secciones
-require('./sections/dashboard.js');
-require('./sections/pacientes.js');
+require('../js/sections/dashboard.js');
+require('../js/sections/pacientes.js');
 
 // Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
