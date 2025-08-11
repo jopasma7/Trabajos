@@ -1,5 +1,6 @@
+/* Fecha de instalación en tabla pacientes: mantener en una sola línea */
 /* Acciones de la tabla pacientes: mantener botones en línea */
-td:last-child {
+td:last-child, td:nth-child(4) {
   white-space: nowrap;
 }
 
