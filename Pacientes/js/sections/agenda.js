@@ -3,15 +3,24 @@
 // Función global para mostrar mensajes flotantes (debe estar antes de cualquier uso)
 function mostrarMensaje(texto, tipo = 'success') {
   let alerta = document.createElement('div');
-  alerta.className = `alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
+  alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
   alerta.style.zIndex = 9999;
-  alerta.innerHTML = texto;
+    let icon = '';
+    if (tipo === 'success') icon = '<span class="alert-icon">✔️</span>';
+    else if (tipo === 'danger') icon = '<span class="alert-icon">❌</span>';
+    else if (tipo === 'warning') icon = '<span class="alert-icon">⚠️</span>';
+    else if (tipo === 'info') icon = '<span class="alert-icon">ℹ️</span>';
+    alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
   document.body.appendChild(alerta);
+  // Cerrar al hacer click en la alerta
+  alerta.onclick = () => alerta.remove();
   setTimeout(() => {
-    alerta.classList.remove('show');
-    alerta.classList.add('hide');
-    setTimeout(() => alerta.remove(), 500);
-  }, 1800);
+    if (document.body.contains(alerta)) {
+      alerta.classList.remove('show');
+      alerta.classList.add('hide');
+      setTimeout(() => alerta.remove(), 500);
+    }
+  }, 3000);
 }
 // js/sections/agenda.js
 // Lógica profesional de la sección Agenda
