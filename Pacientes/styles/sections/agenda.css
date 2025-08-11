@@ -1,3 +1,19 @@
+/* Mejora visual para dropzone activa */
+[data-dia-dropzone].dropzone-hover {
+  background: rgba(0, 123, 255, 0.08) !important;
+  outline: 2px dashed #007bff;
+  outline-offset: -2px;
+  transition: background 0.2s, outline 0.2s;
+}
+.agenda-dia-col [data-dia-dropzone] {
+  min-height: 60px;
+  background: transparent;
+  transition: background 0.2s;
+}
+.agenda-dia-col [data-dia-dropzone].dropzone-hover {
+  background: #e0e7ff33;
+  border-radius: 8px;
+}
 .evento-categoria-indicador {
   display: inline-block;
   width: 14px;
@@ -134,4 +150,7 @@
   grid-auto-flow: column;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+}
+.agenda-evento-calendario[draggable="true"] {
+  cursor: move;
 }
