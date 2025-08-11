@@ -4,15 +4,16 @@ const { app, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
-const db = require('./data/db');
+const agendaData = require('./data/agenda');
 
 
 // Ruta del archivo de perfil en la carpeta de usuario de la app
 const perfilPath = path.join(app.getPath('userData'), 'perfil.json');
 
 // --- Agenda: persistencia de eventos en base de datos (usando db.js) ---
-ipcMain.handle('agenda-cargar', () => db.getAllEventos());
 ipcMain.handle('agenda-guardar', (event, eventos) => db.upsertEventos(eventos));
+ipcMain.handle('agenda-cargar', () => agendaData.getAllEventos());
+ipcMain.handle('agenda-guardar', (event, eventos) => agendaData.upsertEventos(eventos));
 
 // Handler: cargar perfil
 ipcMain.handle('perfil-cargar', () => {

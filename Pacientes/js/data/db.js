@@ -1,8 +1,14 @@
 // db.js
 // Conexión real a better-sqlite3 y creación de tablas necesarias
+
 const Database = require('better-sqlite3');
 const path = require('path');
-const dbPath = path.join(__dirname, '../../data/hospital.db');
+const fs = require('fs');
+const dbDir = path.join(__dirname, '../../data');
+const dbPath = path.join(dbDir, 'hospital.db');
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 const db = new Database(dbPath);
 
 // Crear tabla agenda si no existe

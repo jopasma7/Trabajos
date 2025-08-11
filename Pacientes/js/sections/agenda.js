@@ -30,13 +30,22 @@ function setupAgendaSection() {
 			agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
 		}
 	}
-	// Botón nuevo evento
-	btnNuevoEvento.onclick = () => {
-		formEvento.reset();
-		document.getElementById('modalEventoLabel').textContent = 'Nuevo Evento';
-		document.getElementById('evento-id').value = '';
-		modalEvento.show();
-	};
+  // Botón nuevo evento
+  btnNuevoEvento.onclick = () => {
+    formEvento.reset();
+    document.getElementById('modalEventoLabel').textContent = 'Nuevo Evento';
+    document.getElementById('evento-id').value = '';
+  // Poner fecha y hora actual por defecto
+  const hoy = new Date();
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+  const dd = String(hoy.getDate()).padStart(2, '0');
+  const hh = String(hoy.getHours()).padStart(2, '0');
+  const min = String(hoy.getMinutes()).padStart(2, '0');
+  document.getElementById('evento-fecha').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('evento-hora').value = `${hh}:${min}`;
+    modalEvento.show();
+  };
 	// Guardar evento (nuevo o editado)
 	formEvento.onsubmit = (e) => {
 		e.preventDefault();
@@ -59,8 +68,8 @@ function setupAgendaSection() {
 		agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
 		modalEvento.hide();
 	};
-	// Cargar y renderizar eventos
-	agenda.cargarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+  // Cargar y renderizar eventos solo al iniciar
+  agenda.cargarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
 }
 
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {

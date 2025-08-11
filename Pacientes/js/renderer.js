@@ -62,10 +62,23 @@ document.addEventListener('DOMContentLoaded', () => {
 			link.classList.toggle('active', link.dataset.section === section);
 		});
 
-		// Inicializar Agenda al mostrar la sección
-		if (section === 'agenda') {
-			inicializarAgenda();
-		}
+		   // Refrescar Agenda al mostrar la sección
+		   if (section === 'agenda') {
+			   // Recargar y renderizar eventos al entrar en la sección
+			   agenda.cargarEventos(() => {
+				   const agendaBody = document.getElementById('agenda-body');
+				   agenda.renderAgenda(
+					   agendaBody,
+					   // openModalEditar
+					   (id) => {
+						   // Usar la función openModalEditar de setupAgendaSection si es necesario
+						   // Aquí solo refrescamos, la edición sigue funcionando desde el botón
+					   },
+					   // eliminarEvento
+					   (id) => {}
+				   );
+			   });
+		   }
 	}
 
 	navLinks.forEach(link => {
