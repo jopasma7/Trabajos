@@ -13,7 +13,8 @@
   },
   "devDependencies": {
     "electron": "^30.5.1",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "electron-reloader": "^1.2.3"
   },
   "dependencies": {
     "better-sqlite3": "^12.2.0"
@@ -21,13 +22,21 @@
   "build": {
     "appId": "alejandro.hospitalapp",
     "productName": "Hospital App",
-  "icon": "assets/app.ico",
+    "icon": "assets/app.ico",
     "win": {
-  "target": "nsis",
-  "artifactName": "Hospital App.${ext}"
+      "target": "nsis",
+      "artifactName": "Hospital App.${ext}"
     },
     "directories": {
       "output": "dist"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Hospital App",
+      "uninstallDisplayName": "Uninstall Hospital App"
     }
   }
 }

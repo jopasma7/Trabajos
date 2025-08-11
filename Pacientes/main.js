@@ -1,4 +1,9 @@
 
+// Recarga automática en desarrollo
+try {
+  require('electron-reloader')(module);
+} catch (_) {}
+
 
 // Importamos los módulos principales de Electron
 const { app, BrowserWindow } = require('electron');
@@ -21,6 +26,8 @@ function createWindow() {
   });
   // Cargamos el archivo HTML principal desde la carpeta views
   win.loadFile('views/index.html');
+  // Abrir DevTools automáticamente para depuración
+  win.webContents.openDevTools();
 }
 
 
