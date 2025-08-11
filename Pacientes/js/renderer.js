@@ -4,6 +4,7 @@
 // Importar módulos de secciones
 require('../js/sections/dashboard.js');
 require('../js/sections/pacientes.js');
+const { setupProfileSection } = require('../js/sections/profile.js');
 
 // Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		dashboard: document.getElementById('dashboard-section'),
 		pacientes: document.getElementById('pacientes-section'),
 		reportes: document.getElementById('reportes-section'),
-		configuracion: document.getElementById('configuracion-section')
+		configuracion: document.getElementById('configuracion-section'),
+		perfil: document.getElementById('perfil-section')
 	};
 	const sectionTitle = document.getElementById('section-title');
 
@@ -41,4 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	// Mostrar dashboard por defecto
 	showSection('dashboard');
+
+
+	// Inicializar lógica de perfil
+	setupProfileSection();
 });

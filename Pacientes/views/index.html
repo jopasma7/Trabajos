@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
   <!-- Estilos personalizados -->
   <link rel="stylesheet" href="../styles/styles.css">
+  <link rel="stylesheet" href="../styles/profile.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -42,21 +43,29 @@
                 <span class="d-none d-sm-inline">Reportes</span>
               </a>
             </li>
-            <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white ps-4" data-section="configuracion">
-                <i class="bi bi-gear-fill me-2"></i>
-                <span class="d-none d-sm-inline">Configuración</span>
-              </a>
-            </li>
+            <li class="w-100 border-top border-secondary my-2"></li>
           </ul>
+          <div class="w-100 mt-auto mb-3 pt-3 border-top border-secondary">
+            <a href="#" class="nav-link text-white ps-4 mb-2" data-section="perfil">
+              <i class="bi bi-person-circle me-2"></i>
+              <span class="d-none d-sm-inline">Perfil</span>
+            </a>
+            <a href="#" class="nav-link text-white ps-4" data-section="configuracion">
+              <i class="bi bi-gear-fill me-2"></i>
+              <span class="d-none d-sm-inline">Configuración</span>
+            </a>
+          </div>
         </nav>
         <!-- Main content -->
         <main class="col py-4 px-4">
           <header class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h1 id="section-title" class="h3 text-success mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+            <h1 id="section-title" class="h3 text-success mb-0">Dashboard</h1>
             <div class="d-flex align-items-center gap-3">
-              <span class="text-muted small">Usuario</span>
-              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" class="rounded-circle" width="36" height="36">
+              <span class="text-muted fw-semibold header-username" style="font-size:1.15rem;">Usuario</span>
+              <style>
+                .header-cargo { font-size:1.25rem; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; color: #111; font-weight: 700; letter-spacing: 1px; }
+              </style>
+              <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle" width="48" height="48">
             </div>
           </header>
           <!-- Dashboard Section -->
@@ -172,6 +181,91 @@
               <p class="card-text">Personaliza la aplicación según tus necesidades.</p>
               <button class="btn btn-outline-secondary"><i class="bi bi-palette"></i> Cambiar Tema</button>
             </div>
+          </section>
+          <!-- Perfil Section -->
+          <section id="perfil-section" class="section d-none">
+            <form id="form-datos-usuario">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-4">
+                    <h5 class="mb-3 fw-bold text-success"><i class="bi bi-person-badge me-2"></i>Datos de usuario</h5>
+                    <!-- ...campos anteriores... -->
+                    <div class="mb-3">
+                      <label for="perfil-nombre" class="form-label">Nombre</label>
+                      <input type="text" class="form-control" id="perfil-nombre">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-apellido" class="form-label">Apellidos</label>
+                      <input type="text" class="form-control" id="perfil-apellido">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-sexo" class="form-label">Sexo</label>
+                      <select class="form-select" id="perfil-sexo">
+                        <option value="hombre">Hombre</option>
+                        <option value="mujer">Mujer</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-email" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="perfil-email">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-cargo" class="form-label">Cargo</label>
+                      <input type="text" class="form-control" id="perfil-cargo" placeholder="Ej: Enfermero/a, Médico/a">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-numero-colegiado" class="form-label">Número de Colegiado</label>
+                      <input type="text" class="form-control" id="perfil-numero-colegiado" placeholder="Ej: 1234567">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-4">
+                    <h5 class="mb-3 fw-bold text-success"><i class="bi bi-info-circle me-2"></i>Información adicional</h5>
+                    <div class="mb-3">
+                      <label for="perfil-telefono" class="form-label">Teléfono</label>
+                      <input type="tel" class="form-control" id="perfil-telefono" placeholder="Ej: 600123456">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
+                      <input type="date" class="form-control" id="perfil-fecha-nacimiento">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-direccion" class="form-label">Dirección</label>
+                      <input type="text" class="form-control" id="perfil-direccion" placeholder="Ciudad, Provincia">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-notas" class="form-label">Notas</label>
+                      <textarea class="form-control" id="perfil-notas" rows="2" placeholder="Información adicional..."></textarea>
+                    </div>
+                    <div class="card shadow-sm p-4 text-center mt-4">
+                      <h5 class="mb-3 fw-bold text-success"><i class="bi bi-person-circle me-2"></i>Avatar</h5>
+                      <div class="mb-3">
+                        <div class="d-inline-block avatar-editable mb-2">
+                          <div class="position-relative d-inline-block">
+                            <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle border border-3 border-success avatar-img" width="90" height="90">
+                            <button type="button" class="btn btn-light btn-sm position-absolute top-0 end-0 translate-middle p-0 border border-3 border-success rounded-circle" id="eliminar-avatar-btn" title="Eliminar imagen" style="width:28px;height:28px;z-index:3;">
+                              <span class="text-success fs-5">&times;</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <button type="button" class="btn btn-outline-success btn-sm fw-semibold" id="cambiar-avatar-btn">
+                          <i class="bi bi-image"></i> Cambiar foto
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
+              </div>
+            </form>
+              </div>
+            </div>
+            <!-- Botón eliminado, ahora está dentro del card -->
           </section>
         </main>
       </div>

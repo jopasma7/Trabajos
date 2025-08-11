@@ -1,8 +1,44 @@
-// js/ipcHandlers.js
-// Lógica de comunicación entre frontend y backend (IPC) y acceso a la base de datos
-
+const { app, dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
 const { ipcMain } = require('electron');
 const db = require('./data/db');
+
+// Ruta del archivo de perfil en la carpeta de usuario de la app
+const perfilPath = path.join(app.getPath('userData'), 'perfil.json');
+
+// Handler: cargar perfil
+ipcMain.handle('perfil-cargar', () => {
+  if (fs.existsSync(perfilPath)) {
+    try {
+      return JSON.parse(fs.readFileSync(perfilPath, 'utf8'));
+    } catch (e) { return null; }
+  }
+  return null;
+});
+
+// Handler: guardar perfil
+ipcMain.handle('perfil-guardar', (event, perfil) => {
+  fs.writeFileSync(perfilPath, JSON.stringify(perfil, null, 2), 'utf8');
+  return true;
+});
+
+// Handler: cambiar avatar (seleccionar imagen y copiar a userData)
+ipcMain.handle('perfil-cambiar-avatar', async () => {
+  const result = await dialog.showOpenDialog({
+    title: 'Selecciona una imagen de perfil',
+    filters: [ { name: 'Imágenes', extensions: ['png', 'jpg', 'jpeg', 'gif'] } ],
+    properties: ['openFile']
+  });
+  if (!result.canceled && result.filePaths.length > 0) {
+    const src = result.filePaths[0];
+    const ext = path.extname(src);
+    const dest = path.join(app.getPath('userData'), 'avatar' + ext);
+    fs.copyFileSync(src, dest);
+    return dest;
+  }
+  return null;
+});
 
 // Ejemplo: Obtener todos los pacientes
 ipcMain.handle('get-pacientes', () => {
