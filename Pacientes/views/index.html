@@ -14,6 +14,7 @@
   <!-- Estilos personalizados -->
   <link rel="stylesheet" href="../styles/styles.css">
   <link rel="stylesheet" href="../styles/profile.css">
+  <link rel="stylesheet" href="../styles/sections/agenda.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -151,11 +152,14 @@
           </section>
             <!-- Agenda Section -->
             <section id="agenda-section" class="section d-none">
-              <div class="d-flex align-items-center mb-3">
+              <div class="agenda-header mb-3">
                 <h2 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Agenda</h2>
+                <div class="agenda-actions">
+                  <button class="btn btn-success"><i class="bi bi-plus-circle me-1"></i>Nuevo Evento</button>
+                </div>
               </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Próximamente podrás gestionar la agenda de turnos, citas y eventos.</p>
+              <div class="card agenda-card shadow-sm p-4">
+                <div id="agenda-body"></div>
               </div>
             </section>
             <!-- Historial Clínico Section -->
@@ -366,6 +370,7 @@
     </div>
     <!-- Bootstrap 5 JS y dependencias -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/renderer.js"></script>
+  <script src="../js/sections/agenda.js"></script>
+  <script src="../js/renderer.js"></script>
   </body>
 </html>

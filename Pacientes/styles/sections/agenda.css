@@ -1,0 +1,26 @@
+/* styles/sections/agenda.css */
+
+#agenda-section .agenda-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+#agenda-section .agenda-header h2 {
+  color: #16a34a;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+#agenda-section .agenda-actions .btn {
+  min-width: 120px;
+}
+#agenda-section .agenda-card {
+  border-radius: 1rem;
+  box-shadow: 0 2px 12px rgba(22,163,74,0.08);
+  border: none;
+}
+#agenda-section .agenda-empty {
+  color: #64748b;
+  font-size: 1.1rem;
+  padding: 2.5rem 0;
+}
