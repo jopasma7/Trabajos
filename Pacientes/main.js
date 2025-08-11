@@ -1,7 +1,12 @@
 
 // Recarga automática en desarrollo
 try {
-  require('electron-reloader')(module);
+  require('electron-reloader')(module, {
+    ignore: [
+      'data',
+      'data/**'
+    ]
+  });
 } catch (_) {}
 
 
