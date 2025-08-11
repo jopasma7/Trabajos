@@ -129,3 +129,9 @@
 #modal-evento .btn-success:hover {
   background: #15803d;
 }
+.d-grid.grid-template {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}

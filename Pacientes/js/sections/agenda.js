@@ -1,24 +1,4 @@
-// Contador de eventos próximos (próxima hora)
- setTimeout(() => {
-    const badge = document.getElementById('contador-proximos');
-    if (badge) {
-      const ahora = new Date();
-      const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
-      let totalProximos = 0;
-      Object.values(eventosPorDia).forEach(evList => {
-        totalProximos += evList.filter(ev => {
-          const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
-          return fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues;
-        }).length;
-      });
-      if (totalProximos > 0) {
-        badge.style.display = '';
-        badge.textContent = `Próximos: ${totalProximos}`;
-      } else {
-        badge.style.display = 'none';
-      }
-    }
-}, 10);
+// (El contador de eventos próximos se actualiza ahora dentro de renderAgenda)
 // js/sections/agenda.js
 // Lógica profesional de la sección Agenda
 const { ipcRenderer } = require('electron');
@@ -218,6 +198,27 @@ function setupAgendaSection() {
 }
 
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
+  // Contador de eventos próximos (próxima hora)
+  setTimeout(() => {
+    const badge = document.getElementById('contador-proximos');
+    if (badge && typeof eventosPorDia === 'object') {
+      const ahora = new Date();
+      const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+      let totalProximos = 0;
+      Object.values(eventosPorDia).forEach(evList => {
+        totalProximos += evList.filter(ev => {
+          const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+          return fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues;
+        }).length;
+      });
+      if (totalProximos > 0) {
+        badge.style.display = '';
+        badge.textContent = `Próximos: ${totalProximos}`;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  }, 10);
   // Listener para marcar como completado (fuera del template)
   setTimeout(() => {
     agendaBody.querySelectorAll('[data-completar]').forEach(btn => {
@@ -410,9 +411,10 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                   })()}
                   ${nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1)}
                 </div>
-                <div class="d-flex justify-content-center align-items-center gap-1">
+                <div class="d-grid grid-template">
+                  <div></div>
                   <div class="agenda-dia-numero">${numDia}</div>
-                  <div class="agenda-dia-total-eventos text-secondary small" style="min-width:1.5em;">
+                  <div class="agenda-dia-total-eventos text-secondary small" style="padding-left:15px; min-width:1.5em;">
                     ${(() => {
                       // Contar eventos según el filtro seleccionado
                       let eventosFiltrados = eventosPorDia[key];
