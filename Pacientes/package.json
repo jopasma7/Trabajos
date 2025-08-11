@@ -1,5 +1,5 @@
 {
-  "name": "electron-app",
+  "name": "hospital-app",
   "author": "Alejandro Pastor",
   "version": "1.0.0",
   "description": "Esqueleto de aplicación Electron con JavaScript",
@@ -21,8 +21,10 @@
   "build": {
     "appId": "alejandro.hospitalapp",
     "productName": "Hospital App",
+  "icon": "assets/app.ico",
     "win": {
-      "target": "nsis"
+  "target": "nsis",
+  "artifactName": "Hospital App.${ext}"
     },
     "directories": {
       "output": "dist"
