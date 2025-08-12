@@ -1,4 +1,3 @@
-
 // Eliminar require innecesario de agendaData
 const { app, dialog } = require('electron');
 const fs = require('fs');
@@ -86,6 +85,27 @@ ipcMain.handle('add-paciente', (event, paciente) => {
     return { changes: info.changes };
   });
 
+
+// --- IPC para tags (etiquetas) ---
+ipcMain.handle('tags-get-all', () => {
+  return db.getAllTags();
+});
+
+ipcMain.handle('tags-get', (event, tagId) => {
+  return db.getTagById(tagId);
+});
+
+ipcMain.handle('tags-add', (event, { nombre, color, descripcion }) => {
+  return db.addTag(nombre, color, descripcion);
+});
+
+ipcMain.handle('tags-update', (event, { id, nombre, color, descripcion }) => {
+  return db.updateTag(id, nombre, color, descripcion);
+});
+
+ipcMain.handle('tags-delete', (event, id) => {
+  return db.deleteTag(id);
+});
 
 // Eliminado código de persistencia JSON de agenda
 

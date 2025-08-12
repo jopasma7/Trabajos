@@ -465,9 +465,67 @@
           <!-- Etiquetas Section -->
           <section id="etiquetas-section" class="section d-none">
             <div class="card shadow-sm p-4">
-              <h5 class="card-title mb-3">Incidencias</h5>
-              <p class="card-text">Gestiona las etiquetas para clasificar las incidencias de los pacientes.</p>
-              <button class="btn btn-outline-success"><i class="bi bi-plus-circle"></i> Nueva Etiqueta</button>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title mb-0">Etiquetas de Incidencias</h5>
+                <button class="btn btn-success" id="btn-nueva-etiqueta"><i class="bi bi-plus-circle"></i> Nueva Etiqueta</button>
+              </div>
+              <div id="tags-lista-vacia" class="text-center text-muted my-4 d-none">
+                <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                  <div class="rounded-circle bg-light border border-2 border-success mb-3" style="width:70px;height:70px;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-tags-fill text-success" style="font-size:2.5rem;"></i>
+                  </div>
+                  <div class="fw-bold text-secondary mb-1" style="font-size:1.15rem;">No hay etiquetas registradas</div>
+                  <div class="text-muted" style="font-size:1.01rem;max-width:320px;">Crea tu primera etiqueta para organizar y clasificar las incidencias de manera profesional.</div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tabla-etiquetas">
+                  <thead>
+                    <tr>
+                      <th style="width:40px"></th>
+                      <th>Nombre</th>
+                      <th>Color</th>
+                      <th>Descripción</th>
+                      <th style="width:120px">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Etiquetas dinámicas aquí -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Modal Nueva/Editar Etiqueta -->
+            <div class="modal fade" id="modal-etiqueta" tabindex="-1" aria-labelledby="modalEtiquetaLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                  <form id="form-etiqueta">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="modalEtiquetaLabel">🏷️ Nueva Etiqueta</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label for="etiqueta-nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="etiqueta-nombre" maxlength="32" required>
+                      </div>
+                      <div class="mb-3">
+                        <label for="etiqueta-color" class="form-label">Color</label>
+                        <input type="color" class="form-control form-control-color" id="etiqueta-color" value="#009879" title="Elige un color">
+                      </div>
+                      <div class="mb-3">
+                        <label for="etiqueta-descripcion" class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>
+                        <textarea class="form-control" id="etiqueta-descripcion" rows="2" maxlength="100"></textarea>
+                      </div>
+                      <input type="hidden" id="etiqueta-id">
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
           </section>
           <!-- Perfil Section -->

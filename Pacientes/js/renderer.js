@@ -3,6 +3,7 @@ require('../js/sections/dashboard.js');
 require('../js/sections/pacientes.js');
 const { setupProfileSection } = require('../js/sections/profile.js');
 const agenda = require('../js/sections/agenda.js');
+const etiquetas = require('../js/sections/etiquetas.js');
 
 // Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
@@ -95,7 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	navLinks.forEach(link => {
 		link.addEventListener('click', (e) => {
 			e.preventDefault();
-			showSection(link.dataset.section);
+				showSection(link.dataset.section);
+				// Si es la sección etiquetas, recargar lista
+				if (link.dataset.section === 'etiquetas') {
+					etiquetas.cargarTags();
+				}
 		});
 	});
 

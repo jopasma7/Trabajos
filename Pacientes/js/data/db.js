@@ -58,6 +58,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   ubicacion_lado TEXT
 )`).run();
 
+
 // Crear tabla incidencias (uno a muchos con pacientes)
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +66,23 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   motivo TEXT NOT NULL,
   fecha TEXT NOT NULL,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+)`).run();
+
+// Crear tabla tags (etiquetas personalizables)
+db.prepare(`CREATE TABLE IF NOT EXISTS tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE,
+  color TEXT DEFAULT '#009879',
+  descripcion TEXT
+)`).run();
+
+// Tabla intermedia incidencia_tags (muchos a muchos)
+db.prepare(`CREATE TABLE IF NOT EXISTS incidencia_tags (
+  incidencia_id INTEGER NOT NULL,
+  tag_id INTEGER NOT NULL,
+  PRIMARY KEY (incidencia_id, tag_id),
+  FOREIGN KEY (incidencia_id) REFERENCES incidencias(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 )`).run();
 
 // --- Métodos para incidencias ---
@@ -81,6 +99,33 @@ db.addIncidencia = function(pacienteId, motivo, fecha) {
 db.deleteIncidencia = function(incidenciaId) {
   const stmt = db.prepare('DELETE FROM incidencias WHERE id = ?');
   const info = stmt.run(incidenciaId);
+  return { changes: info.changes };
+};
+
+// --- Métodos para tags (etiquetas) ---
+db.getAllTags = function() {
+  return db.prepare('SELECT * FROM tags ORDER BY nombre COLLATE NOCASE').all();
+};
+
+db.getTagById = function(tagId) {
+  return db.prepare('SELECT * FROM tags WHERE id = ?').get(tagId);
+};
+
+db.addTag = function(nombre, color = '#009879', descripcion = '') {
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion) VALUES (?, ?, ?)');
+  const info = stmt.run(nombre, color, descripcion);
+  return { id: info.lastInsertRowid };
+};
+
+db.updateTag = function(id, nombre, color, descripcion) {
+  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ? WHERE id = ?');
+  const info = stmt.run(nombre, color, descripcion, id);
+  return { changes: info.changes };
+};
+
+db.deleteTag = function(id) {
+  const stmt = db.prepare('DELETE FROM tags WHERE id = ?');
+  const info = stmt.run(id);
   return { changes: info.changes };
 };
 
