@@ -208,6 +208,39 @@ db.upsertEventos = function(eventos) {
   return true;
 };
  
+// --- Etiquetas predefinidas para Motivo de Derivación ---
+function crearEtiquetasMotivoDerivacion() {
+  const motivos = [
+    { nombre: 'Flujo insuficiente', color: '#e74c3c', descripcion: 'El flujo sanguíneo es menor al esperado.' },
+    { nombre: 'Disminución o pérdida del frémito', color: '#f39c12', descripcion: 'El frémito se percibe débil o ausente.' },
+    { nombre: 'Dificultad para la canulación', color: '#e67e22', descripcion: 'Problemas al intentar canalizar el acceso.' },
+    { nombre: 'Hematomas frecuentes', color: '#8e44ad', descripcion: 'Aparición repetida de hematomas en la zona.' },
+    { nombre: 'Aumento de la presión venosa', color: '#2980b9', descripcion: 'Presión venosa superior a lo normal.' },
+    { nombre: 'Sangramiento', color: '#c0392b', descripcion: 'Presencia de sangrado en el acceso.' },
+    { nombre: 'Edema', color: '#16a085', descripcion: 'Hinchazón o retención de líquidos en la extremidad.' },
+    { nombre: 'Circulación colateral', color: '#27ae60', descripcion: 'Desarrollo de circulación venosa alternativa.' },
+    { nombre: 'Dolor', color: '#d35400', descripcion: 'El paciente refiere dolor en la zona.' },
+    { nombre: 'Fav ocluida', color: '#34495e', descripcion: 'Fístula arteriovenosa ocluida o no funcional.' },
+    { nombre: 'Dilataciones', color: '#9b59b6', descripcion: 'Presencia de dilataciones venosas.' },
+    { nombre: 'Infección', color: '#e84393', descripcion: 'Signos de infección en el acceso o zona.' },
+    { nombre: 'Construcción FAV', color: '#00b894', descripcion: 'Motivo relacionado con la creación de una nueva FAV.' },
+    { nombre: 'Otros', color: '#636e72', descripcion: 'Otro motivo no especificado en la lista.' }
+  ];
+  motivos.forEach(motivo => {
+    const existe = db.prepare('SELECT 1 FROM tags WHERE LOWER(nombre) = LOWER(?)').get(motivo.nombre);
+    if (!existe) {
+      db.prepare('INSERT INTO tags (nombre, color, descripcion) VALUES (?, ?, ?)').run(motivo.nombre, motivo.color, motivo.descripcion);
+    }
+  });
+}
+
+// Ejecutar al iniciar si la tabla tags existe
+try {
+  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
+    crearEtiquetasMotivoDerivacion();
+  }
+} catch (e) { /* ignorar si no existe la tabla */ }
+
 
 // --- Insertar 25 pacientes de prueba si la tabla está vacía ---
 const pacientesCount = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;

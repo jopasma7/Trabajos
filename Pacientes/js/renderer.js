@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			   sectionTitle.innerHTML = `
 				   <span style="font-size:1.3em;">🏷️</span>
 				   <span style="color:#1f2937;">Etiquetas</span>
-				   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Gestión de etiquetas de incidencias</span>
+				   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Gestión de etiquetas</span>
 			   `;
 			   sectionTitle.className = '';
 			   sectionTitle.style.fontSize = '1.7rem';

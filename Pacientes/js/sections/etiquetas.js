@@ -14,7 +14,11 @@ const inputColor = document.getElementById('etiqueta-color');
 const inputDescripcion = document.getElementById('etiqueta-descripcion');
 const inputId = document.getElementById('etiqueta-id');
 const listaVacia = document.getElementById('tags-lista-vacia');
+
 const cardEtiquetas = document.querySelector('#etiquetas-section .card');
+const paginacionEtiquetas = document.getElementById('paginacion-etiquetas');
+let paginaActualEtiquetas = 1;
+const etiquetasPorPagina = 4;
 
 // Usa la función mostrarMensaje global de agenda.js si está disponible
 function showAlert(msg, tipo = 'success') {
@@ -32,11 +36,19 @@ function renderTags() {
   if (!tags.length) {
     listaVacia.classList.remove('d-none');
     tabla.parentElement.classList.add('d-none'); // Oculta la tabla
+    if (paginacionEtiquetas) paginacionEtiquetas.innerHTML = '';
     return;
   }
   listaVacia.classList.add('d-none');
   tabla.parentElement.classList.remove('d-none'); // Muestra la tabla
-  tags.forEach(tag => {
+  // Paginación
+  const total = tags.length;
+  const totalPaginas = Math.ceil(total / etiquetasPorPagina) || 1;
+  if (paginaActualEtiquetas > totalPaginas) paginaActualEtiquetas = totalPaginas;
+  const inicio = (paginaActualEtiquetas - 1) * etiquetasPorPagina;
+  const fin = inicio + etiquetasPorPagina;
+  const visibles = tags.slice(inicio, fin);
+  visibles.forEach(tag => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><i class="bi bi-tag-fill" style="color:${tag.color}"></i></td>
@@ -50,7 +62,49 @@ function renderTags() {
     `;
     tablaEtiquetas.appendChild(tr);
   });
+  renderizarPaginacionEtiquetas(total);
 }
+
+function renderizarPaginacionEtiquetas(totalEtiquetas) {
+    if (!paginacionEtiquetas) return;
+    paginacionEtiquetas.innerHTML = '';
+    const totalPaginas = Math.ceil(totalEtiquetas / etiquetasPorPagina) || 1;
+    const maxVisible = 5;
+    let paginas = [];
+    if (totalPaginas <= maxVisible) {
+        for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+    } else {
+        let start = Math.max(1, paginaActualEtiquetas - 2);
+        let end = Math.min(totalPaginas, paginaActualEtiquetas + 2);
+        if (paginaActualEtiquetas <= 3) {
+        start = 1; end = maxVisible;
+        } else if (paginaActualEtiquetas >= totalPaginas - 2) {
+        start = totalPaginas - 4; end = totalPaginas;
+        }
+        for (let i = start; i <= end; i++) paginas.push(i);
+    }
+    // Botón anterior
+    const prev = document.createElement('li');
+    prev.className = 'page-item' + (paginaActualEtiquetas === 1 ? ' disabled' : '');
+    prev.innerHTML = `<a class="page-link" href="#" tabindex="-1">&laquo;</a>`;
+    prev.onclick = e => { e.preventDefault(); if (paginaActualEtiquetas > 1) { paginaActualEtiquetas--; renderTags(); } };
+    paginacionEtiquetas.appendChild(prev);
+    // Números
+    paginas.forEach(i => {
+        const li = document.createElement('li');
+        li.className = 'page-item' + (i === paginaActualEtiquetas ? ' active' : '');
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.onclick = e => { e.preventDefault(); if (paginaActualEtiquetas !== i) { paginaActualEtiquetas = i; renderTags(); } };
+        paginacionEtiquetas.appendChild(li);
+    });
+    // Botón siguiente
+    const next = document.createElement('li');
+    next.className = 'page-item' + (paginaActualEtiquetas === totalPaginas ? ' disabled' : '');
+    next.innerHTML = `<a class="page-link" href="#">&raquo;</a>`;
+    next.onclick = e => { e.preventDefault(); if (paginaActualEtiquetas < totalPaginas) { paginaActualEtiquetas++; renderTags(); } };
+    paginacionEtiquetas.appendChild(next);
+}
+
 
 async function cargarTags() {
   tags = await ipcRenderer.invoke('tags-get-all');
@@ -63,6 +117,7 @@ btnNuevaEtiqueta.addEventListener('click', () => {
   inputColor.value = '#009879';
   modalEtiqueta.show();
   document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Nueva Etiqueta';
+  paginaActualEtiquetas = 1;
 });
 
 tablaEtiquetas.addEventListener('click', async (e) => {
