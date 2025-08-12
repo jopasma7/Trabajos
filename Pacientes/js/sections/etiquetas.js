@@ -55,6 +55,7 @@ function renderTags() {
       <td><i class="bi bi-tag-fill" style="color:${tag.color}"></i></td>
       <td>${tag.nombre}</td>
       <td><span class="badge" style="background:${tag.color}">${tag.color}</span></td>
+      <td>${tag.tipo ? tag.tipo.charAt(0).toUpperCase() + tag.tipo.slice(1) : ''}</td>
       <td>${tag.descripcion ? tag.descripcion : ''}</td>
       <td>
         <button class="btn btn-sm btn-outline-primary me-1 btn-editar" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
