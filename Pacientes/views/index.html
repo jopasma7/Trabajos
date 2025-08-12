@@ -288,7 +288,28 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Pacientes</h2>
               <button class="btn btn-success" id="btn-nuevo-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente"><i class="bi bi-person-plus-fill me-1"></i>Nuevo Paciente</button>
-            <!-- Modal Nuevo Paciente -->
+            <!-- Modal Confirmar Eliminación Paciente -->
+            <div class="modal fade" id="modal-confirmar-eliminar-paciente" tabindex="-1" aria-labelledby="modalEliminarPacienteLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" >
+                <div class="modal-content border-danger" style="max-width:500px;width:95vw;">
+                  <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalEliminarPacienteLabel"><span style="font-size:1.2em;vertical-align:-0.1em;">🗑️</span> Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="alert alert-danger mb-3" id="texto-confirmar-eliminar-paciente">
+                      ¿Estás seguro de que deseas eliminar este paciente?
+                    </div>
+                    <div class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Esta acción no se puede deshacer.</div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirmar-eliminar-paciente">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+              <!-- Modal Nuevo Paciente -->
             <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
               <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="max-width:600px;width:95vw;">

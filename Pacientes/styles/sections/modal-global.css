@@ -1,5 +1,78 @@
+/* MODAL DE PELIGRO (eliminación) - Sobrescribe estilos globales */
+.modal-content.border-danger {
+  background: white !important;
+  box-shadow: 0 8px 32px 0 #dc354544 !important;
+  padding: 0.5em 0.5em 0.5em 0.5em !important;
+}
+
+.modal-content.border-danger .form-control,
+.modal-content.border-danger .form-select {
+  border: 1.5px solid #f5c2c7 !important;
+  background: #fff0f0 !important;
+  box-shadow: 0 1px 4px 0 #f5c2c722 !important;
+}
+
+.modal-content.border-danger .btn-danger {
+  background: linear-gradient(90deg, #dc3545 0%, #b91c1c 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0.8em !important;
+  font-weight: 700 !important;
+  padding: 0.7em 2.2em !important;
+  box-shadow: 0 2px 8px 0 #dc354533 !important;
+}
+
+.modal-content.border-danger .btn-danger:hover {
+  background: linear-gradient(90deg, #b91c1c 0%, #dc3545 100%) !important;
+  box-shadow: 0 4px 16px 0 #dc354533 !important;
+}
+
+.modal-content.border-danger .btn-secondary {
+  background: #f5c2c7 !important;
+  color: #b91c1c !important;
+  border: none !important;
+  border-radius: 0.8em !important;
+  font-weight: 600 !important;
+  padding: 0.7em 2.2em !important;
+  margin-right: 0.7em !important;
+}
+
+.modal-content.border-danger .btn-secondary:hover {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.modal-content.border-danger label {
+  font-weight: bold !important;
+  color: #b91c1c !important;
+}
+
+.modal-content.border-danger .modal-header {
+  background: linear-gradient(90deg, #ffb3b3 0%, #ffe5e5 100%) !important;
+  border-radius: 1.5em 1.5em 0 0 !important;
+  padding: 1.2em 2em 1em 2em !important;
+  box-shadow: 0 2px 8px 0 #f5c2c733 !important;
+}
+
+.modal-content.border-danger .modal-title {
+  color: #b91c1c !important;
+  font-size: 1.8em !important;
+  text-shadow: 0 2px 8px #f5c2c744, 0 1px 0 #fff !important;
+}
+
+.modal-content.border-danger .modal-body {
+  background: transparent !important;
+  padding: 2em 2em 1.5em 2em !important;
+}
+
+.modal-content.border-danger .modal-footer {
+  background: transparent !important;
+  border-radius: 0 0 1.5em 1.5em !important;
+  padding: 1.2em 2em 1.2em 2em !important;
+}
 
 /* MODAL GLOBAL - Diseño más bonito y visualmente atractivo */
+/* Aplica estilos a todos los modales excepto los de peligro (eliminación) */
 .modal-content {
   border-radius: 1.5em;
   box-shadow: 0 16px 48px 0 rgba(44,62,80,0.18), 0 2px 8px 0 rgba(44,62,80,0.10);
@@ -95,12 +168,13 @@
   opacity: 1;
   filter: invert(20%) sepia(100%) saturate(800%) hue-rotate(200deg);
 }
+
+
 @media (max-width: 600px) {
   .modal-dialog {
     max-width: 99vw;
     margin: 0 auto;
   }
-    
   .modal-content {
     width: 98vw;
     max-width: 98vw;

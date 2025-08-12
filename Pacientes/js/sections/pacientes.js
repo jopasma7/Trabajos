@@ -13,6 +13,10 @@ const formPaciente = document.getElementById('form-paciente');
 const btnNuevoPaciente = document.getElementById('btn-nuevo-paciente');
 const modalPaciente = document.getElementById('modal-paciente');
 let pacienteEditando = null;
+let pacienteAEliminar = null;
+const modalConfirmarEliminar = document.getElementById('modal-confirmar-eliminar-paciente');
+const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar-paciente');
+const textoConfirmarEliminar = document.getElementById('texto-confirmar-eliminar-paciente');
 
 // Renderizar la tabla de pacientes
 function renderizarPacientes(pacientes) {
@@ -100,17 +104,30 @@ if (tablaPacientesBody) {
 		}
 		if (e.target.closest('.btn-eliminar')) {
 			const id = e.target.closest('.btn-eliminar').dataset.id;
-			if (confirm('¿Seguro que deseas eliminar este paciente?')) {
-					const pacientes = await ipcRenderer.invoke('get-pacientes');
-					const paciente = pacientes.find(p => p.id == id);
-					await ipcRenderer.invoke('delete-paciente', id);
-					if (paciente) {
-						mostrarMensaje(`Paciente <b>${paciente.nombre} ${paciente.apellidos}</b> eliminado correctamente.`, 'danger');
-					} else {
-						mostrarMensaje('Paciente eliminado correctamente.', 'danger');
-					}
-					cargarPacientes();
+			const pacientes = await ipcRenderer.invoke('get-pacientes');
+			const paciente = pacientes.find(p => p.id == id);
+			pacienteAEliminar = paciente;
+			if (paciente) {
+				textoConfirmarEliminar.innerHTML = `¿Eliminar al paciente <b>${paciente.nombre} ${paciente.apellidos}</b>?`;
+			} else {
+				textoConfirmarEliminar.innerHTML = '¿Estás seguro de que deseas eliminar este paciente?';
 			}
+			const modal = bootstrap.Modal.getOrCreateInstance(modalConfirmarEliminar);
+			modal.show();
+		}
+	});
+}
+
+// Confirmar eliminación desde el modal
+if (btnConfirmarEliminar) {
+	btnConfirmarEliminar.addEventListener('click', async () => {
+		if (pacienteAEliminar) {
+			await ipcRenderer.invoke('delete-paciente', pacienteAEliminar.id);
+			mostrarMensaje(`Paciente <b>${pacienteAEliminar.nombre} ${pacienteAEliminar.apellidos}</b> eliminado correctamente.`, 'danger');
+			cargarPacientes();
+			pacienteAEliminar = null;
+			const modal = bootstrap.Modal.getOrCreateInstance(modalConfirmarEliminar);
+			modal.hide();
 		}
 	});
 }
