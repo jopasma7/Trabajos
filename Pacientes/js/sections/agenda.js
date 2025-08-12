@@ -73,7 +73,10 @@ function setupAgendaSection() {
           return `
             <div class="agenda-evento-calendario bg-white border-end border-3 px-2 py-1 ${mbClass} position-relative ${claseNuevo} ${(() => {
               const ahora = new Date();
-              const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+              // Crear fecha/hora local correctamente
+              const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+              const [hora, minuto] = ev.hora.split(':').map(Number);
+              const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto);
               if (fechaHoraEv < ahora) return 'evento-pasado';
               const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
               if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) return 'evento-proximo';
@@ -86,7 +89,9 @@ function setupAgendaSection() {
                 <i class="bi bi-clock me-1"></i> ${ev.hora}
                 ${(() => {
                   const ahora = new Date();
-                  const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                  const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+                  const [hora, minuto] = ev.hora.split(':').map(Number);
+                  const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto);
                   if (fechaHoraEv < ahora) {
                     return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
                   }
@@ -94,7 +99,9 @@ function setupAgendaSection() {
                 })()}
                 ${(() => {
                   const ahora = new Date();
-                  const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                  const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+                  const [hora, minuto] = ev.hora.split(':').map(Number);
+                  const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto);
                   const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
                   if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
                     return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
