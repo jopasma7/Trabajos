@@ -11,6 +11,7 @@ if (!fs.existsSync(dbDir)) {
 }
 const db = new Database(dbPath);
 
+
 // Crear tabla agenda si no existe
 db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   id TEXT PRIMARY KEY,
@@ -21,6 +22,52 @@ db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   categoria TEXT,
   completado INTEGER DEFAULT 0
 )`).run();
+
+// Crear tabla pacientes si no existe
+db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  apellidos TEXT NOT NULL,
+  tipo_acceso TEXT,
+  fecha_instalacion TEXT,
+  ubicacion TEXT
+)`).run();
+
+// --- Métodos de pacientes ---
+db.getAllPacientes = function() {
+  return db.prepare('SELECT * FROM pacientes').all();
+};
+
+db.addPaciente = function(paciente) {
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.tipo_acceso,
+    paciente.fecha_instalacion,
+    paciente.ubicacion
+  );
+  return { id: info.lastInsertRowid };
+};
+
+db.editPaciente = function(paciente) {
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion = ? WHERE id = ?');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.tipo_acceso,
+    paciente.fecha_instalacion,
+    paciente.ubicacion,
+    paciente.id
+  );
+  return { changes: info.changes };
+};
+
+db.deletePaciente = function(id) {
+  const stmt = db.prepare('DELETE FROM pacientes WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
 
 // Añadir columna categoria si no existe (migración)
 try {

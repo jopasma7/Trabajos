@@ -65,6 +65,26 @@ ipcMain.handle('add-paciente', (event, paciente) => {
   );
   return { id: info.lastInsertRowid };
 });
+  // Editar un paciente
+  ipcMain.handle('edit-paciente', (event, paciente) => {
+    const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion = ? WHERE id = ?`);
+    const info = stmt.run(
+      paciente.nombre,
+      paciente.apellidos,
+      paciente.tipo_acceso,
+      paciente.fecha_instalacion,
+      paciente.ubicacion,
+      paciente.id
+    );
+    return { changes: info.changes };
+  });
+
+  // Eliminar un paciente
+  ipcMain.handle('delete-paciente', (event, id) => {
+    const stmt = db.prepare(`DELETE FROM pacientes WHERE id = ?`);
+    const info = stmt.run(id);
+    return { changes: info.changes };
+  });
 
 
 // Eliminado código de persistencia JSON de agenda
