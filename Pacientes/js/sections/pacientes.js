@@ -134,6 +134,7 @@ function renderizarPacientes(pacientes) {
 			<td>${ubicacionCompleta}</td>
 			<td>${fechaFormateada}${diasDetalle}</td>
 			<td>
+				<button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
 				<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
 				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
 			</td>
@@ -340,6 +341,10 @@ if (formPaciente) {
 // Delegación de eventos para editar y eliminar
 if (tablaPacientesBody) {
 	tablaPacientesBody.addEventListener('click', async (e) => {
+		if (e.target.closest('.btn-historial')) {
+			const id = e.target.closest('.btn-historial').dataset.id;
+			mostrarMensaje('Funcionalidad de Historial Clínico para el paciente ID ' + id + ' próximamente.', 'info');
+		}
 		if (e.target.closest('.btn-editar')) {
 			const id = e.target.closest('.btn-editar').dataset.id;
 			const pacientes = await ipcRenderer.invoke('get-pacientes');
