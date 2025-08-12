@@ -17,7 +17,8 @@
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
-    "better-sqlite3": "^12.2.0"
+    "better-sqlite3": "^12.2.0",
+    "choices.js": "^11.1.0"
   },
   "build": {
     "appId": "alejandro.hospitalapp",

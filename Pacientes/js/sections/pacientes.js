@@ -14,9 +14,57 @@ const ubicacionesAnatomicasPorAcceso = {
 	]
 };
 
+
 const selectTipoAccesoForm = document.getElementById('paciente-tipoacceso');
 const selectUbicacionAnatomica = document.getElementById('paciente-ubicacion-anatomica');
 const selectUbicacionLado = document.getElementById('paciente-ubicacion-lado');
+const listaSimpleContainer = document.getElementById('paciente-etiquetas-lista-simple');
+let etiquetasDisponibles = [];
+let etiquetasSeleccionadas = [];
+
+async function cargarEtiquetasDisponibles() {
+	if (!listaSimpleContainer) return;
+	let ipcRenderer;
+	try {
+		ipcRenderer = require('electron').ipcRenderer;
+		if (!ipcRenderer) return;
+	} catch (e) {
+		return;
+	}
+	etiquetasDisponibles = await ipcRenderer.invoke('tags-get-all');
+	listaSimpleContainer.innerHTML = '';
+	etiquetasSeleccionadas = [];
+	if (etiquetasDisponibles.length === 0) {
+		listaSimpleContainer.innerHTML = '<li class="text-muted">No hay etiquetas disponibles</li>';
+		return;
+	}
+	etiquetasDisponibles.forEach(tag => {
+		const li = document.createElement('li');
+		const input = document.createElement('input');
+		input.type = 'checkbox';
+		input.value = tag.id;
+		input.addEventListener('change', () => {
+			const id = Number(tag.id);
+			if (input.checked) {
+				if (!etiquetasSeleccionadas.includes(id)) etiquetasSeleccionadas.push(id);
+			} else {
+				const idx = etiquetasSeleccionadas.indexOf(id);
+				if (idx !== -1) etiquetasSeleccionadas.splice(idx, 1);
+			}
+		});
+		li.appendChild(input);
+		li.appendChild(document.createTextNode(' ' + tag.nombre));
+		listaSimpleContainer.appendChild(li);
+	});
+}
+
+// Asociación del listener del modal para cargar etiquetas
+document.addEventListener('DOMContentLoaded', () => {
+	const modalPaciente = document.getElementById('modal-paciente');
+	   if (modalPaciente) {
+		   modalPaciente.addEventListener('show.bs.modal', cargarEtiquetasDisponibles);
+	   }
+});
 
 if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 	selectTipoAccesoForm.addEventListener('change', function() {
@@ -34,6 +82,11 @@ if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 			ubicacionesAnatomicasPorAcceso[tipo].map(u => `<option value="${u}">${u}</option>`).join('');
 	});
 	selectUbicacionAnatomica.addEventListener('change', function() {
+		// Recoger etiquetas seleccionadas
+		let etiquetasSeleccionadas = [];
+		if (selectEtiquetas) {
+			etiquetasSeleccionadas = Array.from(selectEtiquetas.selectedOptions).map(opt => Number(opt.value));
+		}
 		if (this.value) {
 			selectUbicacionLado.disabled = false;
 		} else {
@@ -321,7 +374,8 @@ if (formPaciente) {
 			apellidos: document.getElementById('paciente-apellidos').value.trim(),
 			tipo_acceso: document.getElementById('paciente-tipoacceso')?.value || '',
 			fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
-			ubicacion: document.getElementById('paciente-ubicacion')?.value || ''
+			ubicacion: document.getElementById('paciente-ubicacion')?.value || '',
+			etiquetas: [...etiquetasSeleccionadas]
 		};
 		if (pacienteEditando) {
 			paciente.id = pacienteEditando;
