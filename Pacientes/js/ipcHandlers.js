@@ -96,11 +96,11 @@ ipcMain.handle('tags-get', (event, tagId) => {
 });
 
 ipcMain.handle('tags-add', (event, { nombre, color, descripcion }) => {
-  return db.addTag(nombre, color, descripcion);
+  return db.addTag(nombre, color, descripcion, arguments[1].tipo);
 });
 
 ipcMain.handle('tags-update', (event, { id, nombre, color, descripcion }) => {
-  return db.updateTag(id, nombre, color, descripcion);
+  return db.updateTag(id, nombre, color, descripcion, arguments[1].tipo);
 });
 
 ipcMain.handle('tags-delete', (event, id) => {

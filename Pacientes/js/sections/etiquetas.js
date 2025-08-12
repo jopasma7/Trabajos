@@ -12,6 +12,7 @@ const formEtiqueta = document.getElementById('form-etiqueta');
 const inputNombre = document.getElementById('etiqueta-nombre');
 const inputColor = document.getElementById('etiqueta-color');
 const inputDescripcion = document.getElementById('etiqueta-descripcion');
+const inputTipo = document.getElementById('etiqueta-tipo');
 const inputId = document.getElementById('etiqueta-id');
 const listaVacia = document.getElementById('tags-lista-vacia');
 
@@ -115,6 +116,7 @@ btnNuevaEtiqueta.addEventListener('click', () => {
   formEtiqueta.reset();
   inputId.value = '';
   inputColor.value = '#009879';
+  inputTipo.value = 'incidencia';
   modalEtiqueta.show();
   document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Nueva Etiqueta';
   paginaActualEtiquetas = 1;
@@ -129,6 +131,7 @@ tablaEtiquetas.addEventListener('click', async (e) => {
       inputNombre.value = tag.nombre;
       inputColor.value = tag.color;
       inputDescripcion.value = tag.descripcion || '';
+      inputTipo.value = tag.tipo || 'incidencia';
       modalEtiqueta.show();
       document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Editar Etiqueta';
     }
@@ -145,6 +148,7 @@ formEtiqueta.addEventListener('submit', async (e) => {
   const nombre = inputNombre.value.trim();
   const color = inputColor.value;
   const descripcion = inputDescripcion.value.trim();
+  const tipo = inputTipo.value;
   const id = inputId.value;
   if (!nombre) return;
   // Validación de unicidad (case-insensitive)
@@ -167,11 +171,11 @@ formEtiqueta.addEventListener('submit', async (e) => {
   }
   try {
     if (id) {
-      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion });
-  showAlert('Etiqueta actualizada correctamente', 'success');
+      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo });
+      showAlert('Etiqueta actualizada correctamente', 'success');
     } else {
-      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion });
-  showAlert('Etiqueta creada correctamente', 'success');
+      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo });
+      showAlert('Etiqueta creada correctamente', 'success');
     }
     modalEtiqueta.hide();
     cargarTags();

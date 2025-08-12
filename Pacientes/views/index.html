@@ -525,6 +525,13 @@
                         <label for="etiqueta-descripcion" class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>
                         <textarea class="form-control" id="etiqueta-descripcion" rows="2" maxlength="100"></textarea>
                       </div>
+                      <div class="mb-3">
+                        <label for="etiqueta-tipo" class="form-label">Tipo de etiqueta</label>
+                        <select class="form-select" id="etiqueta-tipo" required>
+                          <option value="incidencia">Incidencia</option>
+                          <option value="paciente">Paciente</option>
+                        </select>
+                      </div>
                       <input type="hidden" id="etiqueta-id">
                     </div>
                     <div class="modal-footer">

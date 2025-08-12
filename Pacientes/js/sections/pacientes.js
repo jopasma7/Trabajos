@@ -332,11 +332,12 @@ function actualizarTablaPacientes() {
 
 // Cargar pacientes y renderizar
 function cargarPacientes() {
-	ipcRenderer.invoke('get-pacientes').then(pacientes => {
-		pacientesGlobal = pacientes;
-		paginaActual = 1;
-		actualizarTablaPacientes();
-	});
+		ipcRenderer.invoke('get-pacientes').then(pacientes => {
+			console.log('Pacientes actuales:', pacientes);
+			pacientesGlobal = pacientes;
+			paginaActual = 1;
+			actualizarTablaPacientes();
+		});
 }
 
 

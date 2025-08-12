@@ -69,11 +69,20 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
 )`).run();
 
 // Crear tabla tags (etiquetas personalizables)
+// Añadir columna 'tipo' a tags si no existe
+const tagsTableInfo = db.prepare("PRAGMA table_info(tags)").all();
+const hasTipo = tagsTableInfo.some(col => col.name === 'tipo');
+if (!hasTipo) {
+  try {
+    db.prepare('ALTER TABLE tags ADD COLUMN tipo TEXT DEFAULT "incidencia"').run();
+  } catch (e) {}
+}
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   color TEXT DEFAULT '#009879',
-  descripcion TEXT
+  descripcion TEXT,
+  tipo TEXT DEFAULT 'incidencia'
 )`).run();
 
 // Tabla intermedia incidencia_tags (muchos a muchos)
@@ -111,15 +120,15 @@ db.getTagById = function(tagId) {
   return db.prepare('SELECT * FROM tags WHERE id = ?').get(tagId);
 };
 
-db.addTag = function(nombre, color = '#009879', descripcion = '') {
-  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion) VALUES (?, ?, ?)');
-  const info = stmt.run(nombre, color, descripcion);
+db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo) VALUES (?, ?, ?, ?)');
+  const info = stmt.run(nombre, color, descripcion, tipo);
   return { id: info.lastInsertRowid };
 };
 
-db.updateTag = function(id, nombre, color, descripcion) {
-  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ? WHERE id = ?');
-  const info = stmt.run(nombre, color, descripcion, id);
+db.updateTag = function(id, nombre, color, descripcion, tipo = 'incidencia') {
+  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ? WHERE id = ?');
+  const info = stmt.run(nombre, color, descripcion, tipo, id);
   return { changes: info.changes };
 };
 
