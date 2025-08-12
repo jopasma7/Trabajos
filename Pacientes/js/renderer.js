@@ -52,6 +52,19 @@ document.addEventListener('DOMContentLoaded', () => {
 			   sectionTitle.style.marginBottom = '0.5rem';
 			   sectionTitle.style.display = 'flex';
 			   sectionTitle.style.alignItems = 'center';
+		   } else if (section === 'pacientes') {
+			   sectionTitle.innerHTML = `
+				   <span style="font-size:1.3em;">👨‍⚕️</span>
+				   <span style="color:#1f2937;">Pacientes</span>
+				   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Gestión y seguimiento de pacientes</span>
+			   `;
+			   sectionTitle.className = '';
+			   sectionTitle.style.fontSize = '1.7rem';
+			   sectionTitle.style.fontWeight = '800';
+			   sectionTitle.style.color = '#1f2937';
+			   sectionTitle.style.marginBottom = '0.5rem';
+			   sectionTitle.style.display = 'flex';
+			   sectionTitle.style.alignItems = 'center';
 		   } else {
 			   sectionTitle.textContent = section.charAt(0).toUpperCase() + section.slice(1);
 			   sectionTitle.className = '';
