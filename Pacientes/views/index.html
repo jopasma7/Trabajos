@@ -34,46 +34,46 @@
                 <span class="d-none d-sm-inline">Dashboard</span>
               </a>
             </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="agenda">
-                  <i class="bi bi-calendar-event me-2"></i>
-                  <span class="d-none d-sm-inline">Agenda</span>
-                </a>
-              </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="historial">
-                  <i class="bi bi-journal-medical me-2"></i>
-                  <span class="d-none d-sm-inline">Historial Clínico</span>
-                </a>
-              </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="medicaciones">
-                  <i class="bi bi-capsule-pill me-2"></i>
-                  <span class="d-none d-sm-inline">Medicaciones</span>
-                </a>
-              </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="alertas">
-                  <i class="bi bi-bell-fill me-2"></i>
-                  <span class="d-none d-sm-inline">Alertas</span>
-                </a>
-              </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="documentos">
-                  <i class="bi bi-folder2-open me-2"></i>
-                  <span class="d-none d-sm-inline">Documentos</span>
-                </a>
-              </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="estadisticas">
-                  <i class="bi bi-graph-up-arrow me-2"></i>
-                  <span class="d-none d-sm-inline">Estadísticas</span>
-                </a>
-              </li>
             <li class="nav-item w-100">
               <a href="#" class="nav-link text-white ps-4" data-section="pacientes">
                 <i class="bi bi-people-fill me-2"></i>
                 <span class="d-none d-sm-inline">Pacientes</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="agenda">
+                <i class="bi bi-calendar-event me-2"></i>
+                <span class="d-none d-sm-inline">Agenda</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="historial">
+                <i class="bi bi-journal-medical me-2"></i>
+                <span class="d-none d-sm-inline">Historial Clínico</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="medicaciones">
+                <i class="bi bi-capsule-pill me-2"></i>
+                <span class="d-none d-sm-inline">Medicaciones</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="alertas">
+                <i class="bi bi-bell-fill me-2"></i>
+                <span class="d-none d-sm-inline">Alertas</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="documentos">
+                <i class="bi bi-folder2-open me-2"></i>
+                <span class="d-none d-sm-inline">Documentos</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="estadisticas">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                <span class="d-none d-sm-inline">Estadísticas</span>
               </a>
             </li>
             <li class="nav-item w-100">
@@ -148,6 +148,117 @@
                     <div class="card-text fs-3">0</div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Pacientes Section (movido) -->
+          <section id="pacientes-section" class="section d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Pacientes</h2>
+              <button class="btn btn-success" id="btn-nuevo-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente"><i class="bi bi-person-plus-fill me-1"></i>Nuevo Paciente</button>
+            <!-- Modal Confirmar Eliminación Paciente -->
+            <div class="modal fade" id="modal-confirmar-eliminar-paciente" tabindex="-1" aria-labelledby="modalEliminarPacienteLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered" >
+                <div class="modal-content border-danger" style="max-width:500px;width:95vw;">
+                  <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalEliminarPacienteLabel"><span style="font-size:1.2em;vertical-align:-0.1em;">🗑️</span> Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="alert alert-danger mb-3" id="texto-confirmar-eliminar-paciente">
+                      ¿Estás seguro de que deseas eliminar este paciente?
+                    </div>
+                    <div class="fw-bold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Esta acción no se puede deshacer.</div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirmar-eliminar-paciente">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+              <!-- Modal Nuevo Paciente -->
+            <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="max-width:600px;width:95vw;">
+                  <form id="form-paciente">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="modalPacienteLabel"><span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Nuevo Paciente</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label for="paciente-nombre" class="form-label">Nombre</label>
+                          <input type="text" class="form-control" id="paciente-nombre" maxlength="40" required>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="paciente-apellidos" class="form-label">Apellidos</label>
+                          <input type="text" class="form-control" id="paciente-apellidos" maxlength="60" required>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="paciente-tipoacceso" class="form-label">Tipo Acceso</label>
+                          <select class="form-select" id="paciente-tipoacceso" required>
+                            <option value="">Selecciona...</option>
+                            <option value="fistula">Fístula</option>
+                            <option value="cateter">Catéter</option>
+                            <option value="protesis">Prótesis</option>
+                          </select>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="paciente-fecha" class="form-label">Fecha Instalación</label>
+                          <input type="date" class="form-control" id="paciente-fecha" required>
+                        </div>
+                        <div class="col-12">
+                          <label for="paciente-ubicacion" class="form-label">Ubicación</label>
+                          <input type="text" class="form-control" id="paciente-ubicacion" maxlength="60">
+                        </div>
+                        <div class="col-12">
+                          <label for="paciente-incidentes" class="form-label">Incidentes</label>
+                          <textarea class="form-control" id="paciente-incidentes" rows="2" maxlength="200"></textarea>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            </div>
+            <div class="card shadow-sm p-3">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="table-success">
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Apellidos</th>
+                      <th>Tipo Acceso</th>
+                      <th>Fecha Instalación</th>
+                      <th>Ubicación</th>
+                      <th>Incidentes</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Juan</td>
+                      <td>Pérez</td>
+                      <td>Fístula</td>
+                      <td>2025-08-01</td>
+                      <td>Braquio Cefálica Izquierda</td>
+                      <td>Sin incidentes</td>
+                      <td>
+                        <button class="btn btn-outline-success btn-sm"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                      </td>
+                    </tr>
+                    <!-- Más filas dinámicas -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </section>
