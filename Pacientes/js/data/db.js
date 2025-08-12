@@ -4,8 +4,20 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
-const dbDir = path.join(__dirname, '../../data');
-const dbPath = path.join(dbDir, 'hospital.db');
+
+let dbDir, dbPath;
+// Detectar si estamos en producción (empaquetado) o desarrollo
+const isProd = process.mainModule && process.mainModule.filename.indexOf('app.asar') !== -1;
+if (isProd) {
+  // En producción: usar la carpeta userData de Electron
+  const { app } = require('electron');
+  dbDir = app.getPath('userData');
+  dbPath = path.join(dbDir, 'hospital.db');
+} else {
+  // En desarrollo: usar la carpeta data del proyecto
+  dbDir = path.join(__dirname, '../../data');
+  dbPath = path.join(dbDir, 'hospital.db');
+}
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
@@ -99,6 +111,17 @@ db.getIncidenciasByPaciente = function(pacienteId) {
   return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 
+// Crear una incidencia y asociar un tag (motivo y fecha personalizados)
+db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
+  // Insertar nueva incidencia
+  const insertIncidencia = db.prepare('INSERT INTO incidencias (paciente_id, motivo, fecha) VALUES (?, ?, ?)');
+  const result = insertIncidencia.run(pacienteId, motivo, fecha);
+  const incidenciaId = result.lastInsertRowid;
+  // Asociar el tag a la incidencia
+  const insertTag = db.prepare('INSERT INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
+  insertTag.run(incidenciaId, tagId);
+  return incidenciaId;
+};
 
 
 // Actualizar etiquetas de incidencias para la incidencia más reciente de un paciente
