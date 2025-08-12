@@ -1,3 +1,25 @@
+// --- Reabrir modal paciente al cancelar incidencias personalizadas ---
+document.addEventListener('DOMContentLoaded', () => {
+	const modalIncidencia = document.getElementById('modal-incidencia-inicial');
+	if (modalIncidencia) {
+		modalIncidencia.addEventListener('hidden.bs.modal', function (e) {
+			// Si se cerró sin confirmar (no hay incidencias en curso), reabrir modal paciente
+			// Solo si el modal de paciente no está ya visible
+			const modalPaciente = document.getElementById('modal-paciente');
+			if (modalPaciente && !modalPaciente.classList.contains('show')) {
+				const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(modalPaciente);
+				setTimeout(() => modalPacienteInst.show(), 200); // Pequeño delay para evitar conflicto visual
+			}
+		});
+	}
+});
+try {
+	const electron = require('electron');
+	console.log('[DEPURACIÓN][RENDERER] require("electron") funciona:', !!electron);
+	console.log('[DEPURACIÓN][RENDERER] ipcRenderer:', !!electron.ipcRenderer);
+} catch (e) {
+	console.error('[DEPURACIÓN][RENDERER] require("electron") FALLÓ:', e);
+}
 // Opciones de ubicación anatómica según tipo de acceso
 const ubicacionesAnatomicasPorAcceso = {
 	fistula: [
@@ -22,7 +44,7 @@ const listaSimpleContainer = document.getElementById('paciente-etiquetas-lista-s
 let etiquetasDisponibles = [];
 let etiquetasSeleccionadas = [];
 
-async function cargarEtiquetasDisponibles() {
+async function cargarEtiquetasDisponibles(selectedIds = null) {
 	if (!listaSimpleContainer) return;
 	let ipcRenderer;
 	try {
@@ -33,7 +55,12 @@ async function cargarEtiquetasDisponibles() {
 	}
 	etiquetasDisponibles = await ipcRenderer.invoke('tags-get-all');
 	listaSimpleContainer.innerHTML = '';
-	etiquetasSeleccionadas = [];
+	// Only reset if not editing or not provided
+	if (selectedIds) {
+		etiquetasSeleccionadas = [...selectedIds];
+	} else if (!pacienteEditando) {
+		etiquetasSeleccionadas = [];
+	}
 	if (etiquetasDisponibles.length === 0) {
 		listaSimpleContainer.innerHTML = '<li class="text-muted">No hay etiquetas disponibles</li>';
 		return;
@@ -43,6 +70,7 @@ async function cargarEtiquetasDisponibles() {
 		const input = document.createElement('input');
 		input.type = 'checkbox';
 		input.value = tag.id;
+		input.checked = etiquetasSeleccionadas.includes(Number(tag.id));
 		input.addEventListener('change', () => {
 			const id = Number(tag.id);
 			if (input.checked) {
@@ -61,9 +89,9 @@ async function cargarEtiquetasDisponibles() {
 // Asociación del listener del modal para cargar etiquetas
 document.addEventListener('DOMContentLoaded', () => {
 	const modalPaciente = document.getElementById('modal-paciente');
-	   if (modalPaciente) {
-		   modalPaciente.addEventListener('show.bs.modal', cargarEtiquetasDisponibles);
-	   }
+	if (modalPaciente) {
+		modalPaciente.addEventListener('show.bs.modal', () => cargarEtiquetasDisponibles(etiquetasSeleccionadas));
+	}
 });
 
 if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
@@ -82,11 +110,6 @@ if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 			ubicacionesAnatomicasPorAcceso[tipo].map(u => `<option value="${u}">${u}</option>`).join('');
 	});
 	selectUbicacionAnatomica.addEventListener('change', function() {
-		// Recoger etiquetas seleccionadas
-		let etiquetasSeleccionadas = [];
-		if (selectEtiquetas) {
-			etiquetasSeleccionadas = Array.from(selectEtiquetas.selectedOptions).map(opt => Number(opt.value));
-		}
 		if (this.value) {
 			selectUbicacionLado.disabled = false;
 		} else {
@@ -346,6 +369,8 @@ if (btnNuevoPaciente) {
 	btnNuevoPaciente.addEventListener('click', () => {
 		pacienteEditando = null;
 		formPaciente.reset();
+		etiquetasSeleccionadas = [];
+		cargarEtiquetasDisponibles([]);
 		document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Nuevo Paciente';
 		// Poner fecha actual por defecto
 		const inputFecha = document.getElementById('paciente-fecha');
@@ -376,14 +401,96 @@ if (formPaciente) {
 			tipo_acceso: document.getElementById('paciente-tipoacceso')?.value || '',
 			fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
 			ubicacion: document.getElementById('paciente-ubicacion')?.value || '',
+			ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
+			ubicacion_lado: selectUbicacionLado?.value || '',
 			etiquetas: [...etiquetasSeleccionadas]
 		};
+
+		// Modal de incidencias personalizadas (uno por cada etiqueta seleccionada)
+		const showIncidenciaModal = (defaultMotivo, defaultFecha, etiquetasSeleccionadas) => {
+			return new Promise(resolve => {
+				// Cerrar el modal de paciente antes de abrir el de incidencia
+				const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-paciente'));
+				modalPacienteInst.hide();
+				const modalIncidencia = new bootstrap.Modal(document.getElementById('modal-incidencia-inicial'));
+				const container = document.getElementById('incidencias-multiples-container');
+				container.innerHTML = '';
+				// Obtener nombres de etiquetas seleccionadas
+				const etiquetas = etiquetasDisponibles.filter(tag => etiquetasSeleccionadas.includes(Number(tag.id)));
+				const hoy = (new Date()).toISOString().split('T')[0];
+				// Agrupar en filas de dos columnas
+				for (let i = 0; i < etiquetas.length; i += 2) {
+					const row = document.createElement('div');
+					row.className = 'row';
+					for (let j = 0; j < 2; j++) {
+						const tag = etiquetas[i + j];
+						if (!tag) break;
+						const col = document.createElement('div');
+						col.className = 'col-12 col-md-6 mb-3';
+						col.innerHTML = `
+							<div class="border rounded p-2 h-100">
+								<div class="fw-bold mb-2 d-flex align-items-center gap-2">
+									<span class="badge" style="background:${tag.color};color:#fff;font-size:1em;"><i class="bi bi-tag"></i></span>
+									<span>${tag.nombre}</span>
+								</div>
+								<div class="mb-2">
+									<input type="text" class="form-control" id="input-motivo-incidencia-${tag.id}" maxlength="100" placeholder="Motivo de la incidencia...">
+								</div>
+								<div>
+									<input type="date" class="form-control" id="input-fecha-incidencia-${tag.id}" value="${defaultFecha || hoy}">
+								</div>
+							</div>
+						`;
+						row.appendChild(col);
+					}
+					container.appendChild(row);
+				}
+				const btnConfirmar = document.getElementById('btn-confirmar-incidencia-inicial');
+				const handler = () => {
+					// Recoger motivos y fechas de cada etiqueta
+					const resultados = etiquetas.map(tag => {
+						return {
+							tagId: tag.id,
+							motivo: document.getElementById(`input-motivo-incidencia-${tag.id}`).value,
+							fecha: document.getElementById(`input-fecha-incidencia-${tag.id}`).value
+						};
+					});
+					modalIncidencia.hide();
+					btnConfirmar.removeEventListener('click', handler);
+					resolve(resultados);
+				};
+				btnConfirmar.addEventListener('click', handler);
+				modalIncidencia.show();
+			});
+		};
+
 		if (pacienteEditando) {
 			paciente.id = pacienteEditando;
 			await ipcRenderer.invoke('edit-paciente', paciente);
+			// Si hay etiquetas seleccionadas, pedir motivo/fecha y guardar incidencia personalizada
+			if (etiquetasSeleccionadas.length) {
+				const motivo = 'Etiquetas iniciales';
+				const fecha = (new Date()).toISOString().split('T')[0];
+				const incidencias = await showIncidenciaModal(motivo, fecha, etiquetasSeleccionadas);
+				// Guardar cada incidencia personalizada
+				for (const inc of incidencias) {
+					await ipcRenderer.invoke('paciente-set-etiquetas', paciente.id, [Number(inc.tagId)], inc.motivo, inc.fecha);
+				}
+			} else {
+				// Si no hay etiquetas, limpiar incidencias
+				await ipcRenderer.invoke('paciente-set-etiquetas', paciente.id, [], '', '');
+			}
 			mostrarMensaje(`Paciente <b>${paciente.nombre} ${paciente.apellidos}</b> modificado correctamente.`, 'info');
 		} else {
-			await ipcRenderer.invoke('add-paciente', paciente);
+			const result = await ipcRenderer.invoke('add-paciente', paciente);
+			if (etiquetasSeleccionadas.length) {
+				const motivo = 'Etiquetas iniciales';
+				const fecha = (new Date()).toISOString().split('T')[0];
+				const incidencias = await showIncidenciaModal(motivo, fecha, etiquetasSeleccionadas);
+				for (const inc of incidencias) {
+					await ipcRenderer.invoke('paciente-set-etiquetas', result.id, [Number(inc.tagId)], inc.motivo, inc.fecha);
+				}
+			}
 			mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${paciente.tipo_acceso}</b>`, 'success');
 		}
 		cargarPacientes();
@@ -408,16 +515,36 @@ if (tablaPacientesBody) {
 				pacienteEditando = paciente.id;
 				document.getElementById('paciente-nombre').value = paciente.nombre;
 				document.getElementById('paciente-apellidos').value = paciente.apellidos;
-				if (document.getElementById('paciente-tipo-acceso')) document.getElementById('paciente-tipo-acceso').value = paciente.tipo_acceso || '';
-				if (document.getElementById('paciente-fecha-instalacion')) document.getElementById('paciente-fecha-instalacion').value = paciente.fecha_instalacion || '';
-				if (document.getElementById('paciente-ubicacion')) document.getElementById('paciente-ubicacion').value = paciente.ubicacion || '';
-								document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Editar datos del paciente';
-								const modalSubtitle = document.querySelector('#modal-paciente .modal-subtitle');
-								if (modalSubtitle) {
-									modalSubtitle.textContent = 'Modifica la información, incidencias o seguimiento clínico del paciente seleccionado.';
-								}
+				const tipoAccesoInput = document.getElementById('paciente-tipoacceso');
+				if (tipoAccesoInput) {
+					tipoAccesoInput.value = paciente.tipo_acceso || '';
+					// Disparar el evento change para poblar ubicaciones
+					tipoAccesoInput.dispatchEvent(new Event('change'));
+				}
+				const fechaInput = document.getElementById('paciente-fecha');
+				if (fechaInput) {
+					// Si la fecha está en formato ISO con hora, tomar solo la parte de la fecha
+					let fecha = paciente.fecha_instalacion || '';
+					if (fecha && fecha.includes('T')) fecha = fecha.split('T')[0];
+					fechaInput.value = fecha;
+				}
+				setTimeout(async () => {
+					if (selectUbicacionAnatomica) selectUbicacionAnatomica.value = paciente.ubicacion_anatomica || '';
+					if (selectUbicacionLado) selectUbicacionLado.value = paciente.ubicacion_lado || '';
+				}, 50);
+				document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Editar datos del paciente';
+				const modalSubtitle = document.querySelector('#modal-paciente .modal-subtitle');
+				if (modalSubtitle) {
+					modalSubtitle.textContent = 'Modifica la información, incidencias o seguimiento clínico del paciente seleccionado.';
+				}
 				const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
 				modal.show();
+				// Esperar a que el modal esté visible antes de cargar etiquetas
+				setTimeout(async () => {
+					const ids = await ipcRenderer.invoke('paciente-get-etiquetas', paciente.id);
+					etiquetasSeleccionadas = ids;
+					cargarEtiquetasDisponibles(ids);
+				}, 200);
 			}
 		}
 		if (e.target.closest('.btn-eliminar')) {
@@ -425,13 +552,6 @@ if (tablaPacientesBody) {
 			const pacientes = await ipcRenderer.invoke('get-pacientes');
 			const paciente = pacientes.find(p => p.id == id);
 			pacienteAEliminar = paciente;
-			if (paciente) {
-				textoConfirmarEliminar.innerHTML = `¿Eliminar al paciente <b>${paciente.nombre} ${paciente.apellidos}</b>?`;
-			} else {
-				textoConfirmarEliminar.innerHTML = '¿Estás seguro de que deseas eliminar este paciente?';
-			}
-			const modal = bootstrap.Modal.getOrCreateInstance(modalConfirmarEliminar);
-			modal.show();
 		}
 	});
 }

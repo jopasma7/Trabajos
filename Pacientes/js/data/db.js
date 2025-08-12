@@ -99,6 +99,45 @@ db.getIncidenciasByPaciente = function(pacienteId) {
   return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 
+// Actualizar etiquetas de incidencias para la incidencia más reciente de un paciente
+// Permite motivo y fecha personalizados para la incidencia inicial
+db.setEtiquetasForPaciente = function(pacienteId, tagIds, motivoPersonalizado, fechaPersonalizada) {
+  console.log('[DEPURACIÓN] setEtiquetasForPaciente llamado con:', { pacienteId, tagIds, motivoPersonalizado, fechaPersonalizada });
+  // Obtener la incidencia más reciente del paciente
+  let incidencia = db.prepare('SELECT id FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(pacienteId);
+  // Si no existe, crear una incidencia inicial personalizada
+  if (!incidencia) {
+    let motivo = motivoPersonalizado || 'Etiquetas iniciales';
+    let fecha = fechaPersonalizada || (new Date()).toISOString().split('T')[0];
+    const info = db.addIncidencia(pacienteId, motivo, fecha);
+    incidencia = { id: info.id };
+  }
+  // Eliminar etiquetas actuales
+  db.prepare('DELETE FROM incidencia_tags WHERE incidencia_id = ?').run(incidencia.id);
+  // Insertar nuevas etiquetas
+  const insert = db.prepare('INSERT INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
+  let changes = 0;
+  for (const tagId of tagIds) {
+    insert.run(incidencia.id, tagId);
+    changes++;
+  }
+  return { changes };
+};
+
+
+// Obtener IDs de etiquetas asociadas a las incidencias de un paciente
+db.getEtiquetasByPaciente = function(pacienteId) {
+  // Busca todas las incidencias del paciente y sus tags
+  return db.prepare(`
+    SELECT DISTINCT t.id
+    FROM incidencias i
+    JOIN incidencia_tags it ON i.id = it.incidencia_id
+    JOIN tags t ON it.tag_id = t.id
+    WHERE i.paciente_id = ?
+  `).all(pacienteId).map(row => row.id);
+};
+
+
 db.addIncidencia = function(pacienteId, motivo, fecha) {
   const stmt = db.prepare('INSERT INTO incidencias (paciente_id, motivo, fecha) VALUES (?, ?, ?)');
   const info = stmt.run(pacienteId, motivo, fecha);
@@ -157,13 +196,14 @@ db.addPaciente = function(paciente) {
 };
 
 db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
     paciente.tipo_acceso,
     paciente.fecha_instalacion,
-    paciente.ubicacion,
+    paciente.ubicacion_anatomica,
+    paciente.ubicacion_lado,
     paciente.id
   );
   return { changes: info.changes };

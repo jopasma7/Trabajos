@@ -1,3 +1,24 @@
+    <!-- Modal para motivo y fecha de incidencia inicial -->
+    <div class="modal fade" id="modal-incidencia-inicial" tabindex="-1" aria-labelledby="modalIncidenciaInicialLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-incidencias-wide">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <div class="w-100">
+              <h5 class="modal-title mb-0" id="modalIncidenciaInicialLabel"><i class="bi bi-clipboard-plus me-2"></i>Incidencias personalizadas</h5>
+              <span class="modal-subtitle text-muted small mt-1 mb-0">Registra una o varias incidencias iniciales para el paciente. Puedes personalizar el motivo y la fecha de cada una.</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div id="incidencias-multiples-container"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btn-confirmar-incidencia-inicial">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 <!DOCTYPE html>
 <html>
   <head>
@@ -8,6 +29,12 @@
     <meta charset="UTF-8">
     <title>Electron App</title>
   <!-- Bootstrap 5 CSS -->
+  <style>
+    .modal-dialog.modal-incidencias-wide {
+      max-width: 800px !important;
+      width: 98vw !important;
+    }
+  </style>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
