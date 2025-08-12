@@ -22,30 +22,56 @@ db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   categoria TEXT,
   completado INTEGER DEFAULT 0
 )`).run();
-
-// Crear tabla pacientes si no existe
+// --- MIGRACIÓN: Si la tabla pacientes tiene columna 'ubicacion', migrar a ubicacion_anatomica y ubicacion_lado ---
+const tableInfo = db.prepare("PRAGMA table_info(pacientes)").all();
+const hasOldUbicacion = tableInfo.some(col => col.name === 'ubicacion');
+const hasNewUbicacion = tableInfo.some(col => col.name === 'ubicacion_anatomica');
+if (hasOldUbicacion && !hasNewUbicacion) {
+  // Renombrar tabla antigua
+  db.prepare('ALTER TABLE pacientes RENAME TO pacientes_old').run();
+  // Crear nueva tabla
+  db.prepare(`CREATE TABLE pacientes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    apellidos TEXT NOT NULL,
+    tipo_acceso TEXT,
+    fecha_instalacion TEXT,
+    ubicacion_anatomica TEXT,
+    ubicacion_lado TEXT
+  )`).run();
+  // Migrar datos (ubicacion -> ubicacion_anatomica, ubicacion_lado vacía)
+  const rows = db.prepare('SELECT * FROM pacientes_old').all();
+  const insert = db.prepare('INSERT INTO pacientes (id, nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  for (const row of rows) {
+    insert.run(row.id, row.nombre, row.apellidos, row.tipo_acceso, row.fecha_instalacion, row.ubicacion, '');
+  }
+  db.prepare('DROP TABLE pacientes_old').run();
+}
+// Crear tabla pacientes si no existe (campos nuevos)
 db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   apellidos TEXT NOT NULL,
   tipo_acceso TEXT,
   fecha_instalacion TEXT,
-  ubicacion TEXT
+  ubicacion_anatomica TEXT,
+  ubicacion_lado TEXT
 )`).run();
 
-// --- Métodos de pacientes ---
+
 db.getAllPacientes = function() {
   return db.prepare('SELECT * FROM pacientes').all();
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion) VALUES (?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
     paciente.tipo_acceso,
     paciente.fecha_instalacion,
-    paciente.ubicacion
+    paciente.ubicacion_anatomica,
+    paciente.ubicacion_lado
   );
   return { id: info.lastInsertRowid };
 };
@@ -123,14 +149,31 @@ if (pacientesCount === 0) {
     ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina']
   ];
   const tipos = ['fistula', 'cateter', 'protesis'];
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion) VALUES (?, ?, ?, ?, ?)');
+  const ubicaciones = {
+    fistula: ['Radio Cefálica', 'Braquio Cefálica'],
+    protesis: ['Radio Cefálica', 'Braquio Cefálica'],
+    cateter: ['Yugular', 'Femoral']
+  };
+  const lados = ['Izquierda', 'Derecha'];
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
   for (let i = 0; i < 25; i++) {
+    const tipo = tipos[i % 3];
+    let ubicacion_anatomica = '';
+    let ubicacion_lado = '';
+    if (tipo === 'fistula' || tipo === 'protesis') {
+      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
+      ubicacion_lado = lados[i % 2];
+    } else if (tipo === 'cateter') {
+      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
+      ubicacion_lado = lados[i % 2];
+    }
     stmt.run(
       nombres[i][0],
       nombres[i][1],
-      tipos[i%3],
-      `2025-08-${(i%28+1).toString().padStart(2,'0')}`,
-      `Ubicación ${(i%5)+1}`
+      tipo,
+      `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
+      ubicacion_anatomica,
+      ubicacion_lado
     );
   }
   console.log('Se insertaron 25 pacientes reales de prueba en la base de datos.');

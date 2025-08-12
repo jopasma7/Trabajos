@@ -1,3 +1,50 @@
+// Opciones de ubicación anatómica según tipo de acceso
+const ubicacionesAnatomicasPorAcceso = {
+	fistula: [
+		'Radio Cefálica',
+		'Braquio Cefálica'
+	],
+	protesis: [
+		'Radio Cefálica',
+		'Braquio Cefálica'
+	],
+	cateter: [
+		'Yugular',
+		'Femoral'
+	]
+};
+
+const selectTipoAccesoForm = document.getElementById('paciente-tipoacceso');
+const selectUbicacionAnatomica = document.getElementById('paciente-ubicacion-anatomica');
+const selectUbicacionLado = document.getElementById('paciente-ubicacion-lado');
+
+if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
+	selectTipoAccesoForm.addEventListener('change', function() {
+		const tipo = this.value;
+		selectUbicacionAnatomica.innerHTML = '';
+		selectUbicacionLado.value = '';
+		selectUbicacionLado.disabled = true;
+		if (!tipo || !ubicacionesAnatomicasPorAcceso[tipo]) {
+			selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona tipo de acceso primero</option>';
+			selectUbicacionAnatomica.disabled = true;
+			return;
+		}
+		selectUbicacionAnatomica.disabled = false;
+		selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona ubicación...</option>' +
+			ubicacionesAnatomicasPorAcceso[tipo].map(u => `<option value="${u}">${u}</option>`).join('');
+	});
+	selectUbicacionAnatomica.addEventListener('change', function() {
+		if (this.value) {
+			selectUbicacionLado.disabled = false;
+		} else {
+			selectUbicacionLado.value = '';
+			selectUbicacionLado.disabled = true;
+		}
+	});
+	// Inicialmente deshabilitados
+	selectUbicacionAnatomica.disabled = true;
+	selectUbicacionLado.disabled = true;
+}
 // pacientes.js
 // Lógica específica para la sección Pacientes
 
@@ -63,12 +110,14 @@ function renderizarPacientes(pacientes) {
 					fechaFormateada = paciente.fecha_instalacion;
 				}
 			}
+			const ubicacionCompleta = (paciente.ubicacion_anatomica && paciente.ubicacion_lado)
+				? `${paciente.ubicacion_anatomica} ${paciente.ubicacion_lado}`
+				: (paciente.ubicacion_anatomica || paciente.ubicacion_lado || '');
 			tr.innerHTML = `
 				<td>${paciente.nombre} ${paciente.apellidos}</td>
 				<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
+				<td>${ubicacionCompleta}</td>
 				<td>${fechaFormateada}</td>
-				<td>${paciente.ubicacion || ''}</td>
-				<td>Sin incidentes</td>
 				<td>
 					<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
 					<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
