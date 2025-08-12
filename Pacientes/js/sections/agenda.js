@@ -109,7 +109,7 @@ function setupAgendaSection() {
                   const [hora, minuto] = ev.hora.split(':').map(Number);
                   const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto);
                   if (fechaHoraEv < ahora) {
-                    return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                    return '';
                   }
                   return '';
                 })()}
@@ -397,15 +397,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
             title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
               <div class="fw-bold text-success small">
                 <i class="bi bi-clock me-1"></i> ${ev.hora}
-                <!-- Icono de reloj para eventos pasados -->
-                ${(() => {
-                  const ahora = new Date();
-                  const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
-                  if (fechaHoraEv < ahora) {
-                    return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
-                  }
-                  return '';
-                })()}
+                <!-- Icono de reloj para eventos pasados eliminado -->
                 <!-- Icono de rayo para eventos próximos -->
                 ${(() => {
                   const ahora = new Date();
@@ -552,9 +544,9 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                             const ahora = new Date();
                             const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
                             if (fechaHoraEv < ahora) {
-                              return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
-                            }
-                            return '';
+                                return '';
+                              }
+                              return '';
                           })()}
                           ${(() => {
                             const ahora = new Date();
@@ -577,7 +569,13 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                 }
                 // Reasignar listeners de editar y eliminar en la columna
                 dropzone.querySelectorAll('[data-edit]').forEach(btn => {
+                  btn.replaceWith(btn.cloneNode(true));
+                });
+                dropzone.querySelectorAll('[data-edit]').forEach(btn => {
                   btn.onclick = () => openModalEditar(btn.getAttribute('data-edit'));
+                });
+                dropzone.querySelectorAll('[data-delete]').forEach(btn => {
+                  btn.replaceWith(btn.cloneNode(true));
                 });
                 dropzone.querySelectorAll('[data-delete]').forEach(btn => {
                   btn.onclick = () => eliminarEvento(btn.getAttribute('data-delete'));
@@ -661,6 +659,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   }
 
   // Agrupar eventos por día (YYYY-MM-DD)
+  let eventosPorDia = {};
   dias.forEach(d => {
     const key = d.toISOString().slice(0,10);
     eventosPorDia[key] = [];
@@ -764,7 +763,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                             const ahora = new Date();
                             const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
                             if (fechaHoraEv < ahora) {
-                              return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                              return '';
                             }
                             return '';
                           })()}
