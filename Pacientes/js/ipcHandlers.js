@@ -50,7 +50,12 @@ ipcMain.handle('perfil-cambiar-avatar', async () => {
 // Ejemplo: Obtener todos los pacientes
 ipcMain.handle('get-pacientes', () => {
   const stmt = db.prepare('SELECT * FROM pacientes');
-  return stmt.all();
+  const pacientes = stmt.all();
+  // Añadir etiquetas a cada paciente
+  pacientes.forEach(p => {
+    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+  });
+  return pacientes;
 });
 
 // Ejemplo: Agregar un paciente

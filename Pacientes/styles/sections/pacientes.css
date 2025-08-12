@@ -91,27 +91,31 @@
 }
 /* Badges suaves para tipo de acceso */
 .badge-fistula {
-  background: #f9eeee;
   color: #c62828;
-  border: 1px solid #ffcdd2;
-  border-radius: 999px;
+  font-weight: normal;
+  /* border: 1px solid #ffcdd2; 
+  background: #f9eeee;
+  border-radius: 999px; 
+  font-size: 1.05em;
+  height: 1.8em; 
   padding-right: 20px;
   display: inline-flex;
   align-items: center;
-  font-size: 1.05em;
-  height: 1.8em;
   justify-content: center;
+  */
 }
 .badge-cateter {
-  background: #e3f2fd;
+  /* background: #e3f2fd;
+  border: 1px solid #90caf9;*/
   color: #1565c0;
-  border: 1px solid #90caf9;
+  font-weight: normal;
 }
 .badge-protesis {
-  background: #fff8e1;
   color: #b28900;
+  font-weight: normal;
+  /* background: #fff8e1;
   border: 1px dashed #b28900;
-  box-shadow: 0 0 0 2px #ffe082 inset;
+  box-shadow: 0 0 0 2px #ffe082 inset;*/
 }
 /* Estilos para la sección de pacientes */
 

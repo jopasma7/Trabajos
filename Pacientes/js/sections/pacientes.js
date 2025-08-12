@@ -1,15 +1,24 @@
 // --- Reabrir modal paciente al cancelar incidencias personalizadas ---
+// --- Reabrir modal paciente solo si se cancela incidencias personalizadas ---
 document.addEventListener('DOMContentLoaded', () => {
 	const modalIncidencia = document.getElementById('modal-incidencia-inicial');
 	if (modalIncidencia) {
+		let confirmado = false;
+		// Interceptar el botón confirmar para marcar que fue confirmación
+		const btnConfirmar = document.getElementById('btn-confirmar-incidencia-inicial');
+		if (btnConfirmar) {
+			btnConfirmar.addEventListener('click', () => { confirmado = true; });
+		}
 		modalIncidencia.addEventListener('hidden.bs.modal', function (e) {
-			// Si se cerró sin confirmar (no hay incidencias en curso), reabrir modal paciente
-			// Solo si el modal de paciente no está ya visible
 			const modalPaciente = document.getElementById('modal-paciente');
-			if (modalPaciente && !modalPaciente.classList.contains('show')) {
-				const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(modalPaciente);
-				setTimeout(() => modalPacienteInst.show(), 200); // Pequeño delay para evitar conflicto visual
+			if (!confirmado) {
+				// Solo si se cancela, reabrir modal paciente
+				if (modalPaciente && !modalPaciente.classList.contains('show')) {
+					const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(modalPaciente);
+					setTimeout(() => modalPacienteInst.show(), 200);
+				}
 			}
+			confirmado = false; // Reset para el siguiente uso
 		});
 	}
 });
@@ -173,39 +182,61 @@ function filtrarPacientes() {
 }
 
 function renderizarPacientes(pacientes) {
-	tablaPacientesBody.innerHTML = '';
+    tablaPacientesBody.innerHTML = '';
+    // Prepara un mapa de etiquetas por id para acceso rápido
+    const etiquetasPorId = {};
+    (etiquetasDisponibles || []).forEach(tag => { etiquetasPorId[tag.id] = tag; });
+
 	pacientes.forEach(paciente => {
-		const tr = document.createElement('tr');
-		// Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
-		let fechaFormateada = '';
-		let diasDetalle = '';
-		if (paciente.fecha_instalacion) {
-			const match = paciente.fecha_instalacion.match(/^(\d{4})-(\d{2})-(\d{2})/);
-			if (match) {
-				fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
-				// Calcular días desde la fecha hasta hoy
-				const fechaInst = new Date(`${match[1]}-${match[2]}-${match[3]}`);
-				const hoy = new Date();
-				fechaInst.setHours(0,0,0,0);
-				hoy.setHours(0,0,0,0);
-				const diffMs = hoy - fechaInst;
-				if (!isNaN(diffMs)) {
-					const diffDias = Math.floor(diffMs / (1000*60*60*24));
-					if (diffDias >= 0) {
-						diasDetalle = ` <span style='color:#888;font-size:0.95em;'>(${diffDias}d)</span>`;
-					} else {
-						diasDetalle = '';
-					}
-				}
-			} else {
-				fechaFormateada = paciente.fecha_instalacion;
-			}
+		// Debug: mostrar etiquetas de cada paciente
+		console.log(`[DEBUG] Paciente: ${paciente.nombre} ${paciente.apellidos} | Etiquetas:`, paciente.etiquetas);
+		if (!paciente.etiquetas || paciente.etiquetas.length === 0) {
+			console.warn(`[DEBUG] Paciente sin etiquetas asociadas: ${paciente.nombre} ${paciente.apellidos}`);
 		}
-		const ubicacionCompleta = (paciente.ubicacion_anatomica && paciente.ubicacion_lado)
-			? `${paciente.ubicacion_anatomica} ${paciente.ubicacion_lado}`
-			: (paciente.ubicacion_anatomica || paciente.ubicacion_lado || '');
+        const tr = document.createElement('tr');
+        // Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
+        let fechaFormateada = '';
+        let diasDetalle = '';
+        if (paciente.fecha_instalacion) {
+            const match = paciente.fecha_instalacion.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
+                // Calcular días desde la fecha hasta hoy
+                const fechaInst = new Date(`${match[1]}-${match[2]}-${match[3]}`);
+                const hoy = new Date();
+                fechaInst.setHours(0,0,0,0);
+                hoy.setHours(0,0,0,0);
+                const diffMs = hoy - fechaInst;
+                if (!isNaN(diffMs)) {
+                    const diffDias = Math.floor(diffMs / (1000*60*60*24));
+                    if (diffDias >= 0) {
+                        diasDetalle = ` <span style='color:#888;font-size:0.95em;'>(${diffDias}d)</span>`;
+                    } else {
+                        diasDetalle = '';
+                    }
+                }
+            } else {
+                fechaFormateada = paciente.fecha_instalacion;
+            }
+        }
+        const ubicacionCompleta = (paciente.ubicacion_anatomica && paciente.ubicacion_lado)
+            ? `${paciente.ubicacion_anatomica} ${paciente.ubicacion_lado}`
+            : (paciente.ubicacion_anatomica || paciente.ubicacion_lado || '');
+
+		// Etiquetas de incidencia: solo icono coloreado, con tooltip
+		let badgesHtml = '';
+		if (Array.isArray(paciente.etiquetas) && paciente.etiquetas.length > 0) {
+			badgesHtml = paciente.etiquetas.map(id => {
+				const tag = etiquetasPorId[id];
+				if (!tag) return '';
+				if (tag.tipo !== 'incidencia') return '';
+				// Icono coloreado con tooltip solo el nombre
+				return `<i class=\"bi bi-tag-fill\" style=\"color:${tag.color};font-size:1.15em;margin-right:2px;vertical-align:middle;\" title=\"${tag.nombre.replace(/\"/g, '&quot;')}\"></i>`;
+			}).join(' ');
+		}
+
 		tr.innerHTML = `
-			<td>${paciente.nombre} ${paciente.apellidos}</td>
+			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos}</td>
 			<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
 			<td>${ubicacionCompleta}</td>
 			<td>${fechaFormateada}${diasDetalle}</td>
@@ -215,6 +246,9 @@ function renderizarPacientes(pacientes) {
 				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
 			</td>
 		`;
+        tablaPacientesBody.appendChild(tr);
+    });
+}
 // Devuelve badge con emoji y color según tipo de acceso
 function renderTipoAccesoBadge(tipo) {
 	switch ((tipo||'').toLowerCase()) {
@@ -227,9 +261,6 @@ function renderTipoAccesoBadge(tipo) {
 		default:
 			return '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
 	}
-}
-		tablaPacientesBody.appendChild(tr);
-	});
 }
 
 function renderizarPaginacion(totalPacientes) {
@@ -572,6 +603,16 @@ if (btnConfirmarEliminar) {
 
 
 // Inicializar al mostrar la sección
-document.addEventListener('DOMContentLoaded', () => {
+
+// Cargar etiquetas y pacientes al iniciar la sección para que los iconos estén disponibles
+document.addEventListener('DOMContentLoaded', async () => {
+	// Cargar todas las etiquetas disponibles antes de cargar pacientes
+	let ipcRenderer;
+	try {
+		ipcRenderer = require('electron').ipcRenderer;
+		if (ipcRenderer) {
+			etiquetasDisponibles = await ipcRenderer.invoke('tags-get-all');
+		}
+	} catch (e) {}
 	cargarPacientes();
 });
