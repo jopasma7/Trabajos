@@ -87,7 +87,7 @@ function setupProfileSection() {
             document.getElementById('perfil-direccion').value = data && data.direccion ? data.direccion : '';
             document.getElementById('perfil-notas').value = data && data.notas ? data.notas : '';
             if (data && data.avatar) {
-                perfilAvatar.src = data.avatar;
+                perfilAvatar.src = data.avatar; 
             } else {
                 perfilAvatar.src = sexo === 'mujer' ? '../assets/mujer.jpg' : '../assets/hombre.jpg';
             }

@@ -206,16 +206,18 @@ function setupAgendaSection() {
     e.preventDefault();
     const id = document.getElementById('evento-id').value || crypto.randomUUID();
     const categoriaValue = document.getElementById('evento-categoria').value;
+    let eventos = agenda.getEventos();
+    const idx = eventos.findIndex(ev => ev.id === id);
+    const completado = (idx >= 0 && typeof eventos[idx].completado !== 'undefined') ? !!eventos[idx].completado : false;
     const nuevoEvento = {
       id,
       fecha: document.getElementById('evento-fecha').value,
       hora: document.getElementById('evento-hora').value,
       titulo: document.getElementById('evento-titulo').value,
       descripcion: document.getElementById('evento-descripcion').value,
-      categoria: categoriaValue === undefined || categoriaValue === null ? '' : categoriaValue
+      categoria: categoriaValue === undefined || categoriaValue === null ? '' : categoriaValue,
+      completado
     };
-    let eventos = agenda.getEventos();
-    const idx = eventos.findIndex(ev => ev.id === id);
     if (idx >= 0) {
       eventos[idx] = nuevoEvento;
       mostrarMensaje('Evento editado correctamente', 'success');
@@ -225,7 +227,7 @@ function setupAgendaSection() {
     }
     agenda.setEventos(eventos);
     agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
-    modalEvento.hide();
+    modalEvento.hide(); 
   };
   // Al iniciar, poner el filtro de fecha al día de hoy
   const picker = document.getElementById('agendaSemanaPicker');
@@ -850,8 +852,8 @@ function asignarListenerCompletar(btn, openModalEditar, eliminarEvento) {
     const idx = eventos.findIndex(ev => ev.id === id);
     if (idx >= 0) {
       eventos[idx].completado = !eventos[idx].completado;
-      agenda.setEventos(eventos);
-      agenda.guardarEventos(() => {
+  agenda.setEventos(eventos);
+  agenda.guardarEventos(() => {
         // Actualizar solo la card del evento
         const card = btn.closest('.agenda-evento-calendario');
         if (card) {
@@ -919,10 +921,13 @@ function asignarListenerCompletar(btn, openModalEditar, eliminarEvento) {
               newCard.addEventListener('dragend', function(e) {
                 newCard.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'auto');
               });
-            }
+            } 
           }
         }
-        mostrarMensaje(eventos[idx].completado ? 'Evento marcado como completado' : 'Evento marcado como pendiente', 'info');
+        mostrarMensaje(
+          eventos[idx].completado ? 'Evento marcado como completado' : 'Evento marcado como pendiente',
+          eventos[idx].completado ? 'success' : 'info'
+        );
       });
     }
   });
@@ -930,7 +935,9 @@ function asignarListenerCompletar(btn, openModalEditar, eliminarEvento) {
 
 function cargarEventos(cb) {
   ipcRenderer.invoke('agenda-cargar').then(data => {
-    eventos = Array.isArray(data) ? data : [];
+    eventos = Array.isArray(data)
+      ? data.map(ev => ({ ...ev, completado: !!ev.completado }))
+      : [];
     if (typeof cb === 'function') cb(eventos);
   });
 }
