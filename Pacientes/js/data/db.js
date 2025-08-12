@@ -111,5 +111,30 @@ db.upsertEventos = function(eventos) {
   return true;
 };
  
+
+// --- Insertar 25 pacientes de prueba si la tabla está vacía ---
+const pacientesCount = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
+if (pacientesCount === 0) {
+  const nombres = [
+    ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
+    ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
+    ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
+    ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
+    ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina']
+  ];
+  const tipos = ['fistula', 'cateter', 'protesis'];
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion) VALUES (?, ?, ?, ?, ?)');
+  for (let i = 0; i < 25; i++) {
+    stmt.run(
+      nombres[i][0],
+      nombres[i][1],
+      tipos[i%3],
+      `2025-08-${(i%28+1).toString().padStart(2,'0')}`,
+      `Ubicación ${(i%5)+1}`
+    );
+  }
+  console.log('Se insertaron 25 pacientes reales de prueba en la base de datos.');
+}
+
 module.exports = db;
  

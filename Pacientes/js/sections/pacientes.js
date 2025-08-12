@@ -1,4 +1,3 @@
-
 // pacientes.js
 // Lógica específica para la sección Pacientes
 
@@ -25,6 +24,7 @@ const selectTipoAcceso = document.getElementById('filtro-tipoacceso');
 const inputFecha = document.getElementById('filtro-fecha');
 const paginacionPacientes = document.getElementById('paginacion-pacientes');
 let pacientesGlobal = [];
+
 let paginaActual = 1;
 const pacientesPorPagina = 10;
 
@@ -53,17 +53,40 @@ function renderizarPacientes(pacientes) {
 	tablaPacientesBody.innerHTML = '';
 	pacientes.forEach(paciente => {
 		const tr = document.createElement('tr');
-		tr.innerHTML = `
-			<td>${paciente.nombre} ${paciente.apellidos}</td>
-			<td>${paciente.tipo_acceso || ''}</td>
-			<td>${paciente.fecha_instalacion || ''}</td>
-			<td>${paciente.ubicacion || ''}</td>
-			<td>Sin incidentes</td>
-			<td>
-				<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
-				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
-			</td>
-		`;
+			// Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
+			let fechaFormateada = '';
+			if (paciente.fecha_instalacion) {
+				const match = paciente.fecha_instalacion.match(/^(\d{4})-(\d{2})-(\d{2})/);
+				if (match) {
+					fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
+				} else {
+					fechaFormateada = paciente.fecha_instalacion;
+				}
+			}
+			tr.innerHTML = `
+				<td>${paciente.nombre} ${paciente.apellidos}</td>
+				<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
+				<td>${fechaFormateada}</td>
+				<td>${paciente.ubicacion || ''}</td>
+				<td>Sin incidentes</td>
+				<td>
+					<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
+					<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
+				</td>
+			`;
+// Devuelve badge con emoji y color según tipo de acceso
+function renderTipoAccesoBadge(tipo) {
+	switch ((tipo||'').toLowerCase()) {
+		case 'fistula':
+			return '<span class="badge badge-fistula" style="font-size:1em;">🩸 Fístula</span>';
+		case 'cateter':
+			return '<span class="badge badge-cateter" style="font-size:1em;">➰ Catéter</span>';
+		case 'protesis':
+			return '<span class="badge badge-protesis" style="font-size:1em;">🦾 Prótesis</span>';
+		default:
+			return '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
+	}
+}
 		tablaPacientesBody.appendChild(tr);
 	});
 }
