@@ -8,6 +8,7 @@ console.log('Pacientes module loaded');
 const { ipcRenderer } = require('electron');
 
 // Elementos del DOM
+
 const tablaPacientesBody = document.querySelector('#pacientes-section tbody');
 const formPaciente = document.getElementById('form-paciente');
 const btnNuevoPaciente = document.getElementById('btn-nuevo-paciente');
@@ -18,14 +19,42 @@ const modalConfirmarEliminar = document.getElementById('modal-confirmar-eliminar
 const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar-paciente');
 const textoConfirmarEliminar = document.getElementById('texto-confirmar-eliminar-paciente');
 
-// Renderizar la tabla de pacientes
+// Filtros y paginación
+const inputBusqueda = document.getElementById('busqueda-pacientes');
+const selectTipoAcceso = document.getElementById('filtro-tipoacceso');
+const inputFecha = document.getElementById('filtro-fecha');
+const paginacionPacientes = document.getElementById('paginacion-pacientes');
+let pacientesGlobal = [];
+let paginaActual = 1;
+const pacientesPorPagina = 10;
+
+
+function filtrarPacientes() {
+	let filtrados = [...pacientesGlobal];
+	const texto = (inputBusqueda?.value || '').toLowerCase();
+	const tipo = selectTipoAcceso?.value || '';
+	const fecha = inputFecha?.value || '';
+       if (texto) {
+	       filtrados = filtrados.filter(p =>
+		       p.nombre.toLowerCase().includes(texto) ||
+		       (p.apellidos && p.apellidos.toLowerCase().includes(texto))
+	       );
+       }
+	if (tipo) {
+		filtrados = filtrados.filter(p => (p.tipo_acceso || '') === tipo);
+	}
+	if (fecha) {
+		filtrados = filtrados.filter(p => (p.fecha_instalacion || '') === fecha);
+	}
+	return filtrados;
+}
+
 function renderizarPacientes(pacientes) {
 	tablaPacientesBody.innerHTML = '';
 	pacientes.forEach(paciente => {
 		const tr = document.createElement('tr');
 		tr.innerHTML = `
-			<td>${paciente.nombre}</td>
-			<td>${paciente.apellidos}</td>
+			<td>${paciente.nombre} ${paciente.apellidos}</td>
 			<td>${paciente.tipo_acceso || ''}</td>
 			<td>${paciente.fecha_instalacion || ''}</td>
 			<td>${paciente.ubicacion || ''}</td>
@@ -39,12 +68,44 @@ function renderizarPacientes(pacientes) {
 	});
 }
 
+function renderizarPaginacion(totalPacientes) {
+	if (!paginacionPacientes) return;
+	paginacionPacientes.innerHTML = '';
+	const totalPaginas = Math.ceil(totalPacientes / pacientesPorPagina) || 1;
+	for (let i = 1; i <= totalPaginas; i++) {
+		const li = document.createElement('li');
+		li.className = 'page-item' + (i === paginaActual ? ' active' : '');
+		li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+		li.addEventListener('click', (e) => {
+			e.preventDefault();
+			if (paginaActual !== i) {
+				paginaActual = i;
+				actualizarTablaPacientes();
+			}
+		});
+		paginacionPacientes.appendChild(li);
+	}
+}
+
+function actualizarTablaPacientes() {
+	const filtrados = filtrarPacientes();
+	const total = filtrados.length;
+	const inicio = (paginaActual - 1) * pacientesPorPagina;
+	const fin = inicio + pacientesPorPagina;
+	renderizarPacientes(filtrados.slice(inicio, fin));
+	renderizarPaginacion(total);
+}
+
+
 // Cargar pacientes y renderizar
 function cargarPacientes() {
 	ipcRenderer.invoke('get-pacientes').then(pacientes => {
-		renderizarPacientes(pacientes);
+		pacientesGlobal = pacientes;
+		paginaActual = 1;
+		actualizarTablaPacientes();
 	});
 }
+
 
 // Mostrar modal para nuevo paciente
 if (btnNuevoPaciente) {
@@ -54,6 +115,11 @@ if (btnNuevoPaciente) {
 		document.getElementById('modalPacienteLabel').textContent = 'Nuevo Paciente';
 	});
 }
+
+// Filtros: búsqueda, tipo de acceso, fecha
+if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual = 1; actualizarTablaPacientes(); });
+if (selectTipoAcceso) selectTipoAcceso.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
+if (inputFecha) inputFecha.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
 
 
 
@@ -131,6 +197,7 @@ if (btnConfirmarEliminar) {
 		}
 	});
 }
+
 
 // Inicializar al mostrar la sección
 document.addEventListener('DOMContentLoaded', () => {
