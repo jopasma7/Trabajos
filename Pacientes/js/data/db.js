@@ -141,13 +141,24 @@ db.upsertEventos = function(eventos) {
 // --- Insertar 25 pacientes de prueba si la tabla está vacía ---
 const pacientesCount = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
 if (pacientesCount === 0) {
-  const nombres = [
-    ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
-    ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
-    ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
-    ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
-    ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina']
-  ];
+    const nombres = [
+      ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
+      ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
+      ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
+      ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
+      ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina'],
+      ['Isabel', 'Serrano'], ['Hugo', 'Reyes'], ['Nuria', 'Cano'], ['Pablo', 'Iglesias'], ['Rosa', 'Delgado'],
+      ['Iván', 'Peña'], ['Natalia', 'Cabrera'], ['Samuel', 'Méndez'], ['Clara', 'Aguilar'], ['Álvaro', 'Santos'],
+      ['Julia', 'Castillo'], ['Rubén', 'Rojas'], ['Silvia', 'Ortega'], ['Óscar', 'Cruz'], ['Lorena', 'Ramos'],
+      ['Enrique', 'Vega'], ['Mónica', 'Herrera'], ['Guillermo', 'Campos'], ['Teresa', 'Molina'], ['Emilio', 'Sanz'],
+      ['Irene', 'Pérez'], ['Tomás', 'Vicente'], ['Andrea', 'Cordero'], ['Jesús', 'León'], ['Eva', 'Fuentes'],
+      ['Cristian', 'Soto'], ['Verónica', 'Carrasco'], ['Ángel', 'Blanco'], ['Sonia', 'Reina'], ['Felipe', 'Pastor'],
+      ['Alicia', 'Nieto'], ['Marcos', 'Bravo'], ['Esther', 'Solís'], ['Raúl', 'Benítez'], ['Patricia', 'Lara'],
+      ['Joaquín', 'Pascual'], ['Miriam', 'Vidal'], ['Vicente', 'Gallardo'], ['Noelia', 'Salas'], ['Jorge', 'Arias'],
+      ['Cristina', 'Pardo'], ['Fernando', 'Redondo'], ['Elisa', 'Calvo'], ['Martín', 'Serrano'], ['Celia', 'Moya'],
+      ['Gabriel', 'Sáez'], ['Rocío', 'Valle'], ['Francisca', 'Morales'], ['Julián', 'Crespo'], ['Aitana', 'Ríos'],
+      ['Matías', 'Garrido'], ['Aroa', 'Soler'], ['Ignacio', 'Esteban'], ['Nerea', 'Gallego'], ['Aleix', 'Paredes']
+    ];
   const tipos = ['fistula', 'cateter', 'protesis'];
   const ubicaciones = {
     fistula: ['Radio Cefálica', 'Braquio Cefálica'],
@@ -156,7 +167,8 @@ if (pacientesCount === 0) {
   };
   const lados = ['Izquierda', 'Derecha'];
   const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
-  for (let i = 0; i < 25; i++) {
+  // Insertar los 75 primeros
+  for (let i = 0; i < 75; i++) {
     const tipo = tipos[i % 3];
     let ubicacion_anatomica = '';
     let ubicacion_lado = '';
@@ -170,6 +182,27 @@ if (pacientesCount === 0) {
     stmt.run(
       nombres[i][0],
       nombres[i][1],
+      tipo,
+      `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
+      ubicacion_anatomica,
+      ubicacion_lado
+    );
+  }
+  // Insertar 100 pacientes adicionales ficticios
+  for (let i = 75; i < 175; i++) {
+    const tipo = tipos[i % 3];
+    let ubicacion_anatomica = '';
+    let ubicacion_lado = '';
+    if (tipo === 'fistula' || tipo === 'protesis') {
+      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
+      ubicacion_lado = lados[i % 2];
+    } else if (tipo === 'cateter') {
+      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
+      ubicacion_lado = lados[i % 2];
+    }
+    stmt.run(
+      `Paciente${i+1}`,
+      `Apellido${i+1}`,
       tipo,
       `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
       ubicacion_anatomica,

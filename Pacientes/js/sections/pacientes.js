@@ -144,15 +144,107 @@ function renderizarPaginacion(totalPacientes) {
 	if (!paginacionPacientes) return;
 	paginacionPacientes.innerHTML = '';
 	const totalPaginas = Math.ceil(totalPacientes / pacientesPorPagina) || 1;
-	for (let i = 1; i <= totalPaginas; i++) {
+	const maxVisible = 5;
+	const paginas = [];
+
+	if (totalPaginas <= maxVisible) {
+		for (let i = 1; i <= totalPaginas; i++) paginas.push(i);
+	} else {
+		let start = Math.max(1, paginaActual - 2);
+		let end = Math.min(totalPaginas, paginaActual + 2);
+		if (paginaActual <= 3) {
+			end = 5;
+			start = 1;
+		} else if (paginaActual >= totalPaginas - 2) {
+			start = totalPaginas - 4;
+			end = totalPaginas;
+		}
+		for (let i = start; i <= end; i++) paginas.push(i);
+	}
+
+	// Botón primero
+	if (paginas[0] > 1) {
+		paginarBtn(1, '«');
+		if (paginas[0] > 2) addEllipsis();
+	}
+	// Botones centrales
+	for (const i of paginas) paginarBtn(i);
+	// Mostrar siempre el botón de la última página (número), con puntos suspensivos si no está en el rango visible
+	if (paginas[paginas.length - 1] < totalPaginas) {
+		if (paginas[paginas.length - 1] < totalPaginas - 1) addEllipsis();
+		paginarBtn(totalPaginas);
+	}
+
+	function paginarBtn(i, label) {
 		const li = document.createElement('li');
 		li.className = 'page-item' + (i === paginaActual ? ' active' : '');
-		li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+		li.innerHTML = `<a class="page-link" href="#">${label || i}</a>`;
 		li.addEventListener('click', (e) => {
 			e.preventDefault();
 			if (paginaActual !== i) {
 				paginaActual = i;
 				actualizarTablaPacientes();
+			}
+		});
+		paginacionPacientes.appendChild(li);
+	}
+	function addEllipsis() {
+		const li = document.createElement('li');
+		li.className = 'page-item disabled';
+		li.innerHTML = '<span class="page-link">…</span>';
+		paginacionPacientes.appendChild(li);
+	}
+
+	// Botón moderno de salto de página (abre popover/input al hacer click)
+	if (totalPaginas > maxVisible) {
+		const li = document.createElement('li');
+		li.className = 'page-item';
+		li.style.position = 'relative';
+		li.innerHTML = `<button class="page-link" title="Ir a página..." style="display:flex;align-items:center;gap:4px;"><i class="bi bi-search"></i><span style="font-size:0.95em;">Ir</span></button>`;
+		const btn = li.querySelector('button');
+		let popover = null;
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			if (popover) {
+				popover.remove();
+				popover = null;
+				return;
+			}
+			popover = document.createElement('div');
+			popover.style.position = 'absolute';
+			popover.style.top = '110%';
+			popover.style.left = '50%';
+			popover.style.transform = 'translateX(-50%)';
+			popover.style.background = '#fff';
+			popover.style.border = '1px solid #ccc';
+			popover.style.borderRadius = '6px';
+			popover.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+			popover.style.padding = '8px 12px';
+			popover.style.zIndex = '1000';
+			popover.innerHTML = `<div style="display:flex;align-items:center;gap:6px;"><input type="number" min="1" max="${totalPaginas}" value="${paginaActual}" style="width:56px; height:28px; font-size:1em; text-align:center; border-radius:4px; border:1px solid #ccc;" title="Página" autofocus><button class="btn btn-primary btn-sm" style="margin-left:4px;">Ir</button></div>`;
+			li.appendChild(popover);
+			const input = popover.querySelector('input');
+			const goBtn = popover.querySelector('button');
+			input.focus();
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') goBtn.click();
+				if (e.key === 'Escape') { popover.remove(); popover = null; }
+			});
+			goBtn.addEventListener('click', () => {
+				let val = parseInt(input.value);
+				if (!isNaN(val) && val >= 1 && val <= totalPaginas && val !== paginaActual) {
+					paginaActual = val;
+					actualizarTablaPacientes();
+				}
+				popover.remove();
+				popover = null;
+			});
+			document.addEventListener('click', cerrarPopover, { once: true });
+			function cerrarPopover(ev) {
+				if (!popover.contains(ev.target)) {
+					popover.remove();
+					popover = null;
+				}
 			}
 		});
 		paginacionPacientes.appendChild(li);
