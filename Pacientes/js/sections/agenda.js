@@ -214,8 +214,6 @@ function setupAgendaSection() {
       descripcion: document.getElementById('evento-descripcion').value,
       categoria: categoriaValue === undefined || categoriaValue === null ? '' : categoriaValue
     };
-    // DEBUG: log para ver cómo se guarda la categoría
-    console.log('GUARDANDO EVENTO', nuevoEvento);
     let eventos = agenda.getEventos();
     const idx = eventos.findIndex(ev => ev.id === id);
     if (idx >= 0) {
@@ -266,13 +264,12 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   const diasSemana = dias.map(d => d.toISOString().slice(0,10));
 
   // DEBUG: Mostrar valores de filtros y eventos antes de filtrar
-  console.log('FILTROS:', {filtroEventos, filtroCategoria, busquedaTexto});
-  console.log('EVENTOS ORIGINALES:', eventos);
+  // ...existing code...
 
   // Filtrar SOLO eventos de la semana visible
   let eventosSemana = eventos.filter(ev => diasSemana.includes(ev.fecha));
 
-  console.log('EVENTOS tras filtro semana:', eventosSemana);
+  // ...existing code...
 
   // Siempre comparar en local
   const ahora = new Date();
@@ -284,7 +281,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
       return fechaHoraEv.getTime() >= ahora.getTime();
     });
-    console.log('EVENTOS tras filtro futuros:', eventosSemana);
+  // ...existing code...
   } else if (filtroEventos === 'pasados') {
     eventosSemana = eventosSemana.filter(ev => {
       const [anio, mes, dia] = ev.fecha.split('-').map(Number);
@@ -293,7 +290,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
       return fechaHoraEv.getTime() < ahora.getTime();
     });
-    console.log('EVENTOS tras filtro pasados:', eventosSemana);
+  // ...existing code...
   }
 
   // Filtro por categoría
@@ -302,7 +299,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       // Si ev.categoria es null o undefined, lo tratamos como ''
       return (ev.categoria || '') === filtroCategoria;
     });
-    console.log('EVENTOS tras filtro categoria:', eventosSemana);
+  // ...existing code...
   }
 
   // Filtro por texto (insensible a mayúsculas/minúsculas y espacios)
@@ -312,7 +309,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       const texto = ((ev.titulo || '') + ' ' + (ev.descripcion || '')).toLowerCase();
       return texto.includes(textoFiltro);
     });
-    console.log('EVENTOS tras filtro texto:', eventosSemana);
+  // ...existing code...
   }
 
   // Calcular el día de hoy y su key antes de usarlo en el template
