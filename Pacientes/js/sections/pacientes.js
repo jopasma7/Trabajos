@@ -100,29 +100,44 @@ function renderizarPacientes(pacientes) {
 	tablaPacientesBody.innerHTML = '';
 	pacientes.forEach(paciente => {
 		const tr = document.createElement('tr');
-			// Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
-			let fechaFormateada = '';
-			if (paciente.fecha_instalacion) {
-				const match = paciente.fecha_instalacion.match(/^(\d{4})-(\d{2})-(\d{2})/);
-				if (match) {
-					fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
-				} else {
-					fechaFormateada = paciente.fecha_instalacion;
+		// Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
+		let fechaFormateada = '';
+		let diasDetalle = '';
+		if (paciente.fecha_instalacion) {
+			const match = paciente.fecha_instalacion.match(/^(\d{4})-(\d{2})-(\d{2})/);
+			if (match) {
+				fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
+				// Calcular días desde la fecha hasta hoy
+				const fechaInst = new Date(`${match[1]}-${match[2]}-${match[3]}`);
+				const hoy = new Date();
+				fechaInst.setHours(0,0,0,0);
+				hoy.setHours(0,0,0,0);
+				const diffMs = hoy - fechaInst;
+				if (!isNaN(diffMs)) {
+					const diffDias = Math.floor(diffMs / (1000*60*60*24));
+					if (diffDias >= 0) {
+						diasDetalle = ` <span style='color:#888;font-size:0.95em;'>(${diffDias}d)</span>`;
+					} else {
+						diasDetalle = '';
+					}
 				}
+			} else {
+				fechaFormateada = paciente.fecha_instalacion;
 			}
-			const ubicacionCompleta = (paciente.ubicacion_anatomica && paciente.ubicacion_lado)
-				? `${paciente.ubicacion_anatomica} ${paciente.ubicacion_lado}`
-				: (paciente.ubicacion_anatomica || paciente.ubicacion_lado || '');
-			tr.innerHTML = `
-				<td>${paciente.nombre} ${paciente.apellidos}</td>
-				<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
-				<td>${ubicacionCompleta}</td>
-				<td>${fechaFormateada}</td>
-				<td>
-					<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
-					<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
-				</td>
-			`;
+		}
+		const ubicacionCompleta = (paciente.ubicacion_anatomica && paciente.ubicacion_lado)
+			? `${paciente.ubicacion_anatomica} ${paciente.ubicacion_lado}`
+			: (paciente.ubicacion_anatomica || paciente.ubicacion_lado || '');
+		tr.innerHTML = `
+			<td>${paciente.nombre} ${paciente.apellidos}</td>
+			<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
+			<td>${ubicacionCompleta}</td>
+			<td>${fechaFormateada}${diasDetalle}</td>
+			<td>
+				<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
+				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
+			</td>
+		`;
 // Devuelve badge con emoji y color según tipo de acceso
 function renderTipoAccesoBadge(tipo) {
 	switch ((tipo||'').toLowerCase()) {
@@ -276,7 +291,16 @@ if (btnNuevoPaciente) {
 	btnNuevoPaciente.addEventListener('click', () => {
 		pacienteEditando = null;
 		formPaciente.reset();
-		document.getElementById('modalPacienteLabel').textContent = 'Nuevo Paciente';
+		document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Nuevo Paciente';
+		// Poner fecha actual por defecto
+		const inputFecha = document.getElementById('paciente-fecha');
+		if (inputFecha) {
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			inputFecha.value = `${yyyy}-${mm}-${dd}`;
+		}
 	});
 }
 
@@ -327,7 +351,7 @@ if (tablaPacientesBody) {
 				if (document.getElementById('paciente-tipo-acceso')) document.getElementById('paciente-tipo-acceso').value = paciente.tipo_acceso || '';
 				if (document.getElementById('paciente-fecha-instalacion')) document.getElementById('paciente-fecha-instalacion').value = paciente.fecha_instalacion || '';
 				if (document.getElementById('paciente-ubicacion')) document.getElementById('paciente-ubicacion').value = paciente.ubicacion || '';
-				document.getElementById('modalPacienteLabel').textContent = 'Editar Paciente';
+				document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Editar Paciente';
 				const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
 				modal.show();
 			}

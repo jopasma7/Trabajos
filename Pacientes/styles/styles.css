@@ -75,6 +75,11 @@ body {
   color: #1a2e1a;
 }
 
+/* Botón Verde no se baja de linea */
+.btn.btn-success {
+  white-space: nowrap;
+}
+
 /* Colores personalizados para Bootstrap */
 .bg-emerald {
   background-color: #34c759 !important;
