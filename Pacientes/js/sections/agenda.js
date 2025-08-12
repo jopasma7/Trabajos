@@ -580,6 +580,10 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                 dropzone.querySelectorAll('[data-delete]').forEach(btn => {
                   btn.onclick = () => eliminarEvento(btn.getAttribute('data-delete'));
                 });
+                // Reasignar listener de completar en la columna
+                dropzone.querySelectorAll('[data-completar]').forEach(btn => {
+                  asignarListenerCompletar(btn, openModalEditar, eliminarEvento);
+                });
                 // Reasignar listeners de drag & drop y dragstart/dragend SOLO en esta columna
                 dropzone.querySelectorAll('.agenda-evento-calendario[draggable="true"]').forEach(evEl => {
                   evEl.addEventListener('dragstart', function(e) {
@@ -828,7 +832,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
       renderAgenda(agendaBody, openModalEditar, eliminarEvento);
     };
   }, 10);
-  // Acciones editar/borrar
+  // Acciones editar/borrar/completar
   agendaBody.querySelectorAll('[data-edit]').forEach(btn => {
     btn.addEventListener('click', () => openModalEditar(btn.getAttribute('data-edit')));
   });
@@ -836,6 +840,94 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
     btn.addEventListener('click', () => {
       eliminarEvento(btn.getAttribute('data-delete'));
     });
+  });
+  agendaBody.querySelectorAll('[data-completar]').forEach(btn => {
+    asignarListenerCompletar(btn, openModalEditar, eliminarEvento);
+  });
+}
+
+function asignarListenerCompletar(btn, openModalEditar, eliminarEvento) {
+  btn.addEventListener('click', () => {
+    const id = btn.getAttribute('data-completar');
+    let eventos = agenda.getEventos();
+    const idx = eventos.findIndex(ev => ev.id === id);
+    if (idx >= 0) {
+      eventos[idx].completado = !eventos[idx].completado;
+      agenda.setEventos(eventos);
+      agenda.guardarEventos(() => {
+        // Actualizar solo la card del evento
+        const card = btn.closest('.agenda-evento-calendario');
+        if (card) {
+          const ev = eventos[idx];
+          let claseNuevo = '';
+          if (window._ultimoEventoCreado && ev.id === window._ultimoEventoCreado) {
+            claseNuevo = 'nuevo-evento';
+            setTimeout(() => { window._ultimoEventoCreado = null; }, 1000);
+          }
+          const ahora = new Date();
+          const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+          let estadoClase = '';
+          if (fechaHoraEv < ahora) estadoClase = 'evento-pasado';
+          else {
+            const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+            if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) estadoClase = 'evento-proximo';
+            else if (ev.categoria === 'importante') estadoClase = 'evento-categoria-importante';
+            else if (ev.categoria === 'personal') estadoClase = 'evento-categoria-personal';
+            else if (ev.categoria === 'trabajo') estadoClase = 'evento-categoria-trabajo';
+          }
+          card.outerHTML = `
+            <div class="agenda-evento-calendario bg-white border-end border-3 px-2 py-1 mb-1 position-relative ${claseNuevo} ${estadoClase}"
+              data-id="${ev.id}" data-dia="${ev.fecha}"
+              draggable="true"
+              title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
+              <div class="fw-bold text-success small">
+                <i class="bi bi-clock me-1"></i> ${ev.hora}
+                ${(() => {
+                  const ahora = new Date();
+                  const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                  const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                  if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
+                    return '<i class="bi bi-lightning-charge-fill text-warning ms-2" title="Evento próximo"></i>';
+                  }
+                  return '';
+                })()}
+              </div>
+              <div class="fw-semibold small">${ev.titulo}</div>
+              <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+              <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-link btn-sm text-success p-0 position-absolute" style="right: 1.8rem; top: 0;" data-completar="${ev.id}" title="Marcar como completado"><i class="bi bi-check-circle${ev.completado ? '-fill' : ''}"></i></button>
+              <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+            </div>
+          `;
+          // Reasignar listeners SOLO a la nueva card
+          const parent = document.querySelector(`[data-dia-dropzone="${ev.fecha}"]`);
+          if (parent) {
+            const newCard = parent.querySelector(`.agenda-evento-calendario[data-id="${ev.id}"]`);
+            if (newCard) {
+              // Editar
+              const editBtn = newCard.querySelector('[data-edit]');
+              if (editBtn) editBtn.addEventListener('click', () => openModalEditar(ev.id));
+              // Completar (recursivo)
+              const completarBtn2 = newCard.querySelector('[data-completar]');
+              if (completarBtn2) asignarListenerCompletar(completarBtn2, openModalEditar, eliminarEvento);
+              // Eliminar
+              const deleteBtn = newCard.querySelector('[data-delete]');
+              if (deleteBtn) deleteBtn.addEventListener('click', () => eliminarEvento(ev.id));
+              // Drag & drop
+              newCard.addEventListener('dragstart', function(e) {
+                e.stopPropagation();
+                newCard.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'none');
+                e.dataTransfer.setData('text/plain', newCard.getAttribute('data-id'));
+              });
+              newCard.addEventListener('dragend', function(e) {
+                newCard.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'auto');
+              });
+            }
+          }
+        }
+        mostrarMensaje(eventos[idx].completado ? 'Evento marcado como completado' : 'Evento marcado como pendiente', 'info');
+      });
+    }
   });
 }
 
