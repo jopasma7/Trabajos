@@ -89,3 +89,16 @@ ipcMain.handle('add-paciente', (event, paciente) => {
 
 // Eliminado código de persistencia JSON de agenda
 
+// --- IPC para incidencias ---
+ipcMain.handle('incidencias-get', (event, pacienteId) => {
+  return db.getIncidenciasByPaciente(pacienteId);
+});
+
+ipcMain.handle('incidencias-add', (event, { pacienteId, motivo, fecha }) => {
+  return db.addIncidencia(pacienteId, motivo, fecha);
+});
+
+ipcMain.handle('incidencias-delete', (event, incidenciaId) => {
+  return db.deleteIncidencia(incidenciaId);
+});
+

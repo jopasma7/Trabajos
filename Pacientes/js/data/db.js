@@ -58,6 +58,32 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   ubicacion_lado TEXT
 )`).run();
 
+// Crear tabla incidencias (uno a muchos con pacientes)
+db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  motivo TEXT NOT NULL,
+  fecha TEXT NOT NULL,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
+)`).run();
+
+// --- Métodos para incidencias ---
+db.getIncidenciasByPaciente = function(pacienteId) {
+  return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC').all(pacienteId);
+};
+
+db.addIncidencia = function(pacienteId, motivo, fecha) {
+  const stmt = db.prepare('INSERT INTO incidencias (paciente_id, motivo, fecha) VALUES (?, ?, ?)');
+  const info = stmt.run(pacienteId, motivo, fecha);
+  return { id: info.lastInsertRowid };
+};
+
+db.deleteIncidencia = function(incidenciaId) {
+  const stmt = db.prepare('DELETE FROM incidencias WHERE id = ?');
+  const info = stmt.run(incidenciaId);
+  return { changes: info.changes };
+};
+
 
 db.getAllPacientes = function() {
   return db.prepare('SELECT * FROM pacientes').all();

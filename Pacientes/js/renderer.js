@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		reportes: document.getElementById('reportes-section'),
 		configuracion: document.getElementById('configuracion-section'),
 		perfil: document.getElementById('perfil-section'),
-		agenda: document.getElementById('agenda-section')
+		agenda: document.getElementById('agenda-section'),
+		etiquetas: document.getElementById('etiquetas-section')
 	};
 	const sectionTitle = document.getElementById('section-title');
 
@@ -57,6 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
 				   <span style="font-size:1.3em;">👨‍⚕️</span>
 				   <span style="color:#1f2937;">Pacientes</span>
 				   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Gestión y seguimiento de pacientes</span>
+			   `;
+			   sectionTitle.className = '';
+			   sectionTitle.style.fontSize = '1.7rem';
+			   sectionTitle.style.fontWeight = '800';
+			   sectionTitle.style.color = '#1f2937';
+			   sectionTitle.style.marginBottom = '0.5rem';
+			   sectionTitle.style.display = 'flex';
+			   sectionTitle.style.alignItems = 'center';
+		   } else if (section === 'etiquetas') {
+			   sectionTitle.innerHTML = `
+				   <span style="font-size:1.3em;">🏷️</span>
+				   <span style="color:#1f2937;">Etiquetas</span>
+				   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Gestión de etiquetas de incidencias</span>
 			   `;
 			   sectionTitle.className = '';
 			   sectionTitle.style.fontSize = '1.7rem';
