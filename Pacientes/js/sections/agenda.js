@@ -31,6 +31,22 @@ const hoyKey = hoy.toISOString().slice(0,10);
 let eventos = [];
 
 function setupAgendaSection() {
+  // --- FILTRO Y BÚSQUEDA ---
+  window._agendaBusquedaTexto = '';
+  window._agendaFiltroCategoria = '';
+  window._agendaFiltroEventos = 'todos';
+  const inputBusqueda = document.getElementById('agendaBusquedaEventos');
+  const selectCategoria = document.getElementById('agendaFiltroCategoria');
+  const selectTipo = document.getElementById('agendaFiltroEventos');
+  function actualizarFiltrosAgenda() {
+    window._agendaBusquedaTexto = inputBusqueda ? inputBusqueda.value.toLowerCase() : '';
+    window._agendaFiltroCategoria = selectCategoria ? selectCategoria.value : '';
+    window._agendaFiltroEventos = selectTipo ? selectTipo.value : 'todos';
+    agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+  }
+  if (inputBusqueda) inputBusqueda.addEventListener('input', actualizarFiltrosAgenda);
+  if (selectCategoria) selectCategoria.addEventListener('change', actualizarFiltrosAgenda);
+  if (selectTipo) selectTipo.addEventListener('change', actualizarFiltrosAgenda);
   const agendaSection = document.getElementById('agenda-section');
   if (!agendaSection) return;
   const agendaBody = document.getElementById('agenda-body');
@@ -189,14 +205,17 @@ function setupAgendaSection() {
 	formEvento.onsubmit = (e) => {
     e.preventDefault();
     const id = document.getElementById('evento-id').value || crypto.randomUUID();
+    const categoriaValue = document.getElementById('evento-categoria').value;
     const nuevoEvento = {
       id,
       fecha: document.getElementById('evento-fecha').value,
       hora: document.getElementById('evento-hora').value,
       titulo: document.getElementById('evento-titulo').value,
       descripcion: document.getElementById('evento-descripcion').value,
-      categoria: document.getElementById('evento-categoria').value
+      categoria: categoriaValue === undefined || categoriaValue === null ? '' : categoriaValue
     };
+    // DEBUG: log para ver cómo se guarda la categoría
+    console.log('GUARDANDO EVENTO', nuevoEvento);
     let eventos = agenda.getEventos();
     const idx = eventos.findIndex(ev => ev.id === id);
     if (idx >= 0) {
@@ -224,10 +243,13 @@ function setupAgendaSection() {
 }
 
 function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
-  // Filtro de eventos (todos, futuros, pasados) tomado del select del HTML
-  let filtroEventos = window._agendaFiltroEventos || 'todos';
 
-  // Calcular días de la semana antes de cualquier uso
+  // Obtener SIEMPRE los valores actuales de los filtros
+  const filtroEventos = window._agendaFiltroEventos || 'todos';
+  const filtroCategoria = window._agendaFiltroCategoria || '';
+  const busquedaTexto = window._agendaBusquedaTexto || '';
+
+  // Calcular días de la semana solo una vez
   if (!window._agendaSemanaBase) {
     window._agendaSemanaBase = new Date();
   }
@@ -241,22 +263,63 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
     d.setDate(lunes.getDate() + i);
     return d;
   });
+  const diasSemana = dias.map(d => d.toISOString().slice(0,10));
+
+  // DEBUG: Mostrar valores de filtros y eventos antes de filtrar
+  console.log('FILTROS:', {filtroEventos, filtroCategoria, busquedaTexto});
+  console.log('EVENTOS ORIGINALES:', eventos);
+
+  // Filtrar SOLO eventos de la semana visible
+  let eventosSemana = eventos.filter(ev => diasSemana.includes(ev.fecha));
+
+  console.log('EVENTOS tras filtro semana:', eventosSemana);
+
+  // Siempre comparar en local
+  const ahora = new Date();
+  if (filtroEventos === 'futuros') {
+    eventosSemana = eventosSemana.filter(ev => {
+      const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+      const [hora, minuto] = ev.hora.split(':').map(Number);
+      // Forzar local time
+      const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
+      return fechaHoraEv.getTime() >= ahora.getTime();
+    });
+    console.log('EVENTOS tras filtro futuros:', eventosSemana);
+  } else if (filtroEventos === 'pasados') {
+    eventosSemana = eventosSemana.filter(ev => {
+      const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+      const [hora, minuto] = ev.hora.split(':').map(Number);
+      // Forzar local time
+      const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
+      return fechaHoraEv.getTime() < ahora.getTime();
+    });
+    console.log('EVENTOS tras filtro pasados:', eventosSemana);
+  }
+
+  // Filtro por categoría
+  if (filtroCategoria && filtroCategoria !== '') {
+    eventosSemana = eventosSemana.filter(ev => {
+      // Si ev.categoria es null o undefined, lo tratamos como ''
+      return (ev.categoria || '') === filtroCategoria;
+    });
+    console.log('EVENTOS tras filtro categoria:', eventosSemana);
+  }
+
+  // Filtro por texto (insensible a mayúsculas/minúsculas y espacios)
+  if (busquedaTexto && busquedaTexto.trim() !== '') {
+    const textoFiltro = busquedaTexto.trim().toLowerCase();
+    eventosSemana = eventosSemana.filter(ev => {
+      const texto = ((ev.titulo || '') + ' ' + (ev.descripcion || '')).toLowerCase();
+      return texto.includes(textoFiltro);
+    });
+    console.log('EVENTOS tras filtro texto:', eventosSemana);
+  }
 
   // Calcular el día de hoy y su key antes de usarlo en el template
   const hoy = new Date();
   const hoyKey = hoy.toISOString().slice(0,10);
 
-  // Agrupar eventos por día (YYYY-MM-DD) antes de usar en el template
-  const eventosPorDia = {};
-  dias.forEach(d => {
-    const key = d.toISOString().slice(0,10);
-    eventosPorDia[key] = [];
-  });
-  eventos.forEach(ev => {
-    if (eventosPorDia[ev.fecha]) {
-      eventosPorDia[ev.fecha].push(ev);
-    }
-  });
+  // No agrupar, solo filtrar por día directamente en el render
 
   agendaBody.innerHTML = `
     <div class="agenda-semana-horizontal d-flex flex-row flex-nowrap gap-1" style="min-height: 260px;">
@@ -265,21 +328,15 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
           const nombreDia = dia.toLocaleDateString('es-ES', { weekday: 'short' });
           const numDia = dia.getDate();
           const isToday = key === hoyKey;
-          // Filtrar eventos según el filtro seleccionado
-          let eventosFiltrados = eventosPorDia[key];
-          const ahora = new Date();
-          if (filtroEventos === 'futuros') {
-            eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
-          } else if (filtroEventos === 'pasados') {
-            eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
-          }
+          // Filtrar eventos de este día directamente
+          let eventosFiltrados = eventosSemana.filter(ev => ev.fecha === key);
           return `
             <div class="agenda-dia-col bg-light border rounded-3 h-100 d-flex flex-column p-1 flex-grow-1" style="min-width: 140px; max-width: 1fr;" data-dia-drop="${key}">
               <div class="agenda-dia-header text-center small fw-bold mb-1 ${isToday ? 'agenda-dia-hoy' : ''}">
                 <div class="agenda-dia-nombre d-flex align-items-center justify-content-center gap-1">
                   ${(() => {
                     // Indicador de evento importante
-                    const eventosImportantes = eventosPorDia[key].some(ev => ev.categoria === 'importante');
+                    const eventosImportantes = eventosFiltrados.some(ev => ev.categoria === 'importante');
                     if (eventosImportantes) {
                       return '<span class="badge rounded-pill bg-danger me-1" title="Evento importante" style="width:10px;height:10px;padding:0;"></span>';
                     }
@@ -305,13 +362,8 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
   dias.forEach(dia => {
     const key = dia.toISOString().slice(0,10);
     const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${key}"]`);
-    let eventosFiltrados = eventosPorDia[key];
-    const ahora = new Date();
-    if (filtroEventos === 'futuros') {
-      eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
-    } else if (filtroEventos === 'pasados') {
-      eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
-    }
+    // Filtrar eventos de este día directamente
+    let eventosFiltrados = eventosSemana.filter(ev => ev.fecha === key);
     if (dropzone) {
       if (eventosFiltrados.length === 0) {
         dropzone.innerHTML = '<div class="text-muted small text-center" style="min-height:40px;display:flex;align-items:center;justify-content:center;pointer-events:none;">—</div>' +
@@ -414,29 +466,62 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
         let eventos = agenda.getEventos();
         const idx = eventos.findIndex(ev => ev.id === eventoId);
         if (idx >= 0 && eventos[idx].fecha !== diaNuevo) {
-          const diaOrigen = eventos[idx].fecha;
+          const diaAntiguo = eventos[idx].fecha;
           eventos[idx].fecha = diaNuevo;
           agenda.setEventos(eventos);
           agenda.guardarEventos(() => {
-            // Solo recargar las columnas de origen y destino
-            const renderColumna = (diaKey) => {
-              const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${diaKey}"]`);
-              let eventosPorDia = {};
-              eventos.forEach(ev => {
-                if (!eventosPorDia[ev.fecha]) eventosPorDia[ev.fecha] = [];
-                eventosPorDia[ev.fecha].push(ev);
+            // Solo renderizar columnas afectadas, pero usando los filtros activos
+            const filtroEventos = window._agendaFiltroEventos || 'todos';
+            const filtroCategoria = window._agendaFiltroCategoria || '';
+            const busquedaTexto = window._agendaBusquedaTexto || '';
+            // Calcular días de la semana visibles
+            let semanaBase = window._agendaSemanaBase;
+            if (!(semanaBase instanceof Date)) semanaBase = new Date(semanaBase);
+            const diaSemana = semanaBase.getDay() === 0 ? 7 : semanaBase.getDay();
+            const lunes = new Date(semanaBase);
+            lunes.setDate(semanaBase.getDate() - diaSemana + 1);
+            const dias = Array.from({length: 7}, (_, i) => {
+              const d = new Date(lunes);
+              d.setDate(lunes.getDate() + i);
+              return d;
+            });
+            const diasSemana = dias.map(d => d.toISOString().slice(0,10));
+            // Filtrar eventos de la semana visible
+            let eventosSemana = eventos.filter(ev => diasSemana.includes(ev.fecha));
+            const ahora = new Date();
+            if (filtroEventos === 'futuros') {
+              eventosSemana = eventosSemana.filter(ev => {
+                const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+                const [hora, minuto] = ev.hora.split(':').map(Number);
+                const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
+                return fechaHoraEv.getTime() >= ahora.getTime();
               });
-              let eventosFiltrados = eventosPorDia[diaKey] || [];
-              const ahora = new Date();
-              if (window._agendaFiltroEventos === 'futuros') {
-                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) >= ahora);
-              } else if (window._agendaFiltroEventos === 'pasados') {
-                eventosFiltrados = eventosFiltrados.filter(ev => new Date(ev.fecha + 'T' + ev.hora) < ahora);
-              }
+            } else if (filtroEventos === 'pasados') {
+              eventosSemana = eventosSemana.filter(ev => {
+                const [anio, mes, dia] = ev.fecha.split('-').map(Number);
+                const [hora, minuto] = ev.hora.split(':').map(Number);
+                const fechaHoraEv = new Date(anio, mes - 1, dia, hora, minuto, 0, 0);
+                return fechaHoraEv.getTime() < ahora.getTime();
+              });
+            }
+            if (filtroCategoria && filtroCategoria !== '') {
+              eventosSemana = eventosSemana.filter(ev => (ev.categoria || '') === filtroCategoria);
+            }
+            if (busquedaTexto && busquedaTexto.trim() !== '') {
+              const textoFiltro = busquedaTexto.trim().toLowerCase();
+              eventosSemana = eventosSemana.filter(ev => {
+                const texto = ((ev.titulo || '') + ' ' + (ev.descripcion || '')).toLowerCase();
+                return texto.includes(textoFiltro);
+              });
+            }
+            // Renderizar solo las columnas de origen y destino
+            [diaAntiguo, diaNuevo].forEach(diaKey => {
+              const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${diaKey}"]`);
               if (dropzone) {
+                let eventosFiltrados = eventosSemana.filter(ev => ev.fecha === diaKey);
                 if (eventosFiltrados.length === 0) {
                   dropzone.innerHTML = '<div class="text-muted small text-center" style="min-height:40px;display:flex;align-items:center;justify-content:center;pointer-events:none;">—</div>' +
-                                     '<div style="min-height:20px;pointer-events:none;"></div>';
+                                       '<div style="min-height:20px;pointer-events:none;"></div>';
                 } else {
                   dropzone.innerHTML = eventosFiltrados
                     .sort((a, b) => a.hora.localeCompare(b.hora))
@@ -458,48 +543,46 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                         if (ev.categoria === 'trabajo') return 'evento-categoria-trabajo';
                         return '';
                       })()}"
-                        data-id="${ev.id}" data-dia="${ev.fecha}"
-                        draggable="true"
-                        title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
-                          <div class="fw-bold text-success small">
-                            <i class="bi bi-clock me-1"></i> ${ev.hora}
-                            ${(() => {
-                              const ahora = new Date();
-                              const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
-                              if (fechaHoraEv < ahora) {
-                                return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
-                              }
-                              return '';
-                            })()}
-                            ${(() => {
-                              const ahora = new Date();
-                              const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
-                              const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
-                              if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
-                                return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
-                              }
-                              return '';
-                            })()}
-                          </div>
-                          <div class="fw-semibold small">${ev.titulo}</div>
-                          <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
-                          <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
-                          <button class="btn btn-link btn-sm text-success p-0 position-absolute" style="right: 1.8rem; top: 0;" data-completar="${ev.id}" title="Marcar como completado"><i class="bi bi-check-circle${ev.completado ? '-fill' : ''}"></i></button>
-                          <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                      data-id="${ev.id}" data-dia="${ev.fecha}"
+                      draggable="true"
+                      title="${ev.titulo} - ${ev.descripcion} (${ev.hora})">
+                        <div class="fw-bold text-success small">
+                          <i class="bi bi-clock me-1"></i> ${ev.hora}
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            if (fechaHoraEv < ahora) {
+                              return '<i class=\'bi bi-clock-history text-secondary ms-2\' title=\'Evento pasado\'></i>';
+                            }
+                            return '';
+                          })()}
+                          ${(() => {
+                            const ahora = new Date();
+                            const fechaHoraEv = new Date(ev.fecha + 'T' + ev.hora);
+                            const unaHoraDespues = new Date(ahora.getTime() + 60*60*1000);
+                            if (fechaHoraEv >= ahora && fechaHoraEv <= unaHoraDespues) {
+                              return '<i class=\'bi bi-lightning-charge-fill text-warning ms-2\' title=\'Evento próximo\'></i>';
+                            }
+                            return '';
+                          })()}
                         </div>
+                        <div class="fw-semibold small">${ev.titulo}</div>
+                        <div class="text-muted small fst-italic">${ev.descripcion ? ev.descripcion : ''}</div>
+                        <button class="btn btn-link btn-sm text-primary p-0 position-absolute" style="right: 0.5rem; top: 0;" data-edit="${ev.id}" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-link btn-sm text-success p-0 position-absolute" style="right: 1.8rem; top: 0;" data-completar="${ev.id}" title="Marcar como completado"><i class="bi bi-check-circle${ev.completado ? '-fill' : ''}"></i></button>
+                        <button class="btn btn-link btn-sm text-danger p-0 position-absolute" style="right: 0.5rem; bottom: 0;" data-delete="${ev.id}" title="Eliminar"><i class="bi bi-trash"></i></button>
+                      </div>
                       `;
                     }).join('');
                 }
-              }
-            };
-            renderColumna(diaOrigen);
-            renderColumna(diaNuevo);
-            mostrarMensaje('Evento movido correctamente', 'info');
-            // Reasignar listeners drag & drop solo en las dos columnas actualizadas
-            setTimeout(() => {
-              [diaOrigen, diaNuevo].forEach(diaKey => {
-                const dropzone = agendaBody.querySelector(`[data-dia-dropzone="${diaKey}"]`);
-                if (!dropzone) return;
+                // Reasignar listeners de editar y eliminar en la columna
+                dropzone.querySelectorAll('[data-edit]').forEach(btn => {
+                  btn.onclick = () => openModalEditar(btn.getAttribute('data-edit'));
+                });
+                dropzone.querySelectorAll('[data-delete]').forEach(btn => {
+                  btn.onclick = () => eliminarEvento(btn.getAttribute('data-delete'));
+                });
+                // Reasignar listeners de drag & drop y dragstart/dragend SOLO en esta columna
                 dropzone.querySelectorAll('.agenda-evento-calendario[draggable="true"]').forEach(evEl => {
                   evEl.addEventListener('dragstart', function(e) {
                     e.stopPropagation();
@@ -510,8 +593,21 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
                     evEl.querySelectorAll('button').forEach(btn => btn.style.pointerEvents = 'auto');
                   });
                 });
-              });
-            }, 0);
+                dropzone.addEventListener('dragover', e => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  dropzone.classList.add('dropzone-hover');
+                });
+                dropzone.addEventListener('dragenter', e => {
+                  dropzone.classList.add('dropzone-hover');
+                });
+                dropzone.addEventListener('dragleave', e => {
+                  dropzone.classList.remove('dropzone-hover');
+                });
+                // El drop se mantiene, ya que estamos dentro de él
+              }
+            });
+            mostrarMensaje('Evento movido correctamente', 'info');
           });
         }
       });
