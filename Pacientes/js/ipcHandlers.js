@@ -1,4 +1,4 @@
-console.log('[DEPURACIÓN][MAIN] ipcHandlers.js cargado');
+
 // Eliminar require innecesario de agendaData
 const { app, dialog } = require('electron');
 const fs = require('fs');
@@ -126,6 +126,12 @@ ipcMain.handle('paciente-set-etiquetas', (event, pacienteId, tagIds, motivo, fec
   console.log('[DEPURACIÓN] Handler paciente-set-etiquetas recibido:', { pacienteId, tagIds, motivo, fecha });
   return db.setEtiquetasForPaciente(pacienteId, tagIds, motivo, fecha);
 });
+
+// Nueva función: crear incidencia y asociar un tag
+ipcMain.handle('incidencia-add-con-tag', (event, pacienteId, tagId, motivo, fecha) => {
+  return db.addIncidenciaConTag(pacienteId, tagId, motivo, fecha);
+});
+
 
 // Obtener etiquetas asociadas a un paciente (por incidencias)
 ipcMain.handle('paciente-get-etiquetas', (event, pacienteId) => {

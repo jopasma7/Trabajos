@@ -99,6 +99,8 @@ db.getIncidenciasByPaciente = function(pacienteId) {
   return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 
+
+
 // Actualizar etiquetas de incidencias para la incidencia más reciente de un paciente
 // Permite motivo y fecha personalizados para la incidencia inicial
 db.setEtiquetasForPaciente = function(pacienteId, tagIds, motivoPersonalizado, fechaPersonalizada) {
