@@ -317,10 +317,14 @@
                     <option value="protesis">🦾 Prótesis</option>
                   </select>
                 </div>
-                <div class="col-md-3">
-                  <label for="filtro-fecha" class="form-label mb-1">Fecha Instalación</label>
-                  <input type="date" class="form-control" id="filtro-fecha">
-                </div>
+                  <div class="col-md-3">
+                    <label for="filtro-pendiente" class="form-label mb-1">Estado</label>
+                    <select id="filtro-pendiente" class="form-select">
+                      <option value="">Todos</option>
+                      <option value="pendiente">⏳ Pendiente</option>
+                      <option value="no-pendiente">✔️ No pendiente</option>
+                    </select>
+                  </div>
                 <div class="col-md-2 text-end">
                   <button class="btn btn-success w-100" id="btn-nuevo-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente"><i class="bi bi-person-plus-fill me-1"></i>Nuevo Paciente</button>
                 </div>

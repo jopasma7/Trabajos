@@ -310,7 +310,7 @@ async function poblarSelectTipoAccesoEspera(etiquetasAccesoDisponibles) {
 // Filtros y paginación
 const inputBusqueda = document.getElementById('busqueda-pacientes');
 const selectTipoAcceso = document.getElementById('filtro-tipoacceso');
-const inputFecha = document.getElementById('filtro-fecha');
+const selectPendiente = document.getElementById('filtro-pendiente');
 const paginacionPacientes = document.getElementById('paginacion-pacientes');
 let pacientesGlobal = [];
 
@@ -322,18 +322,20 @@ function filtrarPacientes() {
 	let filtrados = [...pacientesGlobal];
 	const texto = (inputBusqueda?.value || '').toLowerCase();
 	const tipo = selectTipoAcceso?.value || '';
-	const fecha = inputFecha?.value || '';
-       if (texto) {
-	       filtrados = filtrados.filter(p =>
-		       p.nombre.toLowerCase().includes(texto) ||
-		       (p.apellidos && p.apellidos.toLowerCase().includes(texto))
-	       );
-       }
+	const pendiente = selectPendiente?.value || '';
+	if (texto) {
+		filtrados = filtrados.filter(p =>
+			p.nombre.toLowerCase().includes(texto) ||
+			(p.apellidos && p.apellidos.toLowerCase().includes(texto))
+		);
+	}
 	if (tipo) {
 		filtrados = filtrados.filter(p => (p.tipo_acceso || '') === tipo);
 	}
-	if (fecha) {
-		filtrados = filtrados.filter(p => (p.fecha_instalacion || '') === fecha);
+	if (pendiente === 'pendiente') {
+		filtrados = filtrados.filter(p => p.en_lista_espera === 1);
+	} else if (pendiente === 'no-pendiente') {
+		filtrados = filtrados.filter(p => !p.en_lista_espera || p.en_lista_espera === 0);
 	}
 	return filtrados;
 }
@@ -387,8 +389,16 @@ function renderizarPacientes(pacientes) {
 			}).join(' ');
 		}
 
+		// Emoji ⏳ si está en espera
+		let esperaHtml = '';
+		if (paciente.en_lista_espera && paciente.tipo_acceso_espera_id) {
+			// Buscar etiqueta de acceso pendiente
+			const tagPendiente = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_espera_id);
+			const etiquetaPendiente = tagPendiente ? tagPendiente.nombre : 'pendiente';
+			esperaHtml = `<span title="Pendiente de ${etiquetaPendiente}" style="margin-left:3px;font-size:1.0em;cursor:help;">⏳</span>`;
+		}
 		tr.innerHTML = `
-			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos}</td>
+			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos} ${esperaHtml}</td>
 			<td>${renderTipoAccesoBadgeById(paciente.tipo_acceso_id)}</td>
 			<td>${ubicacionCompleta}</td>
 			<td>${fechaFormateada}${diasDetalle}</td>
@@ -570,6 +580,8 @@ if (btnNuevoPaciente) {
 
 // Filtros: búsqueda, tipo de acceso, fecha
 if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual = 1; actualizarTablaPacientes(); });
+if (selectTipoAcceso) selectTipoAcceso.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
+if (selectPendiente) selectPendiente.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
 
 
 // Guardar (agregar o editar) paciente
