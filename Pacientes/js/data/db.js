@@ -44,6 +44,14 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   ubicacion_anatomica TEXT,
   ubicacion_lado TEXT
 )`).run();
+// Añadir columna en_lista_espera si no existe
+try {
+  db.prepare('ALTER TABLE pacientes ADD COLUMN en_lista_espera INTEGER DEFAULT 0').run();
+} catch (e) {}
+// Añadir columna tipo_acceso_espera_id si no existe
+try {
+  db.prepare('ALTER TABLE pacientes ADD COLUMN tipo_acceso_espera_id INTEGER').run();
+} catch (e) {}
 
 
 // Crear tabla incidencias (uno a muchos con pacientes)
@@ -214,20 +222,7 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(
-    paciente.nombre,
-    paciente.apellidos,
-    paciente.tipo_acceso_id,
-    paciente.fecha_instalacion,
-    paciente.ubicacion_anatomica,
-    paciente.ubicacion_lado
-  );
-  return { id: info.lastInsertRowid };
-};
-
-db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -235,6 +230,23 @@ db.editPaciente = function(paciente) {
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
+    paciente.en_lista_espera ? 1 : 0,
+    paciente.tipo_acceso_espera_id || null
+  );
+  return { id: info.lastInsertRowid };
+};
+
+db.editPaciente = function(paciente) {
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ? WHERE id = ?');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.tipo_acceso_id,
+    paciente.fecha_instalacion,
+    paciente.ubicacion_anatomica,
+    paciente.ubicacion_lado,
+    paciente.en_lista_espera ? 1 : 0,
+    paciente.tipo_acceso_espera_id || null,
     paciente.id
   );
   return { changes: info.changes };

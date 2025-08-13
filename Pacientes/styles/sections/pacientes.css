@@ -58,10 +58,22 @@
 }
 /* Modal de paciente más ancho */
 .paciente-modal-ancho {
-  max-width: 98vw;
+}
+
+/* Mejorar alineación de Tipo Acceso destino en el modal de paciente */
+#paciente-lista-espera-select-container {
+  min-width: 180px;
+  max-width: 220px;
+  margin-left: 12px;
+  margin-top: 0;
+
+}
+#paciente-tipoacceso-espera {
+  min-width: 140px;
+  max-width: 200px;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 0;
+  margin-right: 0;
 }
 @media (min-width: 992px) {
   .paciente-modal-ancho {

@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 				try {
 					const allTags = await ipcRenderer.invoke('tags-get-all');
 					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
+					await poblarSelectTipoAccesoEspera(etiquetasAccesoDisponibles);
 				} catch {}
 				if (esNuevoPaciente) {
 					const optInit = document.createElement('option');
@@ -276,6 +277,38 @@ let pacienteAEliminar = null;
 const modalConfirmarEliminar = document.getElementById('modal-confirmar-eliminar-paciente');
 const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar-paciente');
 const textoConfirmarEliminar = document.getElementById('texto-confirmar-eliminar-paciente');
+// Elementos para lista de espera
+const checkboxListaEspera = document.getElementById('paciente-lista-espera');
+const selectListaEsperaContainer = document.getElementById('paciente-lista-espera-select-container');
+const selectTipoAccesoEspera = document.getElementById('paciente-tipoacceso-espera');
+
+// Mostrar/ocultar el select según el checkbox
+if (checkboxListaEspera && selectListaEsperaContainer) {
+    checkboxListaEspera.addEventListener('change', function() {
+        selectListaEsperaContainer.style.display = this.checked ? '' : 'none';
+    });
+    // Inicializar visibilidad al abrir el modal
+    selectListaEsperaContainer.style.display = checkboxListaEspera.checked ? '' : 'none';
+}
+
+// Función para poblar el select de tipo acceso destino (lista de espera)
+async function poblarSelectTipoAccesoEspera(etiquetasAccesoDisponibles) {
+	if (selectTipoAccesoEspera) {
+		selectTipoAccesoEspera.innerHTML = '';
+		const optInit = document.createElement('option');
+		optInit.value = '';
+		optInit.textContent = 'Tipo acceso pendiente...';
+		optInit.disabled = true;
+		optInit.selected = true;
+		selectTipoAccesoEspera.appendChild(optInit);
+		etiquetasAccesoDisponibles.forEach(tag => {
+			const opt = document.createElement('option');
+			opt.value = String(tag.id);
+			opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+			selectTipoAccesoEspera.appendChild(opt);
+		});
+	}
+}
 
 // Filtros y paginación
 const inputBusqueda = document.getElementById('busqueda-pacientes');
