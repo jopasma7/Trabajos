@@ -60,31 +60,35 @@ ipcMain.handle('get-pacientes', () => {
 
 // Ejemplo: Agregar un paciente
 ipcMain.handle('add-paciente', (event, paciente) => {
-  const stmt = db.prepare(`INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
     paciente.tipo_acceso_id,
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
-    paciente.ubicacion_lado
+    paciente.ubicacion_lado,
+    paciente.en_lista_espera ? 1 : 0,
+    paciente.tipo_acceso_espera_id || null
   );
   return { id: info.lastInsertRowid };
 });
   // Editar un paciente
-  ipcMain.handle('edit-paciente', (event, paciente) => {
-    const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?`);
-      const info = stmt.run(
-        paciente.nombre,
-        paciente.apellidos,
-        paciente.tipo_acceso_id,
-        paciente.fecha_instalacion,
-        paciente.ubicacion_anatomica,
-        paciente.ubicacion_lado,
-        paciente.id
-      );
-    return { changes: info.changes };
-  });
+ipcMain.handle('edit-paciente', (event, paciente) => {
+  const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ? WHERE id = ?`);
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.tipo_acceso_id,
+    paciente.fecha_instalacion,
+    paciente.ubicacion_anatomica,
+    paciente.ubicacion_lado,
+    paciente.en_lista_espera ? 1 : 0,
+    paciente.tipo_acceso_espera_id || null,
+    paciente.id
+  );
+  return { changes: info.changes };
+});
 
   // Eliminar un paciente
   ipcMain.handle('delete-paciente', (event, id) => {

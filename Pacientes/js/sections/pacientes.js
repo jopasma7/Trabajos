@@ -579,15 +579,17 @@ if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual 
 if (formPaciente) {
     formPaciente.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const paciente = {
-            nombre: document.getElementById('paciente-nombre').value.trim(),
-            apellidos: document.getElementById('paciente-apellidos').value.trim(),
-            tipo_acceso_id: Number(document.getElementById('paciente-tipoacceso')?.value) || null,
-            fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
-            ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
-            ubicacion_lado: selectUbicacionLado?.value || '',
-            etiquetas: [...etiquetasSeleccionadas]
-        };
+			const paciente = {
+				nombre: document.getElementById('paciente-nombre').value.trim(),
+				apellidos: document.getElementById('paciente-apellidos').value.trim(),
+				tipo_acceso_id: Number(document.getElementById('paciente-tipoacceso')?.value) || null,
+				fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
+				ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
+				ubicacion_lado: selectUbicacionLado?.value || '',
+				etiquetas: [...etiquetasSeleccionadas],
+				en_lista_espera: document.getElementById('paciente-lista-espera')?.checked ? 1 : 0,
+				tipo_acceso_espera_id: document.getElementById('paciente-tipoacceso-espera')?.value ? Number(document.getElementById('paciente-tipoacceso-espera').value) : null
+			};
 
 		// Guardar incidencias seleccionadas
 		let pacienteId;
@@ -690,7 +692,6 @@ if (tablaPacientesBody) {
 				if (listaIncidencia) listaIncidencia.innerHTML = '';
 				// Poblar el select de tipo acceso antes de asignar el valor
 				if (selectTipoAccesoForm) {
-					// Eliminar todas las opciones previas (incluida la por defecto)
 					selectTipoAccesoForm.innerHTML = '';
 					etiquetasAccesoDisponibles.forEach(tag => {
 						const opt = document.createElement('option');
@@ -698,7 +699,6 @@ if (tablaPacientesBody) {
 						opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
 						selectTipoAccesoForm.appendChild(opt);
 					});
-					// Esperar a que el select esté completamente poblado antes de asignar el valor
 					setTimeout(() => {
 						if (paciente.tipo_acceso_id && selectTipoAccesoForm.querySelector(`option[value='${paciente.tipo_acceso_id}']`)) {
 							selectTipoAccesoForm.value = String(paciente.tipo_acceso_id);
@@ -708,13 +708,37 @@ if (tablaPacientesBody) {
 						selectTipoAccesoForm.dispatchEvent(new Event('change'));
 					}, 50);
 				}
+				// Rellenar checkbox y select de lista de espera
+				if (checkboxListaEspera && selectListaEsperaContainer && selectTipoAccesoEspera) {
+					checkboxListaEspera.checked = paciente.en_lista_espera ? true : false;
+					selectListaEsperaContainer.style.display = paciente.en_lista_espera ? '' : 'none';
+					// Poblar el select de tipo acceso pendiente
+					selectTipoAccesoEspera.innerHTML = '';
+					const optInit = document.createElement('option');
+					optInit.value = '';
+					optInit.textContent = 'Tipo acceso pendiente...';
+					optInit.disabled = true;
+					selectTipoAccesoEspera.appendChild(optInit);
+					etiquetasAccesoDisponibles.forEach(tag => {
+						const opt = document.createElement('option');
+						opt.value = String(tag.id);
+						opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+						selectTipoAccesoEspera.appendChild(opt);
+					});
+					setTimeout(() => {
+						if (paciente.tipo_acceso_espera_id && selectTipoAccesoEspera.querySelector(`option[value='${paciente.tipo_acceso_espera_id}']`)) {
+							selectTipoAccesoEspera.value = String(paciente.tipo_acceso_espera_id);
+						} else {
+							selectTipoAccesoEspera.selectedIndex = 0;
+						}
+					}, 50);
+				}
 				const fechaInput = document.getElementById('paciente-fecha');
 				if (fechaInput) {
 					let fecha = paciente.fecha_instalacion || '';
 					if (fecha && fecha.includes('T')) fecha = fecha.split('T')[0];
 					fechaInput.value = fecha;
 				}
-				// Esperar a que el select de ubicaciones esté poblado antes de asignar el valor y disparar el evento
 				setTimeout(() => {
 					if (selectUbicacionAnatomica) {
 						selectUbicacionAnatomica.value = paciente.ubicacion_anatomica || '';
@@ -729,10 +753,9 @@ if (tablaPacientesBody) {
 				}
 				const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
 				modal.show();
-				// Esperar a que el modal esté visible antes de cargar etiquetas
 				setTimeout(async () => {
 					const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
-					cargarIncidenciasEnModal(incidencias); // Nueva función que renderiza cada incidencia individual
+					cargarIncidenciasEnModal(incidencias);
 				}, 200);
 			}
 		}
