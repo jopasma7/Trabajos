@@ -546,38 +546,38 @@ if (formPaciente) {
             paciente.id = pacienteEditando;
             await ipcRenderer.invoke('edit-paciente', paciente);
             pacienteId = paciente.id;
-            if (nuevasEtiquetas.length) {
-                const incidencias = nuevasEtiquetas.map(id => {
-                    const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
-                    const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
-                    return {
-                        tagId: id,
-                        motivo: motivoInput ? motivoInput.value : '',
-                        fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
-                    };
-                });
-                await Promise.all(incidencias.map(inc =>
-                    ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
-                ));
-            }
+			if (nuevasEtiquetas.length) {
+				const incidencias = nuevasEtiquetas.map(id => {
+					const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
+					const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
+					return {
+						tagId: id,
+						motivo: motivoInput ? motivoInput.value : '',
+						fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
+					};
+				}).filter(inc => inc.tagId !== undefined && inc.tagId !== null && !isNaN(Number(inc.tagId)));
+				await Promise.all(incidencias.map(inc =>
+					ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
+				));
+			}
             cargarPacientes();
         } else {
             const result = await ipcRenderer.invoke('add-paciente', paciente);
             pacienteId = result.id;
-            if (etiquetasSeleccionadas.length) {
-                const incidencias = etiquetasSeleccionadas.map(id => {
-                    const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
-                    const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
-                    return {
-                        tagId: id,
-                        motivo: motivoInput ? motivoInput.value : '',
-                        fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
-                    };
-                });
-                await Promise.all(incidencias.map(inc =>
-                    ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
-                ));
-            }
+			if (etiquetasSeleccionadas.length) {
+				const incidencias = etiquetasSeleccionadas.map(id => {
+					const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
+					const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
+					return {
+						tagId: id,
+						motivo: motivoInput ? motivoInput.value : '',
+						fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
+					};
+				}).filter(inc => inc.tagId !== undefined && inc.tagId !== null && !isNaN(Number(inc.tagId)));
+				await Promise.all(incidencias.map(inc =>
+					ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
+				));
+			}
             cargarPacientes();
             const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_id);
             mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${tag ? (tag.icono ? tag.icono + ' ' : '') + tag.nombre : 'Sin tipo'}</b>`, 'success');
@@ -589,36 +589,53 @@ if (formPaciente) {
 
 // Nueva función para renderizar incidencias en el modal
 function cargarIncidenciasEnModal(incidencias) {
-  const listaIncidencia = document.getElementById('lista-incidencia-etiquetas');
-  listaIncidencia.innerHTML = '';
-  incidencias.forEach(inc => {
-    const tag = etiquetasDisponibles.find(t => Number(t.id) === Number(inc.tagId));
-    if (tag) {
-      const li = document.createElement('li');
-      li.className = 'd-flex flex-column gap-2';
-      li.style.listStyle = 'none';
-      li.style.width = 'auto';
-      li.style.padding = '8px 15px';
-      li.style.background = '#abe8d2ff';
-      li.style.fontWeight = '500';
-      li.innerHTML = `
-        <div class="d-flex align-items-center justify-content-between">
-          <span>${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</span>
-          <button type="button" class="btn btn-outline-danger btn-remove-incidencia p-0 ms-2" style="width:24px;height:24px;min-width:24px;min-height:24px;display:flex;align-items:center;justify-content:center;" data-id="${inc.id}"><i class="bi bi-x" style="font-size:1.1em;"></i></button>
-        </div>
-        <div class="row g-2">
-          <div class="col-7">
-            <input type="text" class="form-control form-control-sm" placeholder="Motivo" value="${inc.motivo}" data-motivo-id="${inc.id}">
-          </div>
-          <div class="col-5">
-            <input type="date" class="form-control form-control-sm" data-fecha-id="${inc.id}" value="${inc.fecha}">
-          </div>
-        </div>
-      `;
-      listaIncidencia.appendChild(li);
-    }
-  });
-  // Añade lógica para eliminar o editar cada incidencia según su id
+	// Historial visual (no editable) al final del modal
+	const historialContainerId = 'historial-incidencias-container';
+	let historialContainer = document.getElementById(historialContainerId);
+	const modalBody = document.querySelector('#modal-paciente .modal-body');
+	if (!historialContainer) {
+		historialContainer = document.createElement('div');
+		historialContainer.id = historialContainerId;
+	historialContainer.className = 'mb-2 rounded border bg-light';
+	historialContainer.style.background = '#f8fafc';
+	historialContainer.style.maxHeight = '140px';
+	historialContainer.style.overflowY = 'auto';
+	historialContainer.style.paddingTop = '10px';
+	historialContainer.style.paddingBottom = '10px';
+		if (modalBody) {
+			// Insert label above historialContainer
+			const label = document.createElement('div');
+			label.textContent = 'Incidencias previas';
+			label.className = 'mb-1 fw-bold text-secondary';
+			modalBody.appendChild(label);
+			modalBody.appendChild(historialContainer);
+		}
+	}
+	if (!incidencias || !incidencias.length) {
+		historialContainer.innerHTML = '<div class="text-muted">Sin incidencias previas.</div>';
+		historialContainer.className = 'mb-2 d-flex flex-column gap-2 align-items-start';
+			return;
+		}
+		// Visualización ultra compacta tipo lista horizontal con separadores
+		const div = document.createElement('div');
+	div.className = 'd-flex flex-column gap-2 align-items-start';
+	const incidenciasOrdenadas = [...incidencias].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+	incidenciasOrdenadas.forEach((inc, idx) => {
+			const tag = etiquetasDisponibles.find(t => Number(t.id) === Number(inc.tagId));
+			if (tag) {
+				const item = document.createElement('span');
+				item.className = 'd-inline-flex align-items-center px-2 py-1';
+				item.style.fontSize = '0.95em';
+				item.innerHTML = `
+				<span class="badge ms-2" style="font-size:0.90em;background:#e3e6f5;color:#222;min-width:90px;text-align:center;">${inc.fecha}</span>
+				<span style="font-weight:500;color:#009879;margin-left:8px;">${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</span>
+				<span class="badge bg-light text-dark border ms-2" style="font-size:0.90em;">${inc.motivo || 'Sin motivo'}</span>
+				`;
+				div.appendChild(item);
+			}
+		});
+		historialContainer.innerHTML = '';
+		historialContainer.appendChild(div);
 }
 
 // Delegación de eventos para editar y eliminar
