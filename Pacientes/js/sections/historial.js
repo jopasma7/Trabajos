@@ -1,11 +1,9 @@
 // Poblar filtro de pacientes y actualizar historial
-
 const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
 	const select = document.getElementById('filtro-paciente-historial');
 	if (!select) return;
 	const pacientes = await ipcRenderer.invoke('get-pacientes');
-	console.log('Pacientes recibidos:', pacientes);
 	select.innerHTML = '';
 	if (!pacientes || pacientes.length === 0) {
 		console.warn('No se recibieron pacientes para el filtro.');
@@ -22,6 +20,43 @@ async function cargarPacientesHistorial() {
 		select.value = pacienteId;
 	}
 }
+
+// --- Poblar selectores de etiquetas de tipo evento y diagnóstico ---
+const etiquetas = require('../sections/etiquetas.js');
+let tagsGlobal = [];
+
+async function poblarSelectEtiquetasHistorial() {
+	// Esperar a que se carguen las etiquetas globales
+       if (!tagsGlobal.length) {
+	       tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+       }
+	// Evento
+	const selectEvento = document.getElementById('tipo-historial-etiqueta');
+	if (selectEvento) {
+		selectEvento.innerHTML = '<option value="">Selecciona etiqueta de evento</option>';
+		tagsGlobal.filter(t => t.tipo === 'evento').forEach(tag => {
+			const opt = document.createElement('option');
+			opt.value = tag.id;
+			opt.textContent = tag.nombre + (tag.descripcion ? ' - ' + tag.descripcion : '');
+			selectEvento.appendChild(opt);
+		});
+	}
+	// Diagnóstico
+	const selectDiagnostico = document.getElementById('diagnostico-historial-etiqueta');
+	if (selectDiagnostico) {
+		selectDiagnostico.innerHTML = '<option value="">Selecciona etiqueta de diagnóstico</option>';
+		tagsGlobal.filter(t => t.tipo === 'diagnostico').forEach(tag => {
+			const opt = document.createElement('option');
+			opt.value = tag.id;
+			opt.textContent = tag.nombre + (tag.descripcion ? ' - ' + tag.descripcion : '');
+			selectDiagnostico.appendChild(opt);
+		});
+	}
+}
+
+document.addEventListener('DOMContentLoaded', poblarSelectEtiquetasHistorial);
+document.getElementById('btn-add-historial').addEventListener('click', poblarSelectEtiquetasHistorial);
+
 
 document.addEventListener('DOMContentLoaded', async function() {
 	await cargarPacientesHistorial();
@@ -55,17 +90,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 		// Sincronizar pacienteId global
 		pacienteId = pacienteIdValue;
 		const id = document.getElementById('id-historial').value;
-		const data = {
-			paciente_id: pacienteIdValue,
-			fecha: document.getElementById('fecha-historial').value,
-			tipo_evento: document.getElementById('tipo-historial').value,
-			motivo: document.getElementById('motivo-historial').value,
-			diagnostico: document.getElementById('diagnostico-historial').value,
-			tratamiento: document.getElementById('tratamiento-historial').value,
-			notas: document.getElementById('notas-historial').value,
-			adjuntos: '', // Implementar adjuntos si lo necesitas
-			profesional: document.getElementById('profesional-historial').value
-		};
+	       const data = {
+		       paciente_id: pacienteIdValue,
+		       fecha: document.getElementById('fecha-historial').value,
+		       tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
+		       motivo: document.getElementById('motivo-historial').value,
+		       diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
+		       tratamiento: document.getElementById('tratamiento-historial').value,
+		       notas: document.getElementById('notas-historial').value,
+		       adjuntos: '', // Implementar adjuntos si lo necesitas
+		       profesional: document.getElementById('profesional-historial').value
+	       };
 		if (id) {
 			await ipcRenderer.invoke('historial-edit', id, data);
 		} else {
@@ -117,27 +152,43 @@ async function renderHistorial() {
 			return;
 		}
 	}
-		historialData.forEach((item, idx) => {
-			const esArchivado = item.archivado === 1 || item.archivado === true;
-			tbody.innerHTML += `
-				<tr data-dinamico="true">
-					<td>${item.fecha}</td>
-					<td>${item.tipo_evento || ''}</td>
-					<td>${item.motivo}</td>
-					<td>${item.diagnostico}</td>
-					<td>${item.tratamiento}</td>
-					<td>${item.notas}</td>
-					<td>${item.adjuntos ? `<a href='#' class='btn btn-sm btn-outline-secondary'><i class='bi bi-paperclip'></i></a>` : ''}</td>
-					<td>${item.profesional}</td>
-					<td>
-						<button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
-						${esArchivado
-							? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
-							: `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
-					</td>
-				</tr>
-			`;
-		});
+	       // Asegurarse de tener los tags globales
+	       if (!tagsGlobal.length) {
+		       tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+	       }
+	       historialData.forEach((item, idx) => {
+		       const esArchivado = item.archivado === 1 || item.archivado === true;
+		       // Buscar nombre de etiqueta evento
+		       let nombreEvento = '';
+		       if (item.tipo_evento) {
+			       const tagEvento = tagsGlobal.find(t => String(t.id) === String(item.tipo_evento));
+			       nombreEvento = tagEvento ? tagEvento.nombre : item.tipo_evento;
+		       }
+		       // Buscar nombre de etiqueta diagnostico
+		       let nombreDiagnostico = '';
+		       if (item.diagnostico) {
+			       const tagDiag = tagsGlobal.find(t => String(t.id) === String(item.diagnostico));
+			       nombreDiagnostico = tagDiag ? tagDiag.nombre : item.diagnostico;
+		       }
+		       tbody.innerHTML += `
+			       <tr data-dinamico="true">
+				       <td>${item.fecha}</td>
+				       <td>${nombreEvento}</td>
+				       <td>${item.motivo}</td>
+				       <td>${nombreDiagnostico}</td>
+				       <td>${item.tratamiento}</td>
+				       <td>${item.notas}</td>
+				       <td>${item.adjuntos ? `<a href='#' class='btn btn-sm btn-outline-secondary'><i class='bi bi-paperclip'></i></a>` : ''}</td>
+				       <td>${item.profesional}</td>
+				       <td>
+					       <button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
+					       ${esArchivado
+						       ? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
+						       : `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
+				       </td>
+			       </tr>
+		       `;
+	       });
 		// Delegación de eventos para los botones de acción
 		if (!tbody._delegationSet) {
 			tbody.addEventListener('click', function(e) {

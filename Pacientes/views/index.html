@@ -490,13 +490,9 @@
                         </div>
                         <div class="mb-3">
                           <label for="tipo-historial" class="form-label">Tipo de Evento</label>
-                          <select class="form-select" id="tipo-historial" required>
-                            <option value="">Selecciona tipo</option>
-                            <option value="Consulta">Consulta</option>
-                            <option value="Prueba Laboratorio">Prueba Laboratorio</option>
-                            <option value="Intervención">Intervención</option>
-                            <option value="Seguimiento">Seguimiento</option>
-                            <option value="Otro">Otro</option>
+                          <select class="form-select" id="tipo-historial-etiqueta" required>
+                            <option value="">Selecciona etiqueta de evento</option>
+                            <!-- Opciones dinámicas por JS: solo etiquetas tipo 'evento' -->
                           </select>
                         </div>
                         <div class="mb-3">
@@ -505,7 +501,10 @@
                         </div>
                         <div class="mb-3">
                           <label for="diagnostico-historial" class="form-label">Diagnóstico</label>
-                          <textarea class="form-control" id="diagnostico-historial" rows="2" required></textarea>
+                          <select class="form-select" id="diagnostico-historial-etiqueta" required>
+                            <option value="">Selecciona etiqueta de diagnóstico</option>
+                            <!-- Opciones dinámicas por JS: solo etiquetas tipo 'diagnostico' -->
+                          </select>
                         </div>
                         <div class="mb-3">
                           <label for="tratamiento-historial" class="form-label">Tratamiento</label>

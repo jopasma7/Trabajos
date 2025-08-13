@@ -56,16 +56,67 @@ db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,
   fecha TEXT NOT NULL,
-  tipo_evento TEXT,
+  tipo_evento INTEGER,
   motivo TEXT,
-  diagnostico TEXT,
+  diagnostico INTEGER,
   tratamiento TEXT,
   notas TEXT,
   adjuntos TEXT,
   profesional TEXT,
   archivado INTEGER DEFAULT 0,
-  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (tipo_evento) REFERENCES tags(id),
+  FOREIGN KEY (diagnostico) REFERENCES tags(id)
 )`).run();
+// Migración: cambiar tipo_evento y diagnostico a INTEGER si eran TEXT
+// Migrar valores antiguos de tipo_evento y diagnostico a ids de tags si coinciden por nombre
+try {
+  const rows = db.prepare('SELECT id, tipo_evento, diagnostico FROM historial_clinico WHERE tipo_evento IS NULL OR diagnostico IS NULL').all();
+  const tags = db.prepare('SELECT id, nombre FROM tags').all();
+  const nombreToId = {};
+  tags.forEach(t => { nombreToId[t.nombre.toLowerCase()] = t.id; });
+  const updateStmt = db.prepare('UPDATE historial_clinico SET tipo_evento = ?, diagnostico = ? WHERE id = ?');
+  let migrados = 0;
+  rows.forEach(row => {
+    let tipoId = null, diagId = null;
+    if (row.tipo_evento && typeof row.tipo_evento === 'string') {
+      tipoId = nombreToId[row.tipo_evento.toLowerCase()] || null;
+    }
+    if (row.diagnostico && typeof row.diagnostico === 'string') {
+      diagId = nombreToId[row.diagnostico.toLowerCase()] || null;
+    }
+    if (tipoId !== null || diagId !== null) migrados++;
+    updateStmt.run(tipoId, diagId, row.id);
+  });
+  if (migrados > 0) {
+    console.log(`[MIGRACIÓN historial_clinico] Migrados ${migrados} registros de tipo_evento/diagnostico a ids de tags.`);
+  }
+} catch(e) { console.error('[MIGRACIÓN historial_clinico] Error:', e); }
+try {
+  const cols = db.prepare("PRAGMA table_info(historial_clinico)").all();
+  if (cols.find(c => c.name === 'tipo_evento' && c.type === 'TEXT')) {
+    db.prepare('ALTER TABLE historial_clinico RENAME TO historial_clinico_old').run();
+    db.prepare(`CREATE TABLE historial_clinico (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      paciente_id INTEGER NOT NULL,
+      fecha TEXT NOT NULL,
+      tipo_evento INTEGER,
+      motivo TEXT,
+      diagnostico INTEGER,
+      tratamiento TEXT,
+      notas TEXT,
+      adjuntos TEXT,
+      profesional TEXT,
+      archivado INTEGER DEFAULT 0,
+      FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+      FOREIGN KEY (tipo_evento) REFERENCES tags(id),
+      FOREIGN KEY (diagnostico) REFERENCES tags(id)
+    )`).run();
+    db.prepare(`INSERT INTO historial_clinico (id, paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional, archivado)
+      SELECT id, paciente_id, fecha, NULL, motivo, NULL, tratamiento, notas, adjuntos, profesional, archivado FROM historial_clinico_old`).run();
+    db.prepare('DROP TABLE historial_clinico_old').run();
+  }
+} catch(e) {}
 // Añadir columna archivado si no existe (migración)
 try {
   db.prepare('ALTER TABLE historial_clinico ADD COLUMN archivado INTEGER DEFAULT 0').run();
