@@ -54,14 +54,12 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 		etiquetasSeleccionadas = [];
 		etiquetasYaAsociadas = [];
 	}
-	// Opciones del select: solo las no seleccionadas ni asociadas
+	// Opciones del select: mostrar todas las etiquetas disponibles, aunque ya estén seleccionadas
 	etiquetasDisponibles.forEach(tag => {
-		if (!etiquetasSeleccionadas.includes(Number(tag.id)) && !etiquetasYaAsociadas.includes(Number(tag.id))) {
-			const opt = document.createElement('option');
-			opt.value = tag.id;
-			opt.textContent = (tag.icono ? tag.icono + ' ' : '') + tag.nombre;
-			selectIncidencia.appendChild(opt);
-		}
+		const opt = document.createElement('option');
+		opt.value = tag.id;
+		opt.textContent = (tag.icono ? tag.icono + ' ' : '') + tag.nombre;
+		selectIncidencia.appendChild(opt);
 	});
 	// Mostrar etiquetas seleccionadas en lista visual, con motivo y fecha
 	etiquetasSeleccionadas.forEach(id => {
@@ -96,7 +94,7 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 	if (btnAdd) {
 		btnAdd.onclick = () => {
 			const selected = selectIncidencia.value;
-			if (selected && !etiquetasSeleccionadas.includes(Number(selected))) {
+			if (selected) {
 				etiquetasSeleccionadas.push(Number(selected));
 				cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
 			}
@@ -589,6 +587,40 @@ if (formPaciente) {
     });
 }
 
+// Nueva función para renderizar incidencias en el modal
+function cargarIncidenciasEnModal(incidencias) {
+  const listaIncidencia = document.getElementById('lista-incidencia-etiquetas');
+  listaIncidencia.innerHTML = '';
+  incidencias.forEach(inc => {
+    const tag = etiquetasDisponibles.find(t => Number(t.id) === Number(inc.tagId));
+    if (tag) {
+      const li = document.createElement('li');
+      li.className = 'd-flex flex-column gap-2';
+      li.style.listStyle = 'none';
+      li.style.width = 'auto';
+      li.style.padding = '8px 15px';
+      li.style.background = '#abe8d2ff';
+      li.style.fontWeight = '500';
+      li.innerHTML = `
+        <div class="d-flex align-items-center justify-content-between">
+          <span>${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</span>
+          <button type="button" class="btn btn-outline-danger btn-remove-incidencia p-0 ms-2" style="width:24px;height:24px;min-width:24px;min-height:24px;display:flex;align-items:center;justify-content:center;" data-id="${inc.id}"><i class="bi bi-x" style="font-size:1.1em;"></i></button>
+        </div>
+        <div class="row g-2">
+          <div class="col-7">
+            <input type="text" class="form-control form-control-sm" placeholder="Motivo" value="${inc.motivo}" data-motivo-id="${inc.id}">
+          </div>
+          <div class="col-5">
+            <input type="date" class="form-control form-control-sm" data-fecha-id="${inc.id}" value="${inc.fecha}">
+          </div>
+        </div>
+      `;
+      listaIncidencia.appendChild(li);
+    }
+  });
+  // Añade lógica para eliminar o editar cada incidencia según su id
+}
+
 // Delegación de eventos para editar y eliminar
 if (tablaPacientesBody) {
 	tablaPacientesBody.addEventListener('click', async (e) => {
@@ -653,9 +685,9 @@ if (tablaPacientesBody) {
 				modal.show();
 				// Esperar a que el modal esté visible antes de cargar etiquetas
 				setTimeout(async () => {
-					const ids = await ipcRenderer.invoke('paciente-get-etiquetas', paciente.id);
-					etiquetasSeleccionadas = ids;
-					cargarEtiquetasDisponibles(ids, ids);
+					const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
+					etiquetasSeleccionadas = incidencias; // Ahora es un array de objetos
+					cargarIncidenciasEnModal(incidencias); // Nueva función que renderiza cada incidencia individual
 				}, 200);
 			}
 		}

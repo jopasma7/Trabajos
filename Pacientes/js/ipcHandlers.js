@@ -132,6 +132,17 @@ ipcMain.handle('incidencia-add-con-tag', (event, pacienteId, tagId, motivo, fech
 });
 
 
+ipcMain.handle('paciente-get-incidencias', async (event, pacienteId) => {
+  // Devuelve todas las incidencias asociadas al paciente, con motivo, fecha y tagId
+  return db.prepare(`
+    SELECT i.id, it.tag_id as tagId, i.motivo, i.fecha
+    FROM incidencias i
+    JOIN incidencia_tags it ON i.id = it.incidencia_id
+    WHERE i.paciente_id = ?
+    ORDER BY i.fecha DESC, i.id DESC
+  `).all(pacienteId);
+});
+
 // Obtener etiquetas asociadas a un paciente (por incidencias)
 ipcMain.handle('paciente-get-etiquetas', (event, pacienteId) => {
   return db.getEtiquetasByPaciente(pacienteId);
