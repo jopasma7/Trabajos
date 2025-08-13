@@ -104,12 +104,13 @@ ipcMain.handle('tags-get', (event, tagId) => {
   return db.getTagById(tagId);
 });
 
-ipcMain.handle('tags-add', (event, { nombre, color, descripcion }) => {
-  return db.addTag(nombre, color, descripcion, arguments[1].tipo);
+ipcMain.handle('tags-add', (event, { nombre, color, descripcion, tipo, icono }) => {
+  console.log('[DEPURACIÓN] ipcMain tags-add:', { nombre, color, descripcion, tipo, icono });
+  return db.addTag(nombre, color, descripcion, tipo, icono);
 });
 
-ipcMain.handle('tags-update', (event, { id, nombre, color, descripcion }) => {
-  return db.updateTag(id, nombre, color, descripcion, arguments[1].tipo);
+ipcMain.handle('tags-update', (event, { id, nombre, color, descripcion, tipo, icono }) => {
+  return db.updateTag(id, nombre, color, descripcion, tipo, icono);
 });
 
 ipcMain.handle('tags-delete', (event, id) => {

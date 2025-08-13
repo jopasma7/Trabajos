@@ -279,6 +279,8 @@
                       <button type="submit" class="btn btn-success">Guardar</button>
                     </div>
                   </form>
+                  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+                  <script type="module" src="../js/emoji-picker.js"></script>
                 </div>
               </div>
             </div>
@@ -499,9 +501,22 @@
           <!-- Etiquetas Section -->
           <section id="etiquetas-section" class="section d-none">
             <div class="card shadow-sm p-4">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="card-title mb-0">Etiquetas de Incidencias</h5>
+              <div class="d-flex justify-content-between align-items-center pb-3">
+                <h4></h4>
+                <div class="d-flex justify-content-end align-items-center gap-2">
+                  <div style="min-width:220px;">
+                    <div class="d-flex align-items-center gap-2">
+                      <label for="filtro-tipo-etiqueta" class="form-label mb-0">Filtrar por tipo</label>
+                      <select id="filtro-tipo-etiqueta" class="form-select" style="width:auto; min-width:120px;">
+                        <option value="">Todos</option>
+                        <option value="incidencia">Incidencia</option>
+                        <option value="acceso">Acceso</option>
+                      </select>
+                    </div>
+                    </select>
+                  </div>
                 <button class="btn btn-success" id="btn-nueva-etiqueta"><i class="bi bi-plus-circle"></i> Nueva Etiqueta</button>
+                </div>
               </div>
               <div id="tags-lista-vacia" class="text-center text-muted my-4 d-none">
                 <div class="d-flex flex-column align-items-center justify-content-center py-4">
@@ -518,7 +533,7 @@
                     <tr>
                       <th style="width:40px"></th>
                       <th>Nombre</th>
-                      <th>Color</th>
+                      <th>Símbolo</th>
                       <th>Tipo</th>
                       <th>Descripción</th>
                       <th style="width:120px">Acciones</th>
@@ -557,12 +572,19 @@
                           <label for="etiqueta-tipo" class="form-label">Tipo de etiqueta</label>
                           <select class="form-select" id="etiqueta-tipo" required>
                             <option value="incidencia">Incidencia</option>
-                            <option value="paciente">Paciente</option>
+                            <option value="acceso">Acceso</option>
                           </select>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-1" id="etiqueta-color-group">
                           <label for="etiqueta-color" class="form-label">Color</label>
                           <input type="color" class="form-control form-control-color" id="etiqueta-color" value="#009879" title="Elige un color">
+                        </div>
+                        <div class="col-md-1 d-none" id="etiqueta-icono-group">
+                          <label for="etiqueta-icono" class="form-label">Emoji</label>
+                          <div class="input-group">
+                            <button type="button" class="btn btn-outline-secondary" id="etiqueta-icono-btn" style="font-size:1.2rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">🩸</button>
+                            <input type="hidden" id="etiqueta-icono" value="">
+                          </div>
                         </div>
                         <div class="col-12">
                           <label for="etiqueta-descripcion" class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>

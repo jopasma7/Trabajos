@@ -81,12 +81,18 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
 )`).run();
 
 // Crear tabla tags (etiquetas personalizables)
-// Añadir columna 'tipo' a tags si no existe
+// Añadir columna 'tipo' y 'icono' a tags si no existen
 const tagsTableInfo = db.prepare("PRAGMA table_info(tags)").all();
 const hasTipo = tagsTableInfo.some(col => col.name === 'tipo');
+const hasIcono = tagsTableInfo.some(col => col.name === 'icono');
 if (!hasTipo) {
   try {
     db.prepare('ALTER TABLE tags ADD COLUMN tipo TEXT DEFAULT "incidencia"').run();
+  } catch (e) {}
+}
+if (!hasIcono) {
+  try {
+    db.prepare('ALTER TABLE tags ADD COLUMN icono TEXT').run();
   } catch (e) {}
 }
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
@@ -94,7 +100,8 @@ db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   nombre TEXT NOT NULL UNIQUE,
   color TEXT DEFAULT '#009879',
   descripcion TEXT,
-  tipo TEXT DEFAULT 'incidencia'
+  tipo TEXT DEFAULT 'incidencia',
+  icono TEXT
 )`).run();
 
 // Tabla intermedia incidencia_tags (muchos a muchos)
@@ -185,14 +192,15 @@ db.getTagById = function(tagId) {
 };
 
 db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
-  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo) VALUES (?, ?, ?, ?)');
-  const info = stmt.run(nombre, color, descripcion, tipo);
+  console.log('[DEPURACIÓN] addTag:', { nombre, color, descripcion, tipo, icono: arguments[4] });
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4]);
   return { id: info.lastInsertRowid };
 };
 
 db.updateTag = function(id, nombre, color, descripcion, tipo = 'incidencia') {
-  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ? WHERE id = ?');
-  const info = stmt.run(nombre, color, descripcion, tipo, id);
+  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ?, icono = ? WHERE id = ?');
+  const info = stmt.run(nombre, color, descripcion, tipo, arguments[5], id);
   return { changes: info.changes };
 };
 

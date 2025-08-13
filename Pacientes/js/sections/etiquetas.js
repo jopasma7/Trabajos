@@ -7,19 +7,24 @@ let tags = [];
 // Elementos DOM
 const tablaEtiquetas = document.getElementById('tabla-etiquetas').querySelector('tbody');
 const btnNuevaEtiqueta = document.getElementById('btn-nueva-etiqueta');
-const modalEtiqueta = new bootstrap.Modal(document.getElementById('modal-etiqueta'));
+const modalEtiqueta = new bootstrap.Modal(document.getElementById('modal-etiqueta'), { focus: false });
 const formEtiqueta = document.getElementById('form-etiqueta');
 const inputNombre = document.getElementById('etiqueta-nombre');
 const inputColor = document.getElementById('etiqueta-color');
 const inputDescripcion = document.getElementById('etiqueta-descripcion');
 const inputTipo = document.getElementById('etiqueta-tipo');
 const inputId = document.getElementById('etiqueta-id');
+const inputIcono = document.getElementById('etiqueta-icono');
+const colorGroup = document.getElementById('etiqueta-color-group');
+const iconoGroup = document.getElementById('etiqueta-icono-group');
 const listaVacia = document.getElementById('tags-lista-vacia');
 
 const cardEtiquetas = document.querySelector('#etiquetas-section .card');
 const paginacionEtiquetas = document.getElementById('paginacion-etiquetas');
 let paginaActualEtiquetas = 1;
 const etiquetasPorPagina = 4;
+const filtroTipoEtiqueta = document.getElementById('filtro-tipo-etiqueta');
+let tipoFiltroActual = '';
 
 // Usa la función mostrarMensaje global de agenda.js si está disponible
 function showAlert(msg, tipo = 'success') {
@@ -34,7 +39,8 @@ function showAlert(msg, tipo = 'success') {
 function renderTags() {
   tablaEtiquetas.innerHTML = '';
   const tabla = document.getElementById('tabla-etiquetas');
-  if (!tags.length) {
+  let tagsFiltradas = tipoFiltroActual ? tags.filter(tag => tag.tipo === tipoFiltroActual) : tags;
+  if (!tagsFiltradas.length) {
     listaVacia.classList.remove('d-none');
     tabla.parentElement.classList.add('d-none'); // Oculta la tabla
     if (paginacionEtiquetas) paginacionEtiquetas.innerHTML = '';
@@ -43,18 +49,22 @@ function renderTags() {
   listaVacia.classList.add('d-none');
   tabla.parentElement.classList.remove('d-none'); // Muestra la tabla
   // Paginación
-  const total = tags.length;
+  const total = tagsFiltradas.length;
   const totalPaginas = Math.ceil(total / etiquetasPorPagina) || 1;
   if (paginaActualEtiquetas > totalPaginas) paginaActualEtiquetas = totalPaginas;
   const inicio = (paginaActualEtiquetas - 1) * etiquetasPorPagina;
   const fin = inicio + etiquetasPorPagina;
-  const visibles = tags.slice(inicio, fin);
+  const visibles = tagsFiltradas.slice(inicio, fin);
   visibles.forEach(tag => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><i class="bi bi-tag-fill" style="color:${tag.color}"></i></td>
+      <td>
+        <i class="bi bi-tag-fill" style="color:${tag.color}"></i>
+      </td>
       <td>${tag.nombre}</td>
-      <td><span class="badge" style="background:${tag.color}">${tag.color}</span></td>
+      <td>
+        ${tag.tipo === 'acceso' ? `<span class="badge" style="font-size:1em;">${tag.icono ? tag.icono : ''}</span>` : `<span class="badge" style="background:${tag.color}">${tag.color}</span>`}
+      </td>
       <td>${tag.tipo ? tag.tipo.charAt(0).toUpperCase() + tag.tipo.slice(1) : ''}</td>
       <td>${tag.descripcion ? tag.descripcion : ''}</td>
       <td>
@@ -65,6 +75,14 @@ function renderTags() {
     tablaEtiquetas.appendChild(tr);
   });
   renderizarPaginacionEtiquetas(total);
+}
+// Filtro de tipo de etiqueta
+if (filtroTipoEtiqueta) {
+  filtroTipoEtiqueta.addEventListener('change', function() {
+    tipoFiltroActual = this.value;
+    paginaActualEtiquetas = 1;
+    renderTags();
+  });
 }
 
 function renderizarPaginacionEtiquetas(totalEtiquetas) {
@@ -117,10 +135,29 @@ btnNuevaEtiqueta.addEventListener('click', () => {
   formEtiqueta.reset();
   inputId.value = '';
   inputColor.value = '#009879';
-  inputTipo.value = 'incidencia';
+  // Si el tipo es acceso, poner emoji por defecto
+  if (inputTipo.value === 'acceso') {
+    inputIcono.value = '🩸';
+    colorGroup.classList.add('d-none');
+    iconoGroup.classList.remove('d-none');
+  } else {
+    inputIcono.value = '';
+    colorGroup.classList.remove('d-none');
+    iconoGroup.classList.add('d-none');
+  }
   modalEtiqueta.show();
   document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Nueva Etiqueta';
   paginaActualEtiquetas = 1;
+});
+// Mostrar/ocultar campos según el tipo seleccionado
+inputTipo.addEventListener('change', function() {
+  if (this.value === 'acceso') {
+    colorGroup.classList.add('d-none');
+    iconoGroup.classList.remove('d-none');
+  } else {
+    colorGroup.classList.remove('d-none');
+    iconoGroup.classList.add('d-none');
+  }
 });
 
 tablaEtiquetas.addEventListener('click', async (e) => {
@@ -133,6 +170,18 @@ tablaEtiquetas.addEventListener('click', async (e) => {
       inputColor.value = tag.color;
       inputDescripcion.value = tag.descripcion || '';
       inputTipo.value = tag.tipo || 'incidencia';
+      inputIcono.value = tag.icono || '';
+      // Mostrar/ocultar campos según el tipo seleccionado
+      if (tag.tipo === 'acceso') {
+        colorGroup.classList.add('d-none');
+        iconoGroup.classList.remove('d-none');
+        // Actualiza el botón con el emoji guardado
+        const iconoBtn = document.getElementById('etiqueta-icono-btn');
+        if (iconoBtn) iconoBtn.textContent = tag.icono || '🩸';
+      } else {
+        colorGroup.classList.remove('d-none');
+        iconoGroup.classList.add('d-none');
+      }
       modalEtiqueta.show();
       document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Editar Etiqueta';
     }
@@ -150,6 +199,12 @@ formEtiqueta.addEventListener('submit', async (e) => {
   const color = inputColor.value;
   const descripcion = inputDescripcion.value.trim();
   const tipo = inputTipo.value;
+  // Si es acceso y el icono está vacío, poner emoji por defecto
+  let icono = inputIcono.value.trim();
+  if (tipo === 'acceso' && !icono) {
+    icono = '🩸';
+    inputIcono.value = icono;
+  }
   const id = inputId.value;
   if (!nombre) return;
   // Validación de unicidad (case-insensitive)
@@ -172,10 +227,10 @@ formEtiqueta.addEventListener('submit', async (e) => {
   }
   try {
     if (id) {
-      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo });
+      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo, icono });
       showAlert('Etiqueta actualizada correctamente', 'success');
     } else {
-      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo });
+      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo, icono });
       showAlert('Etiqueta creada correctamente', 'success');
     }
     modalEtiqueta.hide();
