@@ -113,6 +113,21 @@ document.addEventListener('DOMContentLoaded', () => {
 	const modalPaciente = document.getElementById('modal-paciente');
 	if (modalPaciente) {
 		modalPaciente.addEventListener('show.bs.modal', async () => {
+			// Poblar select de tipo acceso dinámicamente
+			if (selectTipoAccesoForm) {
+				selectTipoAccesoForm.innerHTML = '<option value="" hidden selected>Selecciona tipo de acceso...</option>';
+				let etiquetasAcceso = [];
+				try {
+					const allTags = await ipcRenderer.invoke('tags-get-all');
+					etiquetasAcceso = allTags.filter(tag => tag.tipo === 'acceso');
+				} catch {}
+				etiquetasAcceso.forEach(tag => {
+					const opt = document.createElement('option');
+					opt.value = tag.nombre;
+					opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+					selectTipoAccesoForm.appendChild(opt);
+				});
+			}
 			// Obtener las etiquetas realmente asociadas desde la BD
 			let asociadas = [];
 			try {

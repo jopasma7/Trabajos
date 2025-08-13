@@ -18,6 +18,12 @@ const inputIcono = document.getElementById('etiqueta-icono');
 const colorGroup = document.getElementById('etiqueta-color-group');
 const iconoGroup = document.getElementById('etiqueta-icono-group');
 const listaVacia = document.getElementById('tags-lista-vacia');
+// Ubicaciones anatómicas dinámicas
+const ubicacionesGroup = document.getElementById('etiqueta-ubicaciones-group');
+const ubicacionInput = document.getElementById('etiqueta-ubicacion-input');
+const ubicacionAddBtn = document.getElementById('etiqueta-ubicacion-add');
+const ubicacionesLista = document.getElementById('etiqueta-ubicaciones-lista');
+let ubicacionesAnatomicas = [];
 
 const cardEtiquetas = document.querySelector('#etiquetas-section .card');
 const paginacionEtiquetas = document.getElementById('paginacion-etiquetas');
@@ -135,15 +141,19 @@ btnNuevaEtiqueta.addEventListener('click', () => {
   formEtiqueta.reset();
   inputId.value = '';
   inputColor.value = '#009879';
-  // Si el tipo es acceso, poner emoji por defecto
+  ubicacionesAnatomicas = [];
+  renderizarUbicaciones();
+  // Si el tipo es acceso, poner emoji por defecto y mostrar ubicaciones
   if (inputTipo.value === 'acceso') {
     inputIcono.value = '🩸';
     colorGroup.classList.add('d-none');
     iconoGroup.classList.remove('d-none');
+    ubicacionesGroup.classList.remove('d-none');
   } else {
     inputIcono.value = '';
     colorGroup.classList.remove('d-none');
     iconoGroup.classList.add('d-none');
+    ubicacionesGroup.classList.add('d-none');
   }
   modalEtiqueta.show();
   document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Nueva Etiqueta';
@@ -154,9 +164,11 @@ inputTipo.addEventListener('change', function() {
   if (this.value === 'acceso') {
     colorGroup.classList.add('d-none');
     iconoGroup.classList.remove('d-none');
+    ubicacionesGroup.classList.remove('d-none');
   } else {
     colorGroup.classList.remove('d-none');
     iconoGroup.classList.add('d-none');
+    ubicacionesGroup.classList.add('d-none');
   }
 });
 
@@ -171,16 +183,20 @@ tablaEtiquetas.addEventListener('click', async (e) => {
       inputDescripcion.value = tag.descripcion || '';
       inputTipo.value = tag.tipo || 'incidencia';
       inputIcono.value = tag.icono || '';
+      ubicacionesAnatomicas = Array.isArray(tag.ubicaciones) ? [...tag.ubicaciones] : [];
+      renderizarUbicaciones();
       // Mostrar/ocultar campos según el tipo seleccionado
       if (tag.tipo === 'acceso') {
         colorGroup.classList.add('d-none');
         iconoGroup.classList.remove('d-none');
+        ubicacionesGroup.classList.remove('d-none');
         // Actualiza el botón con el emoji guardado
         const iconoBtn = document.getElementById('etiqueta-icono-btn');
         if (iconoBtn) iconoBtn.textContent = tag.icono || '🩸';
       } else {
         colorGroup.classList.remove('d-none');
         iconoGroup.classList.add('d-none');
+        ubicacionesGroup.classList.add('d-none');
       }
       modalEtiqueta.show();
       document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Editar Etiqueta';
@@ -188,7 +204,7 @@ tablaEtiquetas.addEventListener('click', async (e) => {
   } else if (e.target.closest('.btn-eliminar')) {
     const id = e.target.closest('.btn-eliminar').dataset.id;
     await ipcRenderer.invoke('tags-delete', Number(id));
-  showAlert('Etiqueta eliminada correctamente', 'success');
+    showAlert('Etiqueta eliminada correctamente', 'success');
     cargarTags();
   }
 });
@@ -226,17 +242,77 @@ formEtiqueta.addEventListener('submit', async (e) => {
     errorDiv.remove();
   }
   try {
+    const ubicaciones = (tipo === 'acceso') ? [...ubicacionesAnatomicas] : [];
     if (id) {
-      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo, icono });
+      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo, icono, ubicaciones });
       showAlert('Etiqueta actualizada correctamente', 'success');
     } else {
-      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo, icono });
+      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo, icono, ubicaciones });
       showAlert('Etiqueta creada correctamente', 'success');
     }
     modalEtiqueta.hide();
     cargarTags();
   } catch (err) {
     errorDiv.textContent = 'Error al guardar la etiqueta.';
+  }
+});
+
+function renderizarUbicaciones() {
+  ubicacionesLista.innerHTML = '';
+  if (!ubicacionesAnatomicas.length) {
+    ubicacionesLista.style.display = '';
+    return;
+  }
+  // Color azul Bootstrap (btn-success: #198754, btn-primary: #0d6efd)
+  const color = '#0d6efd';
+  // Crear contenedor flex row
+  const flexDiv = document.createElement('div');
+  flexDiv.style.display = 'flex';
+  flexDiv.style.flexDirection = 'row';
+  flexDiv.style.flexWrap = 'wrap';
+  flexDiv.style.gap = '8px';
+  flexDiv.style.paddingTop = '8px';
+  flexDiv.style.paddingBottom = '8px';
+  ubicacionesAnatomicas.forEach((ubic, idx) => {
+    const badge = document.createElement('span');
+    badge.className = 'badge d-flex align-items-center gap-1 px-3 py-2';
+    badge.style.background = color;
+    badge.style.color = '#fff';
+    badge.style.fontSize = '1em';
+    badge.style.maxWidth = '280px';
+    badge.style.overflow = 'hidden';
+    badge.style.textOverflow = 'ellipsis';
+    badge.style.whiteSpace = 'nowrap';
+    badge.innerHTML = `
+      <span style="flex:1;min-width:0;">${ubic}</span>
+      <button type="button" class="btn btn-sm btn-light ms-1 px-1 py-0" style="font-size:0.95em;line-height:1;" title="Eliminar ubicación">
+        <i class="bi bi-x"></i>
+      </button>
+    `;
+    const btnDel = badge.querySelector('button');
+    btnDel.onclick = () => {
+      ubicacionesAnatomicas.splice(idx, 1);
+      renderizarUbicaciones();
+    };
+    flexDiv.appendChild(badge);
+  });
+  ubicacionesLista.appendChild(flexDiv);
+}
+
+ubicacionAddBtn.addEventListener('click', () => {
+  const val = ubicacionInput.value.trim();
+  if (val && !ubicacionesAnatomicas.includes(val)) {
+    ubicacionesAnatomicas.push(val);
+    renderizarUbicaciones();
+    ubicacionInput.value = '';
+    ubicacionInput.focus();
+  }
+});
+
+ubicacionInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    ubicacionAddBtn.click();
   }
 });
 

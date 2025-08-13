@@ -239,10 +239,7 @@
                         <div class="col-md-6">
                           <label for="paciente-tipoacceso" class="form-label">Tipo Acceso</label>
                           <select class="form-select" id="paciente-tipoacceso" required>
-                            <option value="">Selecciona...</option>
-                            <option value="fistula">🩸 Fístula</option>
-                            <option value="cateter">➰ Catéter</option>
-                            <option value="protesis">🦾 Prótesis</option>
+                            <option value="" disabled selected>Selecciona tipo de acceso...</option>
                           </select>
                         </div>
                         <div class="col-md-6">
@@ -575,17 +572,26 @@
                             <option value="acceso">Acceso</option>
                           </select>
                         </div>
-                        <div class="col-md-1" id="etiqueta-color-group">
-                          <label for="etiqueta-color" class="form-label">Color</label>
-                          <input type="color" class="form-control form-control-color" id="etiqueta-color" value="#009879" title="Elige un color">
-                        </div>
-                        <div class="col-md-1 d-none" id="etiqueta-icono-group">
-                          <label for="etiqueta-icono" class="form-label">Emoji</label>
-                          <div class="input-group">
-                            <button type="button" class="btn btn-outline-secondary" id="etiqueta-icono-btn" style="font-size:1.2rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">🩸</button>
-                            <input type="hidden" id="etiqueta-icono" value="">
+                          <div class="col-md-1 d-none" id="etiqueta-icono-group">
+                            <label for="etiqueta-icono" class="form-label">Emoji</label>
+                            <div class="input-group">
+                              <button type="button" class="btn btn-outline-secondary" id="etiqueta-icono-btn" style="font-size:1.2rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">🩸</button>
+                              <input type="hidden" id="etiqueta-icono" value="">
+                            </div>
                           </div>
-                        </div>
+                          <div class="col-md-1" id="etiqueta-color-group">
+                            <label for="etiqueta-color" class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" id="etiqueta-color" value="#009879" title="Elige un color">
+                          </div>
+                          <div class="col-12 d-none" id="etiqueta-ubicaciones-group">
+                            <label class="form-label">Añadir Posible Ubicación Anatómica</label>
+                            <div class="input-group mb-2" style="max-width:400px;">
+                              <input type="text" class="form-control" id="etiqueta-ubicacion-input" placeholder="Ej: Radio Cefálica">
+                              <button type="button" class="btn btn-outline-success" id="etiqueta-ubicacion-add"><i class="bi bi-plus-circle"></i> Añadir</button>
+                            </div>
+                            <ul id="etiqueta-ubicaciones-lista" class="list-group mb-2"></ul>
+                            <div class="form-text">Puedes añadir una o varias ubicaciones anatómicas asociadas a este tipo de acceso.</div>
+                          </div>
                         <div class="col-12">
                           <label for="etiqueta-descripcion" class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>
                           <textarea class="form-control" id="etiqueta-descripcion" rows="2" maxlength="100"></textarea>
