@@ -34,37 +34,12 @@ db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   categoria TEXT,
   completado INTEGER DEFAULT 0
 )`).run();
-// --- MIGRACIÓN: Si la tabla pacientes tiene columna 'ubicacion', migrar a ubicacion_anatomica y ubicacion_lado ---
-const tableInfo = db.prepare("PRAGMA table_info(pacientes)").all();
-const hasOldUbicacion = tableInfo.some(col => col.name === 'ubicacion');
-const hasNewUbicacion = tableInfo.some(col => col.name === 'ubicacion_anatomica');
-if (hasOldUbicacion && !hasNewUbicacion) {
-  // Renombrar tabla antigua
-  db.prepare('ALTER TABLE pacientes RENAME TO pacientes_old').run();
-  // Crear nueva tabla
-  db.prepare(`CREATE TABLE pacientes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    apellidos TEXT NOT NULL,
-    tipo_acceso TEXT,
-    fecha_instalacion TEXT,
-    ubicacion_anatomica TEXT,
-    ubicacion_lado TEXT
-  )`).run();
-  // Migrar datos (ubicacion -> ubicacion_anatomica, ubicacion_lado vacía)
-  const rows = db.prepare('SELECT * FROM pacientes_old').all();
-  const insert = db.prepare('INSERT INTO pacientes (id, nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  for (const row of rows) {
-    insert.run(row.id, row.nombre, row.apellidos, row.tipo_acceso, row.fecha_instalacion, row.ubicacion, '');
-  }
-  db.prepare('DROP TABLE pacientes_old').run();
-}
-// Crear tabla pacientes si no existe (campos nuevos)
+// Crear tabla pacientes si no existe (solo tipo_acceso_id)
 db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   apellidos TEXT NOT NULL,
-  tipo_acceso TEXT,
+  tipo_acceso_id INTEGER,
   fecha_instalacion TEXT,
   ubicacion_anatomica TEXT,
   ubicacion_lado TEXT
@@ -240,11 +215,11 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
-    paciente.tipo_acceso,
+    paciente.tipo_acceso_id,
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado
@@ -253,11 +228,11 @@ db.addPaciente = function(paciente) {
 };
 
 db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
-    paciente.tipo_acceso,
+    paciente.tipo_acceso_id,
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
@@ -315,6 +290,27 @@ db.upsertEventos = function(eventos) {
 };
  
 // --- Etiquetas predefinidas para Motivo de Derivación ---
+// --- Etiquetas predefinidas para Tipo de Acceso ---
+function crearEtiquetasTipoAcceso() {
+  const tipos = [
+    { nombre: 'fistula', color: '#2980b9', descripcion: 'Fístula arteriovenosa', tipo: 'acceso', icono: '🩸' },
+    { nombre: 'cateter', color: '#27ae60', descripcion: 'Catéter venoso', tipo: 'acceso', icono: '🧬' },
+    { nombre: 'protesis', color: '#8e44ad', descripcion: 'Prótesis vascular', tipo: 'acceso', icono: '🦾' }
+  ];
+  tipos.forEach(t => {
+    const existe = db.prepare('SELECT 1 FROM tags WHERE LOWER(nombre) = LOWER(?) AND tipo = ?').get(t.nombre, 'acceso');
+    if (!existe) {
+      db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)').run(t.nombre, t.color, t.descripcion, t.tipo, t.icono);
+    }
+  });
+}
+
+// Ejecutar al iniciar si la tabla tags existe
+try {
+  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
+    crearEtiquetasTipoAcceso();
+  }
+} catch (e) { /* ignorar si no existe la tabla */ }
 function crearEtiquetasMotivoDerivacion() {
   const motivos = [
     { nombre: 'Flujo insuficiente', color: '#e74c3c', descripcion: 'El flujo sanguíneo es menor al esperado.' },
@@ -348,27 +344,34 @@ try {
 } catch (e) { /* ignorar si no existe la tabla */ }
 
 
-// --- Insertar 25 pacientes de prueba si la tabla está vacía ---
+// --- Insertar pacientes de prueba si la tabla está vacía ---
 const pacientesCount = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
 if (pacientesCount === 0) {
-    const nombres = [
-      ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
-      ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
-      ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
-      ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
-      ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina'],
-      ['Isabel', 'Serrano'], ['Hugo', 'Reyes'], ['Nuria', 'Cano'], ['Pablo', 'Iglesias'], ['Rosa', 'Delgado'],
-      ['Iván', 'Peña'], ['Natalia', 'Cabrera'], ['Samuel', 'Méndez'], ['Clara', 'Aguilar'], ['Álvaro', 'Santos'],
-      ['Julia', 'Castillo'], ['Rubén', 'Rojas'], ['Silvia', 'Ortega'], ['Óscar', 'Cruz'], ['Lorena', 'Ramos'],
-      ['Enrique', 'Vega'], ['Mónica', 'Herrera'], ['Guillermo', 'Campos'], ['Teresa', 'Molina'], ['Emilio', 'Sanz'],
-      ['Irene', 'Pérez'], ['Tomás', 'Vicente'], ['Andrea', 'Cordero'], ['Jesús', 'León'], ['Eva', 'Fuentes'],
-      ['Cristian', 'Soto'], ['Verónica', 'Carrasco'], ['Ángel', 'Blanco'], ['Sonia', 'Reina'], ['Felipe', 'Pastor'],
-      ['Alicia', 'Nieto'], ['Marcos', 'Bravo'], ['Esther', 'Solís'], ['Raúl', 'Benítez'], ['Patricia', 'Lara'],
-      ['Joaquín', 'Pascual'], ['Miriam', 'Vidal'], ['Vicente', 'Gallardo'], ['Noelia', 'Salas'], ['Jorge', 'Arias'],
-      ['Cristina', 'Pardo'], ['Fernando', 'Redondo'], ['Elisa', 'Calvo'], ['Martín', 'Serrano'], ['Celia', 'Moya'],
-      ['Gabriel', 'Sáez'], ['Rocío', 'Valle'], ['Francisca', 'Morales'], ['Julián', 'Crespo'], ['Aitana', 'Ríos'],
-      ['Matías', 'Garrido'], ['Aroa', 'Soler'], ['Ignacio', 'Esteban'], ['Nerea', 'Gallego'], ['Aleix', 'Paredes']
-    ];
+  const nombres = [
+    ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
+    ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
+    ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
+    ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
+    ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina'],
+    ['Isabel', 'Serrano'], ['Hugo', 'Reyes'], ['Nuria', 'Cano'], ['Pablo', 'Iglesias'], ['Rosa', 'Delgado'],
+    ['Iván', 'Peña'], ['Natalia', 'Cabrera'], ['Samuel', 'Méndez'], ['Clara', 'Aguilar'], ['Álvaro', 'Santos'],
+    ['Julia', 'Castillo'], ['Rubén', 'Rojas'], ['Silvia', 'Ortega'], ['Óscar', 'Cruz'], ['Lorena', 'Ramos'],
+    ['Enrique', 'Vega'], ['Mónica', 'Herrera'], ['Guillermo', 'Campos'], ['Teresa', 'Molina'], ['Emilio', 'Sanz'],
+    ['Irene', 'Pérez'], ['Tomás', 'Vicente'], ['Andrea', 'Cordero'], ['Jesús', 'León'], ['Eva', 'Fuentes'],
+    ['Cristian', 'Soto'], ['Verónica', 'Carrasco'], ['Ángel', 'Blanco'], ['Sonia', 'Reina'], ['Felipe', 'Pastor'],
+    ['Alicia', 'Nieto'], ['Marcos', 'Bravo'], ['Esther', 'Solís'], ['Raúl', 'Benítez'], ['Patricia', 'Lara'],
+    ['Joaquín', 'Pascual'], ['Miriam', 'Vidal'], ['Vicente', 'Gallardo'], ['Noelia', 'Salas'], ['Jorge', 'Arias'],
+    ['Cristina', 'Pardo'], ['Fernando', 'Redondo'], ['Elisa', 'Calvo'], ['Martín', 'Serrano'], ['Celia', 'Moya'],
+    ['Gabriel', 'Sáez'], ['Rocío', 'Valle'], ['Francisca', 'Morales'], ['Julián', 'Crespo'], ['Aitana', 'Ríos'],
+    ['Matías', 'Garrido'], ['Aroa', 'Soler'], ['Ignacio', 'Esteban'], ['Nerea', 'Gallego'], ['Aleix', 'Paredes']
+  ];
+  // Obtener los ids de los tipos de acceso
+  const tags = db.getAllTags().filter(t => ['fistula', 'cateter', 'protesis'].includes(t.nombre.toLowerCase()));
+  const tipoAccesoIds = {
+    fistula: tags.find(t => t.nombre.toLowerCase() === 'fistula')?.id || 1,
+    cateter: tags.find(t => t.nombre.toLowerCase() === 'cateter')?.id || 2,
+    protesis: tags.find(t => t.nombre.toLowerCase() === 'protesis')?.id || 3
+  };
   const tipos = ['fistula', 'cateter', 'protesis'];
   const ubicaciones = {
     fistula: ['Radio Cefálica', 'Braquio Cefálica'],
@@ -376,8 +379,7 @@ if (pacientesCount === 0) {
     cateter: ['Yugular', 'Femoral']
   };
   const lados = ['Izquierda', 'Derecha'];
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
-  // Insertar los 75 primeros
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
   for (let i = 0; i < 75; i++) {
     const tipo = tipos[i % 3];
     let ubicacion_anatomica = '';
@@ -392,13 +394,12 @@ if (pacientesCount === 0) {
     stmt.run(
       nombres[i][0],
       nombres[i][1],
-      tipo,
+      tipoAccesoIds[tipo],
       `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
       ubicacion_anatomica,
       ubicacion_lado
     );
   }
-  // Insertar 100 pacientes adicionales ficticios
   for (let i = 75; i < 175; i++) {
     const tipo = tipos[i % 3];
     let ubicacion_anatomica = '';
@@ -413,13 +414,13 @@ if (pacientesCount === 0) {
     stmt.run(
       `Paciente${i+1}`,
       `Apellido${i+1}`,
-      tipo,
+      tipoAccesoIds[tipo],
       `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
       ubicacion_anatomica,
       ubicacion_lado
     );
   }
-  console.log('Se insertaron 25 pacientes reales de prueba en la base de datos.');
+  console.log('Se insertaron pacientes de prueba en la base de datos.');
 }
 
 module.exports = db;

@@ -60,11 +60,11 @@ ipcMain.handle('get-pacientes', () => {
 
 // Ejemplo: Agregar un paciente
 ipcMain.handle('add-paciente', (event, paciente) => {
-  const stmt = db.prepare(`INSERT INTO pacientes (nombre, apellidos, tipo_acceso, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
-    paciente.tipo_acceso,
+    paciente.tipo_acceso_id,
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado
@@ -74,11 +74,11 @@ ipcMain.handle('add-paciente', (event, paciente) => {
 });
   // Editar un paciente
   ipcMain.handle('edit-paciente', (event, paciente) => {
-    const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?`);
+    const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ? WHERE id = ?`);
       const info = stmt.run(
         paciente.nombre,
         paciente.apellidos,
-        paciente.tipo_acceso,
+        paciente.tipo_acceso_id,
         paciente.fecha_instalacion,
         paciente.ubicacion_anatomica,
         paciente.ubicacion_lado,

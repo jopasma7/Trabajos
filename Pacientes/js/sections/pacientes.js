@@ -51,6 +51,7 @@ const selectUbicacionAnatomica = document.getElementById('paciente-ubicacion-ana
 const selectUbicacionLado = document.getElementById('paciente-ubicacion-lado');
 const listaSimpleContainer = document.getElementById('paciente-etiquetas-lista-simple');
 let etiquetasDisponibles = [];
+let etiquetasAccesoDisponibles = [];
 let etiquetasSeleccionadas = [];
 let etiquetasYaAsociadas = [];
 
@@ -63,14 +64,13 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 	} catch (e) {
 		return;
 	}
-	etiquetasDisponibles = await ipcRenderer.invoke('tags-get-all');
+	etiquetasDisponibles = (await ipcRenderer.invoke('tags-get-all')).filter(tag => tag.tipo === 'incidencia');
 	listaSimpleContainer.innerHTML = '';
-	// Si se pasan ambos arrays, separamos correctamente
+	// ...existing code...
 	if (selectedIds && Array.isArray(asociadasIds)) {
 		etiquetasSeleccionadas = [...selectedIds];
 		etiquetasYaAsociadas = [...asociadasIds];
 	} else if (selectedIds) {
-		// Compatibilidad: si solo se pasa uno, se asume que son las asociadas
 		etiquetasSeleccionadas = [...selectedIds];
 		etiquetasYaAsociadas = [...selectedIds];
 	} else if (!pacienteEditando) {
@@ -113,20 +113,56 @@ document.addEventListener('DOMContentLoaded', () => {
 	const modalPaciente = document.getElementById('modal-paciente');
 	if (modalPaciente) {
 		modalPaciente.addEventListener('show.bs.modal', async () => {
+			// Si no se está editando, limpiar el id global
+			if (!window.pacienteEditandoTipoAccesoId) {
+				window.pacienteEditandoTipoAccesoId = undefined;
+			}
 			// Poblar select de tipo acceso dinámicamente
 			if (selectTipoAccesoForm) {
-				selectTipoAccesoForm.innerHTML = '<option value="" hidden selected>Selecciona tipo de acceso...</option>';
-				let etiquetasAcceso = [];
+				selectTipoAccesoForm.innerHTML = '';
+				// Si NO se está editando, añadir opción inicial
+				if (window.pacienteEditandoTipoAccesoId === undefined || window.pacienteEditandoTipoAccesoId === null || window.pacienteEditandoTipoAccesoId === '') {
+					const optInit = document.createElement('option');
+					optInit.value = '';
+					optInit.textContent = 'Selecciona tipo de acceso...';
+					optInit.disabled = true;
+					optInit.selected = true;
+					selectTipoAccesoForm.appendChild(optInit);
+				}
 				try {
 					const allTags = await ipcRenderer.invoke('tags-get-all');
-					etiquetasAcceso = allTags.filter(tag => tag.tipo === 'acceso');
+					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
 				} catch {}
-				etiquetasAcceso.forEach(tag => {
+				etiquetasAccesoDisponibles.forEach(tag => {
 					const opt = document.createElement('option');
-					opt.value = tag.nombre;
+					opt.value = String(tag.id);
 					opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
 					selectTipoAccesoForm.appendChild(opt);
 				});
+				// Asignar el valor del select solo si se está editando
+				if (window.pacienteEditandoTipoAccesoId !== undefined && window.pacienteEditandoTipoAccesoId !== null && window.pacienteEditandoTipoAccesoId !== '') {
+					setTimeout(() => {
+						selectTipoAccesoForm.value = String(window.pacienteEditandoTipoAccesoId);
+						selectTipoAccesoForm.dispatchEvent(new Event('change'));
+						// Mostrar campos de ubicación si el tipo de acceso tiene ubicaciones
+						const tag = etiquetasAccesoDisponibles.find(t => String(t.id) === String(window.pacienteEditandoTipoAccesoId));
+						const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
+						const ladoGroup = selectUbicacionLado.closest('.col-5');
+						if (tag && Array.isArray(tag.ubicaciones) && tag.ubicaciones.length > 0) {
+							if (ubicacionGroup) ubicacionGroup.style.display = '';
+							if (ladoGroup) ladoGroup.style.display = '';
+						} else {
+							if (ubicacionGroup) ubicacionGroup.style.display = 'none';
+							if (ladoGroup) ladoGroup.style.display = 'none';
+						}
+					}, 60);
+				} else {
+					// Si es nuevo paciente, ocultar los campos
+					const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
+					const ladoGroup = selectUbicacionLado.closest('.col-5');
+					if (ubicacionGroup) ubicacionGroup.style.display = 'none';
+					if (ladoGroup) ladoGroup.style.display = 'none';
+				}
 			}
 			// Ocultar los campos de ubicación anatómica y lado por defecto
 			const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
@@ -140,6 +176,10 @@ document.addEventListener('DOMContentLoaded', () => {
 			} catch {}
 			cargarEtiquetasDisponibles(etiquetasSeleccionadas, asociadas);
 		});
+		// Limpiar el id global al cerrar el modal
+		modalPaciente.addEventListener('hidden.bs.modal', () => {
+			window.pacienteEditandoTipoAccesoId = undefined;
+		});
 	}
 });
 
@@ -152,31 +192,40 @@ if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 	if (ladoGroup) ladoGroup.style.display = 'none';
 
 	selectTipoAccesoForm.addEventListener('change', function() {
-		const tipo = this.value;
+		const id = Number(this.value);
 		selectUbicacionAnatomica.innerHTML = '';
 		selectUbicacionLado.value = '';
 		selectUbicacionLado.disabled = true;
-		// Buscar la etiqueta seleccionada en etiquetasDisponibles
-		const tag = (etiquetasDisponibles || []).find(t => t.tipo === 'acceso' && t.nombre === tipo);
+		// Buscar la etiqueta seleccionada en etiquetasAccesoDisponibles por id
+		const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === id);
 		if (!tag || !Array.isArray(tag.ubicaciones) || tag.ubicaciones.length === 0) {
 			selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona tipo de acceso primero</option>';
 			selectUbicacionAnatomica.disabled = true;
 			if (ubicacionGroup) ubicacionGroup.style.display = 'none';
 			if (ladoGroup) ladoGroup.style.display = 'none';
+			   selectUbicacionAnatomica.required = false;
 			return;
 		}
 		selectUbicacionAnatomica.disabled = false;
 		selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona ubicación...</option>' +
-			tag.ubicaciones.map(u => `<option value="${u}">${u}</option>`).join('');
+			tag.ubicaciones.map(u => `<option value="${u}">${u}</option>`).join('') +
+			'<option value="Otra">Otra</option>';
 		if (ubicacionGroup) ubicacionGroup.style.display = '';
 		if (ladoGroup) ladoGroup.style.display = '';
+		   selectUbicacionAnatomica.required = true;
 	});
 	selectUbicacionAnatomica.addEventListener('change', function() {
 		if (this.value) {
 			selectUbicacionLado.disabled = false;
+			if (this.value === 'Otra') {
+				selectUbicacionLado.required = false;
+			} else {
+				selectUbicacionLado.required = true;
+			}
 		} else {
 			selectUbicacionLado.value = '';
 			selectUbicacionLado.disabled = true;
+			selectUbicacionLado.required = false;
 		}
 	});
 	// Inicialmente deshabilitados
@@ -290,7 +339,7 @@ function renderizarPacientes(pacientes) {
 
 		tr.innerHTML = `
 			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos}</td>
-			<td>${renderTipoAccesoBadge(paciente.tipo_acceso)}</td>
+			<td>${renderTipoAccesoBadgeById(paciente.tipo_acceso_id)}</td>
 			<td>${ubicacionCompleta}</td>
 			<td>${fechaFormateada}${diasDetalle}</td>
 			<td>
@@ -303,18 +352,15 @@ function renderizarPacientes(pacientes) {
     });
 }
 // Devuelve badge con emoji y color según tipo de acceso
-function renderTipoAccesoBadge(tipo) {
-	switch ((tipo||'').toLowerCase()) {
-		case 'fistula':
-			return '<span class="badge badge-fistula" style="font-size:1em;">🩸 Fístula</span>';
-		case 'cateter':
-			return '<span class="badge badge-cateter" style="font-size:1em;">➰ Catéter</span>';
-		case 'protesis':
-			return '<span class="badge badge-protesis" style="font-size:1em;">🦾 Prótesis</span>';
-		default:
-			return '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
+function renderTipoAccesoBadgeById(tipo_acceso_id) {
+	if (!tipo_acceso_id) return '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
+	const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === tipo_acceso_id);
+	if (tag) {
+		return `<span class="badge" style="font-size:1em;font-weight:normal;background:none;color:#222;padding:0;margin:0;">${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</span>`;
 	}
+	return '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
 }
+
 
 function renderizarPaginacion(totalPacientes) {
 	if (!paginacionPacientes) return;
@@ -465,14 +511,22 @@ if (btnNuevoPaciente) {
 			const dd = String(hoy.getDate()).padStart(2, '0');
 			inputFecha.value = `${yyyy}-${mm}-${dd}`;
 		}
+		// Forzar tipo de acceso a vacío
+		const selectTipoAcceso = document.getElementById('paciente-tipoacceso');
+		if (selectTipoAcceso) {
+			selectTipoAcceso.value = '';
+		}
+					// Añadir opción inicial
+					const optInit = document.createElement('option');
+					optInit.value = '';
+					optInit.textContent = 'Selecciona tipo de acceso...';
+					optInit.disabled = true;
+					selectTipoAccesoForm.appendChild(optInit);
 	});
 }
 
 // Filtros: búsqueda, tipo de acceso, fecha
 if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual = 1; actualizarTablaPacientes(); });
-if (selectTipoAcceso) selectTipoAcceso.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
-if (inputFecha) inputFecha.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
-
 
 
 // Guardar (agregar o editar) paciente
@@ -482,9 +536,8 @@ if (formPaciente) {
 		const paciente = {
 			nombre: document.getElementById('paciente-nombre').value.trim(),
 			apellidos: document.getElementById('paciente-apellidos').value.trim(),
-			tipo_acceso: document.getElementById('paciente-tipoacceso')?.value || '',
+			tipo_acceso_id: Number(document.getElementById('paciente-tipoacceso')?.value) || null,
 			fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
-			ubicacion: document.getElementById('paciente-ubicacion')?.value || '',
 			ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
 			ubicacion_lado: selectUbicacionLado?.value || '',
 			etiquetas: [...etiquetasSeleccionadas]
@@ -592,7 +645,9 @@ if (formPaciente) {
 					await ipcRenderer.invoke('incidencia-add-con-tag', result.id, Number(inc.tagId), inc.motivo, inc.fecha);
 				}
 			}
-			mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${paciente.tipo_acceso}</b>`, 'success');
+			// Mostrar el nombre y emoji del tipo de acceso seleccionado
+			const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_id);
+			mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${tag ? (tag.icono ? tag.icono + ' ' : '') + tag.nombre : 'Sin tipo'}</b>`, 'success');
 		}
 		cargarPacientes();
 		// Cerrar modal Bootstrap
@@ -617,23 +672,46 @@ if (tablaPacientesBody) {
 				pacienteEditando = paciente.id;
 				document.getElementById('paciente-nombre').value = paciente.nombre;
 				document.getElementById('paciente-apellidos').value = paciente.apellidos;
-				const tipoAccesoInput = document.getElementById('paciente-tipoacceso');
-				if (tipoAccesoInput) {
-					tipoAccesoInput.value = paciente.tipo_acceso || '';
-					// Disparar el evento change para poblar ubicaciones
-					tipoAccesoInput.dispatchEvent(new Event('change'));
+				// Poblar el select de tipo acceso antes de asignar el valor
+				if (selectTipoAccesoForm) {
+					// Eliminar todas las opciones previas (incluida la por defecto)
+					selectTipoAccesoForm.innerHTML = '';
+					// Añadir opción inicial
+					const optInit = document.createElement('option');
+					optInit.value = '';
+					optInit.textContent = 'Selecciona tipo de acceso...';
+					optInit.disabled = true;
+					selectTipoAccesoForm.appendChild(optInit);
+					etiquetasAccesoDisponibles.forEach(tag => {
+						const opt = document.createElement('option');
+						opt.value = String(tag.id);
+						opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+						selectTipoAccesoForm.appendChild(opt);
+					});
+					// Esperar a que el select esté completamente poblado antes de asignar el valor
+					setTimeout(() => {
+						if (paciente.tipo_acceso_id && selectTipoAccesoForm.querySelector(`option[value='${paciente.tipo_acceso_id}']`)) {
+							selectTipoAccesoForm.value = String(paciente.tipo_acceso_id);
+						} else {
+							selectTipoAccesoForm.selectedIndex = 0;
+						}
+						selectTipoAccesoForm.dispatchEvent(new Event('change'));
+					}, 50);
 				}
 				const fechaInput = document.getElementById('paciente-fecha');
 				if (fechaInput) {
-					// Si la fecha está en formato ISO con hora, tomar solo la parte de la fecha
 					let fecha = paciente.fecha_instalacion || '';
 					if (fecha && fecha.includes('T')) fecha = fecha.split('T')[0];
 					fechaInput.value = fecha;
 				}
-				setTimeout(async () => {
-					if (selectUbicacionAnatomica) selectUbicacionAnatomica.value = paciente.ubicacion_anatomica || '';
+				// Esperar a que el select de ubicaciones esté poblado antes de asignar el valor y disparar el evento
+				setTimeout(() => {
+					if (selectUbicacionAnatomica) {
+						selectUbicacionAnatomica.value = paciente.ubicacion_anatomica || '';
+						selectUbicacionAnatomica.dispatchEvent(new Event('change'));
+					}
 					if (selectUbicacionLado) selectUbicacionLado.value = paciente.ubicacion_lado || '';
-				}, 50);
+				}, 100);
 				document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Editar datos del paciente';
 				const modalSubtitle = document.querySelector('#modal-paciente .modal-subtitle');
 				if (modalSubtitle) {
@@ -643,9 +721,9 @@ if (tablaPacientesBody) {
 				modal.show();
 				// Esperar a que el modal esté visible antes de cargar etiquetas
 				setTimeout(async () => {
-										const ids = await ipcRenderer.invoke('paciente-get-etiquetas', paciente.id);
-										etiquetasSeleccionadas = ids;
-										cargarEtiquetasDisponibles(ids, ids);
+					const ids = await ipcRenderer.invoke('paciente-get-etiquetas', paciente.id);
+					etiquetasSeleccionadas = ids;
+					cargarEtiquetasDisponibles(ids, ids);
 				}, 200);
 			}
 		}
@@ -691,7 +769,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	try {
 		ipcRenderer = require('electron').ipcRenderer;
 		if (ipcRenderer) {
-			etiquetasDisponibles = await ipcRenderer.invoke('tags-get-all');
+			const allTags = await ipcRenderer.invoke('tags-get-all');
+			etiquetasDisponibles = allTags;
+			etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
 		}
 	} catch (e) {}
 	cargarPacientes();
