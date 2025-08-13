@@ -532,6 +532,38 @@ function insertarEjemplos() {
   db.addHistorialClinico(paciente2, '2025-08-12', 'Intervención', 'Colocación de acceso vascular', 'Acceso tipo Hickman', 'Cuidados postoperatorios', 'Sin complicaciones. Se adjunta informe quirúrgico.', '', 'Dr. Ruiz');
 }
 insertarEjemplos();
+
+// Etiquetas por defecto para tipos de evento y diagnósticos
+const etiquetasEvento = [
+  { nombre: 'Consulta médica', descripcion: 'Visita médica programada para revisión o seguimiento.' },
+  { nombre: 'Prueba de laboratorio', descripcion: 'Análisis clínicos realizados al paciente.' },
+  { nombre: 'Intervención quirúrgica', descripcion: 'Procedimiento quirúrgico realizado.' },
+  { nombre: 'Seguimiento clínico', descripcion: 'Control periódico del estado del paciente.' },
+  { nombre: 'Urgencia', descripcion: 'Atención médica urgente por complicación.' },
+  { nombre: 'Alta hospitalaria', descripcion: 'Finalización de la estancia hospitalaria.' },
+  { nombre: 'Ingreso hospitalario', descripcion: 'Admisión del paciente en el hospital.' },
+  { nombre: 'Cambio de tratamiento', descripcion: 'Modificación en la pauta terapéutica.' },
+  { nombre: 'Revisión de medicación', descripcion: 'Evaluación y ajuste de medicamentos.' },
+  { nombre: 'Otro', descripcion: 'Evento no clasificado en las categorías anteriores.' }
+];
+const etiquetasDiagnostico = [
+  { nombre: 'Insuficiencia renal crónica', descripcion: 'Pérdida progresiva de la función renal.' },
+  { nombre: 'Hipertensión arterial', descripcion: 'Presión arterial elevada de forma crónica.' },
+  { nombre: 'Diabetes mellitus', descripcion: 'Alteración metabólica con hiperglucemia crónica.' },
+  { nombre: 'Infección de acceso vascular', descripcion: 'Infección localizada en el acceso vascular.' },
+  { nombre: 'Trombosis de fístula', descripcion: 'Obstrucción de la fístula por coágulo.' },
+  { nombre: 'Anemia', descripcion: 'Disminución de la concentración de hemoglobina.' },
+  { nombre: 'Hiperkalemia', descripcion: 'Elevación de los niveles de potasio en sangre.' },
+  { nombre: 'Edema pulmonar', descripcion: 'Acumulación de líquido en los pulmones.' },
+  { nombre: 'Sepsis', descripcion: 'Respuesta inflamatoria grave a una infección.' },
+  { nombre: 'Cardiopatía', descripcion: 'Enfermedad que afecta al corazón.' },
+  { nombre: 'Descompensación metabólica', descripcion: 'Alteración aguda del equilibrio metabólico.' },
+  { nombre: 'Fracaso renal agudo', descripcion: 'Pérdida súbita de la función renal.' }
+];
+const insertTag = db.prepare('INSERT OR IGNORE INTO tags (nombre, tipo, descripcion, color) VALUES (?, ?, ?, ?)');
+etiquetasEvento.forEach(e => insertTag.run(e.nombre, 'evento', e.descripcion, '#34c759'));
+etiquetasDiagnostico.forEach(e => insertTag.run(e.nombre, 'diagnostico', e.descripcion, '#14532d'));
+
 // db.js
 // Conexión real a better-sqlite3 y creación de tablas necesarias
 
