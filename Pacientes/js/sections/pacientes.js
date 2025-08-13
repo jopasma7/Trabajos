@@ -1,27 +1,3 @@
-// --- Reabrir modal paciente al cancelar incidencias personalizadas ---
-// --- Reabrir modal paciente solo si se cancela incidencias personalizadas ---
-document.addEventListener('DOMContentLoaded', () => {
-	const modalIncidencia = document.getElementById('modal-incidencia-inicial');
-	if (modalIncidencia) {
-		let confirmado = false;
-		// Interceptar el botón confirmar para marcar que fue confirmación
-		const btnConfirmar = document.getElementById('btn-confirmar-incidencia-inicial');
-		if (btnConfirmar) {
-			btnConfirmar.addEventListener('click', () => { confirmado = true; });
-		}
-		modalIncidencia.addEventListener('hidden.bs.modal', function (e) {
-			const modalPaciente = document.getElementById('modal-paciente');
-			if (!confirmado) {
-				// Solo si se cancela, reabrir modal paciente
-				if (modalPaciente && !modalPaciente.classList.contains('show')) {
-					const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(modalPaciente);
-					setTimeout(() => modalPacienteInst.show(), 200);
-				}
-			}
-			confirmado = false; // Reset para el siguiente uso
-		});
-	}
-});
 try {
 	const electron = require('electron');
 	console.log('[DEPURACIÓN][RENDERER] require("electron") funciona:', !!electron);
@@ -56,17 +32,20 @@ let etiquetasSeleccionadas = [];
 let etiquetasYaAsociadas = [];
 
 async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = null) {
-	if (!listaSimpleContainer) return;
+	// Elementos del modal de paciente
+	const selectIncidencia = document.getElementById('select-incidencia-etiqueta');
+	const listaIncidencia = document.getElementById('lista-incidencia-etiquetas');
+	if (!selectIncidencia || !listaIncidencia) return;
 	let ipcRenderer;
 	try {
 		ipcRenderer = require('electron').ipcRenderer;
 		if (!ipcRenderer) return;
-	} catch (e) {
-		return;
-	}
-	etiquetasDisponibles = (await ipcRenderer.invoke('tags-get-all')).filter(tag => tag.tipo === 'incidencia');
-	listaSimpleContainer.innerHTML = '';
-	// ...existing code...
+	} catch (e) { return; }
+	const allTags = await ipcRenderer.invoke('tags-get-all');
+	etiquetasDisponibles = allTags.filter(tag => tag.tipo === 'incidencia');
+	selectIncidencia.innerHTML = '';
+	listaIncidencia.innerHTML = '';
+	// Actualizar arrays
 	if (selectedIds && Array.isArray(asociadasIds)) {
 		etiquetasSeleccionadas = [...selectedIds];
 		etiquetasYaAsociadas = [...asociadasIds];
@@ -77,34 +56,62 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 		etiquetasSeleccionadas = [];
 		etiquetasYaAsociadas = [];
 	}
-	if (etiquetasDisponibles.length === 0) {
-		listaSimpleContainer.innerHTML = '<li class="text-muted">No hay etiquetas disponibles</li>';
-		return;
-	}
+	// Opciones del select: solo las no seleccionadas ni asociadas
 	etiquetasDisponibles.forEach(tag => {
-		const li = document.createElement('li');
-		const input = document.createElement('input');
-		input.type = 'checkbox';
-		input.value = tag.id;
-		const idNum = Number(tag.id);
-		if (etiquetasYaAsociadas.includes(idNum)) {
-			input.checked = true;
-			input.disabled = true;
-			li.classList.add('text-muted');
-		} else {
-			input.checked = etiquetasSeleccionadas.includes(idNum);
-			input.addEventListener('change', () => {
-				if (input.checked) {
-					if (!etiquetasSeleccionadas.includes(idNum)) etiquetasSeleccionadas.push(idNum);
-				} else {
-					const idx = etiquetasSeleccionadas.indexOf(idNum);
-					if (idx !== -1) etiquetasSeleccionadas.splice(idx, 1);
-				}
-			});
+		if (!etiquetasSeleccionadas.includes(Number(tag.id)) && !etiquetasYaAsociadas.includes(Number(tag.id))) {
+			const opt = document.createElement('option');
+			opt.value = tag.id;
+			opt.textContent = (tag.icono ? tag.icono + ' ' : '') + tag.nombre;
+			selectIncidencia.appendChild(opt);
 		}
-		li.appendChild(input);
-		li.appendChild(document.createTextNode(' ' + tag.nombre));
-		listaSimpleContainer.appendChild(li);
+	});
+	// Mostrar etiquetas seleccionadas en lista visual, con motivo y fecha
+	etiquetasSeleccionadas.forEach(id => {
+		const tag = etiquetasDisponibles.find(t => Number(t.id) === Number(id));
+		if (tag) {
+			const li = document.createElement('li');
+			li.className = 'd-flex flex-column gap-2';
+			li.style.listStyle = 'none';
+			li.style.width = 'auto';
+			li.style.padding = '8px 15px';
+			li.style.background = '#abe8d2ff';
+			li.style.fontWeight = '500';
+			li.innerHTML = `
+				<div class="d-flex align-items-center justify-content-between">
+					<span>${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</span>
+					<button type="button" class="btn btn-outline-danger btn-remove-incidencia p-0 ms-2" style="width:24px;height:24px;min-width:24px;min-height:24px;display:flex;align-items:center;justify-content:center;" data-id="${tag.id}"><i class="bi bi-x" style="font-size:1.1em;"></i></button>
+				</div>
+				<div class="row g-2">
+					<div class="col-7">
+						<input type="text" class="form-control form-control-sm" placeholder="Motivo" data-motivo-id="${tag.id}">
+					</div>
+					<div class="col-5">
+						<input type="date" class="form-control form-control-sm" data-fecha-id="${tag.id}" value="${(new Date()).toISOString().split('T')[0]}">
+					</div>
+				</div>
+			`;
+			listaIncidencia.appendChild(li);
+		}
+	});
+	// Añadir evento al botón de añadir
+	const btnAdd = document.getElementById('btn-add-incidencia-etiqueta');
+	if (btnAdd) {
+		btnAdd.onclick = () => {
+			const selected = selectIncidencia.value;
+			if (selected && !etiquetasSeleccionadas.includes(Number(selected))) {
+				etiquetasSeleccionadas.push(Number(selected));
+				cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
+			}
+		};
+	}
+	// Evento para eliminar etiqueta seleccionada
+	listaIncidencia.querySelectorAll('.btn-remove-incidencia').forEach(btn => {
+		btn.onclick = () => {
+			const id = Number(btn.getAttribute('data-id'));
+			const idx = etiquetasSeleccionadas.indexOf(id);
+			if (idx !== -1) etiquetasSeleccionadas.splice(idx, 1);
+			cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
+		};
 	});
 }
 
@@ -531,129 +538,69 @@ if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual 
 
 // Guardar (agregar o editar) paciente
 if (formPaciente) {
-	formPaciente.addEventListener('submit', async (e) => {
-		e.preventDefault();
-		const paciente = {
-			nombre: document.getElementById('paciente-nombre').value.trim(),
-			apellidos: document.getElementById('paciente-apellidos').value.trim(),
-			tipo_acceso_id: Number(document.getElementById('paciente-tipoacceso')?.value) || null,
-			fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
-			ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
-			ubicacion_lado: selectUbicacionLado?.value || '',
-			etiquetas: [...etiquetasSeleccionadas]
-		};
+    formPaciente.addEventListener('submit', async (e) => {
+        console.log('[DEBUG] Listener submit paciente disparado');
+        e.preventDefault();
+        const paciente = {
+            nombre: document.getElementById('paciente-nombre').value.trim(),
+            apellidos: document.getElementById('paciente-apellidos').value.trim(),
+            tipo_acceso_id: Number(document.getElementById('paciente-tipoacceso')?.value) || null,
+            fecha_instalacion: document.getElementById('paciente-fecha')?.value || '',
+            ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
+            ubicacion_lado: selectUbicacionLado?.value || '',
+            etiquetas: [...etiquetasSeleccionadas]
+        };
 
-		// Solo permitir añadir incidencias nuevas (no duplicar las ya asociadas)
-		const nuevasEtiquetas = etiquetasSeleccionadas.filter(id => !etiquetasYaAsociadas.includes(id));
+        const nuevasEtiquetas = etiquetasSeleccionadas.filter(id => !etiquetasYaAsociadas.includes(id));
 
-		// Modal de incidencias personalizadas solo para las nuevas
-		const showIncidenciaModal = (defaultMotivo, defaultFecha, etiquetasNuevas) => {
-			return new Promise(resolve => {
-				// Guardar el estado previo de etiquetas
-				const etiquetasSeleccionadasPrev = [...etiquetasSeleccionadas];
-				const etiquetasYaAsociadasPrev = [...etiquetasYaAsociadas];
-				// Cerrar el modal de paciente antes de abrir el de incidencia
-				const modalPacienteInst = bootstrap.Modal.getOrCreateInstance(document.getElementById('modal-paciente'));
-				modalPacienteInst.hide();
-				const modalIncidencia = new bootstrap.Modal(document.getElementById('modal-incidencia-inicial'));
-				const container = document.getElementById('incidencias-multiples-container');
-				container.innerHTML = '';
-				// Obtener nombres de etiquetas seleccionadas
-				const etiquetas = etiquetasDisponibles.filter(tag => etiquetasNuevas.includes(Number(tag.id)));
-				const hoy = (new Date()).toISOString().split('T')[0];
-				// Agrupar en filas de dos columnas
-				for (let i = 0; i < etiquetas.length; i += 2) {
-					const row = document.createElement('div');
-					row.className = 'row';
-					for (let j = 0; j < 2; j++) {
-						const tag = etiquetas[i + j];
-						if (!tag) break;
-						const col = document.createElement('div');
-						col.className = 'col-12 col-md-6 mb-3';
-						col.innerHTML = `
-							<div class="border rounded p-2 h-100">
-								<div class="fw-bold mb-2 d-flex align-items-center gap-2">
-									<span class="badge" style="background:${tag.color};color:#fff;font-size:1em;"><i class="bi bi-tag"></i></span>
-									<span>${tag.nombre}</span>
-								</div>
-								<div class="mb-2">
-									<input type="text" class="form-control" id="input-motivo-incidencia-${tag.id}" maxlength="100" placeholder="Motivo de la incidencia...">
-								</div>
-								<div>
-									<input type="date" class="form-control" id="input-fecha-incidencia-${tag.id}" value="${defaultFecha || hoy}">
-								</div>
-							</div>
-						`;
-						row.appendChild(col);
-					}
-					container.appendChild(row);
-				}
-				const btnConfirmar = document.getElementById('btn-confirmar-incidencia-inicial');
-				let cerradoPorConfirmar = false;
-				const handler = () => {
-					cerradoPorConfirmar = true;
-					// Recoger motivos y fechas de cada etiqueta
-					const resultados = etiquetas.map(tag => {
-						return {
-							tagId: tag.id,
-							motivo: document.getElementById(`input-motivo-incidencia-${tag.id}`).value,
-							fecha: document.getElementById(`input-fecha-incidencia-${tag.id}`).value
-						};
-					});
-					console.log('[DEBUG] Incidencias guardadas al confirmar:', resultados);
-					modalIncidencia.hide();
-					btnConfirmar.removeEventListener('click', handler);
-					resolve(resultados);
-				};
-				btnConfirmar.addEventListener('click', handler);
-				// Si se cierra el modal sin confirmar, restaurar el estado
-				document.getElementById('modal-incidencia-inicial').addEventListener('hidden.bs.modal', function onHide() {
-					if (!cerradoPorConfirmar) {
-						etiquetasSeleccionadas.length = 0;
-						etiquetasYaAsociadas.length = 0;
-						etiquetasSeleccionadas.push(...etiquetasSeleccionadasPrev);
-						etiquetasYaAsociadas.push(...etiquetasYaAsociadasPrev);
-					}
-					document.getElementById('modal-incidencia-inicial').removeEventListener('hidden.bs.modal', onHide);
-				});
-				modalIncidencia.show();
-			});
-		};
-
-		if (pacienteEditando) {
-			paciente.id = pacienteEditando;
-			await ipcRenderer.invoke('edit-paciente', paciente);
-			// Solo si hay nuevas etiquetas, pedir motivo/fecha y guardar incidencia personalizada
-			if (nuevasEtiquetas.length) {
-				const motivo = 'Etiquetas iniciales';
-				const fecha = (new Date()).toISOString().split('T')[0];
-				const incidencias = await showIncidenciaModal(motivo, fecha, nuevasEtiquetas);
-				// Guardar cada incidencia personalizada (una incidencia por tag)
-				for (const inc of incidencias) {
-					await ipcRenderer.invoke('incidencia-add-con-tag', paciente.id, Number(inc.tagId), inc.motivo, inc.fecha);
-				}
-			}
-			// Solo permitir añadir incidencias nuevas (no duplicar las ya asociadas)
-			console.log('[DEBUG] Etiquetas seleccionadas al guardar:', etiquetasSeleccionadas);
-		} else {
-			const result = await ipcRenderer.invoke('add-paciente', paciente);
-			if (etiquetasSeleccionadas.length) {
-				const motivo = 'Etiquetas iniciales';
-				const fecha = (new Date()).toISOString().split('T')[0];
-				const incidencias = await showIncidenciaModal(motivo, fecha, etiquetasSeleccionadas);
-				for (const inc of incidencias) {
-					await ipcRenderer.invoke('incidencia-add-con-tag', result.id, Number(inc.tagId), inc.motivo, inc.fecha);
-				}
-			}
-			// Mostrar el nombre y emoji del tipo de acceso seleccionado
-			const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_id);
-			mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${tag ? (tag.icono ? tag.icono + ' ' : '') + tag.nombre : 'Sin tipo'}</b>`, 'success');
-		}
-		cargarPacientes();
-		// Cerrar modal Bootstrap
-		const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
-		modal.hide();
-	});
+        let pacienteId;
+        if (pacienteEditando) {
+            paciente.id = pacienteEditando;
+            console.log('[DEBUG] Editando paciente:', paciente);
+            await ipcRenderer.invoke('edit-paciente', paciente);
+            pacienteId = paciente.id;
+            if (nuevasEtiquetas.length) {
+                const incidencias = nuevasEtiquetas.map(id => {
+                    const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
+                    const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
+                    return {
+                        tagId: id,
+                        motivo: motivoInput ? motivoInput.value : '',
+                        fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
+                    };
+                });
+                await Promise.all(incidencias.map(inc =>
+                    ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
+                ));
+            }
+            cargarPacientes();
+            console.log('[DEBUG] Etiquetas seleccionadas al guardar:', etiquetasSeleccionadas);
+        } else {
+            console.log('[DEBUG] Añadiendo paciente:', paciente);
+            const result = await ipcRenderer.invoke('add-paciente', paciente);
+            pacienteId = result.id;
+            if (etiquetasSeleccionadas.length) {
+                const incidencias = etiquetasSeleccionadas.map(id => {
+                    const motivoInput = document.querySelector(`input[data-motivo-id='${id}']`);
+                    const fechaInput = document.querySelector(`input[data-fecha-id='${id}']`);
+                    return {
+                        tagId: id,
+                        motivo: motivoInput ? motivoInput.value : '',
+                        fecha: fechaInput ? fechaInput.value : (new Date()).toISOString().split('T')[0]
+                    };
+                });
+                await Promise.all(incidencias.map(inc =>
+                    ipcRenderer.invoke('incidencia-add-con-tag', pacienteId, Number(inc.tagId), inc.motivo, inc.fecha)
+                ));
+            }
+            cargarPacientes();
+            const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_id);
+            mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${tag ? (tag.icono ? tag.icono + ' ' : '') + tag.nombre : 'Sin tipo'}</b>`, 'success');
+        }
+        console.log('[DEBUG] Cerrando modal paciente...');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
+        modal.hide();
+    });
 }
 
 // Delegación de eventos para editar y eliminar

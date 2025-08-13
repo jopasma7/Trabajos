@@ -1,24 +1,3 @@
-    <!-- Modal para motivo y fecha de incidencia inicial -->
-    <div class="modal fade" id="modal-incidencia-inicial" tabindex="-1" aria-labelledby="modalIncidenciaInicialLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-incidencias-wide">
-        <div class="modal-content">
-          <div class="modal-header bg-success text-white">
-            <div class="w-100">
-              <h5 class="modal-title mb-0" id="modalIncidenciaInicialLabel"><i class="bi bi-clipboard-plus me-2"></i>Incidencias personalizadas</h5>
-              <span class="modal-subtitle text-muted small mt-1 mb-0">Registra una o varias incidencias iniciales para el paciente. Puedes personalizar el motivo y la fecha de cada una.</span>
-            </div>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-          </div>
-          <div class="modal-body">
-            <div id="incidencias-multiples-container"></div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-success" id="btn-confirmar-incidencia-inicial">Confirmar</button>
-          </div>
-        </div>
-      </div>
-    </div>
 <!DOCTYPE html>
 <html>
   <head>
@@ -51,6 +30,25 @@
   <link rel="stylesheet" href="../styles/sections/modal-global.css">
   </head>
   <body>
+    <!-- Modal de Incidencias -->
+    <div class="modal fade" id="modal-incidencias" tabindex="-1" aria-labelledby="modalIncidenciasLabel" aria-hidden="true">
+      <div class="modal-dialog modal-incidencias-wide">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalIncidenciasLabel">Incidencias del paciente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Aquí puedes mostrar inputs dinámicos para motivo y fecha de cada etiqueta -->
+            <div id="incidencias-modal-content"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btn-guardar-incidencias">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="container-fluid min-vh-100 bg-light">
       <div class="row flex-nowrap">
         <!-- Sidebar -->
@@ -266,8 +264,17 @@
                         </div>
                         <div class="col-12">
                           <label class="form-label">Etiquetas de Incidencias</label>
-                          <ul id="paciente-etiquetas-lista-simple" class="etiquetas-lista"></ul>
-                          <div class="form-text">Selecciona una o varias etiquetas que describan las incidencias del paciente.</div>
+                          <div class="mb-2">
+                            <label for="select-incidencia-etiqueta" class="form-label">Añadir etiqueta de incidencia</label>
+                            <div class="input-group">
+                              <select id="select-incidencia-etiqueta" class="form-select"></select>
+                              <button type="button" class="btn btn-primary" id="btn-add-incidencia-etiqueta"><i class="bi bi-plus-circle"></i> Añadir</button>
+                            </div>
+                          </div>
+                          <div id="incidencias-flex-row" style="display:flex;flex-direction:row;gap:12px;flex-wrap:wrap;">
+                            <ul id="lista-incidencia-etiquetas" class="list-group mb-2" style="display:flex;flex-direction:row;gap:12px;flex-wrap:wrap; margin-bottom:0;width:auto;"></ul>
+                          </div>
+                          <div class="form-text">Selecciona una o varias etiquetas que describan las incidencias del paciente. Para cada una puedes indicar motivo y fecha.</div>
                         </div>
                       </div>
                     </div>

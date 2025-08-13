@@ -109,6 +109,7 @@ db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
   // Asociar el tag a la incidencia
   const insertTag = db.prepare('INSERT INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
   insertTag.run(incidenciaId, tagId);
+  console.log('[DEBUG][DB] addIncidenciaConTag:', { pacienteId, tagId, motivo, fecha, incidenciaId });
   return incidenciaId;
 };
 

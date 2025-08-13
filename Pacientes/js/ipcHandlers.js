@@ -1,3 +1,4 @@
+console.log('[DEBUG][IPC] ipcHandlers.js cargado');
 
 // Eliminar require innecesario de agendaData
 const { app, dialog } = require('electron');
@@ -126,11 +127,15 @@ ipcMain.handle('tags-delete', (event, id) => {
 // Permite motivo y fecha personalizados
 ipcMain.handle('paciente-set-etiquetas', (event, pacienteId, tagIds, motivo, fecha) => {
   console.log('[DEPURACIÓN] Handler paciente-set-etiquetas recibido:', { pacienteId, tagIds, motivo, fecha });
+  console.log('[DEPURACIÓN] Handler paciente-set-etiquetas ejecutando db.setEtiquetasForPaciente');
   return db.setEtiquetasForPaciente(pacienteId, tagIds, motivo, fecha);
 });
 
 // Nueva función: crear incidencia y asociar un tag
 ipcMain.handle('incidencia-add-con-tag', (event, pacienteId, tagId, motivo, fecha) => {
+  console.log('[DEPURACIÓN] Handler incidencia-add-con-tag INICIO:', { pacienteId, tagId, motivo, fecha });
+  console.log('[DEBUG][IPC] Handler incidencia-add-con-tag llamado:', { pacienteId, tagId, motivo, fecha });
+  console.log('[DEPURACIÓN] Handler incidencia-add-con-tag ejecutando db.addIncidenciaConTag');
   return db.addIncidenciaConTag(pacienteId, tagId, motivo, fecha);
 });
 
@@ -145,6 +150,8 @@ ipcMain.handle('incidencias-get', (event, pacienteId) => {
 });
 
 ipcMain.handle('incidencias-add', (event, { pacienteId, motivo, fecha }) => {
+  console.log('[DEPURACIÓN] Handler incidencias-add recibido:', { pacienteId, motivo, fecha });
+  console.log('[DEPURACIÓN] Handler incidencias-add ejecutando db.addIncidencia');
   return db.addIncidencia(pacienteId, motivo, fecha);
 });
 
