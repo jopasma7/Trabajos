@@ -96,11 +96,8 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 		btnAdd.onclick = () => {
 			const selected = selectIncidencia.value;
 			if (selected) {
-				// Solo añadir si no existe ya ese tag en etiquetasSeleccionadas
-				if (!etiquetasSeleccionadas.some(e => e.tagId === Number(selected))) {
-					etiquetasSeleccionadas.push({ tagId: Number(selected), motivo: '', fecha: (new Date()).toISOString().split('T')[0] });
-					cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
-				}
+				etiquetasSeleccionadas.push({ tagId: Number(selected), motivo: '', fecha: (new Date()).toISOString().split('T')[0] });
+				cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
 			}
 		};
 	}
