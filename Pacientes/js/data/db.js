@@ -290,20 +290,41 @@ db.upsertEventos = function(eventos) {
 };
  
 // --- Etiquetas predefinidas para Motivo de Derivación ---
-// --- Etiquetas predefinidas para Tipo de Acceso ---
-function crearEtiquetasTipoAcceso() {
-  const tipos = [
-    { nombre: 'fistula', color: '#2980b9', descripcion: 'Fístula arteriovenosa', tipo: 'acceso', icono: '🩸' },
-    { nombre: 'cateter', color: '#27ae60', descripcion: 'Catéter venoso', tipo: 'acceso', icono: '🧬' },
-    { nombre: 'protesis', color: '#8e44ad', descripcion: 'Prótesis vascular', tipo: 'acceso', icono: '🦾' }
-  ];
-  tipos.forEach(t => {
-    const existe = db.prepare('SELECT 1 FROM tags WHERE LOWER(nombre) = LOWER(?) AND tipo = ?').get(t.nombre, 'acceso');
-    if (!existe) {
-      db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)').run(t.nombre, t.color, t.descripcion, t.tipo, t.icono);
-    }
-  });
-}
+// Crear etiquetas de acceso de prueba si no existen
+const accesoTags = [
+  {
+    nombre: 'Fístula',
+    color: '#007bff',
+    tipo: 'acceso',
+    icono: '🩸',
+    ubicaciones: JSON.stringify(['Radio Cefálica', 'Braquio Cefálica'])
+  },
+  {
+    nombre: 'Prótesis',
+    color: '#28a745',
+    tipo: 'acceso',
+    icono: '🦾',
+    ubicaciones: JSON.stringify(['Radio Cefálica', 'Braquio Cefálica'])
+  },
+  {
+    nombre: 'Catéter',
+    color: '#ffc107',
+    tipo: 'acceso',
+    icono: '➰',
+    ubicaciones: JSON.stringify(['Yugular', 'Femoral'])
+  },
+  {
+    nombre: 'Prueba sin ubicaciones',
+    color: '#6c757d',
+    tipo: 'acceso',
+    icono: '🧪',
+    ubicaciones: JSON.stringify([])
+  }
+];
+const insertTagStmt = db.prepare('INSERT OR IGNORE INTO tags (nombre, color, tipo, icono, ubicaciones) VALUES (?, ?, ?, ?, ?)');
+accesoTags.forEach(tag => {
+  insertTagStmt.run(tag.nombre, tag.color, tag.tipo, tag.icono, tag.ubicaciones);
+});
 
 // Ejecutar al iniciar si la tabla tags existe
 try {
