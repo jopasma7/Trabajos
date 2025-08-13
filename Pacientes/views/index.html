@@ -437,12 +437,101 @@
               </div>
             </section>
             <!-- Historial Clínico Section -->
-            <section id="historial-section" class="section d-none">
+            <section id="historial-section" class="section">
               <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0"><i class="bi bi-journal-medical me-2"></i>Historial Clínico</h2>
+                <div style="min-width:250px;">
+                  <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
+                  <select class="form-select" id="filtro-paciente-historial"></select>
+                </div>
+                <div class="form-check ms-4">
+                  <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
+                  <label class="form-check-label" for="mostrar-archivados-historial">Mostrar archivados</label>
+                </div>
+                <button class="btn btn-primary ms-auto" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial">
+                  <i class="bi bi-plus-lg"></i> Añadir entrada
+                </button>
               </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Aquí se mostrará el historial clínico de los pacientes.</p>
+              <div class="card shadow-sm p-4">
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle" id="tabla-historial">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo de Evento</th>
+                        <th>Motivo</th>
+                        <th>Diagnóstico</th>
+                        <th>Tratamiento</th>
+                        <th>Notas</th>
+                        <th>Adjuntos</th>
+                        <th>Profesional</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Entradas dinámicas -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <!-- Modal para añadir/editar historial -->
+              <div class="modal fade" id="modal-historial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="modalHistorialLabel">Añadir entrada al historial</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <form id="form-historial">
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <div id="paciente-historial-nombre" class="alert alert-info py-2 px-3 mb-3" style="font-size:1.1em; font-weight:500; display:none;"></div>
+                          <label for="fecha-historial" class="form-label">Fecha</label>
+                          <input type="date" class="form-control" id="fecha-historial" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="tipo-historial" class="form-label">Tipo de Evento</label>
+                          <select class="form-select" id="tipo-historial" required>
+                            <option value="">Selecciona tipo</option>
+                            <option value="Consulta">Consulta</option>
+                            <option value="Prueba Laboratorio">Prueba Laboratorio</option>
+                            <option value="Intervención">Intervención</option>
+                            <option value="Seguimiento">Seguimiento</option>
+                            <option value="Otro">Otro</option>
+                          </select>
+                        </div>
+                        <div class="mb-3">
+                          <label for="motivo-historial" class="form-label">Motivo</label>
+                          <input type="text" class="form-control" id="motivo-historial" required>
+                        </div>
+                        <div class="mb-3">
+                          <label for="diagnostico-historial" class="form-label">Diagnóstico</label>
+                          <textarea class="form-control" id="diagnostico-historial" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                          <label for="tratamiento-historial" class="form-label">Tratamiento</label>
+                          <textarea class="form-control" id="tratamiento-historial" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                          <label for="notas-historial" class="form-label">Notas</label>
+                          <textarea class="form-control" id="notas-historial" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                          <label for="adjuntos-historial" class="form-label">Adjuntos</label>
+                          <input type="file" class="form-control" id="adjuntos-historial" multiple>
+                        </div>
+                        <div class="mb-3">
+                          <label for="profesional-historial" class="form-label">Profesional</label>
+                          <input type="text" class="form-control" id="profesional-historial" required>
+                        </div>
+                        <input type="hidden" id="id-historial">
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
               </div>
             </section>
             <!-- Medicaciones Section -->

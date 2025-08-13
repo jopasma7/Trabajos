@@ -98,6 +98,36 @@ ipcMain.handle('edit-paciente', (event, paciente) => {
   });
 
 
+// --- IPC para historial clínico ---
+ipcMain.handle('historial-get', (event, pacienteId) => {
+  return db.getHistorialClinicoByPaciente(pacienteId);
+});
+
+ipcMain.handle('historial-add', (event, { paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional }) => {
+  return db.addHistorialClinico(paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional);
+});
+
+// Editar una entrada de historial clínico
+ipcMain.handle('historial-edit', (event, id, fields) => {
+  return db.updateHistorialClinico(id, fields);
+});
+
+// Eliminar una entrada de historial clínico
+// Archivar una entrada de historial clínico
+ipcMain.handle('historial-archive', (event, id) => {
+  return db.archiveHistorialClinico(id);
+});
+
+ipcMain.handle('historial-get-archived', (event, pacienteId) => {
+  return db.getHistorialArchivadoByPaciente(pacienteId);
+});
+
+// Desarchivar una entrada de historial clínico
+ipcMain.handle('historial-unarchive', (event, id) => {
+  return db.unarchiveHistorialClinico(id);
+});
+
+
 // --- IPC para tags (etiquetas) ---
 ipcMain.handle('tags-get-all', () => {
   return db.getAllTags();

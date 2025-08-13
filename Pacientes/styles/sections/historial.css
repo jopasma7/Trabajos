@@ -1,0 +1,22 @@
+/* Historial Clínico Styles */
+#historial-section h2 {
+	color: #0d6efd;
+}
+#tabla-historial th, #tabla-historial td {
+	vertical-align: middle;
+}
+#tabla-historial tbody tr:hover {
+	background-color: #f0f8ff;
+}
+.modal-header {
+	background: #e9ecef;
+}
+.modal-footer {
+	background: #f8f9fa;
+}
+#btn-add-historial {
+	min-width: 170px;
+}
+.form-label {
+	font-weight: 500;
+}

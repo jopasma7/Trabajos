@@ -1,6 +1,3 @@
-// db.js
-// Conexión real a better-sqlite3 y creación de tablas necesarias
-
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -53,6 +50,26 @@ try {
   db.prepare('ALTER TABLE pacientes ADD COLUMN tipo_acceso_espera_id INTEGER').run();
 } catch (e) {}
 
+
+// Crear tabla historial_clinico (uno a muchos con pacientes)
+db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  fecha TEXT NOT NULL,
+  tipo_evento TEXT,
+  motivo TEXT,
+  diagnostico TEXT,
+  tratamiento TEXT,
+  notas TEXT,
+  adjuntos TEXT,
+  profesional TEXT,
+  archivado INTEGER DEFAULT 0,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id)
+)`).run();
+// Añadir columna archivado si no existe (migración)
+try {
+  db.prepare('ALTER TABLE historial_clinico ADD COLUMN archivado INTEGER DEFAULT 0').run();
+} catch (e) {}
 
 // Crear tabla incidencias (uno a muchos con pacientes)
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
@@ -258,6 +275,49 @@ db.deletePaciente = function(id) {
   return { changes: info.changes };
 };
 
+// --- Métodos para historial clínico ---
+db.getHistorialClinicoByPaciente = function(pacienteId) {
+  return db.prepare('SELECT * FROM historial_clinico WHERE paciente_id = ? AND archivado = 0 ORDER BY fecha DESC, id DESC').all(pacienteId);
+};
+
+db.addHistorialClinico = function(pacienteId, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional) {
+  const stmt = db.prepare('INSERT INTO historial_clinico (paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(pacienteId, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional);
+  return { id: info.lastInsertRowid };
+};
+
+// Editar una entrada de historial clínico
+db.updateHistorialClinico = function(id, fields) {
+  const keys = Object.keys(fields).filter(k => k !== 'id' && k !== 'paciente_id');
+  const setStr = keys.map(k => `${k} = ?`).join(', ');
+  const values = keys.map(k => fields[k]);
+  values.push(id);
+  const stmt = db.prepare(`UPDATE historial_clinico SET ${setStr} WHERE id = ?`);
+  const info = stmt.run(...values);
+  return { changes: info.changes };
+};
+
+// Eliminar una entrada de historial clínico
+db.archiveHistorialClinico = function(id) {
+  const stmt = db.prepare('UPDATE historial_clinico SET archivado = 1 WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
+
+db.getHistorialArchivadoByPaciente = function(pacienteId) {
+  return db.prepare('SELECT * FROM historial_clinico WHERE paciente_id = ? AND archivado = 1 ORDER BY fecha DESC, id DESC').all(pacienteId);
+};
+
+// Desarchivar una entrada de historial clínico
+db.unarchiveHistorialClinico = function(id) {
+  const stmt = db.prepare('UPDATE historial_clinico SET archivado = 0 WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
+
+
+
+
 // Añadir columna categoria si no existe (migración)
 try {
   db.prepare('ALTER TABLE agenda ADD COLUMN categoria TEXT').run();
@@ -453,6 +513,27 @@ if (pacientesCount === 0) {
     );
   }
 }
+
+// --- Ejemplos reales para pruebas ---
+function insertarEjemplos() {
+  // Verificar si ya existen pacientes de ejemplo
+  const existe = db.prepare('SELECT COUNT(*) as c FROM pacientes').get().c;
+  if (existe > 0) return;
+
+  // Insertar pacientes
+  const paciente1 = db.prepare('INSERT INTO pacientes (nombre, apellidos) VALUES (?, ?)').run('Juan', 'García').lastInsertRowid;
+  const paciente2 = db.prepare('INSERT INTO pacientes (nombre, apellidos) VALUES (?, ?)').run('Ana', 'López').lastInsertRowid;
+
+  // Insertar historial clínico para Juan García
+  db.addHistorialClinico(paciente1, '2025-08-01', 'Consulta', 'Dolor abdominal', 'Gastritis aguda', 'Omeprazol 20mg/día', 'Paciente refiere dolor desde hace 3 días. Se recomienda dieta blanda.', '', 'Dr. García');
+  db.addHistorialClinico(paciente1, '2025-08-10', 'Prueba Laboratorio', 'Control rutinario', 'Sin alteraciones', '---', 'Hemograma y bioquímica normales.', '', 'Enf. López');
+
+  // Insertar historial clínico para Ana López
+  db.addHistorialClinico(paciente2, '2025-08-12', 'Intervención', 'Colocación de acceso vascular', 'Acceso tipo Hickman', 'Cuidados postoperatorios', 'Sin complicaciones. Se adjunta informe quirúrgico.', '', 'Dr. Ruiz');
+}
+insertarEjemplos();
+// db.js
+// Conexión real a better-sqlite3 y creación de tablas necesarias
 
 module.exports = db;
  

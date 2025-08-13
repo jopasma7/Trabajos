@@ -1,6 +1,7 @@
 // Importar módulos de secciones
 require('../js/sections/dashboard.js');
 require('../js/sections/pacientes.js');
+require('../js/sections/historial.js');
 const { setupProfileSection } = require('../js/sections/profile.js');
 const agenda = require('../js/sections/agenda.js');
 const etiquetas = require('../js/sections/etiquetas.js');
