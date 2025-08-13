@@ -128,6 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 					selectTipoAccesoForm.appendChild(opt);
 				});
 			}
+			// Ocultar los campos de ubicación anatómica y lado por defecto
+			const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
+			const ladoGroup = selectUbicacionLado.closest('.col-5');
+			if (ubicacionGroup) ubicacionGroup.style.display = 'none';
+			if (ladoGroup) ladoGroup.style.display = 'none';
 			// Obtener las etiquetas realmente asociadas desde la BD
 			let asociadas = [];
 			try {
@@ -139,19 +144,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
+	// Obtener el grupo de campos para mostrar/ocultar
+	const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
+	const ladoGroup = selectUbicacionLado.closest('.col-5');
+	// Ocultar ambos al inicio
+	if (ubicacionGroup) ubicacionGroup.style.display = 'none';
+	if (ladoGroup) ladoGroup.style.display = 'none';
+
 	selectTipoAccesoForm.addEventListener('change', function() {
 		const tipo = this.value;
 		selectUbicacionAnatomica.innerHTML = '';
 		selectUbicacionLado.value = '';
 		selectUbicacionLado.disabled = true;
-		if (!tipo || !ubicacionesAnatomicasPorAcceso[tipo]) {
+		// Buscar la etiqueta seleccionada en etiquetasDisponibles
+		const tag = (etiquetasDisponibles || []).find(t => t.tipo === 'acceso' && t.nombre === tipo);
+		if (!tag || !Array.isArray(tag.ubicaciones) || tag.ubicaciones.length === 0) {
 			selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona tipo de acceso primero</option>';
 			selectUbicacionAnatomica.disabled = true;
+			if (ubicacionGroup) ubicacionGroup.style.display = 'none';
+			if (ladoGroup) ladoGroup.style.display = 'none';
 			return;
 		}
 		selectUbicacionAnatomica.disabled = false;
 		selectUbicacionAnatomica.innerHTML = '<option value="">Selecciona ubicación...</option>' +
-			ubicacionesAnatomicasPorAcceso[tipo].map(u => `<option value="${u}">${u}</option>`).join('');
+			tag.ubicaciones.map(u => `<option value="${u}">${u}</option>`).join('');
+		if (ubicacionGroup) ubicacionGroup.style.display = '';
+		if (ladoGroup) ladoGroup.style.display = '';
 	});
 	selectUbicacionAnatomica.addEventListener('change', function() {
 		if (this.value) {
