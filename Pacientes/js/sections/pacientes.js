@@ -1,7 +1,5 @@
 try {
 	const electron = require('electron');
-	console.log('[DEPURACIÓN][RENDERER] require("electron") funciona:', !!electron);
-	console.log('[DEPURACIÓN][RENDERER] ipcRenderer:', !!electron.ipcRenderer);
 } catch (e) {
 	console.error('[DEPURACIÓN][RENDERER] require("electron") FALLÓ:', e);
 }
@@ -242,7 +240,6 @@ if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 // pacientes.js
 // Lógica específica para la sección Pacientes
 
-console.log('Pacientes module loaded');
 
 
 const { ipcRenderer } = require('electron');
@@ -297,11 +294,6 @@ function renderizarPacientes(pacientes) {
     (etiquetasDisponibles || []).forEach(tag => { etiquetasPorId[tag.id] = tag; });
 
 	pacientes.forEach(paciente => {
-		// Debug: mostrar etiquetas de cada paciente
-		console.log(`[DEBUG] Paciente: ${paciente.nombre} ${paciente.apellidos} | Etiquetas:`, paciente.etiquetas);
-		if (!paciente.etiquetas || paciente.etiquetas.length === 0) {
-			console.warn(`[DEBUG] Paciente sin etiquetas asociadas: ${paciente.nombre} ${paciente.apellidos}`);
-		}
         const tr = document.createElement('tr');
         // Formatear fecha a DD/MM/YYYY si es YYYY-MM-DD o YYYY-MM-DDTHH:mm:ss
         let fechaFormateada = '';
@@ -493,7 +485,6 @@ function actualizarTablaPacientes() {
 // Cargar pacientes y renderizar
 function cargarPacientes() {
 		ipcRenderer.invoke('get-pacientes').then(pacientes => {
-			console.log('Pacientes actuales:', pacientes);
 			pacientesGlobal = pacientes;
 			paginaActual = 1;
 			actualizarTablaPacientes();
@@ -539,7 +530,6 @@ if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual 
 // Guardar (agregar o editar) paciente
 if (formPaciente) {
     formPaciente.addEventListener('submit', async (e) => {
-        console.log('[DEBUG] Listener submit paciente disparado');
         e.preventDefault();
         const paciente = {
             nombre: document.getElementById('paciente-nombre').value.trim(),
@@ -556,7 +546,6 @@ if (formPaciente) {
         let pacienteId;
         if (pacienteEditando) {
             paciente.id = pacienteEditando;
-            console.log('[DEBUG] Editando paciente:', paciente);
             await ipcRenderer.invoke('edit-paciente', paciente);
             pacienteId = paciente.id;
             if (nuevasEtiquetas.length) {
@@ -574,9 +563,7 @@ if (formPaciente) {
                 ));
             }
             cargarPacientes();
-            console.log('[DEBUG] Etiquetas seleccionadas al guardar:', etiquetasSeleccionadas);
         } else {
-            console.log('[DEBUG] Añadiendo paciente:', paciente);
             const result = await ipcRenderer.invoke('add-paciente', paciente);
             pacienteId = result.id;
             if (etiquetasSeleccionadas.length) {
@@ -597,7 +584,6 @@ if (formPaciente) {
             const tag = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_id);
             mostrarMensaje(`Nuevo paciente <b>${paciente.nombre} ${paciente.apellidos}</b> creado. Tipo de Acceso: <b>${tag ? (tag.icono ? tag.icono + ' ' : '') + tag.nombre : 'Sin tipo'}</b>`, 'success');
         }
-        console.log('[DEBUG] Cerrando modal paciente...');
         const modal = bootstrap.Modal.getOrCreateInstance(modalPaciente);
         modal.hide();
     });
@@ -615,7 +601,6 @@ if (tablaPacientesBody) {
 			const pacientes = await ipcRenderer.invoke('get-pacientes');
 			const paciente = pacientes.find(p => p.id == id);
 			if (paciente) {
-				console.log('[DEBUG] Editar paciente:', paciente);
 				pacienteEditando = paciente.id;
 				document.getElementById('paciente-nombre').value = paciente.nombre;
 				document.getElementById('paciente-apellidos').value = paciente.apellidos;

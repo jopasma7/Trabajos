@@ -109,7 +109,6 @@ db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
   // Asociar el tag a la incidencia
   const insertTag = db.prepare('INSERT INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
   insertTag.run(incidenciaId, tagId);
-  console.log('[DEBUG][DB] addIncidenciaConTag:', { pacienteId, tagId, motivo, fecha, incidenciaId });
   return incidenciaId;
 };
 
@@ -117,7 +116,6 @@ db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
 // Actualizar etiquetas de incidencias para la incidencia más reciente de un paciente
 // Permite motivo y fecha personalizados para la incidencia inicial
 db.setEtiquetasForPaciente = function(pacienteId, tagIds, motivoPersonalizado, fechaPersonalizada) {
-  console.log('[DEPURACIÓN] setEtiquetasForPaciente llamado con:', { pacienteId, tagIds, motivoPersonalizado, fechaPersonalizada });
   // Obtener la incidencia más reciente del paciente
   let incidencia = db.prepare('SELECT id FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(pacienteId);
   // Si no existe, crear una incidencia inicial personalizada
@@ -442,7 +440,6 @@ if (pacientesCount === 0) {
       ubicacion_lado
     );
   }
-  console.log('Se insertaron pacientes de prueba en la base de datos.');
 }
 
 module.exports = db;

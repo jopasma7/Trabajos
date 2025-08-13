@@ -1,4 +1,3 @@
-console.log('[DEBUG][MAIN] main.js ejecutado');
 
 // Recarga automática en desarrollo
 try {

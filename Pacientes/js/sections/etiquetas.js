@@ -243,7 +243,6 @@ formEtiqueta.addEventListener('submit', async (e) => {
   }
   try {
     const ubicaciones = (tipo === 'acceso') ? [...ubicacionesAnatomicas] : [];
-    console.log('[DEBUG] Ubicaciones a guardar:', ubicaciones);
     if (id) {
       await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo, icono, ubicaciones });
       showAlert('Etiqueta actualizada correctamente', 'success');
