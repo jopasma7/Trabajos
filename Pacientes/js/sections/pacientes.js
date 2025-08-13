@@ -330,7 +330,7 @@ function filtrarPacientes() {
 		);
 	}
 	if (tipo) {
-		filtrados = filtrados.filter(p => (p.tipo_acceso || '') === tipo);
+		filtrados = filtrados.filter(p => Number(p.tipo_acceso_id) === Number(tipo));
 	}
 	if (pendiente === 'pendiente') {
 		filtrados = filtrados.filter(p => p.en_lista_espera === 1);
@@ -813,6 +813,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 			const allTags = await ipcRenderer.invoke('tags-get-all');
 			etiquetasDisponibles = allTags;
 			etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
+			// Poblar filtro de tipo de acceso dinámicamente
+			if (selectTipoAcceso) {
+				selectTipoAcceso.innerHTML = '<option value="">Todos</option>';
+				etiquetasAccesoDisponibles.forEach(tag => {
+					const opt = document.createElement('option');
+					opt.value = String(tag.id);
+					opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+					selectTipoAcceso.appendChild(opt);
+				});
+			}
 		}
 	} catch (e) {}
 	cargarPacientes();
