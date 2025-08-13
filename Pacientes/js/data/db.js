@@ -81,10 +81,11 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
 )`).run();
 
 // Crear tabla tags (etiquetas personalizables)
-// Añadir columna 'tipo' y 'icono' a tags si no existen
+// Añadir columna 'tipo', 'icono' y 'ubicaciones' a tags si no existen
 const tagsTableInfo = db.prepare("PRAGMA table_info(tags)").all();
 const hasTipo = tagsTableInfo.some(col => col.name === 'tipo');
 const hasIcono = tagsTableInfo.some(col => col.name === 'icono');
+const hasUbicaciones = tagsTableInfo.some(col => col.name === 'ubicaciones');
 if (!hasTipo) {
   try {
     db.prepare('ALTER TABLE tags ADD COLUMN tipo TEXT DEFAULT "incidencia"').run();
@@ -95,13 +96,19 @@ if (!hasIcono) {
     db.prepare('ALTER TABLE tags ADD COLUMN icono TEXT').run();
   } catch (e) {}
 }
+if (!hasUbicaciones) {
+  try {
+    db.prepare('ALTER TABLE tags ADD COLUMN ubicaciones TEXT').run();
+  } catch (e) {}
+}
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   color TEXT DEFAULT '#009879',
   descripcion TEXT,
   tipo TEXT DEFAULT 'incidencia',
-  icono TEXT
+  icono TEXT,
+  ubicaciones TEXT
 )`).run();
 
 // Tabla intermedia incidencia_tags (muchos a muchos)
@@ -184,23 +191,40 @@ db.deleteIncidencia = function(incidenciaId) {
 
 // --- Métodos para tags (etiquetas) ---
 db.getAllTags = function() {
-  return db.prepare('SELECT * FROM tags ORDER BY nombre COLLATE NOCASE').all();
+  // Parsear ubicaciones JSON
+  return db.prepare('SELECT * FROM tags ORDER BY nombre COLLATE NOCASE').all().map(tag => {
+    if (tag.ubicaciones) {
+      try { tag.ubicaciones = JSON.parse(tag.ubicaciones); } catch { tag.ubicaciones = []; }
+    } else {
+      tag.ubicaciones = [];
+    }
+    return tag;
+  });
 };
 
 db.getTagById = function(tagId) {
-  return db.prepare('SELECT * FROM tags WHERE id = ?').get(tagId);
+  const tag = db.prepare('SELECT * FROM tags WHERE id = ?').get(tagId);
+  if (tag && tag.ubicaciones) {
+    try { tag.ubicaciones = JSON.parse(tag.ubicaciones); } catch { tag.ubicaciones = []; }
+  } else if (tag) {
+    tag.ubicaciones = [];
+  }
+  return tag;
 };
 
 db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
-  console.log('[DEPURACIÓN] addTag:', { nombre, color, descripcion, tipo, icono: arguments[4] });
-  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)');
-  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4]);
+  // arguments[5] = ubicaciones (array)
+  const ubicaciones = Array.isArray(arguments[5]) ? JSON.stringify(arguments[5]) : '[]';
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono, ubicaciones) VALUES (?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4], ubicaciones);
   return { id: info.lastInsertRowid };
 };
 
 db.updateTag = function(id, nombre, color, descripcion, tipo = 'incidencia') {
-  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ?, icono = ? WHERE id = ?');
-  const info = stmt.run(nombre, color, descripcion, tipo, arguments[5], id);
+  // arguments[6] = ubicaciones (array)
+  const ubicaciones = Array.isArray(arguments[6]) ? JSON.stringify(arguments[6]) : '[]';
+  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ?, icono = ?, ubicaciones = ? WHERE id = ?');
+  const info = stmt.run(nombre, color, descripcion, tipo, arguments[5], ubicaciones, id);
   return { changes: info.changes };
 };
 
