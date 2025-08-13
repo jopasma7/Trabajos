@@ -96,8 +96,11 @@ async function cargarEtiquetasDisponibles(selectedIds = null, asociadasIds = nul
 		btnAdd.onclick = () => {
 			const selected = selectIncidencia.value;
 			if (selected) {
-				etiquetasSeleccionadas.push({ tagId: Number(selected), motivo: '', fecha: (new Date()).toISOString().split('T')[0] });
-				cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
+				// Solo añadir si no existe ya ese tag en etiquetasSeleccionadas
+				if (!etiquetasSeleccionadas.some(e => e.tagId === Number(selected))) {
+					etiquetasSeleccionadas.push({ tagId: Number(selected), motivo: '', fecha: (new Date()).toISOString().split('T')[0] });
+					cargarEtiquetasDisponibles(etiquetasSeleccionadas, etiquetasYaAsociadas);
+				}
 			}
 		};
 	}
@@ -135,9 +138,16 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 			// Poblar select de tipo acceso dinámicamente
 			if (selectTipoAccesoForm) {
-				selectTipoAccesoForm.innerHTML = '';
-				// Si NO se está editando, añadir opción inicial
-				if (window.pacienteEditandoTipoAccesoId === undefined || window.pacienteEditandoTipoAccesoId === null || window.pacienteEditandoTipoAccesoId === '') {
+				// Limpiar todas las opciones antes de añadir
+				while (selectTipoAccesoForm.firstChild) {
+					selectTipoAccesoForm.removeChild(selectTipoAccesoForm.firstChild);
+				}
+				let esNuevoPaciente = (window.pacienteEditandoTipoAccesoId === undefined || window.pacienteEditandoTipoAccesoId === null || window.pacienteEditandoTipoAccesoId === '');
+				try {
+					const allTags = await ipcRenderer.invoke('tags-get-all');
+					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
+				} catch {}
+				if (esNuevoPaciente) {
 					const optInit = document.createElement('option');
 					optInit.value = '';
 					optInit.textContent = 'Selecciona tipo de acceso...';
@@ -145,10 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
 					optInit.selected = true;
 					selectTipoAccesoForm.appendChild(optInit);
 				}
-				try {
-					const allTags = await ipcRenderer.invoke('tags-get-all');
-					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
-				} catch {}
 				etiquetasAccesoDisponibles.forEach(tag => {
 					const opt = document.createElement('option');
 					opt.value = String(tag.id);
@@ -529,12 +535,6 @@ if (btnNuevoPaciente) {
 		if (selectTipoAcceso) {
 			selectTipoAcceso.value = '';
 		}
-					// Añadir opción inicial
-					const optInit = document.createElement('option');
-					optInit.value = '';
-					optInit.textContent = 'Selecciona tipo de acceso...';
-					optInit.disabled = true;
-					selectTipoAccesoForm.appendChild(optInit);
 	});
 }
 
@@ -647,7 +647,7 @@ if (tablaPacientesBody) {
 			const id = e.target.closest('.btn-editar').dataset.id;
 			const pacientes = await ipcRenderer.invoke('get-pacientes');
 			const paciente = pacientes.find(p => p.id == id);
-			if (paciente) {
+			if (paciente) { 
 				pacienteEditando = paciente.id;
 				document.getElementById('paciente-nombre').value = paciente.nombre;
 				document.getElementById('paciente-apellidos').value = paciente.apellidos;
@@ -659,12 +659,6 @@ if (tablaPacientesBody) {
 				if (selectTipoAccesoForm) {
 					// Eliminar todas las opciones previas (incluida la por defecto)
 					selectTipoAccesoForm.innerHTML = '';
-					// Añadir opción inicial
-					const optInit = document.createElement('option');
-					optInit.value = '';
-					optInit.textContent = 'Selecciona tipo de acceso...';
-					optInit.disabled = true;
-					selectTipoAccesoForm.appendChild(optInit);
 					etiquetasAccesoDisponibles.forEach(tag => {
 						const opt = document.createElement('option');
 						opt.value = String(tag.id);
