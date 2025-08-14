@@ -267,7 +267,7 @@ const { ipcRenderer } = require('electron');
 
 const tablaPacientesBody = document.querySelector('#pacientes-section tbody');
 const formPaciente = document.getElementById('form-paciente');
-const btnNuevoPaciente = document.getElementById('btn-nuevo-paciente');
+const btnNuevoPacienteList = document.querySelectorAll('.btn-nuevo-paciente');
 const modalPaciente = document.getElementById('modal-paciente');
 let pacienteEditando = null;
 let pacienteAEliminar = null;
@@ -554,27 +554,29 @@ function cargarPacientes() {
 
 
 // Mostrar modal para nuevo paciente
-if (btnNuevoPaciente) {
-	btnNuevoPaciente.addEventListener('click', () => {
-		pacienteEditando = null;
-		formPaciente.reset();
-		etiquetasSeleccionadas = [];
-		cargarEtiquetasDisponibles([]);
-		document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Nuevo Paciente';
-		// Poner fecha actual por defecto
-		const inputFecha = document.getElementById('paciente-fecha');
-		if (inputFecha) {
-			const hoy = new Date();
-			const yyyy = hoy.getFullYear();
-			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-			const dd = String(hoy.getDate()).padStart(2, '0');
-			inputFecha.value = `${yyyy}-${mm}-${dd}`;
-		}
-		// Forzar tipo de acceso a vacío
-		const selectTipoAcceso = document.getElementById('paciente-tipoacceso');
-		if (selectTipoAcceso) {
-			selectTipoAcceso.value = '';
-		}
+if (btnNuevoPacienteList && btnNuevoPacienteList.length) {
+    btnNuevoPacienteList.forEach(btn => {
+        btn.addEventListener('click', () => {
+			pacienteEditando = null;
+			formPaciente.reset();
+			etiquetasSeleccionadas = [];
+			cargarEtiquetasDisponibles([]);
+			document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Nuevo Paciente';
+			// Poner fecha actual por defecto
+			const inputFecha = document.getElementById('paciente-fecha');
+			if (inputFecha) {
+				const hoy = new Date();
+				const yyyy = hoy.getFullYear();
+				const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+				const dd = String(hoy.getDate()).padStart(2, '0');
+				inputFecha.value = `${yyyy}-${mm}-${dd}`;
+			}
+			// Forzar tipo de acceso a vacío
+			const selectTipoAcceso = document.getElementById('paciente-tipoacceso');
+			if (selectTipoAcceso) {
+				selectTipoAcceso.value = '';
+			}
+		});
 	});
 }
 
