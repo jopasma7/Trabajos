@@ -64,12 +64,6 @@
             <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">GiGi Hospital</span>
           </a>
           <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 mt-4" id="menu">
-            <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white d-flex align-items-center gap-2" data-section="profesionales">
-                <i class="bi bi-person-badge"></i>
-                <span class="ms-2">Profesionales</span>
-              </a>
-            </li>
             <li class="w-100 border-top border-secondary mb-2"></li>
             <li class="nav-item w-100">
               <a href="#" class="nav-link text-white active ps-4" data-section="dashboard">
@@ -125,12 +119,24 @@
                 <span class="d-none d-sm-inline">Reportes</span>
               </a>
             </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="profesionales">
+                <i class="bi bi-person-badge me-2"></i>
+                <span class="d-none d-sm-inline">Profesionales</span>
+              </a>
+            </li>
           </ul>
           <ul class="nav nav-pills flex-column w-100 mb-3 pt-3 border-top border-secondary mt-auto">
             <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white ps-4 mb-2" data-section="perfil">
+              <a href="#" class="nav-link text-white ps-4" data-section="perfil">
                 <i class="bi bi-person-circle me-2"></i>
                 <span class="d-none d-sm-inline">Perfil</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="etiquetas">
+                <i class="bi bi-tags-fill me-2"></i>
+                <span class="d-none d-sm-inline">Etiquetas</span>
               </a>
             </li>
             <li class="nav-item w-100">
@@ -139,12 +145,6 @@
                 <span class="d-none d-sm-inline">Configuración</span>
               </a>
             </li>
-              <li class="nav-item w-100">
-                <a href="#" class="nav-link text-white ps-4" data-section="etiquetas">
-                  <i class="bi bi-tags-fill me-2"></i>
-                  <span class="d-none d-sm-inline">Etiquetas</span>
-                </a>
-              </li>
           </ul>
         </nav>
         <!-- Main content -->
@@ -864,7 +864,7 @@
                     </div>
                     <div class="mb-2">
                       <label for="profesional-sexo" class="form-label">Sexo</label>
-                      <select class="form-select" id="profesional-sexo">
+                      <select class="form-select" id="profesional-sexo" required>
                         <option value="hombre">Hombre</option>
                         <option value="mujer">Mujer</option>
                         <option value="otro">Otro</option>
@@ -872,19 +872,19 @@
                     </div>
                     <div class="mb-2">
                       <label for="profesional-email" class="form-label">Email</label>
-                      <input type="email" class="form-control" id="profesional-email">
+                      <input type="email" class="form-control" id="profesional-email" required>
                     </div>
                     <div class="mb-2">
                       <label for="profesional-cargo" class="form-label">Cargo</label>
-                      <input type="text" class="form-control" id="profesional-cargo" placeholder="Ej: Enfermero/a, Médico/a">
+                      <input type="text" class="form-control" id="profesional-cargo" placeholder="Ej: Enfermero/a, Médico/a" required>
                     </div>
                     <div class="mb-2">
                       <label for="profesional-numero-colegiado" class="form-label">Número de Colegiado</label>
-                      <input type="text" class="form-control" id="profesional-numero-colegiado" placeholder="Ej: 1234567">
+                      <input type="text" class="form-control" id="profesional-numero-colegiado" placeholder="Ej: 1234567" required>
                     </div>
                     <div class="mb-2">
                       <label for="profesional-telefono" class="form-label">Teléfono</label>
-                      <input type="tel" class="form-control" id="profesional-telefono" placeholder="Ej: 600123456">
+                      <input type="tel" class="form-control" id="profesional-telefono" placeholder="Ej: 600123456" required>
                     </div>
                   </div>
                 </div>
@@ -893,7 +893,7 @@
                     <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-person-circle me-2"></i>Avatar</h5>
                     <div class="d-flex flex-column align-items-center justify-content-center">
                       <div class="position-relative mb-2" style="width:72px;height:72px;">
-                        <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle border border-2 border-success shadow avatar-img" id="profesional-avatar-img" width="72" height="72" style="object-fit:cover;background:#e6f9e6;">
+                        <img src="../assets/hombre.jpg" alt="avatar" class="rounded-circle border border-2 border-success shadow avatar-img" id="profesional-avatar-img" width="72" height="72" style="object-fit:cover;background:#e6f9e6;">
                       </div>
                       <div style="max-width:220px;">
                         <span class="badge text-dark shadow-sm d-inline-flex align-items-center gap-1" style="font-weight:500;letter-spacing:0.5px;font-size:1rem;">
@@ -906,6 +906,7 @@
                         <button type="button" class="btn btn-outline-success btn-sm fw-semibold flex-fill" id="cambiar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
                           <i class="bi bi-image"></i> Cambiar foto
                         </button>
+                        <input type="file" id="profesional-avatar-input" accept="image/*" class="d-none">
                         <button type="button" class="btn btn-outline-danger btn-sm fw-semibold flex-fill" id="eliminar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
                           <i class="bi bi-x-circle"></i> Eliminar avatar
                         </button>
@@ -917,11 +918,11 @@
                     <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-info-circle me-2"></i>Información adicional</h5>
                     <div class="mb-2">
                       <label for="profesional-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
-                      <input type="date" class="form-control" id="profesional-fecha-nacimiento">
+                      <input type="date" class="form-control" id="profesional-fecha-nacimiento" required>
                     </div>
                     <div class="mb-2">
                       <label for="profesional-direccion" class="form-label">Dirección</label>
-                      <input type="text" class="form-control" id="profesional-direccion" placeholder="Ciudad, Provincia">
+                      <input type="text" class="form-control" id="profesional-direccion" placeholder="Ciudad, Provincia" required>
                     </div>
                     <div class="mb-2">
                       <label for="profesional-notas" class="form-label">Notas</label>

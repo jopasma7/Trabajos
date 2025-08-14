@@ -15,7 +15,7 @@ ipcMain.handle('agenda-guardar', (event, eventos) => db.upsertEventos(eventos));
 // Handler: cargar perfil
 ipcMain.handle('perfil-cargar', () => {
   if (fs.existsSync(perfilPath)) {
-    try {
+    try { 
       return JSON.parse(fs.readFileSync(perfilPath, 'utf8'));
     } catch (e) { return null; }
   }

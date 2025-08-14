@@ -121,12 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     avatarImg.src = ev.target.result;
-                    avatarFeedback.textContent = 'Imagen cargada correctamente.';
+                    mostrarMensaje('Imagen de avatar cargada correctamente.', 'success');
+                    avatarFeedback.textContent = '';
                     avatarFeedback.classList.remove('text-danger');
-                    avatarFeedback.classList.add('text-success');
+                    avatarFeedback.classList.remove('text-success');
                 };
                 reader.onerror = function() {
-                    avatarFeedback.textContent = 'Error al cargar la imagen.';
+                    mostrarMensaje('Error al cargar la imagen de avatar.', 'danger');
+                    avatarFeedback.textContent = '';
                     avatarFeedback.classList.remove('text-success');
                     avatarFeedback.classList.add('text-danger');
                 };
@@ -149,9 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
         eliminarAvatarBtn.addEventListener('click', () => {
             avatarImg.src = '../assets/avatar-default.png';
             avatarInput.value = '';
-            avatarFeedback.textContent = 'Avatar eliminado.';
+            mostrarMensaje('Avatar eliminado correctamente.', 'info');
+            avatarFeedback.textContent = '';
             avatarFeedback.classList.remove('text-success');
-            avatarFeedback.classList.add('text-danger');
+            avatarFeedback.classList.remove('text-danger');
         });
     }
     
