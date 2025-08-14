@@ -55,7 +55,7 @@
         <nav class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark d-flex flex-column align-items-center align-items-sm-start min-vh-100 shadow">
           <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none mt-4">
             <span class="fs-2 ms-2"><i class="bi bi-hospital"></i></span>
-            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">HospitalApp</span>
+            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">GiGi Hospital</span>
           </a>
           <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 mt-4" id="menu">
             <li class="w-100 border-top border-secondary mb-2"></li>
@@ -237,7 +237,8 @@
                         <div class="col-md-6">
                             <label for="paciente-tipoacceso" class="form-label">Tipo Acceso</label>
                             <select class="form-select" id="paciente-tipoacceso" required>
-                              <!-- La opción inicial se añade dinámicamente por JS -->
+                                <!-- La opción inicial se añade dinámicamente por JS -->
+                                <option value="">Selecciona tipo de acceso primero</option>
                             </select>
                             <div class="d-flex flex-row align-items-center mt-3">
                               <div class="col-6">
@@ -438,20 +439,40 @@
             </section>
             <!-- Historial Clínico Section -->
             <section id="historial-section" class="section">
-              <div class="d-flex align-items-center mb-3">
-                <div style="min-width:250px;">
-                  <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
-                  <select class="form-select" id="filtro-paciente-historial"></select>
+              <div class="row g-3 align-items-end mb-3">
+                  <div class="col-md-3">
+                    <label for="filtro-tipo-evento-historial" class="form-label mb-1">Tipo de Evento</label>
+                    <select class="form-select" id="filtro-tipo-evento-historial">
+                      <option value="">Todos</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-fecha-historial" class="form-label mb-1">Fecha</label>
+                    <input type="date" class="form-control" id="filtro-fecha-historial">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-profesional-historial" class="form-label mb-1">Profesional</label>
+                    <input type="text" class="form-control" id="filtro-profesional-historial" placeholder="Buscar profesional...">
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <div class="form-check me-3">
+                      <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
+                      <label class="form-check-label" for="mostrar-archivados-historial">Archivados</label>
+                    </div>
+                    
+                  </div>
+                  <button class="btn btn-primary ms-auto col-md-2 d-flex justify-content-center align-items-end me-2" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial" style="width: 150px;">
+                      <i class="bi bi-plus-lg"></i> Añadir entrada
+                    </button>
                 </div>
-                <div class="form-check ms-4">
-                  <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
-                  <label class="form-check-label" for="mostrar-archivados-historial">Mostrar archivados</label>
-                </div>
-                <button class="btn btn-primary ms-auto" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial">
-                  <i class="bi bi-plus-lg"></i> Añadir entrada
-                </button>
-              </div>
               <div class="card shadow-sm p-4">
+                <div class="row g-3 align-items-end mb-3">
+                  <div class="col-md-3">
+                    <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
+                    <select class="form-select" id="filtro-paciente-historial"></select>
+                  </div>
+                </div>         
                 <div class="table-responsive">
                   <table class="table table-hover align-middle" id="tabla-historial">
                     <thead class="table-light">

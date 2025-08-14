@@ -60,13 +60,22 @@ document.getElementById('btn-add-historial').addEventListener('click', poblarSel
 
 document.addEventListener('DOMContentLoaded', async function() {
 	await cargarPacientesHistorial();
-	document.getElementById('filtro-paciente-historial').addEventListener('change', function() {
-		pacienteId = Number(this.value);
-		renderHistorial();
-	});
-	document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
-		renderHistorial();
-	});
+	   document.getElementById('filtro-paciente-historial').addEventListener('change', function() {
+		   pacienteId = Number(this.value);
+		   renderHistorial();
+	   });
+	   document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-tipo-evento-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-fecha-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-profesional-historial').addEventListener('input', function() {
+		   renderHistorial();
+	   });
 	renderHistorial();
 	// Evitar duplicidad de submit
 	const form = document.getElementById('form-historial');
@@ -156,7 +165,19 @@ async function renderHistorial() {
 	       if (!tagsGlobal.length) {
 		       tagsGlobal = await ipcRenderer.invoke('tags-get-all');
 	       }
+	       // --- Filtros avanzados ---
+	       const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
+	       const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
+	       const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value?.toLowerCase() || '';
+
 	       historialData.forEach((item, idx) => {
+		       // Filtrar por tipo de evento
+		       if (filtroTipoEvento && String(item.tipo_evento) !== String(filtroTipoEvento)) return;
+		       // Filtrar por fecha exacta
+		       if (filtroFecha && String(item.fecha) !== String(filtroFecha)) return;
+		       // Filtrar por profesional (substring, case-insensitive)
+		       if (filtroProfesional && (!item.profesional || !item.profesional.toLowerCase().includes(filtroProfesional))) return;
+
 		       const esArchivado = item.archivado === 1 || item.archivado === true;
 		       // Buscar nombre de etiqueta evento
 		       let nombreEvento = '';
