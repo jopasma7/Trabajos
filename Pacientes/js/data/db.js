@@ -39,8 +39,13 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   tipo_acceso_id INTEGER,
   fecha_instalacion TEXT,
   ubicacion_anatomica TEXT,
-  ubicacion_lado TEXT
+  ubicacion_lado TEXT,
+  avatar TEXT
 )`).run();
+// Añadir columna avatar si no existe
+try {
+  db.prepare('ALTER TABLE pacientes ADD COLUMN avatar TEXT').run();
+} catch (e) {}
 // Añadir columna en_lista_espera si no existe
 try {
   db.prepare('ALTER TABLE pacientes ADD COLUMN en_lista_espera INTEGER DEFAULT 0').run();
@@ -290,22 +295,7 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(
-    paciente.nombre,
-    paciente.apellidos,
-    paciente.tipo_acceso_id,
-    paciente.fecha_instalacion,
-    paciente.ubicacion_anatomica,
-    paciente.ubicacion_lado,
-    paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null
-  );
-  return { id: info.lastInsertRowid };
-};
-
-db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ? WHERE id = ?');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -315,9 +305,38 @@ db.editPaciente = function(paciente) {
     paciente.ubicacion_lado,
     paciente.en_lista_espera ? 1 : 0,
     paciente.tipo_acceso_espera_id || null,
+    paciente.avatar || ''
+  );
+  return { id: info.lastInsertRowid };
+};
+
+db.editPaciente = function(paciente) {
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ?, avatar = ? WHERE id = ?');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.tipo_acceso_id,
+    paciente.fecha_instalacion,
+    paciente.ubicacion_anatomica,
+    paciente.ubicacion_lado,
+    paciente.en_lista_espera ? 1 : 0,
+    paciente.tipo_acceso_espera_id || null,
+    paciente.avatar || '',
     paciente.id
   );
   return { changes: info.changes };
+};
+// Actualizar solo el avatar de un paciente
+db.setPacienteAvatar = function(pacienteId, avatarData) {
+  const stmt = db.prepare('UPDATE pacientes SET avatar = ? WHERE id = ?');
+  const info = stmt.run(avatarData, pacienteId);
+  return { changes: info.changes };
+};
+// Obtener avatar de un paciente
+db.getPacienteAvatar = function(pacienteId) {
+  const stmt = db.prepare('SELECT avatar FROM pacientes WHERE id = ?');
+  const row = stmt.get(pacienteId);
+  return row ? row.avatar : '';
 };
 
 db.deletePaciente = function(id) {

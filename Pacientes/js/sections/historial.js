@@ -1,3 +1,25 @@
+// Función global para mostrar mensajes flotantes (copiada de agenda.js)
+function mostrarMensaje(texto, tipo = 'success') {
+	let alerta = document.createElement('div');
+	alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
+	alerta.style.zIndex = 9999;
+	let icon = '';
+	if (tipo === 'success') icon = '<span class="alert-icon">✨</span>';
+	else if (tipo === 'danger') icon = '<span class="alert-icon">❌</span>';
+	else if (tipo === 'warning') icon = '<span class="alert-icon">⚠️</span>';
+	else if (tipo === 'info') icon = '<span class="alert-icon">ℹ️</span>';
+	alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
+	document.body.appendChild(alerta);
+	// Cerrar al hacer click en la alerta
+	alerta.onclick = () => alerta.remove();
+	setTimeout(() => {
+		if (document.body.contains(alerta)) {
+			alerta.classList.remove('show');
+			alerta.classList.add('hide');
+			setTimeout(() => alerta.remove(), 500);
+		}
+	}, 3000);
+}
 // Poblar filtro de pacientes y actualizar historial
 const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
@@ -59,9 +81,23 @@ document.getElementById('btn-add-historial').addEventListener('click', poblarSel
 
 
 document.addEventListener('DOMContentLoaded', async function() {
-	await cargarPacientesHistorial();
-	   document.getElementById('filtro-paciente-historial').addEventListener('change', function() {
+	   await cargarPacientesHistorial();
+	   // Mostrar datos del paciente seleccionado por defecto
+	   const select = document.getElementById('filtro-paciente-historial');
+	   let pacienteId = select && select.value ? Number(select.value) : null;
+	   if (pacienteId) {
+		   const pacientes = await ipcRenderer.invoke('get-pacientes');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+		   await renderPacienteCard(pacienteSel || null);
+	   } else {
+		   await renderPacienteCard(null);
+	   }
+	   renderHistorial();
+	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
 		   pacienteId = Number(this.value);
+		   const pacientes = await ipcRenderer.invoke('get-pacientes');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+		   await renderPacienteCard(pacienteSel || null);
 		   renderHistorial();
 	   });
 	   document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
@@ -76,7 +112,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 	   document.getElementById('filtro-profesional-historial').addEventListener('input', function() {
 		   renderHistorial();
 	   });
-	renderHistorial();
 	// Evitar duplicidad de submit
 	const form = document.getElementById('form-historial');
 	if (form._submitHandlerSet) return;
@@ -291,4 +326,95 @@ window.archiveHistorial = async function(idx) {
 		renderHistorial();
 	}
 };
+
+
+
+document.getElementById('pacienteAvatarInput').addEventListener('change', async function() {
+    const input = this;
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64 = e.target.result;
+        document.getElementById('pacienteAvatar').src = base64;
+        const select = document.getElementById('filtro-paciente-historial');
+        const pacienteId = select && select.value ? Number(select.value) : null;
+        if (pacienteId) {
+            await ipcRenderer.invoke('paciente-set-avatar', pacienteId, base64);
+			mostrarMensaje('¡Foto de perfil actualizada correctamente!', 'info');
+        }
+    };
+    reader.readAsDataURL(file);
+});
+
+async function renderPacienteCard(paciente) {
+    const avatar = document.getElementById('pacienteAvatar');
+    const nombre = document.getElementById('pacienteNombre');
+    const datos = document.getElementById('pacienteDatos');
+    const extra = document.getElementById('pacienteExtra');
+    const sexoBadge = document.getElementById('pacienteSexo');
+
+    if (!paciente) {
+        avatar.src = '../assets/avatar-default.png';
+        nombre.textContent = 'Selecciona un paciente';
+        datos.textContent = '';
+        extra.textContent = '';
+        sexoBadge.textContent = '';
+        sexoBadge.className = 'badge bg-secondary mt-2';
+        return;
+    }
+    let avatarData = paciente.avatar;
+    if (!avatarData && paciente.id) {
+        avatarData = await ipcRenderer.invoke('paciente-get-avatar', paciente.id);
+    }
+    if (avatarData && avatarData !== '') {
+        if (avatarData.startsWith('data:image')) {
+            avatar.src = avatarData;
+        } else {
+            avatar.src = avatarData;
+        }
+    } else {
+        avatar.src = paciente.sexo === 'M' ? '../assets/hombre.jpg' : (paciente.sexo === 'F' ? '../assets/mujer.jpg' : '../assets/avatar-default.png');
+    }
+    nombre.textContent = paciente.nombre + (paciente.apellidos ? ' ' + paciente.apellidos : '');
+    let edad = '';
+    let fechaNac = paciente.fecha_nacimiento || '';
+    if (fechaNac) {
+        const nacimiento = new Date(fechaNac);
+        const hoy = new Date();
+        let years = hoy.getFullYear() - nacimiento.getFullYear();
+        if (hoy.getMonth() < nacimiento.getMonth() || (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate())) {
+            years--;
+        }
+        edad = years + ' años';
+    }
+    let tipoAcceso = paciente.tipo_acceso_id ? (window.tagsGlobal ? (window.tagsGlobal.find(t => t.id === paciente.tipo_acceso_id)?.nombre || '') : '') : '';
+    let ubicacion = paciente.ubicacion_anatomica || '';
+    let lado = paciente.ubicacion_lado || '';
+    let fechaAlta = paciente.fecha_instalacion || '';
+    datos.innerHTML = `<i class='bi bi-calendar-heart me-1'></i> ${edad ? edad : 'Edad desconocida'}${fechaNac ? ' <span class="text-muted">(' + fechaNac + ')</span>' : ''}<br>
+        <i class='bi bi-key me-1'></i> ${tipoAcceso ? tipoAcceso : ''}${ubicacion ? ', ' + ubicacion : ''}${lado ? ', ' + lado : ''}`;
+    if (paciente.sexo === 'M') {
+        sexoBadge.textContent = 'Hombre';
+        sexoBadge.className = 'badge bg-primary mt-2';
+        sexoBadge.style.backgroundColor = '';
+    } else if (paciente.sexo === 'F') {
+        sexoBadge.textContent = 'Mujer';
+        sexoBadge.className = 'badge bg-pink mt-2';
+        sexoBadge.style.backgroundColor = '#e83e8c';
+    } else {
+        sexoBadge.textContent = 'Sin especificar';
+        sexoBadge.className = 'badge bg-secondary mt-2';
+        sexoBadge.style.backgroundColor = '';
+    }
+    extra.innerHTML = `<i class='bi bi-person-badge me-1'></i> ID: ${paciente.id || ''}${fechaAlta ? ', Alta: ' + fechaAlta : ''}`;
+}
+
+document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
+    pacienteId = Number(this.value);
+    const pacientes = await ipcRenderer.invoke('get-pacientes');
+    const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+    await renderPacienteCard(pacienteSel || null);
+    renderHistorial();
+});
 

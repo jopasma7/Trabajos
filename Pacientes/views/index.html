@@ -440,39 +440,59 @@
             <!-- Historial Clínico Section -->
             <section id="historial-section" class="section">
               <div class="row g-3 align-items-end mb-3">
-                  <div class="col-md-3">
-                    <label for="filtro-tipo-evento-historial" class="form-label mb-1">Tipo de Evento</label>
-                    <select class="form-select" id="filtro-tipo-evento-historial">
-                      <option value="">Todos</option>
-                      <!-- Opciones dinámicas por JS -->
-                    </select>
-                  </div>
-                  <div class="col-md-2">
-                    <label for="filtro-fecha-historial" class="form-label mb-1">Fecha</label>
-                    <input type="date" class="form-control" id="filtro-fecha-historial">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="filtro-profesional-historial" class="form-label mb-1">Profesional</label>
-                    <input type="text" class="form-control" id="filtro-profesional-historial" placeholder="Buscar profesional...">
-                  </div>
-                  <div class="col-md-2 d-flex align-items-end">
-                    <div class="form-check me-3">
-                      <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
-                      <label class="form-check-label" for="mostrar-archivados-historial">Archivados</label>
-                    </div>
-                    
-                  </div>
-                  <button class="btn btn-primary ms-auto col-md-2 d-flex justify-content-center align-items-end me-2" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial" style="width: 150px;">
-                      <i class="bi bi-plus-lg"></i> Añadir entrada
-                    </button>
-                </div>
-              <div class="card shadow-sm p-4">
-                <div class="row g-3 align-items-end mb-3">
                   <div class="col-md-3 d-flex flex-row align-items-center gap-3">
                     <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
                     <select class="form-select" id="filtro-paciente-historial"></select>
                   </div>
-                </div>         
+                </div> 
+              <!-- Tarjeta visual del paciente -->
+              <div id="historialPacienteCard" class="card mb-3 shadow-sm" style="max-width: 540px;">
+                <div class="row g-0 align-items-center">
+                  <div class="col-auto d-flex flex-column align-items-center justify-content-center p-3">
+                    <div class="rounded-circle border border-3 border-success shadow mb-2" style="width: 90px; height: 90px; overflow: hidden; background: linear-gradient(135deg, #e0ffe0 60%, #b2f7b2 100%);">
+                      <img id="pacienteAvatar" src="../assets/avatar-default.png" class="img-fluid" alt="Avatar" style="width: 90px; height: 90px; object-fit: cover;">
+                    </div>
+                    <span class="badge bg-success mt-2" id="pacienteSexo">Sexo</span>
+                    <label for="pacienteAvatarInput" class="form-label mt-2 mb-0 small text-muted">Cambiar foto</label>
+                    <input type="file" id="pacienteAvatarInput" accept="image/*" class="form-control form-control-sm" style="max-width:137px;">
+                  </div>
+                  <div class="col ps-3">
+                    <div class="card-body py-2">
+                      <h5 class="card-title mb-1 fw-bold text-success" id="pacienteNombre">Nombre del paciente</h5>
+                      <p class="card-text mb-1 fs-6" id="pacienteDatos"><i class="bi bi-calendar-heart me-1"></i> Edad</p>
+                      <p class="card-text mb-0 text-muted small" id="pacienteExtra"><i class="bi bi-person-badge me-1"></i> ID, Fecha de alta</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card shadow-sm p-4">
+                <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-3">
+                  <label for="filtro-tipo-evento-historial" class="form-label mb-1">Tipo de Evento</label>
+                  <select class="form-select" id="filtro-tipo-evento-historial">
+                    <option value="">Todos</option>
+                    <!-- Opciones dinámicas por JS -->
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label for="filtro-fecha-historial" class="form-label mb-1">Fecha</label>
+                  <input type="date" class="form-control" id="filtro-fecha-historial">
+                </div>
+                <div class="col-md-2">
+                  <label for="filtro-profesional-historial" class="form-label mb-1">Profesional</label>
+                  <input type="text" class="form-control" id="filtro-profesional-historial" placeholder="Buscar profesional...">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
+                    <label class="form-check-label" for="mostrar-archivados-historial">Archivados</label>
+                  </div>
+                  
+                </div>
+                <button class="btn btn-primary ms-auto col-md-2 d-flex justify-content-center align-items-end me-2" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial" style="width: 150px;">
+                  <i class="bi bi-plus-lg"></i> Añadir entrada
+                </button>
+              </div>        
                 <div class="table-responsive">
                   <table class="table table-hover align-middle" id="tabla-historial">
                     <thead class="table-light">

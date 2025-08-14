@@ -1,4 +1,3 @@
-
 // Eliminar require innecesario de agendaData
 const { app, dialog } = require('electron');
 const fs = require('fs');
@@ -192,5 +191,12 @@ ipcMain.handle('incidencias-add', (event, { pacienteId, motivo, fecha }) => {
 
 ipcMain.handle('incidencias-delete', (event, incidenciaId) => {
   return db.deleteIncidencia(incidenciaId);
+});
+
+ipcMain.handle('paciente-set-avatar', async (event, pacienteId, avatarData) => {
+  return db.setPacienteAvatar(pacienteId, avatarData);
+});
+ipcMain.handle('paciente-get-avatar', async (event, pacienteId) => {
+  return db.getPacienteAvatar(pacienteId);
 });
 
