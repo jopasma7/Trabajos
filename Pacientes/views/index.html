@@ -17,6 +17,31 @@
       max-width: 800px !important;
       width: 98vw !important;
     }
+    .icon-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 1.15rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-right: 0.25rem;
+    }
+    .timeline-paciente {
+      max-height: 375px;
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-width: thin;
+    }
+    .timeline-paciente::-webkit-scrollbar {
+      width: 7px;
+      background: #f1f1f1;
+    }
+    .timeline-paciente::-webkit-scrollbar-thumb {
+      background: #b2f7b2;
+      border-radius: 4px;
+    }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
@@ -445,26 +470,91 @@
                     <select class="form-select" id="filtro-paciente-historial"></select>
                   </div>
                 </div> 
-              <!-- Tarjeta visual del paciente -->
-              <div id="historialPacienteCard" class="card mb-3 shadow-sm" style="max-width: 540px;">
-                <div class="row g-0 align-items-center">
-                  <div class="col-auto d-flex flex-column align-items-center justify-content-center p-3">
-                    <div class="rounded-circle border border-3 border-success shadow mb-2" style="width: 90px; height: 90px; overflow: hidden; background: linear-gradient(135deg, #e0ffe0 60%, #b2f7b2 100%);">
-                      <img id="pacienteAvatar" src="../assets/avatar-default.png" class="img-fluid" alt="Avatar" style="width: 90px; height: 90px; object-fit: cover;">
-                    </div>
-                    <span class="badge bg-success mt-2" id="pacienteSexo">Sexo</span>
-                    <label for="pacienteAvatarInput" class="form-label mt-2 mb-0 small text-muted">Cambiar foto</label>
-                    <input type="file" id="pacienteAvatarInput" accept="image/*" class="form-control form-control-sm" style="max-width:137px;">
-                  </div>
-                  <div class="col ps-3">
-                    <div class="card-body py-2">
-                      <h5 class="card-title mb-1 fw-bold text-success" id="pacienteNombre">Nombre del paciente</h5>
-                      <p class="card-text mb-1 fs-6" id="pacienteDatos"><i class="bi bi-calendar-heart me-1"></i> Edad</p>
-                      <p class="card-text mb-0 text-muted small" id="pacienteExtra"><i class="bi bi-person-badge me-1"></i> ID, Fecha de alta</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
+<div class="row g-4 mb-3">
+  <div class="col-lg-5">
+    <!-- Tarjeta visual del paciente -->
+    <div id="historialPacienteCard" class="card shadow-lg border-0 mb-4" style="max-width: 540px;">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center mb-3">
+          <div class="rounded-circle border border-3 border-success shadow-sm me-3" style="width: 90px; height: 90px; overflow: hidden; background: linear-gradient(135deg, #e0ffe0 60%, #b2f7b2 100%);">
+            <img id="pacienteAvatar" src="../assets/avatar-default.png" class="img-fluid" alt="Avatar" style="width: 90px; height: 90px; object-fit: cover;">
+          </div>
+          <div>
+            <h4 class="fw-bold text-success mb-1" id="pacienteNombre">Nombre del paciente</h4>
+            <span class="badge mt-1" id="pacienteSexo">Sexo</span>
+            <label for="pacienteAvatarInput" class="form-label mt-2 mb-0 small text-muted d-block">Cambiar foto</label>
+            <input type="file" id="pacienteAvatarInput" accept="image/*" class="form-control form-control-sm" style="max-width:137px;">
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-telephone"></i></span>
+            <span class="fw-semibold">Teléfono:</span>
+            <span id="pacienteTelefono" class="text-muted ms-1">-</span>
+          </div>
+          <div class="col-12 col-md-6">
+            <span class="icon-circle bg-primary-subtle text-primary me-2"><i class="bi bi-envelope"></i></span>
+            <span class="fw-semibold">Correo:</span>
+            <span id="pacienteCorreo" class="text-muted ms-1">-</span>
+          </div>
+          <div class="col-12">
+            <span class="icon-circle bg-warning-subtle text-warning me-2"><i class="bi bi-house-door"></i></span>
+            <span class="fw-semibold">Dirección:</span>
+            <span id="pacienteDireccion" class="text-muted ms-1">-</span>
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            <span class="icon-circle bg-info-subtle text-info me-2"><i class="bi bi-file-earmark-medical"></i></span>
+            <span class="fw-semibold">Historia clínica:</span>
+            <span id="pacienteHistoria" class="text-muted ms-1">-</span>
+          </div>
+          <div class="col-12 col-md-6">
+            <span class="icon-circle bg-danger-subtle text-danger me-2"><i class="bi bi-exclamation-diamond"></i></span>
+            <span class="fw-semibold">Alergias:</span>
+            <span id="pacienteAlergias" class="text-muted ms-1">-</span>
+          </div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-12 col-md-6">
+            <span class="icon-circle bg-secondary-subtle text-secondary me-2"><i class="bi bi-person-workspace"></i></span>
+            <span class="fw-semibold">Profesional:</span>
+            <span id="pacienteProfesional" class="text-muted ms-1">-</span>
+          </div>
+          <div class="col-12">
+            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-chat-left-text"></i></span>
+            <span class="fw-semibold">Observaciones:</span>
+            <span id="pacienteObservaciones" class="text-muted ms-1">-</span>
+          </div>
+        </div>
+        <hr>
+        <div class="mb-1">
+          <span class="fw-semibold text-dark"><i class="bi bi-calendar-heart me-1"></i>Edad:</span>
+          <span id="pacienteDatos" class="text-muted ms-1">-</span>
+        </div>
+        <div class="mb-1">
+          <span class="fw-semibold text-dark"><i class="bi bi-person-badge me-1"></i>ID, Fecha de alta:</span>
+          <span id="pacienteExtra" class="text-muted ms-1">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <!-- Panel resumen visual/timeline -->
+    <div class="card shadow-sm border-0 mb-4" id="panelResumenPaciente">
+      <div class="card-body p-4">
+        <h5 class="fw-bold text-primary mb-4">
+          <i class="bi bi-graph-up-arrow me-2"></i>Evolución y eventos recientes
+        </h5>
+        <div id="timelinePaciente" class="timeline-paciente">
+          <!-- Aquí se renderizará la gráfica/timeline por JS -->
+          <div class="text-muted">Sin datos de evolución disponibles.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
               <div class="card shadow-sm p-4">
                 <div class="row g-3 align-items-end mb-3">
                 <div class="col-md-3">

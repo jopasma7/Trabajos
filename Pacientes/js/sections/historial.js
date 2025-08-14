@@ -1,3 +1,81 @@
+// Renderizar timeline visual de eventos clínicos recientes
+function renderTimelinePaciente(eventos) {
+	const timeline = document.getElementById('timelinePaciente');
+	if (!timeline) return;
+	if (!eventos || eventos.length === 0) {
+		timeline.innerHTML = '<div class="text-muted">Sin datos de evolución disponibles.</div>';
+		return;
+	}
+	timeline.innerHTML = eventos.map(ev => `
+		<div class="d-flex align-items-start mb-3">
+			<div class="icon-circle bg-${ev.color}-subtle text-${ev.color} me-3" style="font-size:1.3em;">
+				<i class="${ev.icono}"></i>
+			</div>
+			<div>
+				<div class="fw-semibold text-${ev.color}">${ev.tipo} <span class="text-muted small ms-2">${ev.fecha}</span></div>
+				<div class="text-dark">${ev.descripcion}</div>
+			</div>
+		</div>
+	`).join('');
+}
+
+// Ejemplo de eventos clínicos recientes
+const eventosPaciente = [
+	{
+		fecha: '2025-08-01',
+		tipo: 'Consulta',
+		descripcion: 'Dolor abdominal. Diagnóstico: Gastritis aguda.',
+		icono: 'bi bi-person-badge',
+		color: 'primary'
+	},
+	{
+		fecha: '2025-08-10',
+		tipo: 'Prueba Laboratorio',
+		descripcion: 'Hemograma y bioquímica normales.',
+		icono: 'bi bi-flask',
+		color: 'info'
+	},
+	{
+		fecha: '2025-08-15',
+		tipo: 'Incidencia',
+		descripcion: 'Alergia detectada: Penicilina.',
+		icono: 'bi bi-exclamation-diamond',
+		color: 'danger'
+	},
+	{
+		fecha: '2025-08-20',
+		tipo: 'Tratamiento',
+		descripcion: 'Inicio de Omeprazol 20mg/día. Seguimiento semanal.',
+		icono: 'bi bi-capsule',
+		color: 'success'
+	},
+	{
+		fecha: '2025-08-25',
+		tipo: 'Cita de control',
+		descripcion: 'Control de evolución. Sin complicaciones.',
+		icono: 'bi bi-calendar-check',
+		color: 'secondary'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	}
+];
+
+// Llama a la función con tus datos reales o de ejemplo
+document.addEventListener('DOMContentLoaded', function() {
+	renderTimelinePaciente(eventosPaciente);
+});
 // Función global para mostrar mensajes flotantes (copiada de agenda.js)
 function mostrarMensaje(texto, tipo = 'success') {
 	let alerta = document.createElement('div');
@@ -348,21 +426,43 @@ document.getElementById('pacienteAvatarInput').addEventListener('change', async 
 });
 
 async function renderPacienteCard(paciente) {
-    const avatar = document.getElementById('pacienteAvatar');
-    const nombre = document.getElementById('pacienteNombre');
-    const datos = document.getElementById('pacienteDatos');
-    const extra = document.getElementById('pacienteExtra');
-    const sexoBadge = document.getElementById('pacienteSexo');
+	const avatar = document.getElementById('pacienteAvatar');
+	const nombre = document.getElementById('pacienteNombre');
+	const datos = document.getElementById('pacienteDatos');
+	const extra = document.getElementById('pacienteExtra');
+	const sexoBadge = document.getElementById('pacienteSexo');
+	const telefono = document.getElementById('pacienteTelefono');
+	const correo = document.getElementById('pacienteCorreo');
+	const direccion = document.getElementById('pacienteDireccion');
+	const historia = document.getElementById('pacienteHistoria');
+	const alergias = document.getElementById('pacienteAlergias');
+	const profesional = document.getElementById('pacienteProfesional');
+	const observaciones = document.getElementById('pacienteObservaciones');
 
-    if (!paciente) {
-        avatar.src = '../assets/avatar-default.png';
-        nombre.textContent = 'Selecciona un paciente';
-        datos.textContent = '';
-        extra.textContent = '';
-        sexoBadge.textContent = '';
-        sexoBadge.className = 'badge bg-secondary mt-2';
-        return;
-    }
+	if (!paciente) {
+		avatar.src = '../assets/avatar-default.png';
+		nombre.textContent = 'Selecciona un paciente';
+		datos.textContent = '';
+		extra.textContent = '';
+		sexoBadge.textContent = '';
+		sexoBadge.className = 'badge bg-secondary mt-2';
+		if (telefono) telefono.textContent = '-';
+		if (correo) correo.textContent = '-';
+		if (direccion) direccion.textContent = '-';
+		if (historia) historia.textContent = '-';
+		if (alergias) alergias.textContent = '-';
+		if (profesional) profesional.textContent = '-';
+		if (observaciones) observaciones.textContent = '-';
+		return;
+	}
+	// Nuevos campos visuales profesionales
+	if (telefono) telefono.textContent = paciente.telefono || '-';
+	if (correo) correo.textContent = paciente.correo || '-';
+	if (direccion) direccion.textContent = paciente.direccion || '-';
+	if (historia) historia.textContent = paciente.historia_clinica || '-';
+	if (alergias) alergias.textContent = paciente.alergias || '-';
+	if (profesional) profesional.textContent = paciente.profesional_asignado || '-';
+	if (observaciones) observaciones.textContent = paciente.observaciones || '-';
     let avatarData = paciente.avatar;
     if (!avatarData && paciente.id) {
         avatarData = await ipcRenderer.invoke('paciente-get-avatar', paciente.id);
