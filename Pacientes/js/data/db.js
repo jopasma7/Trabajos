@@ -1,3 +1,18 @@
+// Crear tabla profesionales si no existe
+db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  apellidos TEXT NOT NULL,
+  sexo TEXT,
+  email TEXT,
+  telefono TEXT,
+  cargo TEXT,
+  numero_colegiado TEXT,
+  fecha_nacimiento TEXT,
+  direccion TEXT,
+  notas TEXT,
+  avatar TEXT
+)`).run();
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -54,6 +69,25 @@ try {
 try {
   db.prepare('ALTER TABLE pacientes ADD COLUMN tipo_acceso_espera_id INTEGER').run();
 } catch (e) {}
+
+// Añadir nuevos campos si no existen
+const pacientesTableInfo = db.prepare("PRAGMA table_info(pacientes)").all();
+const addColumnIfMissing = (colName, colType) => {
+  if (!pacientesTableInfo.some(col => col.name === colName)) {
+    try {
+      db.prepare(`ALTER TABLE pacientes ADD COLUMN ${colName} ${colType}`).run();
+    } catch (e) {}
+  }
+};
+addColumnIfMissing('sexo', 'TEXT');
+addColumnIfMissing('telefono', 'TEXT');
+addColumnIfMissing('correo', 'TEXT');
+addColumnIfMissing('direccion', 'TEXT');
+addColumnIfMissing('alergias', 'TEXT');
+addColumnIfMissing('observaciones', 'TEXT');
+addColumnIfMissing('profesional_id', 'INTEGER');
+addColumnIfMissing('fecha_nacimiento', 'TEXT');
+addColumnIfMissing('fecha_alta', 'TEXT');
 
 
 // Crear tabla historial_clinico (uno a muchos con pacientes)

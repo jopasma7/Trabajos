@@ -59,7 +59,10 @@ ipcMain.handle('get-pacientes', () => {
 
 // Ejemplo: Agregar un paciente
 ipcMain.handle('add-paciente', (event, paciente) => {
-  const stmt = db.prepare(`INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pacientes (
+    nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id, avatar,
+    sexo, telefono, correo, direccion, alergias, observaciones, profesional_id, fecha_nacimiento, fecha_alta
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -68,7 +71,17 @@ ipcMain.handle('add-paciente', (event, paciente) => {
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
     paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null
+    paciente.tipo_acceso_espera_id || null,
+    paciente.avatar || '',
+    paciente.sexo || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
+    paciente.profesional_id || null,
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || ''
   );
   return { id: info.lastInsertRowid };
 });
