@@ -29,7 +29,7 @@
       margin-right: 0.25rem;
     }
     .timeline-paciente {
-      max-height: 375px;
+      max-height: 323px;
       overflow-y: auto;
       padding-right: 8px;
       scrollbar-width: thin;
@@ -376,7 +376,7 @@
                 <div class="row g-2">
                   <div class="col-lg-6">
                     <!-- Tarjeta visual del paciente -->
-                    <div id="historialPacienteCard" class="card shadow-lg border-0 mb-4" style="max-width: 540px; margin-right: 10px;">
+                    <div id="historialPacienteCard" class="card shadow-lg border-0 mb-4" style="max-width: 940px; margin-right: 10px;">
                       <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
                           <div class="rounded-circle border border-3 border-success shadow-sm me-3" style="width: 90px; height: 90px; overflow: hidden; background: linear-gradient(135deg, #e0ffe0 60%, #b2f7b2 100%);">
@@ -391,53 +391,50 @@
                         </div>
                         <div class="row g-2 mb-2">
                           <div class="col-12 col-md-6">
-                            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-telephone"></i></span>
-                            <span class="fw-semibold">Teléfono:</span>
-                            <span id="pacienteTelefono" class="text-muted ms-1">-</span>
-                          </div>
-                          <div class="col-12 col-md-6">
-                            <span class="icon-circle bg-primary-subtle text-primary me-2"><i class="bi bi-envelope"></i></span>
-                            <span class="fw-semibold">Correo:</span>
-                            <span id="pacienteCorreo" class="text-muted ms-1">-</span>
-                          </div>
-                          <div class="col-12">
                             <span class="icon-circle bg-warning-subtle text-warning me-2"><i class="bi bi-house-door"></i></span>
                             <span class="fw-semibold">Dirección:</span>
-                            <span id="pacienteDireccion" class="text-muted ms-1">-</span>
+                            <span id="pacienteDireccion" class="text-muted">-</span>
                           </div>
+                          <div class="col-12 col-md-6">
+                            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-telephone"></i></span>
+                            <span class="fw-semibold">Teléfono:</span>
+                            <span id="pacienteTelefono" class="text-muted">-</span>
+                          </div>
+                          
                         </div>
                         <div class="row g-2 mb-2">
                           <div class="col-12 col-md-6">
-                            <span class="icon-circle bg-info-subtle text-info me-2"><i class="bi bi-file-earmark-medical"></i></span>
-                            <span class="fw-semibold">Historia clínica:</span>
-                            <span id="pacienteHistoria" class="text-muted ms-1">-</span>
+                            <span class="icon-circle bg-info-subtle text-info me-2"><i class="bi bi-calendar-heart"></i></span>
+                            <span class="fw-semibold">Edad:</span>
+                            <span id="pacienteDatos" class="text-muted">-</span>
                           </div>
                           <div class="col-12 col-md-6">
                             <span class="icon-circle bg-danger-subtle text-danger me-2"><i class="bi bi-exclamation-diamond"></i></span>
                             <span class="fw-semibold">Alergias:</span>
-                            <span id="pacienteAlergias" class="text-muted ms-1">-</span>
+                            <span id="pacienteAlergias" class="text-muted">-</span>
                           </div>
                         </div>
                         <div class="row g-2 mb-2">
-                          <div class="col-12 col-md-6">
-                            <span class="icon-circle bg-secondary-subtle text-secondary me-2"><i class="bi bi-person-workspace"></i></span>
-                            <span class="fw-semibold">Profesional:</span>
-                            <span id="pacienteProfesional" class="text-muted ms-1">-</span>
+                          <div class="col-12">
+                            <span class="icon-circle bg-primary-subtle text-primary me-2"><i class="bi bi-envelope"></i></span>
+                            <span class="fw-semibold">Correo:</span>
+                            <span id="pacienteCorreo" class="text-muted">-</span>
                           </div>
                           <div class="col-12">
                             <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-chat-left-text"></i></span>
                             <span class="fw-semibold">Observaciones:</span>
-                            <span id="pacienteObservaciones" class="text-muted ms-1">-</span>
+                            <span id="pacienteObservaciones" class="text-muted">-</span>
+                          </div>
+                          <div class="col-12">
+                            <span class="icon-circle bg-warning-subtle text-warning me-2"><i class="bi bi-eye"></i></span>
+                            <span class="fw-semibold">Tipo de Acceso:</span>
+                            <span id="paciente-tipoacceso" class="text-muted">-</span>
                           </div>
                         </div>
                         <hr>
                         <div class="mb-1">
-                          <span class="fw-semibold text-dark"><i class="bi bi-calendar-heart me-1"></i>Edad:</span>
-                          <span id="pacienteDatos" class="text-muted ms-1">-</span>
-                        </div>
-                        <div class="mb-1">
                           <span class="fw-semibold text-dark"><i class="bi bi-person-badge me-1"></i>ID, Fecha de alta:</span>
-                          <span id="pacienteExtra" class="text-muted ms-1">-</span>
+                          <span id="pacienteExtra" class="text-muted">-</span>
                         </div>
                       </div>
                     </div>

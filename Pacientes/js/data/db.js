@@ -21,6 +21,16 @@ if (!fs.existsSync(dbDir)) {
 const db = new Database(dbPath);
 
 // Crear tabla profesionales si no existe
+// Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
+db.prepare(`CREATE TABLE IF NOT EXISTS tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE,
+  color TEXT DEFAULT '#009879',
+  descripcion TEXT,
+  tipo TEXT DEFAULT 'incidencia',
+  icono TEXT,
+  ubicaciones TEXT
+)`).run();
 db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
@@ -79,6 +89,23 @@ const addColumnIfMissing = (colName, colType) => {
     } catch (e) {}
   }
 };
+// Añadir columnas si no existen
+addColumnIfMissing('tipo_acceso_id', 'INTEGER');
+addColumnIfMissing('fecha_instalacion', 'TEXT');
+addColumnIfMissing('ubicacion_anatomica', 'TEXT');
+addColumnIfMissing('ubicacion_lado', 'TEXT');
+addColumnIfMissing('avatar', 'TEXT');
+addColumnIfMissing('profesional_asignado', 'TEXT');
+addColumnIfMissing('historia_clinica', 'TEXT');
+addColumnIfMissing('sexo', 'TEXT');
+addColumnIfMissing('telefono', 'TEXT');
+addColumnIfMissing('correo', 'TEXT');
+addColumnIfMissing('direccion', 'TEXT');
+addColumnIfMissing('alergias', 'TEXT');
+addColumnIfMissing('observaciones', 'TEXT');
+addColumnIfMissing('profesional_id', 'INTEGER');
+addColumnIfMissing('fecha_nacimiento', 'TEXT');
+addColumnIfMissing('fecha_alta', 'TEXT');
 addColumnIfMissing('sexo', 'TEXT');
 addColumnIfMissing('telefono', 'TEXT');
 addColumnIfMissing('correo', 'TEXT');
@@ -191,6 +218,7 @@ if (!hasUbicaciones) {
     db.prepare('ALTER TABLE tags ADD COLUMN ubicaciones TEXT').run();
   } catch (e) {}
 }
+// Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
@@ -592,101 +620,73 @@ try {
 
 
 // --- Insertar pacientes de prueba si la tabla está vacía ---
-const pacientesCount = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
-if (pacientesCount === 0) {
-  const nombres = [
-    ['Alejandro', 'García'], ['María', 'López'], ['Juan', 'Martínez'], ['Lucía', 'Sánchez'], ['Pedro', 'Fernández'],
-    ['Laura', 'Gómez'], ['David', 'Díaz'], ['Carmen', 'Ruiz'], ['Javier', 'Moreno'], ['Sara', 'Muñoz'],
-    ['Antonio', 'Jiménez'], ['Paula', 'Romero'], ['Manuel', 'Alonso'], ['Elena', 'Gutiérrez'], ['Francisco', 'Navarro'],
-    ['Marta', 'Torres'], ['José', 'Domínguez'], ['Patricia', 'Vázquez'], ['Andrés', 'Ramos'], ['Cristina', 'Gil'],
-    ['Sergio', 'Castro'], ['Beatriz', 'Suárez'], ['Miguel', 'Ortega'], ['Raquel', 'Rubio'], ['Adrián', 'Molina'],
-    ['Isabel', 'Serrano'], ['Hugo', 'Reyes'], ['Nuria', 'Cano'], ['Pablo', 'Iglesias'], ['Rosa', 'Delgado'],
-    ['Iván', 'Peña'], ['Natalia', 'Cabrera'], ['Samuel', 'Méndez'], ['Clara', 'Aguilar'], ['Álvaro', 'Santos'],
-    ['Julia', 'Castillo'], ['Rubén', 'Rojas'], ['Silvia', 'Ortega'], ['Óscar', 'Cruz'], ['Lorena', 'Ramos'],
-    ['Enrique', 'Vega'], ['Mónica', 'Herrera'], ['Guillermo', 'Campos'], ['Teresa', 'Molina'], ['Emilio', 'Sanz'],
-    ['Irene', 'Pérez'], ['Tomás', 'Vicente'], ['Andrea', 'Cordero'], ['Jesús', 'León'], ['Eva', 'Fuentes'],
-    ['Cristian', 'Soto'], ['Verónica', 'Carrasco'], ['Ángel', 'Blanco'], ['Sonia', 'Reina'], ['Felipe', 'Pastor'],
-    ['Alicia', 'Nieto'], ['Marcos', 'Bravo'], ['Esther', 'Solís'], ['Raúl', 'Benítez'], ['Patricia', 'Lara'],
-    ['Joaquín', 'Pascual'], ['Miriam', 'Vidal'], ['Vicente', 'Gallardo'], ['Noelia', 'Salas'], ['Jorge', 'Arias'],
-    ['Cristina', 'Pardo'], ['Fernando', 'Redondo'], ['Elisa', 'Calvo'], ['Martín', 'Serrano'], ['Celia', 'Moya'],
-    ['Gabriel', 'Sáez'], ['Rocío', 'Valle'], ['Francisca', 'Morales'], ['Julián', 'Crespo'], ['Aitana', 'Ríos'],
-    ['Matías', 'Garrido'], ['Aroa', 'Soler'], ['Ignacio', 'Esteban'], ['Nerea', 'Gallego'], ['Aleix', 'Paredes']
-  ];
-  // Obtener los ids de los tipos de acceso
-  const tags = db.getAllTags().filter(t => ['fistula', 'cateter', 'protesis'].includes(t.nombre.toLowerCase()));
-  const tipoAccesoIds = {
-    fistula: tags.find(t => t.nombre.toLowerCase() === 'fistula')?.id || 1,
-    cateter: tags.find(t => t.nombre.toLowerCase() === 'cateter')?.id || 2,
-    protesis: tags.find(t => t.nombre.toLowerCase() === 'protesis')?.id || 3
-  };
-  const tipos = ['fistula', 'cateter', 'protesis'];
-  const ubicaciones = {
-    fistula: ['Radio Cefálica', 'Braquio Cefálica'],
-    protesis: ['Radio Cefálica', 'Braquio Cefálica'],
-    cateter: ['Yugular', 'Femoral']
-  };
+// Función para insertar 10 pacientes completos y realistas con imagen y registros en el historial clínico
+db.insertarPacientesDemo = function() {
+  // Obtener IDs válidos de tags para tipo_evento y diagnostico
+  const tagsEvento = db.prepare("SELECT id FROM tags WHERE tipo='evento' ORDER BY id ASC LIMIT 3").all();
+  const tagsDiagnostico = db.prepare("SELECT id FROM tags WHERE tipo='diagnostico' ORDER BY id ASC LIMIT 3").all();
+  // Obtener IDs válidos de tags para tipo_acceso_id
+  const tagsAcceso = db.prepare("SELECT id, nombre FROM tags WHERE tipo='acceso' ORDER BY id ASC LIMIT 3").all();
+  const tiposAcceso = [tagsAcceso[0]?.id || 1, tagsAcceso[1]?.id || 2, tagsAcceso[2]?.id || 3];
+  const ubicaciones = ['Radio Cefálica', 'Braquio Cefálica', 'Yugular', 'Femoral'];
   const lados = ['Izquierda', 'Derecha'];
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?)');
-  for (let i = 0; i < 75; i++) {
-    const tipo = tipos[i % 3];
-    let ubicacion_anatomica = '';
-    let ubicacion_lado = '';
-    if (tipo === 'fistula' || tipo === 'protesis') {
-      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
-      ubicacion_lado = lados[i % 2];
-    } else if (tipo === 'cateter') {
-      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
-      ubicacion_lado = lados[i % 2];
+  const pacientes = [
+    {
+      nombre: 'Alejandro', apellidos: 'García', sexo: 'M', telefono: '600123456', correo: 'alejandro.garcia@mail.com', direccion: 'Calle Mayor 1', fecha_nacimiento: '1985-03-12', historia_clinica: 'Diálisis desde 2020', alergias: 'Penicilina', profesional_asignado: 'Dr. Ruiz', observaciones: 'Buen estado general', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2024-01-15', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
+    },
+    {
+      nombre: 'María', apellidos: 'López', sexo: 'F', telefono: '600234567', correo: 'maria.lopez@mail.com', direccion: 'Av. Andalucía 23', fecha_nacimiento: '1990-07-25', historia_clinica: 'Trasplante renal en 2022', alergias: 'Ninguna', profesional_asignado: 'Dra. Gómez', observaciones: 'Control mensual', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2023-11-10', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
+    },
+    {
+      nombre: 'Juan', apellidos: 'Martínez', sexo: 'M', telefono: '600345678', correo: 'juan.martinez@mail.com', direccion: 'Calle Sol 15', fecha_nacimiento: '1978-11-02', historia_clinica: 'Fístula radiocefálica', alergias: 'Sulfas', profesional_asignado: 'Dr. García', observaciones: 'Pendiente revisión', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2022-09-05', ubicacion_anatomica: ubicaciones[2], ubicacion_lado: lados[0]
+    },
+    {
+      nombre: 'Lucía', apellidos: 'Sánchez', sexo: 'F', telefono: '600456789', correo: 'lucia.sanchez@mail.com', direccion: 'Plaza Nueva 8', fecha_nacimiento: '1988-05-18', historia_clinica: 'Catéter yugular', alergias: 'Latex', profesional_asignado: 'Dra. Pérez', observaciones: 'Alergia conocida', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2021-06-20', ubicacion_anatomica: ubicaciones[3], ubicacion_lado: lados[1]
+    },
+    {
+      nombre: 'Pedro', apellidos: 'Fernández', sexo: 'M', telefono: '600567890', correo: 'pedro.fernandez@mail.com', direccion: 'Calle Real 22', fecha_nacimiento: '1965-09-30', historia_clinica: 'Prótesis braquiocefálica', alergias: 'Ninguna', profesional_asignado: 'Dr. Torres', observaciones: 'Revisión anual', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2020-03-12', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
+    },
+    {
+      nombre: 'Laura', apellidos: 'Gómez', sexo: 'F', telefono: '600678901', correo: 'laura.gomez@mail.com', direccion: 'Av. Madrid 5', fecha_nacimiento: '1995-01-10', historia_clinica: 'Diálisis peritoneal', alergias: 'Aspirina', profesional_asignado: 'Dra. Romero', observaciones: 'Sin incidencias', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2023-05-18', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
+    },
+    {
+      nombre: 'David', apellidos: 'Díaz', sexo: 'M', telefono: '600789012', correo: 'david.diaz@mail.com', direccion: 'Calle Luna 3', fecha_nacimiento: '1982-06-21', historia_clinica: 'Catéter femoral', alergias: 'Ibuprofeno', profesional_asignado: 'Dr. Moreno', observaciones: 'Control trimestral', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2022-12-01', ubicacion_anatomica: ubicaciones[2], ubicacion_lado: lados[0]
+    },
+    {
+      nombre: 'Carmen', apellidos: 'Ruiz', sexo: 'F', telefono: '600890123', correo: 'carmen.ruiz@mail.com', direccion: 'Plaza Vieja 7', fecha_nacimiento: '1972-12-05', historia_clinica: 'Fístula braquiocefálica', alergias: 'Ninguna', profesional_asignado: 'Dra. Herrera', observaciones: 'Estable', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2021-08-30', ubicacion_anatomica: ubicaciones[3], ubicacion_lado: lados[1]
+    },
+    {
+      nombre: 'Javier', apellidos: 'Moreno', sexo: 'M', telefono: '600901234', correo: 'javier.moreno@mail.com', direccion: 'Calle Norte 19', fecha_nacimiento: '1980-04-14', historia_clinica: 'Prótesis radiocefálica', alergias: 'Paracetamol', profesional_asignado: 'Dr. Campos', observaciones: 'Sin complicaciones', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2024-02-22', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
+    },
+    {
+      nombre: 'Sara', apellidos: 'Muñoz', sexo: 'F', telefono: '600012345', correo: 'sara.munoz@mail.com', direccion: 'Av. Sevilla 11', fecha_nacimiento: '1993-08-27', historia_clinica: 'Diálisis desde 2021', alergias: 'Ninguna', profesional_asignado: 'Dra. León', observaciones: 'Buen cumplimiento', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2023-07-14', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
     }
-    stmt.run(
-      nombres[i][0],
-      nombres[i][1],
-      tipoAccesoIds[tipo],
-      `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
-      ubicacion_anatomica,
-      ubicacion_lado
-    );
-  }
-  for (let i = 75; i < 175; i++) {
-    const tipo = tipos[i % 3];
-    let ubicacion_anatomica = '';
-    let ubicacion_lado = '';
-    if (tipo === 'fistula' || tipo === 'protesis') {
-      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
-      ubicacion_lado = lados[i % 2];
-    } else if (tipo === 'cateter') {
-      ubicacion_anatomica = ubicaciones[tipo][Math.floor(i / 2) % 2];
-      ubicacion_lado = lados[i % 2];
+  ];
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, telefono, correo, direccion, fecha_nacimiento, historia_clinica, alergias, profesional_asignado, observaciones, avatar, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  pacientes.forEach((p, idx) => {
+    const info = stmt.run(p.nombre, p.apellidos, p.sexo, p.telefono, p.correo, p.direccion, p.fecha_nacimiento, p.historia_clinica, p.alergias, p.profesional_asignado, p.observaciones, p.avatar, p.tipo_acceso_id, p.fecha_instalacion, p.ubicacion_anatomica, p.ubicacion_lado);
+    // Insertar 2-3 registros de historial clínico para cada paciente usando IDs válidos
+    const pacienteId = info.lastInsertRowid;
+    db.addHistorialClinico(pacienteId, '2025-08-01', tagsEvento[idx % tagsEvento.length]?.id || 1, 'Consulta inicial', tagsDiagnostico[idx % tagsDiagnostico.length]?.id || 1, 'Tratamiento base', 'Sin incidencias', '', p.profesional_asignado);
+    db.addHistorialClinico(pacienteId, '2025-08-10', tagsEvento[(idx+1) % tagsEvento.length]?.id || 1, 'Revisión', tagsDiagnostico[(idx+1) % tagsDiagnostico.length]?.id || 1, 'Ajuste de medicación', 'Mejoría clínica', '', p.profesional_asignado);
+    db.addHistorialClinico(pacienteId, '2025-08-20', tagsEvento[(idx+2) % tagsEvento.length]?.id || 1, 'Seguimiento', tagsDiagnostico[(idx+2) % tagsDiagnostico.length]?.id || 1, 'Sin cambios', 'Estable', '', p.profesional_asignado);
+    // Añadir incidencias de ejemplo para algunos pacientes
+    if (idx % 3 === 0) {
+      db.addIncidencia(pacienteId, 'Dolor en acceso vascular', '2025-07-15');
+      db.addIncidencia(pacienteId, 'Hematoma leve', '2025-07-20');
     }
-    stmt.run(
-      `Paciente${i+1}`,
-      `Apellido${i+1}`,
-      tipoAccesoIds[tipo],
-      `2025-08-${(i % 28 + 1).toString().padStart(2, '0')}`,
-      ubicacion_anatomica,
-      ubicacion_lado
-    );
-  }
-}
+    if (idx % 4 === 0) {
+      db.addIncidencia(pacienteId, 'Dificultad para canulación', '2025-06-10');
+    }
+  });
+};
 
 // --- Ejemplos reales para pruebas ---
-function insertarEjemplos() {
-  // Verificar si ya existen pacientes de ejemplo
-  const existe = db.prepare('SELECT COUNT(*) as c FROM pacientes').get().c;
-  if (existe > 0) return;
-
-  // Insertar pacientes
-  const paciente1 = db.prepare('INSERT INTO pacientes (nombre, apellidos) VALUES (?, ?)').run('Juan', 'García').lastInsertRowid;
-  const paciente2 = db.prepare('INSERT INTO pacientes (nombre, apellidos) VALUES (?, ?)').run('Ana', 'López').lastInsertRowid;
-
-  // Insertar historial clínico para Juan García
-  db.addHistorialClinico(paciente1, '2025-08-01', 'Consulta', 'Dolor abdominal', 'Gastritis aguda', 'Omeprazol 20mg/día', 'Paciente refiere dolor desde hace 3 días. Se recomienda dieta blanda.', '', 'Dr. García');
-  db.addHistorialClinico(paciente1, '2025-08-10', 'Prueba Laboratorio', 'Control rutinario', 'Sin alteraciones', '---', 'Hemograma y bioquímica normales.', '', 'Enf. López');
-
-  // Insertar historial clínico para Ana López
-  db.addHistorialClinico(paciente2, '2025-08-12', 'Intervención', 'Colocación de acceso vascular', 'Acceso tipo Hickman', 'Cuidados postoperatorios', 'Sin complicaciones. Se adjunta informe quirúrgico.', '', 'Dr. Ruiz');
+// Insertar 10 pacientes completos y realistas al iniciar si la tabla está vacía
+const pacientesCountDemo = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
+if (pacientesCountDemo === 0) {
+  db.insertarPacientesDemo();
 }
-insertarEjemplos();
 
 // Etiquetas por defecto para tipos de evento y diagnósticos
 const etiquetasEvento = [

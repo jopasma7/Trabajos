@@ -434,10 +434,10 @@ async function renderPacienteCard(paciente) {
 	const telefono = document.getElementById('pacienteTelefono');
 	const correo = document.getElementById('pacienteCorreo');
 	const direccion = document.getElementById('pacienteDireccion');
-	const historia = document.getElementById('pacienteHistoria');
 	const alergias = document.getElementById('pacienteAlergias');
 	const profesional = document.getElementById('pacienteProfesional');
 	const observaciones = document.getElementById('pacienteObservaciones');
+	const tipoAccesoElem = document.getElementById('paciente-tipoacceso');
 
 	if (!paciente) {
 		avatar.src = '../assets/avatar-default.png';
@@ -453,13 +453,13 @@ async function renderPacienteCard(paciente) {
 		if (alergias) alergias.textContent = '-';
 		if (profesional) profesional.textContent = '-';
 		if (observaciones) observaciones.textContent = '-';
+		if (tipoAccesoElem) tipoAccesoElem.textContent = '-';
 		return;
 	}
 	// Nuevos campos visuales profesionales
 	if (telefono) telefono.textContent = paciente.telefono || '-';
 	if (correo) correo.textContent = paciente.correo || '-';
 	if (direccion) direccion.textContent = paciente.direccion || '-';
-	if (historia) historia.textContent = paciente.historia_clinica || '-';
 	if (alergias) alergias.textContent = paciente.alergias || '-';
 	if (profesional) profesional.textContent = paciente.profesional_asignado || '-';
 	if (observaciones) observaciones.textContent = paciente.observaciones || '-';
@@ -479,7 +479,12 @@ async function renderPacienteCard(paciente) {
     nombre.textContent = paciente.nombre + (paciente.apellidos ? ' ' + paciente.apellidos : '');
     let edad = '';
     let fechaNac = paciente.fecha_nacimiento || '';
-    if (fechaNac) {
+	let tipoAcceso = paciente.tipo_acceso_id ? (tagsGlobal ? (tagsGlobal.find(t => t.id === paciente.tipo_acceso_id)?.nombre || '') : '') : '';
+	let ubicacion = paciente.ubicacion_anatomica || '';
+	let lado = paciente.ubicacion_lado || '';
+	let acceso_final = `${tipoAcceso ? tipoAcceso : ''}${ubicacion ? ', ' + ubicacion : ''}${lado ? ', ' + lado : ''}`;
+    if (tipoAccesoElem) tipoAccesoElem.textContent = acceso_final || '';
+	if (fechaNac) {
         const nacimiento = new Date(fechaNac);
         const hoy = new Date();
         let years = hoy.getFullYear() - nacimiento.getFullYear();
@@ -488,12 +493,17 @@ async function renderPacienteCard(paciente) {
         }
         edad = years + ' años';
     }
-    let tipoAcceso = paciente.tipo_acceso_id ? (window.tagsGlobal ? (window.tagsGlobal.find(t => t.id === paciente.tipo_acceso_id)?.nombre || '') : '') : '';
-    let ubicacion = paciente.ubicacion_anatomica || '';
-    let lado = paciente.ubicacion_lado || '';
-    let fechaAlta = paciente.fecha_instalacion || '';
-    datos.innerHTML = `<i class='bi bi-calendar-heart me-1'></i> ${edad ? edad : 'Edad desconocida'}${fechaNac ? ' <span class="text-muted">(' + fechaNac + ')</span>' : ''}<br>
-        <i class='bi bi-key me-1'></i> ${tipoAcceso ? tipoAcceso : ''}${ubicacion ? ', ' + ubicacion : ''}${lado ? ', ' + lado : ''}`;
+
+	let fechaAlta = paciente.fecha_instalacion || '';
+	// Formatear fecha de alta a dd/mm/yyyy
+	let fechaAltaFormateada = '';
+	if (fechaAlta && fechaAlta.includes('-')) {
+		const [y, m, d] = fechaAlta.split('-');
+		fechaAltaFormateada = `${d}/${m}/${y}`;
+	} else {
+		fechaAltaFormateada = fechaAlta;
+	}
+	datos.innerHTML = `${edad ? edad : 'Edad desconocida'}<br>`;
     if (paciente.sexo === 'M') {
         sexoBadge.textContent = 'Hombre';
         sexoBadge.className = 'badge bg-primary mt-2';
@@ -507,7 +517,8 @@ async function renderPacienteCard(paciente) {
         sexoBadge.className = 'badge bg-secondary mt-2';
         sexoBadge.style.backgroundColor = '';
     }
-    extra.innerHTML = `<i class='bi bi-person-badge me-1'></i> ID: ${paciente.id || ''}${fechaAlta ? ', Alta: ' + fechaAlta : ''}`;
+	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
+	
 }
 
 document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
