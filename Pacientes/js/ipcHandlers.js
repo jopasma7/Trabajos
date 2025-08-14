@@ -3,7 +3,6 @@ const { app, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
-const db = require('./data/db');
 
 
 // Ruta del archivo de perfil en la carpeta de usuario de la app

@@ -4,6 +4,61 @@
 const { ipcRenderer } = require('electron');
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Limpiar formulario y selector al pulsar 'Agregar profesional'
+    const btnAgregarProfesional = document.getElementById('btn-agregar-profesional');
+    if (btnAgregarProfesional) {
+        btnAgregarProfesional.addEventListener('click', () => {
+            if (selectorProfesional) selectorProfesional.value = '';
+            if (form) form.reset();
+            if (avatarImg) avatarImg.src = '../assets/avatar-default.png';
+            if (avatarFeedback) avatarFeedback.textContent = '';
+            document.getElementById('profesional-id').value = '';
+        });
+    }
+    // Poblar selector de profesionales
+    const selectorProfesional = document.getElementById('selector-profesional');
+    async function poblarSelectorProfesionales() {
+        if (!selectorProfesional) return;
+        selectorProfesional.innerHTML = '<option value="">-- Selecciona un profesional --</option>';
+        const profesionales = await ipcRenderer.invoke('get-profesionales');
+        profesionales.forEach(prof => {
+            const opt = document.createElement('option');
+            opt.value = prof.id;
+            opt.textContent = `${prof.nombre} ${prof.apellidos}`;
+            selectorProfesional.appendChild(opt);
+        });
+    }
+    poblarSelectorProfesionales();
+
+    // Al cambiar el selector, cargar datos en el formulario
+    if (selectorProfesional) {
+        selectorProfesional.addEventListener('change', async (e) => {
+            const id = e.target.value;
+            if (!id) {
+                document.getElementById('form-profesional').reset();
+                avatarImg.src = '../assets/avatar-default.png';
+                avatarFeedback.textContent = '';
+                return;
+            }
+            const profesionales = await ipcRenderer.invoke('get-profesionales');
+            const prof = profesionales.find(p => String(p.id) === String(id));
+            if (prof) {
+                document.getElementById('profesional-nombre').value = prof.nombre || '';
+                document.getElementById('profesional-apellidos').value = prof.apellidos || '';
+                document.getElementById('profesional-sexo').value = prof.sexo || '';
+                document.getElementById('profesional-email').value = prof.email || '';
+                document.getElementById('profesional-cargo').value = prof.cargo || '';
+                document.getElementById('profesional-numero-colegiado').value = prof.numero_colegiado || '';
+                document.getElementById('profesional-telefono').value = prof.telefono || '';
+                document.getElementById('profesional-fecha-nacimiento').value = prof.fecha_nacimiento || '';
+                document.getElementById('profesional-direccion').value = prof.direccion || '';
+                document.getElementById('profesional-notas').value = prof.notas || '';
+                document.getElementById('profesional-id').value = prof.id || '';
+                avatarImg.src = prof.avatar || '../assets/avatar-default.png';
+                avatarFeedback.textContent = '';
+            }
+        });
+    }
     const form = document.getElementById('form-profesional');
     const avatarImg = document.getElementById('profesional-avatar-img');
     const cambiarAvatarBtn = document.getElementById('cambiar-profesional-avatar-btn');
@@ -36,17 +91,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 avatar: avatarImg.src,
                 id: document.getElementById('profesional-id').value || null
             };
+            let nuevoId = null;
             if (profesional.id) {
                 await ipcRenderer.invoke('edit-profesional', profesional);
                 mostrarMensaje(`Profesional <b>${profesional.nombre} ${profesional.apellidos}</b> actualizado correctamente.`, 'success');
+                nuevoId = profesional.id;
             } else {
-                await ipcRenderer.invoke('add-profesional', profesional);
+                const res = await ipcRenderer.invoke('add-profesional', profesional);
                 mostrarMensaje(`Nuevo profesional <b>${profesional.nombre} ${profesional.apellidos}</b> creado correctamente.`, 'success');
+                nuevoId = res.id;
             }
-            // Limpiar formulario tras guardar
-            form.reset();
-            avatarImg.src = '../assets/avatar-default.png';
-            avatarFeedback.textContent = '';
+            await poblarSelectorProfesionales();
+            if (nuevoId) {
+                selectorProfesional.value = nuevoId;
+                selectorProfesional.dispatchEvent(new Event('change'));
+            } else {
+                form.reset();
+                avatarImg.src = '../assets/avatar-default.png';
+                avatarFeedback.textContent = '';
+            }
         });
     }
 
