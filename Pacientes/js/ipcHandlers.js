@@ -213,3 +213,23 @@ ipcMain.handle('paciente-get-avatar', async (event, pacienteId) => {
   return db.getPacienteAvatar(pacienteId);
 });
 
+// --- IPC para profesionales ---
+const db = require('./data/db');
+
+ipcMain.handle('get-profesionales', () => {
+  return db.getProfesionales();
+});
+
+ipcMain.handle('add-profesional', (event, profesional) => {
+  return db.addProfesional(profesional);
+});
+
+ipcMain.handle('edit-profesional', (event, profesional) => {
+  return db.editProfesional(profesional);
+});
+
+ipcMain.handle('delete-profesional', (event, id) => {
+  return db.deleteProfesional(id);
+});
+
+

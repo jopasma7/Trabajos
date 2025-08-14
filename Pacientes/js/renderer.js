@@ -5,6 +5,7 @@ require('../js/sections/historial.js');
 const { setupProfileSection } = require('../js/sections/profile.js');
 const agenda = require('../js/sections/agenda.js');
 const etiquetas = require('../js/sections/etiquetas.js');
+require('../js/sections/profesionales.js');
 
 // Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
@@ -21,7 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
 		medicaciones: document.getElementById('medicaciones-section'),
 		alertas: document.getElementById('alertas-section'),
 		documentos: document.getElementById('documentos-section'),
-		estadisticas: document.getElementById('estadisticas-section')
+		estadisticas: document.getElementById('estadisticas-section'),
+		profesionales: document.getElementById('profesionales-section')
 	};
 	const sectionTitle = document.getElementById('section-title');
 
@@ -190,7 +192,20 @@ document.addEventListener('DOMContentLoaded', () => {
                sectionTitle.style.marginBottom = '0.5rem';
                sectionTitle.style.display = 'flex';
                sectionTitle.style.alignItems = 'center';
-           } else {
+           } else if (section === 'profesionales') {
+            sectionTitle.innerHTML = `
+                <span style="font-size:1.3em;">🩺</span>
+                <span style="color:#1f2937;">Profesionales</span>
+                <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Registro y edición de médicos y especialistas</span>
+            `;
+            sectionTitle.className = '';
+            sectionTitle.style.fontSize = '1.7rem';
+            sectionTitle.style.fontWeight = '800';
+            sectionTitle.style.color = '#1f2937';
+            sectionTitle.style.marginBottom = '0.5rem';
+            sectionTitle.style.display = 'flex';
+            sectionTitle.style.alignItems = 'center';
+		   } else {
 			   sectionTitle.textContent = section.charAt(0).toUpperCase() + section.slice(1);
 			   sectionTitle.className = '';
 			   sectionTitle.removeAttribute('style');

@@ -1,18 +1,3 @@
-// Crear tabla profesionales si no existe
-db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  nombre TEXT NOT NULL,
-  apellidos TEXT NOT NULL,
-  sexo TEXT,
-  email TEXT,
-  telefono TEXT,
-  cargo TEXT,
-  numero_colegiado TEXT,
-  fecha_nacimiento TEXT,
-  direccion TEXT,
-  notas TEXT,
-  avatar TEXT
-)`).run();
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -35,6 +20,21 @@ if (!fs.existsSync(dbDir)) {
 }
 const db = new Database(dbPath);
 
+// Crear tabla profesionales si no existe
+db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  apellidos TEXT NOT NULL,
+  sexo TEXT,
+  email TEXT,
+  telefono TEXT,
+  cargo TEXT,
+  numero_colegiado TEXT,
+  fecha_nacimiento TEXT,
+  direccion TEXT,
+  notas TEXT,
+  avatar TEXT
+)`).run();
 
 // Crear tabla agenda si no existe
 db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
@@ -209,6 +209,57 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencia_tags (
   FOREIGN KEY (incidencia_id) REFERENCES incidencias(id) ON DELETE CASCADE,
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 )`).run();
+
+
+// --- Métodos para profesionales ---
+db.addProfesional = function(prof) {
+  const stmt = db.prepare(`INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const info = stmt.run(
+    prof.nombre,
+    prof.apellidos,
+    prof.sexo || '',
+    prof.email || '',
+    prof.telefono || '',
+    prof.cargo || '',
+    prof.numero_colegiado || '',
+    prof.fecha_nacimiento || '',
+    prof.direccion || '',
+    prof.notas || '',
+    prof.avatar || ''
+  );
+  return { id: info.lastInsertRowid };
+};
+
+db.editProfesional = function(prof) {
+  const stmt = db.prepare(`UPDATE profesionales SET nombre = ?, apellidos = ?, sexo = ?, email = ?, telefono = ?, cargo = ?, numero_colegiado = ?, fecha_nacimiento = ?, direccion = ?, notas = ?, avatar = ? WHERE id = ?`);
+  const info = stmt.run(
+    prof.nombre,
+    prof.apellidos,
+    prof.sexo || '',
+    prof.email || '',
+    prof.telefono || '',
+    prof.cargo || '',
+    prof.numero_colegiado || '',
+    prof.fecha_nacimiento || '',
+    prof.direccion || '',
+    prof.notas || '',
+    prof.avatar || '',
+    prof.id
+  );
+  return { changes: info.changes };
+};
+
+db.deleteProfesional = function(id) {
+  const stmt = db.prepare('DELETE FROM profesionales WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
+
+db.getProfesionales = function() {
+  return db.prepare('SELECT * FROM profesionales ORDER BY nombre, apellidos').all();
+};
+
+
 
 // --- Métodos para incidencias ---
 db.getIncidenciasByPaciente = function(pacienteId) {

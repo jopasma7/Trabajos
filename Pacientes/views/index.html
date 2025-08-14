@@ -55,25 +55,6 @@
   <link rel="stylesheet" href="../styles/sections/modal-global.css">
   </head>
   <body>
-    <!-- Modal de Incidencias -->
-    <div class="modal fade" id="modal-incidencias" tabindex="-1" aria-labelledby="modalIncidenciasLabel" aria-hidden="true">
-      <div class="modal-dialog modal-incidencias-wide">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalIncidenciasLabel">Incidencias del paciente</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-          </div>
-          <div class="modal-body">
-            <!-- Aquí puedes mostrar inputs dinámicos para motivo y fecha de cada etiqueta -->
-            <div id="incidencias-modal-content"></div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" class="btn btn-success" id="btn-guardar-incidencias">Guardar</button>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="container-fluid min-vh-100 bg-light">
       <div class="row flex-nowrap">
         <!-- Sidebar -->
@@ -83,6 +64,12 @@
             <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">GiGi Hospital</span>
           </a>
           <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 mt-4" id="menu">
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white d-flex align-items-center gap-2" data-section="profesionales">
+                <i class="bi bi-person-badge"></i>
+                <span class="ms-2">Profesionales</span>
+              </a>
+            </li>
             <li class="w-100 border-top border-secondary mb-2"></li>
             <li class="nav-item w-100">
               <a href="#" class="nav-link text-white active ps-4" data-section="dashboard">
@@ -848,14 +835,120 @@
                 <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
               </div>
             </form>
-              </div>
-            </div>
             <!-- Botón eliminado, ahora está dentro del card -->
+          </section>
+          <!-- Profesionales Section -->
+          <section id="profesionales-section" class="section d-none">
+            <form id="form-profesional">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-3 mb-3">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-person-badge me-2"></i>Datos del profesional</h5>
+                    <div class="mb-2">
+                      <label for="profesional-nombre" class="form-label">Nombre</label>
+                      <input type="text" class="form-control" id="profesional-nombre" maxlength="40" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-apellidos" class="form-label">Apellidos</label>
+                      <input type="text" class="form-control" id="profesional-apellidos" maxlength="60" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-sexo" class="form-label">Sexo</label>
+                      <select class="form-select" id="profesional-sexo">
+                        <option value="hombre">Hombre</option>
+                        <option value="mujer">Mujer</option>
+                        <option value="otro">Otro</option>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-email" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="profesional-email">
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-cargo" class="form-label">Cargo</label>
+                      <input type="text" class="form-control" id="profesional-cargo" placeholder="Ej: Enfermero/a, Médico/a">
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-numero-colegiado" class="form-label">Número de Colegiado</label>
+                      <input type="text" class="form-control" id="profesional-numero-colegiado" placeholder="Ej: 1234567">
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-telefono" class="form-label">Teléfono</label>
+                      <input type="tel" class="form-control" id="profesional-telefono" placeholder="Ej: 600123456">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-3 mb-3 text-center">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-person-circle me-2"></i>Avatar</h5>
+                    <div class="d-flex flex-column align-items-center justify-content-center">
+                      <div class="position-relative mb-2" style="width:72px;height:72px;">
+                        <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle border border-2 border-success shadow avatar-img" id="profesional-avatar-img" width="72" height="72" style="object-fit:cover;background:#e6f9e6;">
+                      </div>
+                      <div style="max-width:220px;">
+                        <span class="badge text-dark shadow-sm d-inline-flex align-items-center gap-1" style="font-weight:500;letter-spacing:0.5px;font-size:1rem;">
+                          <i class="bi bi-star-fill text-warning"></i>
+                          Establece tu avatar
+                          <i class="bi bi-star-fill text-warning"></i>
+                        </span>
+                      </div>
+                      <div class="d-flex gap-2 w-100 mt-1">
+                        <button type="button" class="btn btn-outline-success btn-sm fw-semibold flex-fill" id="cambiar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
+                          <i class="bi bi-image"></i> Cambiar foto
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm fw-semibold flex-fill" id="eliminar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
+                          <i class="bi bi-x-circle"></i> Eliminar avatar
+                        </button>
+                      </div>
+                      <div id="avatar-profesional-feedback" class="text-muted small mt-1" style="min-height:18px;font-size:0.95em;"></div>
+                    </div>
+                  </div>
+                  <div class="card shadow-sm p-3 mb-3">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-info-circle me-2"></i>Información adicional</h5>
+                    <div class="mb-2">
+                      <label for="profesional-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
+                      <input type="date" class="form-control" id="profesional-fecha-nacimiento">
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-direccion" class="form-label">Dirección</label>
+                      <input type="text" class="form-control" id="profesional-direccion" placeholder="Ciudad, Provincia">
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-notas" class="form-label">Notas</label>
+                      <textarea class="form-control" id="profesional-notas" rows="2" placeholder="Información adicional..."></textarea>
+                    </div>
+                    <input type="hidden" id="profesional-id">
+                    <div class="d-flex justify-content-end mt-3">
+                      <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
           </section>
         </main>
       </div>
     </div>
 
+    <!-- Modal de Incidencias -->
+    <div class="modal fade" id="modal-incidencias" tabindex="-1" aria-labelledby="modalIncidenciasLabel" aria-hidden="true">
+      <div class="modal-dialog modal-incidencias-wide">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalIncidenciasLabel">Incidencias del paciente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Aquí puedes mostrar inputs dinámicos para motivo y fecha de cada etiqueta -->
+            <div id="incidencias-modal-content"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btn-guardar-incidencias">Guardar</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Modal Nuevo Paciente -->
     <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg paciente-modal-ancho">
@@ -944,6 +1037,8 @@
         </div>
       </div>
     </div>
+
+
     <!-- Bootstrap 5 JS y dependencias -->
     <script src="../node_modules/choices.js/public/assets/scripts/choices.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
