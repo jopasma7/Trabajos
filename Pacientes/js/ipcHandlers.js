@@ -217,7 +217,6 @@ const db = require('./data/db');
 
 ipcMain.handle('get-profesionales', () => {
   const profesionales = db.getProfesionales();
-  console.log('IPC get-profesionales llamado. Profesionales:', profesionales);
   return profesionales;
 });
 

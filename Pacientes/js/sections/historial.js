@@ -107,40 +107,36 @@ async function obtenerProfesionales() {
 
 // Poblar el select de profesionales en el modal de historial
 async function cargarProfesionalesEnHistorial() {
-	console.log('cargarProfesionalesEnHistorial ejecutándose...');
 // Forzar carga de profesionales al mostrar el modal (por si el botón no es el único trigger)
 document.addEventListener('DOMContentLoaded', function() {
 	const modal = document.getElementById('modal-historial');
 	if (modal) {
 		modal.addEventListener('shown.bs.modal', function() {
-			console.log('Modal historial mostrado');
 			cargarProfesionalesEnHistorial();
 		});
 	}
 });
-	console.log('Cargando profesionales...');
-		const select = document.getElementById('profesional-historial');
-		if (!select) return;
-		select.innerHTML = '';
-			const profesionales = await obtenerProfesionales();
-				console.log('Profesionales recibidos:', profesionales);
-					const options = [];
-					if (!profesionales || profesionales.length === 0) {
-						console.error('No se recibieron profesionales desde la base de datos.');
+	const select = document.getElementById('profesional-historial');
+	if (!select) return;
+	select.innerHTML = '';
+		const profesionales = await obtenerProfesionales();
+		const options = [];
+		if (!profesionales || profesionales.length === 0) {
+			console.error('No se recibieron profesionales desde la base de datos.');
+			options.push({
+				value: '',
+				label: 'No hay profesionales registrados'
+			});
+		} else {
+			profesionales.forEach((prof, idx) => {
 						options.push({
-							value: '',
-							label: 'No hay profesionales registrados'
+							value: prof.id,
+							label: `${prof.nombre} ${prof.apellidos}`,
+							customProperties: { avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png' },
+							selected: idx === 0 // Selecciona el primero por defecto
 						});
-					} else {
-						profesionales.forEach((prof, idx) => {
-									options.push({
-										value: prof.id,
-										label: `${prof.nombre} ${prof.apellidos}`,
-										customProperties: { avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png' },
-										selected: idx === 0 // Selecciona el primero por defecto
-									});
-						});
-					}
+			});
+		}
 		// Destruir instancia previa de Choices si existe
 		if (select.choicesInstance) {
 			select.choicesInstance.destroy();
