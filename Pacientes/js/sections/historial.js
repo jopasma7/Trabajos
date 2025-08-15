@@ -672,7 +672,7 @@ async function renderPacienteCard(paciente) {
 	const alergias = document.getElementById('pacienteAlergias');
 	const profesional = document.getElementById('pacienteProfesional');
 	const observaciones = document.getElementById('pacienteObservaciones');
-	const tipoAccesoElem = document.getElementById('paciente-tipoacceso');
+	const tipoAccesoElem = document.getElementById('paciente-tipoacceso-info');
 
 	if (!paciente) {
 		avatar.src = '../assets/avatar-default.png';

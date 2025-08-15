@@ -58,11 +58,21 @@ ipcMain.handle('get-pacientes', () => {
 
 // Handler: Pacientes con CHD pendiente de FAV
 ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
-  // Filtro: pacientes en lista de espera y con tipo_acceso_espera_id = FAV
-  // Reemplaza el valor 2 por el id real de FAV si es diferente
-  const FAV_ID = 2;
-  const stmt = db.prepare(`SELECT id, nombre, apellidos, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, observaciones FROM pacientes WHERE en_lista_espera = 1 AND tipo_acceso_espera_id = ?`);
-  return stmt.all(FAV_ID);
+  // Filtro: pacientes con etiqueta de acceso 'Catéter' y pendientes de etiqueta 'Fístula'
+  const cateterTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) = 'catéter' AND tipo = 'acceso'").get();
+  const fistulaTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) = 'fístula' AND tipo = 'acceso'").get();
+  if (!cateterTag || !fistulaTag) {
+    console.log('[CHD Reporte] No se encontraron los tags Catéter o Fístula en la tabla tags.');
+    return [];
+  }
+  const CATETER_ID = cateterTag.id;
+  const FAV_ID = fistulaTag.id;
+  const query = `SELECT id, nombre, apellidos, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, observaciones FROM pacientes WHERE en_lista_espera = 1 AND tipo_acceso_id = ? AND tipo_acceso_espera_id = ?`;
+  const stmt = db.prepare(query);
+  const pacientes = stmt.all(CATETER_ID, FAV_ID);
+  console.log('[CHD Reporte] Consulta SQL:', query, 'CATETER_ID:', CATETER_ID, 'FAV_ID:', FAV_ID);
+  console.log('[CHD Reporte] Datos obtenidos:', pacientes);
+  return pacientes;
 });
 
 // Ejemplo: Agregar un paciente
