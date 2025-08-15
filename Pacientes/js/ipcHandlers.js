@@ -56,6 +56,15 @@ ipcMain.handle('get-pacientes', () => {
   return pacientes;
 });
 
+// Handler: Pacientes con CHD pendiente de FAV
+ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
+  // Filtro: pacientes en lista de espera y con tipo_acceso_espera_id = FAV
+  // Reemplaza el valor 2 por el id real de FAV si es diferente
+  const FAV_ID = 2;
+  const stmt = db.prepare(`SELECT id, nombre, apellidos, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, observaciones FROM pacientes WHERE en_lista_espera = 1 AND tipo_acceso_espera_id = ?`);
+  return stmt.all(FAV_ID);
+});
+
 // Ejemplo: Agregar un paciente
 ipcMain.handle('add-paciente', (event, paciente) => {
   const stmt = db.prepare(`INSERT INTO pacientes (
