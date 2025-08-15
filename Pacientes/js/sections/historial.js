@@ -210,6 +210,7 @@ async function cargarPacientesHistorial() {
 const etiquetas = require('../sections/etiquetas.js');
 let tagsGlobal = [];
 
+
 async function poblarSelectEtiquetasHistorial(tipoEventoSeleccionado = null, diagnosticoSeleccionado = null) {
     // Esperar a que se carguen las etiquetas globales
     if (!tagsGlobal.length) {
@@ -321,6 +322,7 @@ document.getElementById('btn-add-historial').addEventListener('click', poblarSel
 
 document.addEventListener('DOMContentLoaded', async function() {
 	   await cargarPacientesHistorial();
+	   await poblarFiltroProfesionalHistorial();
 	   // Mostrar datos del paciente seleccionado por defecto
 	   const select = document.getElementById('filtro-paciente-historial');
 	   let pacienteId = select && select.value ? Number(select.value) : null;
@@ -348,9 +350,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 	   document.getElementById('filtro-fecha-historial').addEventListener('change', function() {
 		   renderHistorial();
 	   });
-	   document.getElementById('filtro-profesional-historial').addEventListener('input', function() {
-		   renderHistorial();
-	   });
+	   document.getElementById('filtro-profesional-historial').addEventListener('change', function() {
+			renderHistorial();
+		});
 	// Evitar duplicidad de submit
 	const form = document.getElementById('form-historial');
 	if (form._submitHandlerSet) return;
@@ -448,18 +450,27 @@ async function renderHistorial() {
     }
     // Obtener lista de profesionales para mostrar nombre y avatar
     const profesionales = await obtenerProfesionales();
-    // --- Filtros avanzados ---
-    const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
-    const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
-    const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value?.toLowerCase() || '';
+	// --- Filtros avanzados ---
+	const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
+	const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
+	const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value || '';
 
     historialData.forEach((item, idx) => {
         // Filtrar por tipo de evento
         if (filtroTipoEvento && String(item.tipo_evento) !== String(filtroTipoEvento)) return;
         // Filtrar por fecha exacta
         if (filtroFecha && String(item.fecha) !== String(filtroFecha)) return;
-        // Filtrar por profesional (substring, case-insensitive)
-        if (filtroProfesional && (!item.profesional || !item.profesional.toLowerCase().includes(filtroProfesional))) return;
+		// Filtrar por profesional (nombre y apellidos exacto)
+		if (filtroProfesional) {
+			let nombreCompleto = '';
+			if (item.profesional) {
+				const prof = profesionales.find(p => String(p.id) === String(item.profesional));
+				if (prof) {
+					nombreCompleto = `${prof.nombre} ${prof.apellidos}`;
+				}
+			}
+			if (nombreCompleto !== filtroProfesional) return;
+		}
 
         const esArchivado = item.archivado === 1 || item.archivado === true;
         // Buscar nombre de etiqueta evento
@@ -487,9 +498,9 @@ async function renderHistorial() {
         } else {
             profesionalHtml = `<span class='text-muted'>Sin profesional</span>`;
         }
-        tbody.innerHTML += `
-            <tr data-dinamico="true">
-                <td>${item.fecha}</td>
+		tbody.innerHTML += `
+			<tr data-dinamico="true">
+				<td>${formatearFecha(item.fecha)}</td>
 				<td>${nombreEvento}</td>
 				<td>${item.motivo}</td>
 				<td>${profesionalHtml}</td>
@@ -499,8 +510,8 @@ async function renderHistorial() {
 						? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
 						: `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
 				</td>
-            </tr>
-        `;
+			</tr>
+		`;
     });
     // ...existing code...
 	// Delegación de eventos para los botones de acción
@@ -748,6 +759,115 @@ async function renderPacienteCard(paciente) {
 	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
 	
 }
+
+function formatearFecha(fechaStr) {
+	if (!fechaStr) return '';
+	const partes = fechaStr.split('-');
+	if (partes.length === 3) {
+		return `${partes[2]}-${partes[1]}-${partes[0]}`;
+	}
+	return fechaStr;
+}
+
+
+
+// Poblar filtro de tipo de evento en la tabla
+async function poblarFiltroTipoEventoHistorial() {
+	const select = document.getElementById('filtro-tipo-evento-historial');
+	if (!select) return;
+	select.innerHTML = '<option value="">Todos</option>';
+	if (!tagsGlobal.length) {
+		tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+	}
+	tagsGlobal.filter(t => t.tipo === 'evento').forEach(tag => {
+		const opt = document.createElement('option');
+		opt.value = tag.id;
+		opt.textContent = tag.nombre;
+		select.appendChild(opt);
+	});
+}
+document.addEventListener('DOMContentLoaded', poblarFiltroTipoEventoHistorial);
+
+// Poblar filtro de profesional en la tabla (única función, con avatar y Choices.js)
+async function poblarFiltroProfesionalHistorial() {
+    const select = document.getElementById('filtro-profesional-historial');
+    select.innerHTML = '';
+    // Opción por defecto 'Todos'
+    const optionTodos = document.createElement('option');
+    optionTodos.value = '';
+    optionTodos.textContent = 'Todos';
+    select.appendChild(optionTodos);
+
+    const profesionales = await obtenerProfesionales();
+    profesionales.forEach((prof) => {
+        const opt = document.createElement('option');
+        opt.value = `${prof.nombre} ${prof.apellidos}`;
+        opt.textContent = `${prof.nombre} ${prof.apellidos}`;
+        opt.setAttribute('data-custom-properties', JSON.stringify({
+            avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png'
+        }));
+        select.appendChild(opt);
+    });
+
+    // Inicializar Choices.js para mostrar lista desplegable mejorada con avatar
+    if (select.choicesInstance) {
+        select.choicesInstance.destroy();
+        select.choicesInstance = null;
+    }
+    if (window.Choices) {
+        select.choicesInstance = new Choices(select, {
+            searchEnabled: false,
+            itemSelectText: '',
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    choice: (classNames, data) => {
+                        let avatar = '';
+                        if (data.customProperties && data.customProperties.avatar) {
+                            avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:18px;height:18px;object-fit:cover;margin-right:8px;'>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:4px 10px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${avatar}${data.label}</div>`;
+                        return template(html);
+                    },
+                    item: (classNames, data) => { 
+                        let avatar = '';
+                        if (data.customProperties && data.customProperties.avatar) {
+                            avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle' style='width:18px;height:18px;object-fit:cover;margin-right:2px;'>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${avatar}${data.label}</div>`;
+                        return template(html);
+                    }
+                };
+            }
+        });
+    }
+}
+
+
+// Poblar filtro de fecha en la tabla
+async function poblarFiltroFechaHistorial() {
+	const select = document.getElementById('filtro-fecha-historial');
+	if (!select) return;
+	select.innerHTML = '';
+	// Opción para mostrar todas
+	const optTodos = document.createElement('option');
+	optTodos.value = '';
+	optTodos.textContent = 'Todas';
+	select.appendChild(optTodos);
+	// Obtener historial del paciente seleccionado
+	const pacienteSelect = document.getElementById('filtro-paciente-historial');
+	const pacienteIdActual = pacienteSelect && pacienteSelect.value ? Number(pacienteSelect.value) : null;
+	if (!pacienteIdActual) return;
+	let historial = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+	// Extraer fechas únicas y ordenarlas
+	const fechasUnicas = [...new Set(historial.map(item => item.fecha))].sort();
+	fechasUnicas.forEach(fecha => {
+		const opt = document.createElement('option');
+		opt.value = fecha;
+		opt.textContent = formatearFecha(fecha);
+		select.appendChild(opt);
+	});
+}
+document.addEventListener('DOMContentLoaded', poblarFiltroFechaHistorial);
 
 document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
     pacienteId = Number(this.value);
