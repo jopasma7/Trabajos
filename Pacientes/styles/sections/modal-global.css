@@ -1,3 +1,55 @@
+/* Centrar el modal verticalmente */
+.modal.show .modal-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90vh;
+}
+/* Título bonito para el modal de reporte */
+.modal-titulo-reporte {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #198754;
+  text-shadow: 0 2px 8px rgba(25,135,84,0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+
+/* Botón PDF con estilo bonito naranja */
+.modal-content .btn-pdf {
+  background: linear-gradient(90deg, #fb923c 0%, #f59e42 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #fb923c33;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-content .btn-pdf:hover, .modal-content .btn-pdf:focus {
+  background: linear-gradient(90deg, #f59e42 0%, #fb923c 100%);
+  box-shadow: 0 4px 16px 0 #fb923c33;
+}
+
+/* Botón cerrar con estilo bonito rojo suave */
+.modal-content .btn-cerrar {
+  background: linear-gradient(90deg, #f87171 0%, #fca5a5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #f8717133;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-content .btn-cerrar:hover, .modal-content .btn-cerrar:focus {
+  background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%);
+  box-shadow: 0 4px 16px 0 #f8717133;
+}
 /* MODAL DE PELIGRO (eliminación) - Sobrescribe estilos globales */
 .modal-content.border-danger {
   background: white !important;
@@ -131,7 +183,8 @@
   border: none;
   border-radius: 0.8em;
   font-weight: 700;
-  padding: 0.7em 2.2em;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
   box-shadow: 0 2px 8px 0 #34d39933;
   transition: background 0.2s, box-shadow 0.2s;
 }
