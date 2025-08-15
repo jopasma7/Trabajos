@@ -99,6 +99,25 @@ function mostrarMensaje(texto, tipo = 'success') {
 	}, 3000);
 }
 // Poblar filtro de pacientes y actualizar historial
+// Función para obtener profesionales registrados
+async function obtenerProfesionales() {
+	// IPC call para obtener profesionales desde el backend
+	return await ipcRenderer.invoke('get-profesionales');
+}
+
+// Poblar el select de profesionales en el modal de historial
+async function cargarProfesionalesEnHistorial() {
+	const select = document.getElementById('profesional-historial');
+	if (!select) return;
+	select.innerHTML = `<option value="">Selecciona profesional</option>`;
+	const profesionales = await obtenerProfesionales();
+	if (profesionales && profesionales.length) {
+		profesionales.forEach(prof => {
+			select.innerHTML += `<option value="${prof.id}">${prof.nombre} ${prof.apellidos}</option>`;
+		});
+	}
+}
+
 const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
 	const select = document.getElementById('filtro-paciente-historial');
@@ -244,6 +263,7 @@ let pacienteId = window.pacienteId || null;
 
 async function renderHistorial() {
 	const tbody = document.querySelector('#tabla-historial tbody');
+	if (!tbody) return; // Prevent error if table is missing
 	// Mantener los ejemplos fijos arriba, luego las entradas dinámicas
 	const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
 	ejemplos.forEach(tr => {
@@ -256,7 +276,8 @@ async function renderHistorial() {
 		tbody.innerHTML += `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
 		return;
 	}
-	const mostrarArchivados = document.getElementById('mostrar-archivados-historial')?.checked;
+	const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
+	const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
 	if (mostrarArchivados) {
 		// Mostrar solo los archivados
 		historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
@@ -353,6 +374,7 @@ window.unarchiveHistorial = async function(idx) {
 
 
 document.getElementById('btn-add-historial').addEventListener('click', function() {
+	cargarProfesionalesEnHistorial();
 	document.getElementById('form-historial').reset();
 	document.getElementById('id-historial').value = '';
 	const select = document.getElementById('filtro-paciente-historial');
@@ -371,14 +393,22 @@ document.getElementById('btn-add-historial').addEventListener('click', function(
 
 window.editHistorial = function(idx) {
 	const item = historialData[idx];
-	document.getElementById('fecha-historial').value = item.fecha;
-	document.getElementById('tipo-historial').value = item.tipo_evento;
-	document.getElementById('motivo-historial').value = item.motivo;
-	document.getElementById('diagnostico-historial').value = item.diagnostico;
-	document.getElementById('tratamiento-historial').value = item.tratamiento;
-	document.getElementById('notas-historial').value = item.notas;
-	document.getElementById('profesional-historial').value = item.profesional;
-	document.getElementById('id-historial').value = item.id;
+	const fechaElem = document.getElementById('fecha-historial');
+	if (fechaElem) fechaElem.value = item.fecha;
+	const tipoElem = document.getElementById('tipo-historial');
+	if (tipoElem) tipoElem.value = item.tipo_evento;
+	const motivoElem = document.getElementById('motivo-historial');
+	if (motivoElem) motivoElem.value = item.motivo;
+	const diagElem = document.getElementById('diagnostico-historial');
+	if (diagElem) diagElem.value = item.diagnostico;
+	const tratElem = document.getElementById('tratamiento-historial');
+	if (tratElem) tratElem.value = item.tratamiento;
+	const notasElem = document.getElementById('notas-historial');
+	if (notasElem) notasElem.value = item.notas;
+	const profElem = document.getElementById('profesional-historial');
+	if (profElem) profElem.value = item.profesional;
+	const idElem = document.getElementById('id-historial');
+	if (idElem) idElem.value = item.id;
 	// Mostrar nombre del paciente en el modal
 	const select = document.getElementById('filtro-paciente-historial');
 	const nombreDiv = document.getElementById('paciente-historial-nombre');
@@ -392,8 +422,11 @@ window.editHistorial = function(idx) {
 			nombreDiv.style.display = 'block';
 		}
 	}
-	const modal = new bootstrap.Modal(document.getElementById('modal-historial'));
-	modal.show();
+	const modalElem = document.getElementById('modal-historial');
+	if (modalElem) {
+		const modal = new bootstrap.Modal(modalElem);
+		modal.show();
+	}
 };
 
 

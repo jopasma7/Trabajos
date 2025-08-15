@@ -231,4 +231,3 @@ ipcMain.handle('delete-profesional', (event, id) => {
   return db.deleteProfesional(id);
 });
 
-
