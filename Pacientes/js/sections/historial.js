@@ -211,32 +211,108 @@ const etiquetas = require('../sections/etiquetas.js');
 let tagsGlobal = [];
 
 async function poblarSelectEtiquetasHistorial() {
-	// Esperar a que se carguen las etiquetas globales
-       if (!tagsGlobal.length) {
-	       tagsGlobal = await ipcRenderer.invoke('tags-get-all');
-       }
-	// Evento
-	const selectEvento = document.getElementById('tipo-historial-etiqueta');
-	if (selectEvento) {
-		selectEvento.innerHTML = '<option value="">Selecciona etiqueta de evento</option>';
-		tagsGlobal.filter(t => t.tipo === 'evento').forEach(tag => {
-			const opt = document.createElement('option');
-			opt.value = tag.id;
-			opt.textContent = tag.nombre + (tag.descripcion ? ' - ' + tag.descripcion : '');
-			selectEvento.appendChild(opt);
-		});
-	}
-	// Diagnóstico
-	const selectDiagnostico = document.getElementById('diagnostico-historial-etiqueta');
-	if (selectDiagnostico) {
-		selectDiagnostico.innerHTML = '<option value="">Selecciona etiqueta de diagnóstico</option>';
-		tagsGlobal.filter(t => t.tipo === 'diagnostico').forEach(tag => {
-			const opt = document.createElement('option');
-			opt.value = tag.id;
-			opt.textContent = tag.nombre + (tag.descripcion ? ' - ' + tag.descripcion : '');
-			selectDiagnostico.appendChild(opt);
-		});
-	}
+    // Esperar a que se carguen las etiquetas globales
+    if (!tagsGlobal.length) {
+        tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+    }
+    // Evento
+    const selectEvento = document.getElementById('tipo-historial-etiqueta');
+    if (selectEvento) {
+        selectEvento.innerHTML = '';
+        const eventoOptions = tagsGlobal.filter(t => t.tipo === 'evento').map((tag, idx) => {
+            return {
+                value: tag.id,
+                label: tag.nombre,
+                customProperties: { color: tag.color || '#888' },
+                selected: idx === 0
+            };
+        });
+        eventoOptions.forEach(opt => {
+            const optElem = document.createElement('option');
+            optElem.value = opt.value;
+            optElem.textContent = opt.label;
+            if (opt.selected) optElem.selected = true;
+            optElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
+            selectEvento.appendChild(optElem);
+        });
+        if (selectEvento.choicesInstance) {
+            selectEvento.choicesInstance.destroy();
+            selectEvento.choicesInstance = null;
+        }
+        selectEvento.choicesInstance = new Choices(selectEvento, {
+            searchEnabled: false,
+            itemSelectText: '',
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    choice: (classNames, data) => {
+                        let colorCircle = '';
+                        if (data.customProperties && data.customProperties.color) {
+                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${colorCircle}${data.label}</div>`;
+                        return template(html);
+                    },
+                    item: (classNames, data) => {
+                        let colorCircle = '';
+                        if (data.customProperties && data.customProperties.color) {
+                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${colorCircle}${data.label}</div>`;
+                        return template(html);
+                    }
+                };
+            }
+        });
+    }
+    // Diagnóstico
+    const selectDiagnostico = document.getElementById('diagnostico-historial-etiqueta');
+    if (selectDiagnostico) {
+        selectDiagnostico.innerHTML = '';
+        const diagOptions = tagsGlobal.filter(t => t.tipo === 'diagnostico').map((tag, idx) => {
+            return {
+                value: tag.id,
+                label: tag.nombre,
+                customProperties: { color: tag.color || '#888' },
+                selected: idx === 0
+            };
+        });
+        diagOptions.forEach(opt => {
+            const optElem = document.createElement('option');
+            optElem.value = opt.value;
+            optElem.textContent = opt.label;
+            if (opt.selected) optElem.selected = true;
+            optElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
+            selectDiagnostico.appendChild(optElem);
+        });
+        if (selectDiagnostico.choicesInstance) {
+            selectDiagnostico.choicesInstance.destroy();
+            selectDiagnostico.choicesInstance = null;
+        }
+        selectDiagnostico.choicesInstance = new Choices(selectDiagnostico, {
+            searchEnabled: false,
+            itemSelectText: '',
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    choice: (classNames, data) => {
+                        let colorCircle = '';
+                        if (data.customProperties && data.customProperties.color) {
+                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${colorCircle}${data.label}</div>`;
+                        return template(html);
+                    },
+                    item: (classNames, data) => {
+                        let colorCircle = '';
+                        if (data.customProperties && data.customProperties.color) {
+                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${colorCircle}${data.label}</div>`;
+                        return template(html);
+                    }
+                };
+            }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', poblarSelectEtiquetasHistorial);
@@ -328,114 +404,102 @@ let historialData = [];
 let pacienteId = window.pacienteId || null;
 
 async function renderHistorial() {
-	const tbody = document.querySelector('#tabla-historial tbody');
-	if (!tbody) return; // Prevent error if table is missing
-	// Mantener los ejemplos fijos arriba, luego las entradas dinámicas
-	const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
-	ejemplos.forEach(tr => {
-		if (tr.getAttribute('data-dinamico') === 'true') tr.remove();
-	});
-	// Leer pacienteId actual del select siempre
-	const select = document.getElementById('filtro-paciente-historial');
-	const pacienteIdActual = select && select.value ? Number(select.value) : null;
-	if (!pacienteIdActual) {
-		tbody.innerHTML += `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
-		return;
-	}
-	const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
-	const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
-	if (mostrarArchivados) {
-		// Mostrar solo los archivados
-		historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
-		tbody.innerHTML = '';
-		if (!historialData || historialData.length === 0) {
-			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
-			return;
-		}
-	} else {
-		// Mostrar solo los activos
-		historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
-		tbody.innerHTML = '';
-		if (!historialData || historialData.length === 0) {
-			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
-			return;
-		}
-	}
-	       // Asegurarse de tener los tags globales
-	       if (!tagsGlobal.length) {
-		       tagsGlobal = await ipcRenderer.invoke('tags-get-all');
-	       }
-	       // --- Filtros avanzados ---
-	       const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
-	       const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
-	       const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value?.toLowerCase() || '';
+    const tbody = document.querySelector('#tabla-historial tbody');
+    if (!tbody) return;
+    // Mantener los ejemplos fijos arriba, luego las entradas dinámicas
+    const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
+    ejemplos.forEach(tr => {
+        if (tr.getAttribute('data-dinamico') === 'true') tr.remove();
+    });
+    // Leer pacienteId actual del select siempre
+    const select = document.getElementById('filtro-paciente-historial');
+    const pacienteIdActual = select && select.value ? Number(select.value) : null;
+    if (!pacienteIdActual) {
+        tbody.innerHTML += `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
+        return;
+    }
+    const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
+    const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
+    if (mostrarArchivados) {
+        historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
+        tbody.innerHTML = '';
+        if (!historialData || historialData.length === 0) {
+            tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
+            return;
+        }
+    } else {
+        historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+        tbody.innerHTML = '';
+        if (!historialData || historialData.length === 0) {
+            tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
+            return;
+        }
+    }
+    // Asegurarse de tener los tags globales
+    if (!tagsGlobal.length) {
+        tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+    }
+    // Obtener lista de profesionales para mostrar nombre y avatar
+    const profesionales = await obtenerProfesionales();
+    // --- Filtros avanzados ---
+    const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
+    const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
+    const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value?.toLowerCase() || '';
 
-	       historialData.forEach((item, idx) => {
-		       // Filtrar por tipo de evento
-		       if (filtroTipoEvento && String(item.tipo_evento) !== String(filtroTipoEvento)) return;
-		       // Filtrar por fecha exacta
-		       if (filtroFecha && String(item.fecha) !== String(filtroFecha)) return;
-		       // Filtrar por profesional (substring, case-insensitive)
-		       if (filtroProfesional && (!item.profesional || !item.profesional.toLowerCase().includes(filtroProfesional))) return;
+    historialData.forEach((item, idx) => {
+        // Filtrar por tipo de evento
+        if (filtroTipoEvento && String(item.tipo_evento) !== String(filtroTipoEvento)) return;
+        // Filtrar por fecha exacta
+        if (filtroFecha && String(item.fecha) !== String(filtroFecha)) return;
+        // Filtrar por profesional (substring, case-insensitive)
+        if (filtroProfesional && (!item.profesional || !item.profesional.toLowerCase().includes(filtroProfesional))) return;
 
-		       const esArchivado = item.archivado === 1 || item.archivado === true;
-		       // Buscar nombre de etiqueta evento
-		       let nombreEvento = '';
-		       if (item.tipo_evento) {
-			       const tagEvento = tagsGlobal.find(t => String(t.id) === String(item.tipo_evento));
-			       nombreEvento = tagEvento ? tagEvento.nombre : item.tipo_evento;
-		       }
-		       // Buscar nombre de etiqueta diagnostico
-		       let nombreDiagnostico = '';
-		       if (item.diagnostico) {
-			       const tagDiag = tagsGlobal.find(t => String(t.id) === String(item.diagnostico));
-			       nombreDiagnostico = tagDiag ? tagDiag.nombre : item.diagnostico;
-		       }
-		       tbody.innerHTML += `
-			       <tr data-dinamico="true">
-				       <td>${item.fecha}</td>
-				       <td>${nombreEvento}</td>
-				       <td>${item.motivo}</td>
-				       <td>${nombreDiagnostico}</td>
-				       <td>${item.tratamiento}</td>
-				       <td>${item.notas}</td>
-				       <td>${item.adjuntos ? `<a href='#' class='btn btn-sm btn-outline-secondary'><i class='bi bi-paperclip'></i></a>` : ''}</td>
-				       <td>${item.profesional}</td>
-				       <td>
-					       <button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
-					       ${esArchivado
-						       ? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
-						       : `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
-				       </td>
-			       </tr>
-		       `;
-	       });
-		// Delegación de eventos para los botones de acción
-		if (!tbody._delegationSet) {
-			tbody.addEventListener('click', function(e) {
-				if (e.target.closest('.btn-edit-historial')) {
-					const idx = e.target.closest('.btn-edit-historial').getAttribute('data-idx');
-					editHistorial(idx);
-				}
-				if (e.target.closest('.btn-archive-historial')) {
-					const idx = e.target.closest('.btn-archive-historial').getAttribute('data-idx');
-					archiveHistorial(idx);
-				}
-				if (e.target.closest('.btn-unarchive-historial')) {
-					const idx = e.target.closest('.btn-unarchive-historial').getAttribute('data-idx');
-					unarchiveHistorial(idx);
-				}
-			});
-			tbody._delegationSet = true;
-		}
-// Desarchivar historial
-window.unarchiveHistorial = async function(idx) {
-	const item = historialData[idx];
-	if (confirm('¿Seguro que quieres desarchivar esta entrada?')) {
-		await ipcRenderer.invoke('historial-unarchive', item.id);
-		renderHistorial();
-	}
-};
+        const esArchivado = item.archivado === 1 || item.archivado === true;
+        // Buscar nombre de etiqueta evento
+        let nombreEvento = '';
+        if (item.tipo_evento) {
+            const tagEvento = tagsGlobal.find(t => String(t.id) === String(item.tipo_evento));
+            nombreEvento = tagEvento ? tagEvento.nombre : item.tipo_evento;
+        }
+        // Buscar nombre de etiqueta diagnostico
+        let nombreDiagnostico = '';
+        if (item.diagnostico) {
+            const tagDiag = tagsGlobal.find(t => String(t.id) === String(item.diagnostico));
+            nombreDiagnostico = tagDiag ? tagDiag.nombre : item.diagnostico;
+        }
+        // Mostrar profesional: avatar + nombre + apellidos
+        let profesionalHtml = '';
+        if (item.profesional) {
+            const prof = profesionales.find(p => String(p.id) === String(item.profesional));
+            if (prof) {
+                const avatarUrl = prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png';
+				profesionalHtml = `<img src='${avatarUrl}' class='rounded-circle' style='width:28px;height:28px;object-fit:cover;vertical-align:middle;margin-right:2px;'> <span>${prof.nombre} ${prof.apellidos}</span>`;
+            } else {
+                profesionalHtml = `<span class='text-muted'>No encontrado</span>`;
+            }
+        } else {
+            profesionalHtml = `<span class='text-muted'>Sin profesional</span>`;
+        }
+        tbody.innerHTML += `
+            <tr data-dinamico="true">
+                <td>${item.fecha}</td>
+                <td>${nombreEvento}</td>
+                <td>${item.motivo}</td>
+                <td>${nombreDiagnostico}</td>
+                <td>${item.tratamiento}</td>
+                <td>${item.notas}</td>
+                <td>${item.adjuntos ? `<a href='#' class='btn btn-sm btn-outline-secondary'><i class='bi bi-paperclip'></i></a>` : ''}</td>
+                <td>${profesionalHtml}</td>
+                <td>
+                    <button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
+                    ${esArchivado
+                        ? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
+                        : `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
+                </td>
+            </tr>
+        `;
+    });
+    // ...existing code...
 }
 
 
@@ -560,7 +624,7 @@ async function renderPacienteCard(paciente) {
 	if (correo) correo.textContent = paciente.correo || '-';
 	if (direccion) direccion.textContent = paciente.direccion || '-';
 	if (alergias) alergias.textContent = paciente.alergias || '-';
-	if (profesional) profesional.textContent = paciente.profesional_asignado || '-';
+	if (profesional) profesional.textContent = paciente.alergias || '-';
 	if (observaciones) observaciones.textContent = paciente.observaciones || '-';
     let avatarData = paciente.avatar;
     if (!avatarData && paciente.id) {
