@@ -216,7 +216,9 @@ ipcMain.handle('paciente-get-avatar', async (event, pacienteId) => {
 const db = require('./data/db');
 
 ipcMain.handle('get-profesionales', () => {
-  return db.getProfesionales();
+  const profesionales = db.getProfesionales();
+  console.log('IPC get-profesionales llamado. Profesionales:', profesionales);
+  return profesionales;
 });
 
 ipcMain.handle('add-profesional', (event, profesional) => {

@@ -1,3 +1,14 @@
+/* Mejorar visualización de avatares en el dropdown de Choices.js */
+.avatar-choices-dropdown {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  margin-right: 8px;
+}
 /* Subtítulo bonito para el modal de paciente */
 .modal-subtitle {
   color: #3a6ea5;

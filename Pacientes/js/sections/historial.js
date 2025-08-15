@@ -107,16 +107,82 @@ async function obtenerProfesionales() {
 
 // Poblar el select de profesionales en el modal de historial
 async function cargarProfesionalesEnHistorial() {
-	const select = document.getElementById('profesional-historial');
-	if (!select) return;
-	select.innerHTML = `<option value="">Selecciona profesional</option>`;
-	const profesionales = await obtenerProfesionales();
-	if (profesionales && profesionales.length) {
-		profesionales.forEach(prof => {
-			select.innerHTML += `<option value="${prof.id}">${prof.nombre} ${prof.apellidos}</option>`;
+	console.log('cargarProfesionalesEnHistorial ejecutándose...');
+// Forzar carga de profesionales al mostrar el modal (por si el botón no es el único trigger)
+document.addEventListener('DOMContentLoaded', function() {
+	const modal = document.getElementById('modal-historial');
+	if (modal) {
+		modal.addEventListener('shown.bs.modal', function() {
+			console.log('Modal historial mostrado');
+			cargarProfesionalesEnHistorial();
 		});
 	}
-}
+});
+	console.log('Cargando profesionales...');
+		const select = document.getElementById('profesional-historial');
+		if (!select) return;
+		select.innerHTML = '';
+			const profesionales = await obtenerProfesionales();
+				console.log('Profesionales recibidos:', profesionales);
+					const options = [];
+					if (!profesionales || profesionales.length === 0) {
+						console.error('No se recibieron profesionales desde la base de datos.');
+						options.push({
+							value: '',
+							label: 'No hay profesionales registrados'
+						});
+					} else {
+						profesionales.forEach((prof, idx) => {
+									options.push({
+										value: prof.id,
+										label: `${prof.nombre} ${prof.apellidos}`,
+										customProperties: { avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png' },
+										selected: idx === 0 // Selecciona el primero por defecto
+									});
+						});
+					}
+		// Destruir instancia previa de Choices si existe
+		if (select.choicesInstance) {
+			select.choicesInstance.destroy();
+			select.choicesInstance = null;
+		}
+		// Crear opciones en el select
+		options.forEach(opt => {
+			const optionElem = document.createElement('option');
+			optionElem.value = opt.value;
+			optionElem.textContent = opt.label;
+			if (opt.disabled) optionElem.disabled = true;
+			if (opt.selected) optionElem.selected = true;
+			if (opt.customProperties) optionElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
+			select.appendChild(optionElem);
+		});
+		// Inicializar Choices con template personalizado para mostrar avatar
+		select.choicesInstance = new Choices(select, {
+			searchEnabled: false,
+			itemSelectText: '',
+			callbackOnCreateTemplates: function(template) {
+				return {
+					choice: (classNames, data) => {
+						let avatar = '';
+						if (data.customProperties && data.customProperties.avatar) {
+						avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:28px;height:28px;object-fit:cover;margin: 8px 0 8px 8px;'>`;
+						}
+						const html = `<div class='${classNames.item} ${classNames.itemChoice}' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${avatar}${data.label}</div>`;
+						return template(html);
+					},
+					item: (classNames, data) => {
+						let avatar = '';
+						if (data.customProperties && data.customProperties.avatar) {
+							avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:28px;height:28px;object-fit:cover;'>`;
+						}
+						const html = `<div class='${classNames.item} ${classNames.highlighted}' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${avatar}${data.label}</div>`;
+						return template(html);
+					}
+				};
+			}
+		});
+	}
+
 
 const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
