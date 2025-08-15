@@ -210,7 +210,7 @@ async function cargarPacientesHistorial() {
 const etiquetas = require('../sections/etiquetas.js');
 let tagsGlobal = [];
 
-async function poblarSelectEtiquetasHistorial() {
+async function poblarSelectEtiquetasHistorial(tipoEventoSeleccionado = null, diagnosticoSeleccionado = null) {
     // Esperar a que se carguen las etiquetas globales
     if (!tagsGlobal.length) {
         tagsGlobal = await ipcRenderer.invoke('tags-get-all');
@@ -224,7 +224,7 @@ async function poblarSelectEtiquetasHistorial() {
                 value: tag.id,
                 label: tag.nombre,
                 customProperties: { color: tag.color || '#888' },
-                selected: idx === 0
+                selected: tipoEventoSeleccionado ? String(tag.id) === String(tipoEventoSeleccionado) : idx === 0
             };
         });
         eventoOptions.forEach(opt => {
@@ -273,7 +273,7 @@ async function poblarSelectEtiquetasHistorial() {
                 value: tag.id,
                 label: tag.nombre,
                 customProperties: { color: tag.color || '#888' },
-                selected: idx === 0
+                selected: diagnosticoSeleccionado ? String(tag.id) === String(diagnosticoSeleccionado) : idx === 0
             };
         });
         diagOptions.forEach(opt => {
@@ -372,18 +372,25 @@ document.addEventListener('DOMContentLoaded', async function() {
 		}
 		// Sincronizar pacienteId global
 		pacienteId = pacienteIdValue;
+		// Validar profesional-historial
+		const profesionalSelect = document.getElementById('profesional-historial');
+		if (!profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
+			mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
+			profesionalSelect.focus();
+			return;
+		}
 		const id = document.getElementById('id-historial').value;
-	       const data = {
-		       paciente_id: pacienteIdValue,
-		       fecha: document.getElementById('fecha-historial').value,
-		       tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
-		       motivo: document.getElementById('motivo-historial').value,
-		       diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
-		       tratamiento: document.getElementById('tratamiento-historial').value,
-		       notas: document.getElementById('notas-historial').value,
-		       adjuntos: '', // Implementar adjuntos si lo necesitas
-		       profesional: document.getElementById('profesional-historial').value
-	       };
+		const data = {
+			paciente_id: pacienteIdValue,
+			fecha: document.getElementById('fecha-historial').value,
+			tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
+			motivo: document.getElementById('motivo-historial').value,
+			diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
+			tratamiento: document.getElementById('tratamiento-historial').value,
+			notas: document.getElementById('notas-historial').value,
+			adjuntos: '', // Implementar adjuntos si lo necesitas
+			profesional: profesionalSelect.value
+		};
 		if (id) {
 			await ipcRenderer.invoke('historial-edit', id, data);
 		} else {
@@ -414,26 +421,26 @@ async function renderHistorial() {
     // Leer pacienteId actual del select siempre
     const select = document.getElementById('filtro-paciente-historial');
     const pacienteIdActual = select && select.value ? Number(select.value) : null;
-    if (!pacienteIdActual) {
-        tbody.innerHTML += `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
-        return;
-    }
+	if (!pacienteIdActual) {
+		tbody.innerHTML += `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
+		return;
+	}
     const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
     const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
     if (mostrarArchivados) {
         historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
         tbody.innerHTML = '';
-        if (!historialData || historialData.length === 0) {
-            tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
-            return;
-        }
+		if (!historialData || historialData.length === 0) {
+			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
+			return;
+		}
     } else {
         historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
         tbody.innerHTML = '';
-        if (!historialData || historialData.length === 0) {
-            tbody.innerHTML = `<tr data-dinamico="true"><td colspan="9" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
-            return;
-        }
+		if (!historialData || historialData.length === 0) {
+			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
+			return;
+		}
     }
     // Asegurarse de tener los tags globales
     if (!tagsGlobal.length) {
@@ -483,23 +490,40 @@ async function renderHistorial() {
         tbody.innerHTML += `
             <tr data-dinamico="true">
                 <td>${item.fecha}</td>
-                <td>${nombreEvento}</td>
-                <td>${item.motivo}</td>
-                <td>${nombreDiagnostico}</td>
-                <td>${item.tratamiento}</td>
-                <td>${item.notas}</td>
-                <td>${item.adjuntos ? `<a href='#' class='btn btn-sm btn-outline-secondary'><i class='bi bi-paperclip'></i></a>` : ''}</td>
-                <td>${profesionalHtml}</td>
-                <td>
-                    <button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
-                    ${esArchivado
-                        ? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
-                        : `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
-                </td>
+				<td>${nombreEvento}</td>
+				<td>${item.motivo}</td>
+				<td>${profesionalHtml}</td>
+				<td>
+					<button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
+					${esArchivado
+						? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
+						: `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
+				</td>
             </tr>
         `;
     });
     // ...existing code...
+	// Delegación de eventos para los botones de acción
+	tbody.onclick = function(e) {
+		const editBtn = e.target.closest('.btn-edit-historial');
+		if (editBtn) {
+			const idx = editBtn.getAttribute('data-idx');
+			if (idx !== null) window.editHistorial(Number(idx));
+			return;
+		}
+		const archiveBtn = e.target.closest('.btn-archive-historial');
+		if (archiveBtn) {
+			const idx = archiveBtn.getAttribute('data-idx'); 
+			if (idx !== null) window.archiveHistorial(Number(idx));
+			return;
+		}
+		const unarchiveBtn = e.target.closest('.btn-unarchive-historial');
+		if (unarchiveBtn) {
+			const idx = unarchiveBtn.getAttribute('data-idx');
+			if (idx !== null) window.archiveHistorial(Number(idx));
+			return;
+		}
+	};
 }
 
 
@@ -521,23 +545,64 @@ document.getElementById('btn-add-historial').addEventListener('click', function(
 	}
 });
 
-window.editHistorial = function(idx) {
-	const item = historialData[idx];
-	const fechaElem = document.getElementById('fecha-historial');
-	if (fechaElem) fechaElem.value = item.fecha;
-	const tipoElem = document.getElementById('tipo-historial');
-	if (tipoElem) tipoElem.value = item.tipo_evento;
-	const motivoElem = document.getElementById('motivo-historial');
-	if (motivoElem) motivoElem.value = item.motivo;
-	const diagElem = document.getElementById('diagnostico-historial');
-	if (diagElem) diagElem.value = item.diagnostico;
-	const tratElem = document.getElementById('tratamiento-historial');
-	if (tratElem) tratElem.value = item.tratamiento;
-	const notasElem = document.getElementById('notas-historial');
-	if (notasElem) notasElem.value = item.notas;
-	const profElem = document.getElementById('profesional-historial');
-	if (profElem) profElem.value = item.profesional;
-	const idElem = document.getElementById('id-historial');
+window.editHistorial = async function(idx) {
+    await cargarProfesionalesEnHistorial();
+    const item = historialData[idx];
+    await poblarSelectEtiquetasHistorial(item.tipo_evento, item.diagnostico);
+    // Seleccionar profesional en select y Choices.js
+    const profElem = document.getElementById('profesional-historial');
+    if (profElem) {
+        const optionExists = Array.from(profElem.options).some(opt => String(opt.value) === String(item.profesional));
+        if (optionExists) {
+            profElem.value = item.profesional;
+            if (profElem.choicesInstance) {
+                profElem.choicesInstance.setChoiceByValue(item.profesional);
+            }
+        } else {
+            profElem.selectedIndex = 0;
+            if (profElem.choicesInstance) {
+                profElem.choicesInstance.setChoiceByValue(profElem.options[0].value);
+            }
+            mostrarMensaje('El profesional original de la entrada no existe. Se ha seleccionado el primero disponible.', 'warning');
+        }
+    }
+    // Seleccionar Tipo de Evento en select y Choices.js
+    setTimeout(() => {
+        const tipoEventoElem = document.getElementById('tipo-historial-etiqueta');
+        if (tipoEventoElem) {
+            const optionExists = Array.from(tipoEventoElem.options).some(opt => String(opt.value) === String(item.tipo_evento));
+            if (optionExists) {
+                tipoEventoElem.value = item.tipo_evento;
+                if (tipoEventoElem.choicesInstance) {
+                    tipoEventoElem.choicesInstance.setChoiceByValue(item.tipo_evento);
+                }
+            } else {
+                tipoEventoElem.selectedIndex = 0;
+                if (tipoEventoElem.choicesInstance) {
+                    tipoEventoElem.choicesInstance.setChoiceByValue(tipoEventoElem.options[0].value);
+                }
+                mostrarMensaje('El tipo de evento original no existe. Se ha seleccionado el primero disponible.', 'warning');
+            }
+        }
+        // Seleccionar Diagnóstico en select y Choices.js
+        const diagEtiquetaElem = document.getElementById('diagnostico-historial-etiqueta');
+        if (diagEtiquetaElem) {
+            const optionExists = Array.from(diagEtiquetaElem.options).some(opt => String(opt.value) === String(item.diagnostico));
+            if (optionExists) {
+                diagEtiquetaElem.value = item.diagnostico;
+                if (diagEtiquetaElem.choicesInstance) {
+                    diagEtiquetaElem.choicesInstance.setChoiceByValue(item.diagnostico);
+                }
+            } else {
+                diagEtiquetaElem.selectedIndex = 0;
+                if (diagEtiquetaElem.choicesInstance) {
+                    diagEtiquetaElem.choicesInstance.setChoiceByValue(diagEtiquetaElem.options[0].value);
+                }
+                mostrarMensaje('El diagnóstico original no existe. Se ha seleccionado el primero disponible.', 'warning');
+            }
+        }
+    }, 0);
+    const idElem = document.getElementById('id-historial');
 	if (idElem) idElem.value = item.id;
 	// Mostrar nombre del paciente en el modal
 	const select = document.getElementById('filtro-paciente-historial');
