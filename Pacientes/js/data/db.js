@@ -568,11 +568,7 @@ accesoTags.forEach(tag => {
 });
 
 // Ejecutar al iniciar si la tabla tags existe
-try {
-  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
-    crearEtiquetasTipoAcceso();
-  }
-} catch (e) { /* ignorar si no existe la tabla */ }
+// (Eliminado bloque duplicado, solo se llama al final)
 function crearEtiquetasMotivoDerivacion() {
   const motivos = [
     { nombre: 'Flujo insuficiente', color: '#e74c3c', descripcion: 'El flujo sanguíneo es menor al esperado.' },
@@ -607,6 +603,45 @@ try {
 
 
 // --- Insertar pacientes de prueba si la tabla está vacía ---
+// --- Método para agregar etiquetas de tipo Proceso por defecto ---
+db.insertarEtiquetasProcesoDemo = function() {
+  const etiquetasProceso = [
+    {
+      nombre: 'Pendiente de confección / reparación',
+      tipo: 'proceso',
+      color: '#f7b731',
+      descripcion: 'Paciente pendiente de confección o reparación de acceso vascular.'
+    },
+    {
+      nombre: 'Pendiente de Retiro',
+      tipo: 'proceso',
+      color: '#eb3b5a',
+      descripcion: 'Paciente pendiente de retiro de acceso vascular.'
+    },
+    {
+      nombre: 'Proceso Madurativo',
+      tipo: 'proceso',
+      color: '#20bf6b',
+      descripcion: 'Paciente en proceso madurativo del acceso vascular.'
+    } 
+  ];
+  const existeStmt = db.prepare('SELECT COUNT(*) as count FROM tags WHERE nombre = ? AND tipo = ?');
+  const insertStmt = db.prepare('INSERT INTO tags (nombre, tipo, color, descripcion) VALUES (?, ?, ?, ?)');
+  etiquetasProceso.forEach(tag => {
+    try {
+      const existe = existeStmt.get(tag.nombre, tag.tipo).count;
+      if (!existe) {
+        insertStmt.run(tag.nombre, tag.tipo, tag.color, tag.descripcion);
+        // Etiqueta creada
+      } else {
+        // Etiqueta ya existe
+      }
+    } catch (e) {
+  // Error al crear etiqueta
+    }
+  });
+};
+// --- Método para agregar etiquetas de tipo Proceso por defecto ---
 // Función para insertar 10 pacientes completos y realistas con imagen y registros en el historial clínico
 db.insertarPacientesDemo = function() {
   // Obtener IDs válidos de tags para tipo_evento y diagnostico
@@ -671,32 +706,6 @@ db.insertarPacientesDemo = function() {
 // --- Ejemplos reales para pruebas ---
 
 // Método para agregar etiquetas de tipo Proceso por defecto
-db.insertarEtiquetasProcesoDemo = function() {
-  const etiquetasProceso = [
-    {
-      nombre: 'Pendiente de confección / reparación',
-      tipo: 'proceso',
-      color: '#f7b731',
-      descripcion: 'Paciente pendiente de confección o reparación de acceso vascular.'
-    },
-    {
-      nombre: 'Pendiente de Retiro',
-      tipo: 'proceso',
-      color: '#eb3b5a',
-      descripcion: 'Paciente pendiente de retiro de acceso vascular.'
-    },
-    {
-      nombre: 'Proceso Madurativo',
-      tipo: 'proceso',
-      color: '#20bf6b',
-      descripcion: 'Paciente en proceso madurativo del acceso vascular.'
-    }
-  ];
-  const stmt = db.prepare('INSERT INTO tags (nombre, tipo, color, descripcion) VALUES (?, ?, ?, ?)');
-  etiquetasProceso.forEach(tag => {
-    stmt.run(tag.nombre, tag.tipo, tag.color, tag.descripcion);
-  });
-};
 
 
 // Insertar 10 pacientes completos y realistas al iniciar si la tabla está vacía
@@ -737,6 +746,14 @@ etiquetasEvento.forEach(e => insertTag.run(e.nombre, 'evento', e.descripcion, '#
 etiquetasDiagnostico.forEach(e => insertTag.run(e.nombre, 'diagnostico', e.descripcion, '#14532d'));
 
 // db.js
+// Ejecutar al iniciar si la tabla tags existe (después de la definición)
+try {
+  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
+    console.log('[DB] Llamando a insertarEtiquetasProcesoDemo()');
+    db.insertarEtiquetasProcesoDemo();
+    console.log('[DB] Fin llamada a insertarEtiquetasProcesoDemo()');
+  }
+} catch (e) { console.error('[DB] Error comprobando tabla tags:', e); }
 // Conexión real a better-sqlite3 y creación de tablas necesarias
 
 module.exports = db;
