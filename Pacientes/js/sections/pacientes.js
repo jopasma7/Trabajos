@@ -329,6 +329,9 @@ function filtrarPacientes() {
 	if (tipo) {
 		filtrados = filtrados.filter(p => Number(p.tipo_acceso_id) === Number(tipo));
 	}
+	if (pendiente) {
+		filtrados = filtrados.filter(p => String(p.proceso_actual) === String(pendiente));
+	}
 	return filtrados;
 }
 
@@ -781,6 +784,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 			const allTags = await ipcRenderer.invoke('tags-get-all');
 			etiquetasDisponibles = allTags;
 			etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
+            // Poblar filtro de Estado con etiquetas de tipo Proceso
+            const selectEstado = document.getElementById('filtro-pendiente');
+            if (selectEstado) {
+                selectEstado.innerHTML = '';
+                const optTodos = document.createElement('option');
+                optTodos.value = '';
+                optTodos.textContent = 'Todos';
+                selectEstado.appendChild(optTodos);
+                allTags.filter(tag => tag.tipo === 'proceso').forEach(tag => {
+                    const opt = document.createElement('option');
+                    opt.value = String(tag.id);
+                    opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+                    selectEstado.appendChild(opt);
+                });
+            }
 			// Poblar filtro de tipo de acceso dinámicamente
 			if (selectTipoAcceso) {
 				selectTipoAcceso.innerHTML = '<option value="">Todos</option>';
@@ -795,3 +813,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 	} catch (e) {}
 	cargarPacientes();
 });
+
+if (selectTipoAcceso) {
+    selectTipoAcceso.addEventListener('change', () => {
+        actualizarTablaPacientes();
+    });
+}
+if (selectPendiente) {
+    selectPendiente.addEventListener('change', () => {
+        actualizarTablaPacientes();
+    });
+}
+if (inputBusqueda) {
+    inputBusqueda.addEventListener('input', () => {
+        actualizarTablaPacientes();
+    });
+}
