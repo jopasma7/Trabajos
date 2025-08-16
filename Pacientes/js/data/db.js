@@ -536,6 +536,38 @@ db.getPacientesCHDPendienteFAV = function() {
     return pacientes;
   };
 
+// Pacientes con CHD y proceso madurativo de FAV
+db.getPacientesCHDFAVMadurativo = function() {
+  // Buscar el id de la etiqueta "Proceso Madurativo" en tags tipo proceso
+  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%madurativo%');
+  if (!procesoTag) return [];
+  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
+  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
+  if (!chdTag) return [];
+  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
+  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
+  if (!favTag) return [];
+  // Filtrar pacientes con tipo_acceso_id = chdTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(chdTag.id, procesoTag.id, favTag.id);
+  pacientes.forEach(p => {
+    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+  });
+  return pacientes;
+};
+
+// Pacientes con CHD y diagnóstico de Sepsis
+db.getPacientesSepsisCHD = function() {
+  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
+  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
+  if (!chdTag) return [];
+  // Buscar pacientes con tipo_acceso_id = chdTag.id y al menos una incidencia con cualquier etiqueta de tipo incidencia
+  const pacientes = db.prepare(`SELECT DISTINCT p.* FROM pacientes p JOIN incidencias i ON p.id = i.paciente_id JOIN incidencia_tags it ON i.id = it.incidencia_id JOIN tags t ON it.tag_id = t.id WHERE p.tipo_acceso_id = ? AND t.tipo = 'incidencia'`).all(chdTag.id);
+  pacientes.forEach(p => {
+    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+  });
+  return pacientes;
+};
+
 
 // --- Métodos de agenda ---
 db.getAllEventos = function() {
@@ -785,7 +817,6 @@ const insertTag = db.prepare('INSERT OR IGNORE INTO tags (nombre, tipo, descripc
 etiquetasEvento.forEach(e => insertTag.run(e.nombre, 'evento', e.descripcion, '#34c759'));
 etiquetasDiagnostico.forEach(e => insertTag.run(e.nombre, 'diagnostico', e.descripcion, '#14532d'));
 
-// db.js
 // Ejecutar al iniciar si la tabla tags existe (después de la definición)
 try {
   if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
