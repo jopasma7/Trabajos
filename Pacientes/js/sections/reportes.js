@@ -66,7 +66,7 @@ async function obtenerPacientesSepsisCHD() {
   ]);
 }
 
-function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true }) {
+function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true, descripcion = '' }) {
   let modal = document.getElementById(id);
   if (!modal) {
     modal = document.createElement('div');
@@ -77,7 +77,10 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title modal-titulo-reporte"><span>🩺</span> CHD pendiente de FAV</h5>
+            <div style="width:100%">
+              <h5 class="modal-title modal-titulo-reporte"><span>🩺</span> ${titulo}</h5>
+              <div class="modal-descripcion-reporte text-muted" style="font-size:1.05em;margin-top:2px;">${descripcion}</div>
+            </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -105,6 +108,19 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
       </div>
     `;
     document.body.appendChild(modal);
+    // Eliminar el modal del DOM al cerrarse para evitar solapamiento de campos
+    modal.addEventListener('hidden.bs.modal', () => {
+      modal.parentNode.removeChild(modal);
+    });
+  }
+  // Actualizar SIEMPRE el título y la descripción del modal antes de mostrarlo
+  const tituloElem = modal.querySelector('.modal-titulo-reporte');
+  if (tituloElem) {
+    tituloElem.innerHTML = `<span>🩺</span> ${titulo}`;
+  }
+  const descripcionElem = modal.querySelector('.modal-descripcion-reporte');
+  if (descripcionElem) {
+    descripcionElem.innerHTML = descripcion;
   }
   // Poblar la tabla, rellenando con filas vacías hasta completar 15
   const tbody = modal.querySelector('#reporte-generico-body');
@@ -180,6 +196,7 @@ document.getElementById('btn-generar-reporte-chd').addEventListener('click', asy
     const anio = '2025';
     mostrarModalReporte({
       titulo: 'Registro de pacientes con CHD pendiente de FAV',
+      descripcion: 'Controla pacientes con CHD y pendiente de confección o reparación de FAV. Este reporte permite identificar a los pacientes que aún no cuentan con una fístula arteriovenosa funcional y requieren seguimiento especial para evitar complicaciones asociadas al acceso temporal. Incluye ubicación, fecha y observaciones clínicas.',
       mes,
       anio,
       profesional,
@@ -198,6 +215,7 @@ document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEvent
     const anio = '2025';
     mostrarModalReporte({
       titulo: 'Acceso FAV, pendiente retiro CHD',
+      descripcion: 'Visualiza pacientes con acceso FAV y retiro de CHD pendiente. Este reporte ayuda a gestionar el proceso de transición de acceso vascular, asegurando que los pacientes con FAV maduro sean evaluados para el retiro oportuno del catéter y así reducir riesgos de infección. Facilita el seguimiento y la planificación clínica.',
       mes,
       anio,
       profesional,
@@ -216,6 +234,7 @@ document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListen
     const anio = '2025';
     mostrarModalReporte({
       titulo: 'Acceso CHD, FAV en proceso Madurativo',
+      descripcion: 'Pacientes con CHD y FAV en proceso madurativo. Permite identificar a quienes están en fase de maduración de la fístula arteriovenosa, facilitando el control evolutivo y la toma de decisiones clínicas para el cambio de acceso.',
       mes,
       anio,
       profesional,
@@ -234,6 +253,7 @@ document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('clic
     const anio = '2025';
     mostrarModalReporte({
       titulo: 'Sepsis CHD',
+      descripcion: 'Reporte de pacientes con sepsis asociada a CHD. Permite el seguimiento de casos de infección grave vinculados al catéter, facilitando la gestión clínica y la prevención de complicaciones.',
       mes,
       anio,
       profesional,

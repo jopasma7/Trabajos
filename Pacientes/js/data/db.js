@@ -497,6 +497,46 @@ try {
   db.prepare('ALTER TABLE agenda ADD COLUMN completado INTEGER DEFAULT 0').run();
 } catch (e) {}
 
+// Pacientes con CHD pendiente de FAV
+// Se asume que tipo_acceso_id corresponde a CHD y proceso_actual corresponde a "Pendiente de confección / reparación" (proceso)
+db.getPacientesCHDPendienteFAV = function() {
+  // Buscar el id de la etiqueta "Pendiente de confección / reparación" en tags tipo proceso
+  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%confección%');
+  if (!procesoTag) return [];
+  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
+  const accesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
+  if (!accesoTag) return [];
+  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
+  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
+  if (!favTag) return [];
+  // Filtrar pacientes con tipo_acceso_id = accesoTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(accesoTag.id, procesoTag.id, favTag.id);
+  pacientes.forEach(p => {
+    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+  });
+  return pacientes;
+};
+
+  // Pacientes con FAV pendiente retiro CHD
+  db.getPacientesFAVPendienteRetiroCHD = function() {
+    // Buscar el id de la etiqueta "Pendiente de Retiro" en tags tipo proceso
+    const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%retiro%');
+    if (!procesoTag) return [];
+    // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
+    const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
+    if (!favTag) return [];
+    // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
+    const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
+    if (!chdTag) return [];
+    // Filtrar pacientes con tipo_acceso_id = favTag.id, proceso_actual = procesoTag.id y acceso_proceso = chdTag.id
+    const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(favTag.id, procesoTag.id, chdTag.id);
+    pacientes.forEach(p => {
+      p.etiquetas = db.getEtiquetasByPaciente(p.id); 
+    });
+    return pacientes;
+  };
+
+
 // --- Métodos de agenda ---
 db.getAllEventos = function() {
   // Convertir completado INTEGER a booleano

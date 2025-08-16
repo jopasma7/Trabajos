@@ -58,8 +58,26 @@ ipcMain.handle('get-pacientes', () => {
 
 // Handler: Pacientes con CHD pendiente de FAV
 ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
-  // Handler eliminado: lógica de lista de espera y tipo_acceso_espera eliminada
-  return [];
+  // Lógica real de filtrado en db.js
+  return db.getPacientesCHDPendienteFAV ? db.getPacientesCHDPendienteFAV() : [];
+});
+
+// Handler: Pacientes con FAV pendiente retiro CHD
+ipcMain.handle('get-pacientes-fav-pendiente-retiro-chd', () => {
+  // TODO: Reemplazar con lógica real de filtrado en db.js
+  return db.getPacientesFAVPendienteRetiroCHD ? db.getPacientesFAVPendienteRetiroCHD() : [];
+});
+
+// Handler: Pacientes con CHD, FAV Madurativo
+ipcMain.handle('get-pacientes-chd-fav-madurativo', () => {
+  // TODO: Reemplazar con lógica real de filtrado en db.js
+  return db.getPacientesCHDFAVMadurativo ? db.getPacientesCHDFAVMadurativo() : [];
+});
+
+// Handler: Pacientes con Sepsis CHD
+ipcMain.handle('get-pacientes-sepsis-chd', () => {
+  // TODO: Reemplazar con lógica real de filtrado en db.js
+  return db.getPacientesSepsisCHD ? db.getPacientesSepsisCHD() : [];
 });
 
 // Ejemplo: Agregar un paciente
