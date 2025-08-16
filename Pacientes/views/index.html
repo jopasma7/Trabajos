@@ -54,6 +54,7 @@
   <link rel="stylesheet" href="../styles/sections/agenda.css">
   <link rel="stylesheet" href="../styles/sections/pacientes.css">
   <link rel="stylesheet" href="../styles/sections/modal-global.css">
+  <link rel="stylesheet" href="../styles/sections/reportes.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -607,35 +608,82 @@
           <section id="reportes-section" class="section d-none">
             <div class="row g-4">
               <div class="col-md-6 mb-4">
-                <div class="card shadow-sm">
+                <div class="card-premium-report chd position-relative h-100">
                   <div class="card-body">
-                    <h5 class="card-title">Reporte de pacientes con CHD pendiente de FAV</h5>
-                    <p class="card-text">
-                      Este registro permite llevar un control de los pacientes que actualmente utilizan un catéter de hemodiálisis (CHD) como acceso vascular y que se encuentran pendientes de confección o reparación de una fístula arteriovenosa (FAV). Incluye datos del paciente, ubicación, fecha de instalación del catéter y observaciones relevantes para el seguimiento clínico.
-                    </p>
-                    <button class="btn btn-primary" id="btn-generar-reporte-chd">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-droplet-half text-primary"></i></span>
+                      <span class="card-title">CHD pendiente de FAV</span>
+                    </div>
+                      <p class="card-text">
+                        Controla pacientes con CHD y pendiente de confección o reparación de FAV.<br>
+                        Este reporte permite identificar a los pacientes que aún no cuentan con una fístula arteriovenosa funcional y requieren seguimiento especial para evitar complicaciones asociadas al acceso temporal.<br>
+                        <span class="text-chd"><b>Incluye ubicación, fecha y observaciones clínicas.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-chd">
                       <i class="bi bi-file-earmark-plus"></i> Generar Reporte
                     </button>
+                    <span class="badge-premium">Relevante</span>
                   </div>
                 </div>
               </div>
-            </div>"
-            <div class="row g-4">
-              <div class="col-md-6">
-                <div class="card shadow-sm p-4">
-                  <h5 class="card-title mb-3">Reporte General</h5>
-                  <p class="card-text">Visualiza estadísticas y tendencias de los pacientes y accesos vasculares.</p>
-                  <button class="btn btn-outline-success"><i class="bi bi-file-earmark-bar-graph"></i> Generar Reporte</button>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report fav position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-heart-pulse text-warning"></i></span>
+                      <span class="card-title">FAV pendiente retiro CHD</span>
+                    </div>
+                      <p class="card-text">
+                        Visualiza pacientes con acceso FAV y retiro de CHD pendiente.<br>
+                        Este reporte ayuda a gestionar el proceso de transición de acceso vascular, asegurando que los pacientes con FAV maduro sean evaluados para el retiro oportuno del catéter y así reducir riesgos de infección.<br>
+                        <span class="text-fav"><b>Facilita el seguimiento y la planificación clínica.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-fav-pendiente-retiro-chd">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Nuevo</span>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="card shadow-sm p-4">
-                  <h5 class="card-title mb-3">Exportar/Imprimir</h5>
-                  <p class="card-text">Exporta los datos a PDF o imprime los reportes fácilmente.</p>
-                  <button class="btn btn-outline-primary"><i class="bi bi-printer"></i> Imprimir</button>
-                  <button class="btn btn-outline-danger ms-2"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report madurativo position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-arrow-repeat text-info"></i></span>
+                      <span class="card-title">CHD, FAV Madurativo</span>
+                    </div>
+                      <p class="card-text">
+                        Pacientes con CHD y FAV en proceso de maduración.<br>
+                        Este reporte permite monitorear el progreso de la maduración de la fístula arteriovenosa en pacientes que aún dependen de un catéter, facilitando la toma de decisiones clínicas para el cambio de acceso.<br>
+                        <span class="text-madurativo"><b>Permite seguimiento y planificación del cambio de acceso.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-chd-fav-madurativo">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Madurando</span>
+                  </div>
                 </div>
               </div>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report sepsis position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-bug text-danger"></i></span>
+                      <span class="card-title">Sepsis CHD</span>
+                    </div>
+                      <p class="card-text">
+                        Pacientes con diagnóstico de sepsis relacionada a CHD.<br>
+                        Este reporte destaca los casos críticos de infección asociada al catéter, permitiendo priorizar la atención, implementar protocolos de manejo y reducir complicaciones graves en la población de pacientes.<br>
+                        <span class="text-sepsis"><b>Visualiza casos críticos y facilita el control clínico.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-sepsis-chd">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Crítico</span>
+                  </div>
+                </div>
+              </div>
+            </div>
             </div>
           </section>
           <!-- Configuración Section -->

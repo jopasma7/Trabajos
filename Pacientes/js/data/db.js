@@ -175,7 +175,7 @@ try {
   db.prepare('ALTER TABLE historial_clinico ADD COLUMN archivado INTEGER DEFAULT 0').run();
 } catch (e) {}
 
-// Crear tabla incidencias (uno a muchos con pacientes)
+// Crear tabla incidencias (uno a muchos with pacientes)
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,

@@ -24,6 +24,48 @@ async function obtenerPacientesCHDPendienteFAV() {
   ]);
 }
 
+// Función para obtener pacientes con Acceso FAV y pendiente retiro CHD
+async function obtenerPacientesFAVPendienteRetiroCHD() {
+  const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
+  const pacientes = await ipcRenderer.invoke('get-pacientes-fav-pendiente-retiro-chd');
+  return pacientes.map((p, idx) => [
+    idx + 1,
+    `${p.nombre} ${p.apellidos}`,
+    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
+    p.fecha_instalacion,
+    p.fecha_retiro_chd || '',
+    p.observaciones || ''
+  ]);
+}
+
+// Función para obtener pacientes con CHD y FAV en proceso madurativo
+async function obtenerPacientesCHDFAVMadurativo() {
+  const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
+  const pacientes = await ipcRenderer.invoke('get-pacientes-chd-fav-madurativo');
+  return pacientes.map((p, idx) => [
+    idx + 1,
+    `${p.nombre} ${p.apellidos}`,
+    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
+    p.fecha_instalacion,
+    p.fecha_maduracion_fav || '',
+    p.observaciones || ''
+  ]);
+}
+
+// Función para obtener pacientes con Sepsis CHD
+async function obtenerPacientesSepsisCHD() {
+  const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
+  const pacientes = await ipcRenderer.invoke('get-pacientes-sepsis-chd');
+  return pacientes.map((p, idx) => [
+    idx + 1,
+    `${p.nombre} ${p.apellidos}`,
+    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
+    p.fecha_instalacion,
+    p.fecha_sepsis || '',
+    p.observaciones || ''
+  ]);
+}
+
 function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true }) {
   let modal = document.getElementById(id);
   if (!modal) {
@@ -142,6 +184,60 @@ document.getElementById('btn-generar-reporte-chd').addEventListener('click', asy
       anio,
       profesional,
       columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Observaciones'],
+      datos
+    });
+  }, 200);
+});
+
+// Evento para el nuevo reporte: Acceso FAV, pendiente retiro CHD
+document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEventListener('click', async function() {
+  setTimeout(async () => {
+    const datos = await obtenerPacientesFAVPendienteRetiroCHD();
+    const profesional = await getNombreCompletoProfesional();
+    const mes = 'Agosto';
+    const anio = '2025';
+    mostrarModalReporte({
+      titulo: 'Acceso FAV, pendiente retiro CHD',
+      mes,
+      anio,
+      profesional,
+      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha retiro CHD', 'Observaciones'],
+      datos
+    });
+  }, 200);
+});
+
+// Evento para reporte: CHD, FAV en proceso Madurativo
+document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListener('click', async function() {
+  setTimeout(async () => {
+    const datos = await obtenerPacientesCHDFAVMadurativo();
+    const profesional = await getNombreCompletoProfesional();
+    const mes = 'Agosto';
+    const anio = '2025';
+    mostrarModalReporte({
+      titulo: 'Acceso CHD, FAV en proceso Madurativo',
+      mes,
+      anio,
+      profesional,
+      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha maduración FAV', 'Observaciones'],
+      datos
+    });
+  }, 200);
+});
+
+// Evento para reporte: Sepsis CHD
+document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('click', async function() {
+  setTimeout(async () => {
+    const datos = await obtenerPacientesSepsisCHD();
+    const profesional = await getNombreCompletoProfesional();
+    const mes = 'Agosto';
+    const anio = '2025';
+    mostrarModalReporte({
+      titulo: 'Sepsis CHD',
+      mes,
+      anio,
+      profesional,
+      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha Sepsis', 'Observaciones'],
       datos
     });
   }, 200);
