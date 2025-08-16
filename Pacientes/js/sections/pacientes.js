@@ -143,6 +143,36 @@ document.addEventListener('DOMContentLoaded', () => {
 				try {
 					const allTags = await ipcRenderer.invoke('tags-get-all');
 					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
+					// Poblar select de proceso
+					const selectProceso = document.getElementById('paciente-proceso');
+					if (selectProceso) {
+						selectProceso.innerHTML = '';
+						const optSinProceso = document.createElement('option');
+						optSinProceso.value = '';
+						optSinProceso.textContent = 'Sin proceso';
+						selectProceso.appendChild(optSinProceso);
+						allTags.filter(tag => tag.tipo === 'proceso').forEach(tag => {
+							const opt = document.createElement('option');
+							opt.value = String(tag.id);
+							opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+							selectProceso.appendChild(opt);
+						});
+					}
+					// Poblar select de proceso-especifico (acceso)
+					const selectProcesoEspecifico = document.getElementById('paciente-proceso-especifico');
+					if (selectProcesoEspecifico) {
+						selectProcesoEspecifico.innerHTML = '';
+						const optInit = document.createElement('option');
+						optInit.value = '';
+						optInit.textContent = 'Selecciona tipo de acceso';
+						selectProcesoEspecifico.appendChild(optInit);
+						allTags.filter(tag => tag.tipo === 'acceso').forEach(tag => {
+							const opt = document.createElement('option');
+							opt.value = String(tag.id);
+							opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
+							selectProcesoEspecifico.appendChild(opt);
+						});
+					}
 				} catch {}
 				if (esNuevoPaciente) {
 					const optInit = document.createElement('option');
@@ -550,6 +580,8 @@ if (formPaciente) {
 				ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
 				ubicacion_lado: selectUbicacionLado?.value || '',
 				etiquetas: [...etiquetasSeleccionadas],
+				proceso_actual: document.getElementById('paciente-proceso')?.value || null,
+				acceso_proceso: document.getElementById('paciente-proceso-especifico')?.value || null,
 			};
 
 		// Guardar incidencias seleccionadas
@@ -681,6 +713,15 @@ if (tablaPacientesBody) {
 						selectUbicacionAnatomica.dispatchEvent(new Event('change'));
 					}
 					if (selectUbicacionLado) selectUbicacionLado.value = paciente.ubicacion_lado || '';
+					// Poblar proceso_actual y acceso_proceso
+					const selectProceso = document.getElementById('paciente-proceso');
+					if (selectProceso && paciente.proceso_actual !== undefined && paciente.proceso_actual !== null) {
+						selectProceso.value = String(paciente.proceso_actual);
+					}
+					const selectProcesoEspecifico = document.getElementById('paciente-proceso-especifico');
+					if (selectProcesoEspecifico && paciente.acceso_proceso !== undefined && paciente.acceso_proceso !== null) {
+						selectProcesoEspecifico.value = String(paciente.acceso_proceso);
+					}
 				}, 100);
 				document.getElementById('modalPacienteLabel').innerHTML = '<span style="font-size:1.2em;vertical-align:-0.1em;">🧑‍⚕️</span> Editar datos del paciente';
 				const modalSubtitle = document.querySelector('#modal-paciente .modal-subtitle');
