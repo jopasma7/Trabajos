@@ -58,29 +58,17 @@ ipcMain.handle('get-pacientes', () => {
 
 // Handler: Pacientes con CHD pendiente de FAV
 ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
-  // Filtro: pacientes con etiqueta de acceso 'Catéter' y pendientes de etiqueta 'Fístula'
-  const cateterTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) = 'catéter' AND tipo = 'acceso'").get();
-  const fistulaTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) = 'fístula' AND tipo = 'acceso'").get();
-  if (!cateterTag || !fistulaTag) {
-    console.log('[CHD Reporte] No se encontraron los tags Catéter o Fístula en la tabla tags.');
-    return [];
-  }
-  const CATETER_ID = cateterTag.id;
-  const FAV_ID = fistulaTag.id;
-  const query = `SELECT id, nombre, apellidos, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, observaciones FROM pacientes WHERE en_lista_espera = 1 AND tipo_acceso_id = ? AND tipo_acceso_espera_id = ?`;
-  const stmt = db.prepare(query);
-  const pacientes = stmt.all(CATETER_ID, FAV_ID);
-  console.log('[CHD Reporte] Consulta SQL:', query, 'CATETER_ID:', CATETER_ID, 'FAV_ID:', FAV_ID);
-  console.log('[CHD Reporte] Datos obtenidos:', pacientes);
-  return pacientes;
+  // Handler eliminado: lógica de lista de espera y tipo_acceso_espera eliminada
+  return [];
 });
 
 // Ejemplo: Agregar un paciente
 ipcMain.handle('add-paciente', (event, paciente) => {
   const stmt = db.prepare(`INSERT INTO pacientes (
-    nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id, avatar,
-    sexo, telefono, correo, direccion, alergias, observaciones, profesional_id, fecha_nacimiento, fecha_alta
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, avatar,
+    sexo, telefono, correo, direccion, alergias, observaciones, profesional_id, fecha_nacimiento, fecha_alta,
+    proceso_actual, acceso_proceso
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -88,8 +76,6 @@ ipcMain.handle('add-paciente', (event, paciente) => {
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
-    paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null,
     paciente.avatar || '',
     paciente.sexo || '',
     paciente.telefono || '',
@@ -99,13 +85,15 @@ ipcMain.handle('add-paciente', (event, paciente) => {
     paciente.observaciones || '',
     paciente.profesional_id || null,
     paciente.fecha_nacimiento || '',
-    paciente.fecha_alta || ''
+    paciente.fecha_alta || '',
+    paciente.proceso_actual || null,
+    paciente.acceso_proceso || null
   );
   return { id: info.lastInsertRowid };
 });
   // Editar un paciente
 ipcMain.handle('edit-paciente', (event, paciente) => {
-  const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ? WHERE id = ?`);
+  const stmt = db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, avatar = ?, sexo = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, profesional_id = ?, fecha_nacimiento = ?, fecha_alta = ?, proceso_actual = ?, acceso_proceso = ? WHERE id = ?`);
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -113,8 +101,18 @@ ipcMain.handle('edit-paciente', (event, paciente) => {
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
-    paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null,
+    paciente.avatar || '',
+    paciente.sexo || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
+    paciente.profesional_id || null,
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || '',
+    paciente.proceso_actual || null,
+    paciente.acceso_proceso || null,
     paciente.id
   );
   return { changes: info.changes };

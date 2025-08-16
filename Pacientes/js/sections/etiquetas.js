@@ -134,6 +134,21 @@ function renderizarPaginacionEtiquetas(totalEtiquetas) {
 
 async function cargarTags() {
   tags = await ipcRenderer.invoke('tags-get-all');
+  // Actualizar filtro de tipo de etiqueta con los tipos realmente existentes
+  if (filtroTipoEtiqueta) {
+    const tiposUnicos = Array.from(new Set(tags.map(tag => tag.tipo))).filter(Boolean);
+    filtroTipoEtiqueta.innerHTML = '';
+    const optTodos = document.createElement('option');
+    optTodos.value = '';
+    optTodos.textContent = 'Todos';
+    filtroTipoEtiqueta.appendChild(optTodos);
+    tiposUnicos.forEach(tipo => {
+      const opt = document.createElement('option');
+      opt.value = tipo;
+      opt.textContent = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+      filtroTipoEtiqueta.appendChild(opt);
+    });
+  }
   renderTags();
 }
 

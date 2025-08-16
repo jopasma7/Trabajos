@@ -663,6 +663,7 @@
                         <option value="incidencia">Incidencia</option>
                         <option value="acceso">Acceso</option>
                         <option value="evento">Evento</option>
+                        <option value="proceso">Proceso</option>
                         <option value="diagnostico">Diagnóstico</option>
                       </select>
                     </div>
@@ -727,6 +728,7 @@
                             <option value="incidencia">Incidencia</option>
                             <option value="acceso">Acceso</option>
                             <option value="evento">Evento</option>
+                            <option value="proceso">Proceso</option>
                             <option value="diagnostico">Diagnóstico</option>
                           </select>
                         </div>
@@ -999,18 +1001,6 @@
                     <!-- La opción inicial se añade dinámicamente por JS -->
                     <option value="">Selecciona tipo de acceso primero</option>
                   </select>
-                  <div class="d-flex flex-row align-items-center mt-3">
-                    <div class="col-6">
-                      <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="paciente-lista-espera">
-                        <label class="form-check-label" for="paciente-lista-espera">Lista de Espera</label>
-                      </div>
-                    </div>
-                    <div class="col-6 " id="paciente-lista-espera-select-container" style=" display:none;">
-                      <label for="paciente-tipoacceso-espera" class="form-label">En espera de</label>
-                      <select class="form-select" id="paciente-tipoacceso-espera"></select>   
-                    </div>
-                  </div>
                 </div>
                 <div class="col-md-6">
                   <label for="paciente-fecha" class="form-label">Fecha Instalación</label>
@@ -1018,13 +1008,13 @@
                 </div>
                 <div class="col-12">
                   <div class="row g-2">
-                    <div class="col-7">
+                    <div class="col-6">
                       <label for="paciente-ubicacion-anatomica" class="form-label">Ubicación anatómica</label>
                       <select class="form-select" id="paciente-ubicacion-anatomica" required>
                         <option value="">Selecciona tipo de acceso primero</option>
                       </select>
                     </div>
-                    <div class="col-5">
+                    <div class="col-6">
                       <label for="paciente-ubicacion-lado" class="form-label">Lado</label>
                       <select class="form-select" id="paciente-ubicacion-lado" required disabled>
                         <option value="">Selecciona lado...</option>
@@ -1033,6 +1023,21 @@
                       </select>
                     </div>
                   </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="paciente-proceso" class="form-label">Proceso</label>
+                    <select class="form-select" id="paciente-proceso" name="paciente-proceso">
+                      <option value="">Sin proceso</option>
+                      <option value="confeccion">Pendiente de confección / reparación</option>
+                      <option value="retiro">Pendiente de Retiro</option>
+                      <option value="madurativo">Proceso Madurativo</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="paciente-proceso-especifico" class="form-label">Proceso / Acceso</label>
+                    <select class="form-select" id="paciente-proceso-especifico" name="paciente-proceso-especifico">
+                      <option value="">Selecciona tipo de acceso</option>
+                    </select>
                 </div>
                 <div class="col-12">
                   <div class="mb-2">

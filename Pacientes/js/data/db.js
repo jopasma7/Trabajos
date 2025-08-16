@@ -72,13 +72,7 @@ try {
   db.prepare('ALTER TABLE pacientes ADD COLUMN avatar TEXT').run();
 } catch (e) {}
 // Añadir columna en_lista_espera si no existe
-try {
-  db.prepare('ALTER TABLE pacientes ADD COLUMN en_lista_espera INTEGER DEFAULT 0').run();
-} catch (e) {}
-// Añadir columna tipo_acceso_espera_id si no existe
-try {
-  db.prepare('ALTER TABLE pacientes ADD COLUMN tipo_acceso_espera_id INTEGER').run();
-} catch (e) {}
+// Eliminadas migraciones de en_lista_espera y tipo_acceso_espera_id
 
 // Añadir nuevos campos si no existen
 const pacientesTableInfo = db.prepare("PRAGMA table_info(pacientes)").all();
@@ -106,15 +100,8 @@ addColumnIfMissing('observaciones', 'TEXT');
 addColumnIfMissing('profesional_id', 'INTEGER');
 addColumnIfMissing('fecha_nacimiento', 'TEXT');
 addColumnIfMissing('fecha_alta', 'TEXT');
-addColumnIfMissing('sexo', 'TEXT');
-addColumnIfMissing('telefono', 'TEXT');
-addColumnIfMissing('correo', 'TEXT');
-addColumnIfMissing('direccion', 'TEXT');
-addColumnIfMissing('alergias', 'TEXT');
-addColumnIfMissing('observaciones', 'TEXT');
-addColumnIfMissing('profesional_id', 'INTEGER');
-addColumnIfMissing('fecha_nacimiento', 'TEXT');
-addColumnIfMissing('fecha_alta', 'TEXT');
+addColumnIfMissing('proceso_actual', 'INTEGER'); // id etiqueta tipo "Proceso"
+addColumnIfMissing('acceso_proceso', 'INTEGER'); // id etiqueta tipo "Acceso"
 
 
 // Crear tabla historial_clinico (uno a muchos con pacientes)
@@ -408,7 +395,7 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, en_lista_espera, tipo_acceso_espera_id, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, avatar, proceso_actual, acceso_proceso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -416,15 +403,15 @@ db.addPaciente = function(paciente) {
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
-    paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null,
-    paciente.avatar || ''
+    paciente.avatar || '',
+    paciente.proceso_actual || null,
+    paciente.acceso_proceso || null
   );
   return { id: info.lastInsertRowid };
 };
 
 db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, en_lista_espera = ?, tipo_acceso_espera_id = ?, avatar = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, avatar = ?, proceso_actual = ?, acceso_proceso = ? WHERE id = ?');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -432,9 +419,9 @@ db.editPaciente = function(paciente) {
     paciente.fecha_instalacion,
     paciente.ubicacion_anatomica,
     paciente.ubicacion_lado,
-    paciente.en_lista_espera ? 1 : 0,
-    paciente.tipo_acceso_espera_id || null,
     paciente.avatar || '',
+    paciente.proceso_actual || null,
+    paciente.acceso_proceso || null,
     paciente.id
   );
   return { changes: info.changes };
@@ -682,6 +669,36 @@ db.insertarPacientesDemo = function() {
 };
 
 // --- Ejemplos reales para pruebas ---
+
+// Método para agregar etiquetas de tipo Proceso por defecto
+db.insertarEtiquetasProcesoDemo = function() {
+  const etiquetasProceso = [
+    {
+      nombre: 'Pendiente de confección / reparación',
+      tipo: 'proceso',
+      color: '#f7b731',
+      descripcion: 'Paciente pendiente de confección o reparación de acceso vascular.'
+    },
+    {
+      nombre: 'Pendiente de Retiro',
+      tipo: 'proceso',
+      color: '#eb3b5a',
+      descripcion: 'Paciente pendiente de retiro de acceso vascular.'
+    },
+    {
+      nombre: 'Proceso Madurativo',
+      tipo: 'proceso',
+      color: '#20bf6b',
+      descripcion: 'Paciente en proceso madurativo del acceso vascular.'
+    }
+  ];
+  const stmt = db.prepare('INSERT INTO tags (nombre, tipo, color, descripcion) VALUES (?, ?, ?, ?)');
+  etiquetasProceso.forEach(tag => {
+    stmt.run(tag.nombre, tag.tipo, tag.color, tag.descripcion);
+  });
+};
+
+
 // Insertar 10 pacientes completos y realistas al iniciar si la tabla está vacía
 const pacientesCountDemo = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
 if (pacientesCountDemo === 0) {

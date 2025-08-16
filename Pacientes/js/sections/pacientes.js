@@ -143,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
 				try {
 					const allTags = await ipcRenderer.invoke('tags-get-all');
 					etiquetasAccesoDisponibles = allTags.filter(tag => tag.tipo === 'acceso');
-					await poblarSelectTipoAccesoEspera(etiquetasAccesoDisponibles);
 				} catch {}
 				if (esNuevoPaciente) {
 					const optInit = document.createElement('option');
@@ -166,8 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
 						selectTipoAccesoForm.dispatchEvent(new Event('change'));
 						// Mostrar campos de ubicación si el tipo de acceso tiene ubicaciones
 						const tag = etiquetasAccesoDisponibles.find(t => String(t.id) === String(window.pacienteEditandoTipoAccesoId));
-						const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
-						const ladoGroup = selectUbicacionLado.closest('.col-5');
+						const ubicacionGroup = selectUbicacionAnatomica.closest('.col-6');
+						const ladoGroup = selectUbicacionLado.closest('.col-6');
 						if (tag && Array.isArray(tag.ubicaciones) && tag.ubicaciones.length > 0) {
 							if (ubicacionGroup) ubicacionGroup.style.display = '';
 							if (ladoGroup) ladoGroup.style.display = '';
@@ -178,15 +177,15 @@ document.addEventListener('DOMContentLoaded', () => {
 					}, 60);
 				} else {
 					// Si es nuevo paciente, ocultar los campos
-					const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
-					const ladoGroup = selectUbicacionLado.closest('.col-5');
+					const ubicacionGroup = selectUbicacionAnatomica.closest('.col-6');
+					const ladoGroup = selectUbicacionLado.closest('.col-6');
 					if (ubicacionGroup) ubicacionGroup.style.display = 'none';
 					if (ladoGroup) ladoGroup.style.display = 'none';
 				}
 			}
 			// Ocultar los campos de ubicación anatómica y lado por defecto
-			const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
-			const ladoGroup = selectUbicacionLado.closest('.col-5');
+			const ubicacionGroup = selectUbicacionAnatomica.closest('.col-6');
+			const ladoGroup = selectUbicacionLado.closest('.col-6');
 			if (ubicacionGroup) ubicacionGroup.style.display = 'none';
 			if (ladoGroup) ladoGroup.style.display = 'none';
 			// Obtener las etiquetas realmente asociadas desde la BD
@@ -209,8 +208,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if (selectTipoAccesoForm && selectUbicacionAnatomica && selectUbicacionLado) {
 	// Obtener el grupo de campos para mostrar/ocultar
-	const ubicacionGroup = selectUbicacionAnatomica.closest('.col-7');
-	const ladoGroup = selectUbicacionLado.closest('.col-5');
+	const ubicacionGroup = selectUbicacionAnatomica.closest('.col-6');
+	const ladoGroup = selectUbicacionLado.closest('.col-6');
 	// Ocultar ambos al inicio
 	if (ubicacionGroup) ubicacionGroup.style.display = 'none';
 	if (ladoGroup) ladoGroup.style.display = 'none';
@@ -274,38 +273,6 @@ let pacienteAEliminar = null;
 const modalConfirmarEliminar = document.getElementById('modal-confirmar-eliminar-paciente');
 const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar-paciente');
 const textoConfirmarEliminar = document.getElementById('texto-confirmar-eliminar-paciente');
-// Elementos para lista de espera
-const checkboxListaEspera = document.getElementById('paciente-lista-espera');
-const selectListaEsperaContainer = document.getElementById('paciente-lista-espera-select-container');
-const selectTipoAccesoEspera = document.getElementById('paciente-tipoacceso-espera');
-
-// Mostrar/ocultar el select según el checkbox
-if (checkboxListaEspera && selectListaEsperaContainer) {
-    checkboxListaEspera.addEventListener('change', function() {
-        selectListaEsperaContainer.style.display = this.checked ? '' : 'none';
-    });
-    // Inicializar visibilidad al abrir el modal
-    selectListaEsperaContainer.style.display = checkboxListaEspera.checked ? '' : 'none';
-}
-
-// Función para poblar el select de tipo acceso destino (lista de espera)
-async function poblarSelectTipoAccesoEspera(etiquetasAccesoDisponibles) {
-	if (selectTipoAccesoEspera) {
-		selectTipoAccesoEspera.innerHTML = '';
-		const optInit = document.createElement('option');
-		optInit.value = '';
-		optInit.textContent = 'Tipo acceso pendiente...';
-		optInit.disabled = true;
-		optInit.selected = true;
-		selectTipoAccesoEspera.appendChild(optInit);
-		etiquetasAccesoDisponibles.forEach(tag => {
-			const opt = document.createElement('option');
-			opt.value = String(tag.id);
-			opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
-			selectTipoAccesoEspera.appendChild(opt);
-		});
-	}
-}
 
 // Filtros y paginación
 const inputBusqueda = document.getElementById('busqueda-pacientes');
@@ -331,11 +298,6 @@ function filtrarPacientes() {
 	}
 	if (tipo) {
 		filtrados = filtrados.filter(p => Number(p.tipo_acceso_id) === Number(tipo));
-	}
-	if (pendiente === 'pendiente') {
-		filtrados = filtrados.filter(p => p.en_lista_espera === 1);
-	} else if (pendiente === 'no-pendiente') {
-		filtrados = filtrados.filter(p => !p.en_lista_espera || p.en_lista_espera === 0);
 	}
 	return filtrados;
 }
@@ -390,15 +352,8 @@ function renderizarPacientes(pacientes) {
 		}
 
 		// Emoji ⏳ si está en espera
-		let esperaHtml = '';
-		if (paciente.en_lista_espera && paciente.tipo_acceso_espera_id) {
-			// Buscar etiqueta de acceso pendiente
-			const tagPendiente = (etiquetasAccesoDisponibles || []).find(t => t.id === paciente.tipo_acceso_espera_id);
-			const etiquetaPendiente = tagPendiente ? tagPendiente.nombre : 'pendiente';
-			esperaHtml = `<span title="Pendiente de ${etiquetaPendiente}" style="margin-left:3px;font-size:1.0em;cursor:help;">⏳</span>`;
-		}
 		tr.innerHTML = `
-			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos} ${esperaHtml}</td>
+			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos}</td>
 			<td>${renderTipoAccesoBadgeById(paciente.tipo_acceso_id)}</td>
 			<td>${ubicacionCompleta}</td>
 			<td>${fechaFormateada}${diasDetalle}</td>
@@ -581,9 +536,6 @@ if (btnNuevoPacienteList && btnNuevoPacienteList.length) {
 }
 
 // Filtros: búsqueda, tipo de acceso, fecha
-if (inputBusqueda) inputBusqueda.addEventListener('input', () => { paginaActual = 1; actualizarTablaPacientes(); });
-if (selectTipoAcceso) selectTipoAcceso.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
-if (selectPendiente) selectPendiente.addEventListener('change', () => { paginaActual = 1; actualizarTablaPacientes(); });
 
 
 // Guardar (agregar o editar) paciente
@@ -598,8 +550,6 @@ if (formPaciente) {
 				ubicacion_anatomica: selectUbicacionAnatomica?.value || '',
 				ubicacion_lado: selectUbicacionLado?.value || '',
 				etiquetas: [...etiquetasSeleccionadas],
-				en_lista_espera: document.getElementById('paciente-lista-espera')?.checked ? 1 : 0,
-				tipo_acceso_espera_id: document.getElementById('paciente-tipoacceso-espera')?.value ? Number(document.getElementById('paciente-tipoacceso-espera').value) : null
 			};
 
 		// Guardar incidencias seleccionadas
@@ -717,31 +667,6 @@ if (tablaPacientesBody) {
 							selectTipoAccesoForm.selectedIndex = 0;
 						}
 						selectTipoAccesoForm.dispatchEvent(new Event('change'));
-					}, 50);
-				}
-				// Rellenar checkbox y select de lista de espera
-				if (checkboxListaEspera && selectListaEsperaContainer && selectTipoAccesoEspera) {
-					checkboxListaEspera.checked = paciente.en_lista_espera ? true : false;
-					selectListaEsperaContainer.style.display = paciente.en_lista_espera ? '' : 'none';
-					// Poblar el select de tipo acceso pendiente
-					selectTipoAccesoEspera.innerHTML = '';
-					const optInit = document.createElement('option');
-					optInit.value = '';
-					optInit.textContent = 'Tipo acceso pendiente...';
-					optInit.disabled = true;
-					selectTipoAccesoEspera.appendChild(optInit);
-					etiquetasAccesoDisponibles.forEach(tag => {
-						const opt = document.createElement('option');
-						opt.value = String(tag.id);
-						opt.textContent = `${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}`;
-						selectTipoAccesoEspera.appendChild(opt);
-					});
-					setTimeout(() => {
-						if (paciente.tipo_acceso_espera_id && selectTipoAccesoEspera.querySelector(`option[value='${paciente.tipo_acceso_espera_id}']`)) {
-							selectTipoAccesoEspera.value = String(paciente.tipo_acceso_espera_id);
-						} else {
-							selectTipoAccesoEspera.selectedIndex = 0;
-						}
 					}, 50);
 				}
 				const fechaInput = document.getElementById('paciente-fecha');
