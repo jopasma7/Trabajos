@@ -87,6 +87,23 @@ ipcMain.handle('add-paciente', (event, paciente) => {
   return result;
 });
 
+// Handler para agregar incidencia con tag
+ipcMain.handle('add-incidencia-con-tag', (event, data) => {
+  // data: { pacienteId, tagId, tipo_acceso_id, fecha, tipo, microorganismo_asociado, medidas, etiqueta_id, activo }
+  // Adaptar a la estructura de la tabla incidencias
+  return db.addIncidenciaConTag(
+    data.pacienteId,
+    data.tagId,
+  data.tipo_acceso_id || null,
+    data.fecha || null,
+    data.tipo || null,
+    data.microorganismo_asociado || null,
+    data.medidas || null,
+    data.etiqueta_id || data.tagId || null,
+    typeof data.activo === 'undefined' ? 1 : data.activo
+  );
+});
+
 // Handler para obtener paciente con datos de acceso para edición
 // Handler para obtener todos los datos completos de todos los pacientes
 ipcMain.handle('get-pacientes-completos', () => {
@@ -209,9 +226,9 @@ ipcMain.handle('tipo-acceso-get-all', () => {
 });
 
 ipcMain.handle('paciente-get-incidencias', async (event, pacienteId) => {
-  // Devuelve todas las incidencias asociadas al paciente, con motivo, fecha y tagId
+  // Devuelve todas las incidencias asociadas al paciente, todos los campos + tagId
   return db.prepare(`
-    SELECT i.id, it.tag_id as tagId, i.motivo, i.fecha
+    SELECT i.*, it.tag_id as tagId
     FROM incidencias i
     JOIN incidencia_tags it ON i.id = it.incidencia_id
     WHERE i.paciente_id = ? AND i.activo = 1

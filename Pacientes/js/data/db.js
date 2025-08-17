@@ -88,7 +88,7 @@ tiposPendiente.forEach(nombre => {
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,
-  acceso_id INTEGER,
+  tipo_acceso_id INTEGER,
   fecha TEXT,
   tipo TEXT,
   microorganismo_asociado TEXT,
@@ -96,7 +96,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   etiqueta_id INTEGER,
   activo INTEGER DEFAULT 1,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-  FOREIGN KEY (acceso_id) REFERENCES acceso(id),
+  FOREIGN KEY (tipo_acceso_id) REFERENCES tipo_acceso(id),
   FOREIGN KEY (etiqueta_id) REFERENCES tags(id)
 )`).run();
 
@@ -107,9 +107,9 @@ db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   nombre TEXT NOT NULL UNIQUE,
   color TEXT DEFAULT '#009879',
   descripcion TEXT,
-  tipo TEXT DEFAULT 'incidencia',
+  tipo TEXT DEFAULT 'incidencia', 
   icono TEXT
-)`).run();
+)`).run(); 
 
 
 // Crear tabla profesionales si no existe
@@ -255,9 +255,24 @@ db.getIncidenciasByPaciente = function(pacienteId) {
 
 // Crear una incidencia y asociar un tag (motivo y fecha personalizados)
 db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
-  // Insertar nueva incidencia
-  const insertIncidencia = db.prepare('INSERT INTO incidencias (paciente_id, motivo, fecha) VALUES (?, ?, ?)');
-  const result = insertIncidencia.run(pacienteId, motivo, fecha);
+  // Insertar nueva incidencia con todos los campos relevantes
+  // Si motivo se usaba como tipo, ahora se guarda en tipo
+  // Los argumentos: pacienteId, tagId, tipo_acceso_id, fecha, tipo, microorganismo_asociado, medidas, etiqueta_id, activo
+  const insertIncidencia = db.prepare(`
+    INSERT INTO incidencias (
+      paciente_id, tipo_acceso_id, fecha, tipo, microorganismo_asociado, medidas, etiqueta_id, activo
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+  const result = insertIncidencia.run(
+    pacienteId,
+  arguments[2] || null, // tipo_acceso_id
+    arguments[3] || null, // fecha
+    arguments[4] || null, // tipo
+    arguments[5] || null, // microorganismo_asociado
+    arguments[6] || null, // medidas
+    arguments[7] || tagId || null, // etiqueta_id
+    typeof arguments[8] === 'undefined' ? 1 : arguments[8] // activo
+  );
   const incidenciaId = result.lastInsertRowid;
   // Asociar el tag a la incidencia
   const insertTag = db.prepare('INSERT INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
@@ -846,7 +861,7 @@ function insertarTiposAccesoPredeterminados() {
     {
       nombre: 'Catéter',
       descripcion: 'Catéter venoso central, temporal o tunelizado, para acceso inmediato o prolongado. Mayor riesgo de infección.',
-      color: '#457b9d',
+  color: '#5dade2',
       icono: '➰',
       ubicaciones: [
         'Yugular Interna',
@@ -989,8 +1004,28 @@ db.insertarPacientesPrueba = function() {
   }
 };
 
+// Crear etiquetas de tipo incidencia (motivos de derivación)
+db.crearEtiquetasIncidenciaMotivos = function() {
+  const motivos = [
+    { nombre: 'Flujo insuficiente', color: '#009879' },
+    { nombre: 'Disminución o pérdida del frémito', color: '#1565c0' },
+    { nombre: 'Dificultad para la canulación', color: '#b28900' },
+    { nombre: 'Hematomas frecuentes', color: '#c62828' },
+    { nombre: 'Aumento de la presión venosa', color: '#3a8dde' },
+    { nombre: 'Sangramiento', color: '#ad1457' },
+    { nombre: 'Edema', color: '#00897b' },
+    { nombre: 'Circulación colateral', color: '#6d4c41' },
+    { nombre: 'Dolor', color: '#f57c00' },
+    { nombre: 'Fav ocluida', color: '#7b1fa2' }
+  ];
+  const stmt = db.prepare('INSERT OR IGNORE INTO tags (nombre, color, tipo) VALUES (?, ?, ?)');
+  motivos.forEach(m => {
+    stmt.run(m.nombre, m.color, 'incidencia');
+  });
+};
+
 module.exports = db;
 
 // Llamar siempre al cargar el archivo para poblar la base de datos con pacientes de prueba
 db.insertarPacientesPrueba();
- 
+db.crearEtiquetasIncidenciaMotivos();

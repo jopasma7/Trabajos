@@ -13,9 +13,12 @@ const selectPendiente = document.getElementById('pendiente');
 const fechaLabelPend = document.getElementById('labelFechaInstalacionAccesoPendiente');
 const fechaInputPend = document.getElementById('fechaInstalacionAccesoPendiente');
 
+// Variable temporal para guardar los valores de incidencias
+let incidenciaValoresTemp = {}
 
 // Variables
 let pacientesGlobal = [];
+let etiquetasPorId = {};
 const pacientesPorPagina = 10;
 let datosGlobalesCargados = false;
 let profesionalesGlobal = [];
@@ -27,7 +30,7 @@ let ubicacionesGlobal = [];
 async function cargarDatosGlobal() {
     profesionalesGlobal = await ipcRenderer.invoke('get-profesionales');
     tiposAccesoGlobal = await ipcRenderer.invoke('tipo-acceso-get-all');
-    tiposPendienteGlobal = await ipcRenderer.invoke('pendiente-tipos-get');
+		tiposPendienteGlobal = await ipcRenderer.invoke('pendiente-tipos-get');
     ubicacionesGlobal = await ipcRenderer.invoke('get-ubicaciones-anatomicas');
 	datosGlobalesCargados = true;
 }
@@ -37,7 +40,7 @@ async function cargarDatosGlobal() {
 document.addEventListener('DOMContentLoaded', async () => {
 	await cargarDatosGlobal();
 	cargarPacientes();
-	// Listener para actualizar ubicaciones cuando cambie el tipo de acceso
+	cargarEtiquetas();
 	if (selectTipoAcceso) {
 		selectTipoAcceso.addEventListener('change', function() {
 			llenarSelectUbicacion();
@@ -124,15 +127,60 @@ document.addEventListener('click', async function(e) {
 		if (!pacienteId) return;
 		// Obtener datos completos del paciente
 		if (!datosGlobalesCargados) await cargarDatosGlobal();    
-        limpiarCamposNuevoPaciente();
-        llenarSelectProfesional();
-        llenarSelectTipoAcceso();
-        llenarSelectUbicacion();
-        llenarSelectPendiente();
+		limpiarCamposNuevoPaciente();
+		llenarSelectProfesional();
+		llenarSelectTipoAcceso();
+		llenarSelectUbicacion();
+		llenarSelectPendiente();
 		const paciente = await ipcRenderer.invoke('paciente-get-con-acceso', Number(pacienteId));
-	
 		if (!paciente) return;
 		window.pacienteEditando = paciente;
+		// Mostrar etiquetas activas visualmente
+		const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
+		etiquetasActivasContainer.innerHTML = '<label for="etiquetas-activas-container" class="form-label"><i class="bi bi-tag-fill me-1"></i> Etiquetas Activas</label>';
+		// Recoger incidencias activas del paciente
+		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
+		let badgesHtml = '';
+		console.log('incidencias:', incidencias);
+		if (Array.isArray(paciente.etiquetas) && paciente.etiquetas.length > 0) {
+			badgesHtml = paciente.etiquetas.map(id => {
+				const tag = etiquetasPorId[id];
+				if (!tag || tag.tipo !== 'incidencia') return '';
+				// Buscar incidencia activa para esta etiqueta
+				const incidencia = incidencias.find(inc => String(inc.etiqueta_id) === String(id) && inc.activo);
+				let fecha = '';
+				let accesoBadge = '';
+				if (incidencia) {
+					if (incidencia.fecha) {
+						const match = incidencia.fecha.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
+						if (match) fecha = `${match[3]}/${match[2]}/${match[1]}`;
+						else fecha = incidencia.fecha;
+					}
+					let accesoObj = null;
+					// Buscar por id y por nombre
+					if (incidencia.tipo_acceso_id) {
+						accesoObj = tiposAccesoGlobal.find(t => String(t.id) === String(incidencia.tipo_acceso_id));
+						if (accesoObj) {
+							const colorCateter = '#5dade2CC';
+							const badgeColor = accesoObj.nombre === 'Catéter' ? colorCateter : `${accesoObj.color}CC`;
+							accesoBadge = `<span class='badge' style='background:linear-gradient(270deg,#f8f9faCC 0%,${badgeColor} 100%);color:#222;font-size:1em;padding:4px 14px 4px 10px;border-radius:16px;margin-left:10px;box-shadow:0 1px 4px rgba(0,0,0,0.07);border:1.5px solid #e0e0e0;display:inline-flex;align-items:center;gap:6px;vertical-align:middle;' title='${accesoObj.nombre}'>${accesoObj.icono ? `<span style='font-size:1.3em;vertical-align:middle;margin-right:4px;'>${accesoObj.icono}</span>` : ''}<span style='font-weight:500;'>${accesoObj.nombre}</span></span>`;
+						} else {
+							// Si no está en tiposAccesoGlobal, mostrar el id
+							accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='${incidencia.tipo_acceso_id}'>${incidencia.tipo_acceso_id}</span>`;
+						}
+					} else if (incidencia.tipo_acceso_id) {
+						// Si existe tipo_acceso_id pero no está en tiposAccesoGlobal, mostrar el valor
+						accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='${incidencia.tipo_acceso_id}'>${incidencia.tipo_acceso_id}</span>`;
+					} else {
+						accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='Sin acceso'>Sin acceso</span>`;
+					}
+				} else {
+					accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='Sin acceso'>Sin acceso</span>`;
+				}
+				return `<span style="display:inline-flex;align-items:center;margin-right:10px;"><i class="bi bi-tag-fill" style="color:${tag.color};font-size:1.15em;margin-right:4px;vertical-align:middle;" title="${tag.nombre.replace(/\"/g, '&quot;')}"></i><span style="font-size:0.97em;color:#14532d;">${tag.nombre}${fecha ? ' <span style=\"color:#666;font-size:0.93em;margin-left:4px;\">(' + fecha + ')</span>' : ''}${accesoBadge}</span></span>`;
+			}).join(' ');
+		}
+		etiquetasActivasContainer.innerHTML += `<div style="margin-top:6px;">${badgesHtml}</div>`;
 		// Cargar datos en el formulario
 		document.getElementById('nombre').value = paciente.nombre || '';
 		document.getElementById('apellidos').value = paciente.apellidos || '';
@@ -558,8 +606,26 @@ function limpiarCamposNuevoPaciente() {
 	document.getElementById('accesoPendiente').value = '';
 	document.getElementById('fechaInstalacionAcceso').value = '';
 	document.getElementById('fechaInstalacionAccesoPendiente').value = '';
-	document.getElementById('etiquetasIncidencia').value = '';
+	// Limpiar select de Choices.js correctamente
+	const etiquetasSelect = document.getElementById('etiquetasIncidencia');
+	if (window.etiquetasChoices) {
+		window.etiquetasChoices.removeActiveItems();
+	}
+
+	// Limpiar formularios dinámicos de incidencias
+	const incidenciaContainer = document.getElementById('incidencia-valores-container');
+	if (incidenciaContainer) {
+		incidenciaContainer.innerHTML = '';
+	}
+
+	// Limpiar badges y valores visuales de incidencias activas
+	const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
+	if (etiquetasActivasContainer) {
+		etiquetasActivasContainer.innerHTML = '';
+	}
+
 	window.pacienteEditando = null;
+	incidenciaValoresTemp = {}; // Limpiar variable temporal al cancelar/crear
 }
 
 // Crear nuevo paciente
@@ -643,15 +709,31 @@ async function crearPaciente() {
 			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 			profesional_id: profesional,
 			activo: 1
-		},
-		incidencia: {
-			motivo: document.getElementById('etiquetasIncidencia').value,
-			fecha: document.getElementById('fechaInstalacionAcceso').value,
-			activo: 1
 		}
 	};
-	// Llama al ipcHandler para añadir paciente
-	await ipcRenderer.invoke('add-paciente', paciente);
+	// Llama al ipcHandler para añadir paciente y obtiene el id
+	const result = await ipcRenderer.invoke('add-paciente', paciente);
+	const pacienteId = result && result.id ? result.id : null;
+
+	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
+	const etiquetasSeleccionadas = Object.keys(incidenciaValoresTemp);
+	if (pacienteId && etiquetasSeleccionadas.length > 0) {
+		for (const id of etiquetasSeleccionadas) {
+			const incidencia = incidenciaValoresTemp[id];
+			console.log(`Guardando incidencia para paciente ${pacienteId} con etiqueta ${id}`, incidencia);
+			await ipcRenderer.invoke('add-incidencia-con-tag', {
+				pacienteId,
+				tagId: id,
+				tipo_acceso_id: incidencia.acceso ? Number(incidencia.acceso) : null,
+				fecha: incidencia.fecha,
+				tipo: incidencia.nombre,
+				microorganismo_asociado: null,
+				medidas: incidencia.medidas,
+				etiqueta_id: id,
+				activo: 1
+			});
+		}
+	}
 	// Actualiza la tabla y cierra el modal
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');
@@ -663,6 +745,81 @@ async function crearPaciente() {
 		modalInstance.hide();
 	}
 	mostrarMensaje('Paciente creado correctamente', 'success');
+	incidenciaValoresTemp = {}; // Limpiar variable temporal tras guardar
+}
+
+async function cargarEtiquetas() {
+	// Inicializar Choices.js para etiquetas de incidencia
+	const etiquetasSelect = document.getElementById('etiquetasIncidencia');
+	let etiquetasChoices;
+	// Cargar etiquetas desde el backend
+	const etiquetas = await ipcRenderer.invoke('tags-get-all');
+	// Poblar el diccionario etiquetasPorId para acceso rápido por id
+	etiquetasPorId = {};
+	etiquetas.forEach(tag => {
+		etiquetasPorId[tag.id] = tag;
+	});
+	// Eliminar log de etiquetas
+	// etiquetasSelect.innerHTML = etiquetas
+	etiquetasSelect.innerHTML = etiquetas
+		.filter(tag => tag.tipo && tag.tipo.toLowerCase() === 'incidencia')
+		.map(tag => `<option value="${tag.id}" data-color="${tag.color || ''}" data-icono="${tag.icono || ''}">${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</option>`)
+		.join('');
+	window.etiquetasChoices = new Choices(etiquetasSelect, {
+		removeItemButton: true,
+		placeholder: true,
+		placeholderValue: 'Selecciona etiquetas...',
+		searchEnabled: true,
+		shouldSort: false
+	});
+	// Aplica color a los items seleccionados tras cada cambio
+	function pintarEtiquetasSeleccionadas() {
+		const selectedOptions = Array.from(etiquetasSelect.selectedOptions);
+		const items = document.querySelectorAll('.choices__list--multiple .choices__item');
+		items.forEach((item, idx) => {
+			const option = selectedOptions[idx];
+			if (option) {
+				const color = option.getAttribute('data-color') || '#009879';
+				item.style.backgroundColor = color;
+				item.style.color = '#fff';
+			}
+		});
+	}
+		etiquetasSelect.addEventListener('change', function() {
+			// Detectar incidencias eliminadas
+			const selectedIds = Array.from(etiquetasSelect.selectedOptions).map(opt => opt.value);
+			const prevIds = Object.keys(incidenciaValoresTemp);
+			prevIds.forEach(id => {
+				if (!selectedIds.includes(id)) {
+					// Eliminada del selector, borrar de variable y mostrar mensaje
+					const nombre = incidenciaValoresTemp[id]?.nombre || '';
+					delete incidenciaValoresTemp[id];
+					mostrarMensaje(`Incidencia "${nombre}" eliminada`, 'info');
+				}
+			});
+			pintarEtiquetasSeleccionadas();
+			// Renderizar formularios dinámicos
+			const selectedOptions = Array.from(etiquetasSelect.selectedOptions);
+			renderIncidenciaValores(selectedOptions);
+		});
+	// Pintar al iniciar si ya hay seleccionadas
+		setTimeout(() => {
+			pintarEtiquetasSeleccionadas();
+			renderIncidenciaValores(Array.from(etiquetasSelect.selectedOptions));
+		}, 400);
+	window.etiquetasChoices.setValue([]);
+	window.etiquetasChoices.passedElement.element.addEventListener('change', function(event) {
+		const selectedOptions = Array.from(event.target.selectedOptions);
+		selectedOptions.forEach(option => {
+			const color = option.getAttribute('data-color');
+			const icono = option.getAttribute('data-icono');
+			option.style.backgroundColor = color || '#fff';
+			option.style.color = '#fff';
+			if (icono) {
+				option.innerHTML = `<i class='${icono}' style='color:#fff;'></i> ${option.text}`;
+			}
+		});
+	});
 }
 
 // Editar paciente existente
@@ -747,11 +904,7 @@ async function editarPaciente(id) {
 			profesional_id: document.getElementById('profesional').value,
 			activo: 1
 		},
-		incidencia: {
-			motivo: document.getElementById('etiquetasIncidencia').value,
-			fecha: document.getElementById('fechaInstalacionAcceso').value,
-			activo: 1
-		}
+		// Eliminados: incidencia, incidencia_valores
 	};
 	await ipcRenderer.invoke('update-paciente', paciente);
 	cargarPacientes();
@@ -766,4 +919,82 @@ async function editarPaciente(id) {
 	mostrarMensaje('Paciente editado correctamente', 'success');
 }
 
+// Renderiza formularios dinámicos para cada incidencia seleccionada
+function renderIncidenciaValores(selectedIncidencias) {
+	const container = document.getElementById('incidencia-valores-container');
+	container.innerHTML = '';
+	// Al seleccionar nuevas incidencias, mostrar todos los formularios (resetear ocultos)
+	// Si hay formularios ocultos de incidencias previas, los volvemos a mostrar
+	// Esto se logra porque se recrea el contenido cada vez que se llama a la función
+	selectedIncidencias.forEach(option => {
+		const color = option.getAttribute('data-color') || '#009879';
+		const nombre = option.textContent;
+		const id = option.value;
+		// Si está guardada, no mostrar nada
+		if (incidenciaValoresTemp[id]) {
+			return;
+		}
+		// Solo renderizar el formulario si la incidencia no está guardada
+		const formDiv = document.createElement('div');
+		formDiv.className = 'incidencia-form mb-1 p-1 border rounded';
+		formDiv.style.background = '#f8fafc';
+		formDiv.style.maxWidth = '640px';
+		formDiv.style.fontSize = '0.92em';
+		formDiv.style.padding = '6px 10px';
+		formDiv.style.margin = '2px 0';
+
+		// Rellenar select con tipos de acceso global, mostrando icono/emoji
+		let selectAccesoHtml = `<select class=\"form-select form-select-sm\" name=\"acceso-${id}\" required>`;
+		selectAccesoHtml += `<option value=\"\">Tipo de acceso</option>`;
+		tiposAccesoGlobal.forEach(tipo => {
+			let iconHtml = '';
+			if (tipo.icono) {
+				if (tipo.icono.startsWith('bi-')) {
+					iconHtml = `<i class='bi ${tipo.icono}' style='font-size:1em;vertical-align:middle;'></i> `;
+				} else {
+					iconHtml = `${tipo.icono} `;
+				}
+			}
+			selectAccesoHtml += `<option value=\"${tipo.id}\">${iconHtml}${tipo.nombre}</option>`;
+		});
+		selectAccesoHtml += `</select>`;
+
+		formDiv.innerHTML = `
+			<div class=\"row align-items-center g-2 justify-content-between\">
+				<div class=\"col-auto\">
+					<span class=\"badge\" style=\"background:${color};color:#fff;font-size:0.95em;\" title=\"${nombre}\">${nombre}</span>
+				</div>
+				<div class=\"col d-flex justify-content-end align-items-center\">
+					<input type=\"date\" class=\"form-control form-control-sm me-2\" placeholder=\"Fecha\" name=\"fecha-${id}\" required />
+					${selectAccesoHtml}
+					<input type=\"text\" class=\"form-control form-control-sm ms-2 me-2\" placeholder=\"Medidas\" name=\"medidas-${id}\" style=\"min-width:120px;\" />
+					<button type=\"button\" class=\"btn btn-success btn-sm btn-guardar-incidencia ms-2\" data-id=\"${id}\">Guardar</button>
+				</div>
+			</div>
+		`;
+		container.appendChild(formDiv);
+
+		// Listener para guardar los datos en la variable temporal
+		const btnGuardar = formDiv.querySelector('.btn-guardar-incidencia');
+		btnGuardar.addEventListener('click', () => {
+			const fecha = formDiv.querySelector(`input[name='fecha-${id}']`).value;
+			const acceso = formDiv.querySelector(`select[name='acceso-${id}']`).value;
+			const medidas = formDiv.querySelector(`input[name='medidas-${id}']`).value;
+			if (!fecha) {
+				formDiv.querySelector(`input[name='fecha-${id}']`).focus();
+				mostrarMensaje('La fecha de la incidencia es obligatoria', 'danger');
+				return;
+			}
+			if (!acceso) {
+				formDiv.querySelector(`select[name='acceso-${id}']`).focus();
+				mostrarMensaje('El tipo de acceso de la incidencia es obligatorio', 'danger');
+				return;
+			}
+			incidenciaValoresTemp[id] = { fecha, acceso, medidas, nombre, color };
+			console.log('incidenciaValoresTemp:', incidenciaValoresTemp); // Log al guardar incidencia
+			mostrarMensaje(`Incidencia "${nombre}" guardada`, 'success');
+			renderIncidenciaValores(selectedIncidencias);
+		});
+	});
+}
 

@@ -1,3 +1,89 @@
+/* Formularios dinámicos para incidencias seleccionadas */
+#incidencia-valores-container .incidencia-form {
+  background: #f8fafc;
+  border: 1px solid #e0e0e0;
+  border-radius: 7px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 4px rgba(40,60,90,0.06);
+}
+#incidencia-valores-container .badge {
+  font-size: 0.95em;
+  padding: 4px 12px;
+  border-radius: 12px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#incidencia-valores-container .form-control-sm,
+#incidencia-valores-container .form-select-sm {
+  font-size: 0.92em;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+#modal-paciente .choices .choices__input {
+  min-height: 28px !important;
+  height: 22px !important;
+  font-size: 1em !important;
+  padding: 2px 6px !important;
+  box-sizing: border-box !important;
+}
+
+#modal-paciente .choices .choices__list--multiple {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 4px !important;
+}
+#modal-paciente .choices .choices__list--multiple .choices__item {
+  font-size: 0.85em !important;
+  padding: 2px 10px !important;
+  border-radius: 14px !important;
+  min-height: 18px !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  width: auto !important; 
+  max-width: 500px !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#modal-paciente .choices .choices__list--multiple .choices__item .choices__button {
+  font-size: 0.95em !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 1 !important;
+  margin-left: 6px !important;
+  padding: 0 !important;
+}
+#modal-paciente .choices .choices__button {
+  font-size: 0.95em !important;
+  width: 16px !important;
+  height: 16px !important;
+  line-height: 1 !important;
+  margin-left: 3px !important;
+  padding: 0 !important;
+}
+#modal-paciente .choices .choices__list--dropdown {
+  font-size: 0.92em !important;
+  padding: 2px 0 !important;
+}
+#modal-paciente .choices {
+  min-height: 18px !important;
+  font-size: 0.74em !important;
+  padding: 1px 3px !important;
+  margin-bottom: 1px !important;
+  background: #f9fafc !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 24px !important;
+  padding: 2px 6px !important;
+  margin-left: 0 !important;
+}
 #modal-paciente .card.avatar-card {
   background: transparent !important;
   box-shadow: 0 1px 6px rgba(40,60,90,0.10);
@@ -171,4 +257,16 @@ td:last-child, td:nth-child(4) {
 td:last-child .btn {
   margin-right: 0.25rem;
   margin-bottom: 0;
+}
+
+.choices__list--dropdown .choices__item[data-custom-properties] {
+  background: #fff !important;
+  color: #222 !important;
+}
+.choices__list--dropdown {
+  background: #fff !important;
+  color: #222 !important;
+  z-index: 9999 !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
 }
