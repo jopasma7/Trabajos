@@ -92,6 +92,15 @@ if (btnNuevoPaciente) {
 
 // Handler global para los botones de eliminar en la tabla
 document.addEventListener('click', async function(e) {
+	const btnArchivar = e.target.closest('.btn-archivar');
+	if (btnArchivar) {
+		const pacienteId = btnArchivar.getAttribute('data-id');
+		if (!pacienteId) return;
+		await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
+		cargarPacientes();
+		mostrarMensaje('Paciente archivado correctamente', 'info');
+		return;
+	}
 	const btn = e.target.closest('.btn-eliminar');
 	if (btn) {
 		const pacienteId = btn.getAttribute('data-id');
@@ -370,6 +379,7 @@ async function renderizarPacientes() {
 			<td>
 				<button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
 				<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
+				<button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
 				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
 			</td>
 		`;
@@ -614,16 +624,31 @@ async function crearPaciente() {
 		tipo_acceso_id: tipoAcceso,
 		ubicacion_anatomica: ubicacion,
 		ubicacion_lado: document.getElementById('lado').value,
+		activo: 1,
 		pendiente: {
 			acceso_id: document.getElementById('accesoPendiente').value,
 			fecha: document.getElementById('fechaInstalacionAccesoPendiente').value,
 			observaciones: '',
 			profesional_id: profesional,
-			pendiente_tipo_id: document.getElementById('pendiente').value
+			pendiente_tipo_id: document.getElementById('pendiente').value,
+			activo: 1
 		},
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		fecha_instalacion_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value
+		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
+		acceso: {
+			tipo_acceso_id: tipoAcceso,
+			ubicacion_anatomica: ubicacion,
+			ubicacion_lado: document.getElementById('lado').value,
+			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
+			profesional_id: profesional,
+			activo: 1
+		},
+		incidencia: {
+			motivo: document.getElementById('etiquetasIncidencia').value,
+			fecha: document.getElementById('fechaInstalacionAcceso').value,
+			activo: 1
+		}
 	};
 	// Llama al ipcHandler para añadir paciente
 	await ipcRenderer.invoke('add-paciente', paciente);
@@ -703,7 +728,7 @@ async function editarPaciente(id) {
 		ubicacion_lado: document.getElementById('lado').value,
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
-		// Pendiente
+		activo: 1,
 		pendiente: {
 			id: window.pacienteEditando?.pendiente?.id || null,
 			acceso_id: document.getElementById('accesoPendiente').value,
@@ -711,7 +736,21 @@ async function editarPaciente(id) {
 			observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
 			profesional_id: document.getElementById('profesional').value,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
-			paciente_id: id
+			paciente_id: id,
+			activo: 1
+		},
+		acceso: {
+			tipo_acceso_id: document.getElementById('tipoAcceso').value,
+			ubicacion_anatomica: document.getElementById('ubicacion').value,
+			ubicacion_lado: document.getElementById('lado').value,
+			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
+			profesional_id: document.getElementById('profesional').value,
+			activo: 1
+		},
+		incidencia: {
+			motivo: document.getElementById('etiquetasIncidencia').value,
+			fecha: document.getElementById('fechaInstalacionAcceso').value,
+			activo: 1
 		}
 	};
 	await ipcRenderer.invoke('update-paciente', paciente);

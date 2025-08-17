@@ -47,40 +47,42 @@ db.prepare(`CREATE TABLE IF NOT EXISTS acceso (
   etiqueta_id INTEGER,
   profesional_id INTEGER, -- Nuevo: profesional responsable
   estado TEXT,            -- Nuevo: estado/proceso del acceso
+  activo INTEGER DEFAULT 1,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
   FOREIGN KEY (tipo_acceso_id) REFERENCES tipo_acceso(id),
   FOREIGN KEY (etiqueta_id) REFERENCES tags(id),
   FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
 )`).run();
+
 db.prepare(`CREATE TABLE IF NOT EXISTS pendiente (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,
   pendiente_tipo_id INTEGER,
   acceso_id INTEGER NOT NULL,
   fecha TEXT,
-  -- motivo TEXT,  // Eliminado, ahora se usa pendiente_tipo_id
   observaciones TEXT,
   profesional_id INTEGER,
+  activo INTEGER DEFAULT 1,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
   FOREIGN KEY (acceso_id) REFERENCES tipo_acceso(id),
   FOREIGN KEY (profesional_id) REFERENCES profesionales(id),
   FOREIGN KEY (pendiente_tipo_id) REFERENCES pendiente_tipo(id)
 )`).run();
 
-  // Crear tabla pendiente_tipo (tipos de pendiente)
-  db.prepare(`CREATE TABLE IF NOT EXISTS pendiente_tipo (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL UNIQUE
-  )`).run();
+// Crear tabla pendiente_tipo (tipos de pendiente)
+db.prepare(`CREATE TABLE IF NOT EXISTS pendiente_tipo (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE
+)`).run();
 
-  // Insertar tipos de pendiente si no existen
-  const tiposPendiente = ['Confección / Reparación', 'Retiro', 'Maduración'];
-  tiposPendiente.forEach(nombre => {
-    const existe = db.prepare('SELECT 1 FROM pendiente_tipo WHERE nombre = ?').get(nombre);
-    if (!existe) {
-      db.prepare('INSERT INTO pendiente_tipo (nombre) VALUES (?)').run(nombre);
-    }
-  });
+// Insertar tipos de pendiente si no existen
+const tiposPendiente = ['Confección / Reparación', 'Retiro', 'Maduración'];
+tiposPendiente.forEach(nombre => {
+  const existe = db.prepare('SELECT 1 FROM pendiente_tipo WHERE nombre = ?').get(nombre);
+  if (!existe) {
+    db.prepare('INSERT INTO pendiente_tipo (nombre) VALUES (?)').run(nombre);
+  }
+});
 
 // Crear tabla incidencias (eventos clínicos, incluyendo sepsis)
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
@@ -92,6 +94,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   microorganismo_asociado TEXT,
   medidas TEXT,
   etiqueta_id INTEGER,
+  activo INTEGER DEFAULT 1,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
   FOREIGN KEY (acceso_id) REFERENCES acceso(id),
   FOREIGN KEY (etiqueta_id) REFERENCES tags(id)
@@ -107,6 +110,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   tipo TEXT DEFAULT 'incidencia',
   icono TEXT
 )`).run();
+
 
 // Crear tabla profesionales si no existe
 db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
@@ -150,6 +154,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   observaciones TEXT,
   avatar TEXT,
   profesional_id INTEGER,
+  activo INTEGER DEFAULT 1,
   FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
 )`).run();
 
@@ -171,15 +176,6 @@ db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
   FOREIGN KEY (diagnostico) REFERENCES tags(id)
 )`).run();
 
-// Crear tabla incidencias (uno a muchos with pacientes)
-db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  paciente_id INTEGER NOT NULL,
-  motivo TEXT NOT NULL,
-  fecha TEXT NOT NULL,
-  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
-)`).run();
-
 // Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,6 +188,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS tags (
 )`).run();
 
 // Tabla intermedia incidencia_tags (muchos a muchos)
+
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencia_tags (
   incidencia_id INTEGER NOT NULL,
   tag_id INTEGER NOT NULL,
@@ -253,7 +250,7 @@ db.getProfesionales = function() {
 
 // --- Métodos para incidencias ---
 db.getIncidenciasByPaciente = function(pacienteId) {
-  return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? ORDER BY fecha DESC, id DESC').all(pacienteId);
+  return db.prepare('SELECT * FROM incidencias WHERE paciente_id = ? AND activo = 1 ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 
 // Crear una incidencia y asociar un tag (motivo y fecha personalizados)
@@ -302,7 +299,7 @@ db.getEtiquetasByPaciente = function(pacienteId) {
     FROM incidencias i
     JOIN incidencia_tags it ON i.id = it.incidencia_id
     JOIN tags t ON it.tag_id = t.id
-    WHERE i.paciente_id = ?
+    WHERE i.paciente_id = ? AND i.activo = 1
   `).all(pacienteId).map(row => row.id);
 };
 
@@ -364,7 +361,7 @@ db.deleteTag = function(id) {
 
 
 db.getAllPacientes = function() {
-  return db.prepare('SELECT * FROM pacientes').all();
+  return db.prepare('SELECT * FROM pacientes WHERE activo = 1').all();
 };
 
 db.addPaciente = function(paciente) {
@@ -461,10 +458,10 @@ db.getHistorialArchivadoByPaciente = function(pacienteId) {
 // Obtener todos los datos completos de todos los pacientes
 db.getPacientesCompletos = function() {
   // Obtener todos los pacientes
-  const pacientes = db.prepare('SELECT * FROM pacientes').all();
+  const pacientes = db.prepare('SELECT * FROM pacientes WHERE activo = 1').all();
   return pacientes.map(paciente => {
     // Acceso más reciente
-    const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? ORDER BY id DESC LIMIT 1').get(paciente.id);
+  const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
     // Tipo de acceso
     let tipoAcceso = null;
     if (acceso && acceso.tipo_acceso_id) {
@@ -485,10 +482,10 @@ db.getPacientesCompletos = function() {
 };
 db.getPacienteConAcceso = function(pacienteId) {
   // Obtener datos de paciente
-  const paciente = db.prepare('SELECT * FROM pacientes WHERE id = ?').get(pacienteId);
+  const paciente = db.prepare('SELECT * FROM pacientes WHERE id = ? AND activo = 1').get(pacienteId);
   if (!paciente) return null;
   // Obtener acceso más reciente
-  const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? ORDER BY id DESC LIMIT 1').get(pacienteId);
+  const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(pacienteId);
   // Tipo de acceso
   let tipoAcceso = null;
   if (acceso && acceso.tipo_acceso_id) {
@@ -528,7 +525,7 @@ db.getPacientesCHDPendienteFAV = function() {
   const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
   if (!favTag) return [];
   // Filtrar pacientes con tipo_acceso_id = accesoTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(accesoTag.id, procesoTag.id, favTag.id);
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(accesoTag.id, procesoTag.id, favTag.id);
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
   });
@@ -547,7 +544,7 @@ db.getPacientesFAVPendienteRetiroCHD = function() {
   const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
   if (!chdTag) return [];
   // Filtrar pacientes con tipo_acceso_id = favTag.id, proceso_actual = procesoTag.id y acceso_proceso = chdTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(favTag.id, procesoTag.id, chdTag.id);
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(favTag.id, procesoTag.id, chdTag.id);
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id); 
   });
@@ -566,7 +563,7 @@ db.getPacientesCHDFAVMadurativo = function() {
   const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
   if (!favTag) return [];
   // Filtrar pacientes con tipo_acceso_id = chdTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(chdTag.id, procesoTag.id, favTag.id);
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(chdTag.id, procesoTag.id, favTag.id);
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
   });
@@ -579,7 +576,7 @@ db.getPacientesSepsisCHD = function() {
   const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
   if (!chdTag) return [];
   // Buscar pacientes con tipo_acceso_id = chdTag.id y al menos una incidencia con cualquier etiqueta de tipo incidencia
-  const pacientes = db.prepare(`SELECT DISTINCT p.* FROM pacientes p JOIN incidencias i ON p.id = i.paciente_id JOIN incidencia_tags it ON i.id = it.incidencia_id JOIN tags t ON it.tag_id = t.id WHERE p.tipo_acceso_id = ? AND t.tipo = 'incidencia'`).all(chdTag.id);
+  const pacientes = db.prepare(`SELECT DISTINCT p.* FROM pacientes p JOIN incidencias i ON p.id = i.paciente_id JOIN incidencia_tags it ON i.id = it.incidencia_id JOIN tags t ON it.tag_id = t.id WHERE p.tipo_acceso_id = ? AND t.tipo = 'incidencia' AND p.activo = 1`).all(chdTag.id);
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
   });
@@ -680,7 +677,8 @@ db.editPacienteCompleto = function(paciente) {
             fecha: paciente.pendiente.fecha,
             observaciones: paciente.pendiente.observaciones || '',
             profesional_id: paciente.pendiente.profesional_id,
-            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+            activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
           });
         } else {
           db.addPendiente({
@@ -689,7 +687,8 @@ db.editPacienteCompleto = function(paciente) {
             fecha: paciente.pendiente.fecha,
             observaciones: paciente.pendiente.observaciones || '',
             profesional_id: paciente.pendiente.profesional_id,
-            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+            activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
           });
         }
       }
@@ -737,7 +736,8 @@ db.addPacienteCompleto = function(paciente) {
       fecha: paciente.pendiente.fecha || paciente.fecha_instalacion_pendiente || '',
       observaciones: paciente.pendiente.observaciones || '',
       profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
-      pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+      pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+      activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
     });
   }
 
@@ -748,14 +748,15 @@ db.addPacienteCompleto = function(paciente) {
 // Agregar pendiente
 db.addPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     pendiente.paciente_id,
-    pendiente.acceso_id || null, // Debe ser el id de tipo_acceso
+    pendiente.acceso_id || null,
     pendiente.fecha,
     pendiente.observaciones || '',
     pendiente.profesional_id || null,
-    pendiente.pendiente_tipo_id || null
+    pendiente.pendiente_tipo_id || null,
+    typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0
   );
   return { id: info.lastInsertRowid };
 };
@@ -763,14 +764,15 @@ db.addPendiente = function(pendiente) {
 // Editar pendiente
 db.editPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, acceso_id = ?, fecha = ?, observaciones = ?, profesional_id = ?, pendiente_tipo_id = ? WHERE id = ?`);
+  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, acceso_id = ?, fecha = ?, observaciones = ?, profesional_id = ?, pendiente_tipo_id = ?, activo = ? WHERE id = ?`);
   const info = stmt.run(
     pendiente.paciente_id,
-    pendiente.acceso_id || null, // Debe ser el id de tipo_acceso
+    pendiente.acceso_id || null,
     pendiente.fecha,
     pendiente.observaciones || '',
     pendiente.profesional_id || null,
     pendiente.pendiente_tipo_id || null,
+    typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
     pendiente.id
   );
   return { changes: info.changes };
@@ -783,20 +785,31 @@ db.deletePendiente = function(id) {
   return { changes: info.changes };
 };
 
+// Archivar pendiente (soft delete)
+db.archivarPendiente = function(id) {
+  const stmt = db.prepare('UPDATE pendiente SET activo = 0 WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
+
 // Obtener todos los pendientes
 db.getPendientes = function() {
-  return db.prepare(`SELECT * FROM pendiente ORDER BY fecha DESC, id DESC`).all();
+  return db.prepare(`SELECT * FROM pendiente WHERE activo = 1 ORDER BY fecha DESC, id DESC`).all();
 };
 
 // Obtener pendientes por paciente
 db.getPendientesByPaciente = function(pacienteId) {
-  return db.prepare(`SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC`).all(pacienteId);
+  return db.prepare(`SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 ORDER BY fecha DESC, id DESC`).all(pacienteId);
 };
 
 // Obtener el pendiente más reciente de un paciente
 db.getPendienteActualByPaciente = function(pacienteId) {
-  // acceso_id ahora representa tipo_acceso_id
-  return db.prepare(`SELECT pendiente_tipo_id, acceso_id as tipo_acceso_id FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1`).get(pacienteId) || null;
+  // Devuelve solo el pendiente activo más reciente del paciente
+  return db.prepare(`
+    SELECT * FROM pendiente
+    WHERE paciente_id = ? AND activo = 1
+    ORDER BY fecha DESC, id DESC LIMIT 1
+  `).get(pacienteId) || null;
 };
 
 

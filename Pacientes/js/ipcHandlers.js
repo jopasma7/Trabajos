@@ -109,14 +109,25 @@ ipcMain.handle('update-paciente', (event, paciente) => {
   return result;
 });
 
-  // Eliminar un paciente
-  ipcMain.handle('delete-paciente', (event, id) => {
+// Archiva un paciente
+ipcMain.handle('archivar-paciente', (event, id) => {
+  // Archivar registros relacionados antes de archivar el paciente
+  db.prepare('UPDATE pendiente SET activo = 0 WHERE paciente_id = ? AND activo = 1').run(id);
+  db.prepare('UPDATE acceso SET activo = 0 WHERE paciente_id = ? AND activo = 1').run(id);
+  db.prepare('UPDATE incidencias SET activo = 0 WHERE paciente_id = ? AND activo = 1').run(id);
+  // Si tienes otras tablas relacionadas, agrégalas aquí
+  const stmt = db.prepare('UPDATE pacientes SET activo = 0 WHERE id = ? AND activo = 1');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+});
+
+// Eliminar un paciente
+ipcMain.handle('delete-paciente', (event, id) => {
   // Eliminar registros relacionados antes de eliminar el paciente
   // Eliminar registros que referencian acceso_id
   // Eliminar todos los pendientes relacionados con el paciente directamente
   db.prepare('DELETE FROM pendiente WHERE paciente_id = ?').run(id);
   db.prepare('DELETE FROM acceso WHERE paciente_id = ?').run(id);
-  db.prepare('DELETE FROM pendiente WHERE paciente_id = ?').run(id);
   // db.prepare('DELETE FROM historial WHERE paciente_id = ?').run(id); // Tabla no existe
   db.prepare('DELETE FROM incidencias WHERE paciente_id = ?').run(id);
   db.prepare('DELETE FROM historial_clinico WHERE paciente_id = ?').run(id);
@@ -124,7 +135,7 @@ ipcMain.handle('update-paciente', (event, paciente) => {
   const stmt = db.prepare('DELETE FROM pacientes WHERE id = ?');
   const info = stmt.run(id);
   return { changes: info.changes };
-  });
+});
 
 
 // --- IPC para historial clínico ---
@@ -203,7 +214,7 @@ ipcMain.handle('paciente-get-incidencias', async (event, pacienteId) => {
     SELECT i.id, it.tag_id as tagId, i.motivo, i.fecha
     FROM incidencias i
     JOIN incidencia_tags it ON i.id = it.incidencia_id
-    WHERE i.paciente_id = ?
+    WHERE i.paciente_id = ? AND i.activo = 1
     ORDER BY i.fecha DESC, i.id DESC
   `).all(pacienteId);
 });
@@ -233,7 +244,7 @@ ipcMain.handle('paciente-get-avatar', async (event, pacienteId) => {
 });
 
 ipcMain.handle('get-acceso-by-paciente', (event, pacienteId) => {
-  return db.prepare('SELECT * FROM acceso WHERE paciente_id = ?').get(pacienteId);
+  return db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1').get(pacienteId);
 });
 
 // --- IPC para profesionales ---
@@ -250,6 +261,10 @@ ipcMain.handle('pendiente-edit', (event, pendiente) => {
 
 ipcMain.handle('pendiente-delete', (event, id) => {
   return db.deletePendiente(id);
+});
+
+ipcMain.handle('pendiente-archivar', (event, id) => {
+  return db.archivarPendiente(id);
 });
 
 ipcMain.handle('pendientes-get', () => {
