@@ -192,8 +192,6 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('direccion').value = paciente.direccion || '';
 		document.getElementById('alergias').value = paciente.alergias || '';
 		document.getElementById('observaciones').value = paciente.observaciones || '';
-		document.getElementById('avatar').value = paciente.avatar || '';
-		document.getElementById('avatarPreview').src = paciente.avatar || '../assets/avatar-default.png';
 		document.getElementById('profesional').value = paciente.acceso?.profesional_id || paciente.profesional_id || '';
 		document.getElementById('tipoAcceso').value = paciente.acceso?.tipo_acceso_id || paciente.tipo_acceso_id || '';
 		llenarSelectUbicacion();
@@ -596,8 +594,6 @@ function limpiarCamposNuevoPaciente() {
 	document.getElementById('direccion').value = '';
 	document.getElementById('alergias').value = '';
 	document.getElementById('observaciones').value = '';
-	document.getElementById('avatar').value = '';
-	document.getElementById('avatarPreview').src = '../assets/avatar-default.png';
 	document.getElementById('profesional').value = '';
 	document.getElementById('tipoAcceso').value = '';
 	document.getElementById('ubicacion').value = '';
@@ -685,7 +681,6 @@ async function crearPaciente() {
 		direccion: document.getElementById('direccion').value,
 		alergias: document.getElementById('alergias').value,
 		observaciones: document.getElementById('observaciones').value,
-		avatar: document.getElementById('avatar').value,
 		profesional_id: profesional,
 		tipo_acceso_id: tipoAcceso,
 		ubicacion_anatomica: ubicacion,
@@ -801,6 +796,10 @@ async function cargarEtiquetas() {
 			// Renderizar formularios dinámicos
 			const selectedOptions = Array.from(etiquetasSelect.selectedOptions);
 			renderIncidenciaValores(selectedOptions);
+			// Cerrar el menú desplegable de Choices.js al seleccionar
+			if (window.etiquetasChoices) {
+				window.etiquetasChoices.hideDropdown();
+			}
 		});
 	// Pintar al iniciar si ya hay seleccionadas
 		setTimeout(() => {
@@ -878,7 +877,6 @@ async function editarPaciente(id) {
 		direccion: document.getElementById('direccion').value,
 		alergias: document.getElementById('alergias').value,
 		observaciones: document.getElementById('observaciones').value,
-		avatar: document.getElementById('avatar').value,
 		profesional_id: document.getElementById('profesional').value,
 		tipo_acceso_id: document.getElementById('tipoAcceso').value,
 		ubicacion_anatomica: document.getElementById('ubicacion').value,
