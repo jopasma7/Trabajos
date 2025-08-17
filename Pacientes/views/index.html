@@ -258,7 +258,7 @@
               </div>
               <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                  <thead class="table-success">
+                  <thead class="table-success"> 
                     <tr>
                       <th>Nombre</th>
                       <th>Tipo Acceso</th>
@@ -1022,91 +1022,181 @@
       </div>
     </div>
 
-    <!-- Modal Nuevo Paciente -->
-    <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="modalPacienteLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg paciente-modal-ancho">
-        <div class="modal-content" style="max-width:600px;width:95vw;">
-          <form id="form-paciente">
-            <div class="modal-header flex-column align-items-start">
-              <h5 class="modal-title mb-0" id="modalPacienteLabel"></h5>
-              <span class="modal-subtitle text-muted small mt-1 mb-0">Completa el formulario para registrar un nuevo paciente en el hospital. Así podrás gestionar su información, incidencias y seguimiento clínico de forma centralizada.</span>
-              <button type="button" class="btn-close position-absolute end-0 top-0 m-3" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label for="paciente-nombre" class="form-label">Nombre</label>
-                  <input type="text" class="form-control" id="paciente-nombre" maxlength="40" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="paciente-apellidos" class="form-label">Apellidos</label>
-                  <input type="text" class="form-control" id="paciente-apellidos" maxlength="60" required>
-                </div>
-                <div class="col-md-6">
-                  <label for="paciente-tipoacceso" class="form-label">Tipo Acceso</label>
-                  <select class="form-select" id="paciente-tipoacceso" required>
-                    <!-- La opción inicial se añade dinámicamente por JS -->
-                    <option value="">Selecciona tipo de acceso primero</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label for="paciente-fecha" class="form-label">Fecha Instalación</label>
-                  <input type="date" class="form-control" id="paciente-fecha" required>
-                </div>
-                <div class="col-12">
-                  <div class="row g-2">
-                    <div class="col-6">
-                      <label for="paciente-ubicacion-anatomica" class="form-label">Ubicación anatómica</label>
-                      <select class="form-select" id="paciente-ubicacion-anatomica" required>
-                        <option value="">Selecciona tipo de acceso primero</option>
-                      </select>
-                    </div>
-                    <div class="col-6">
-                      <label for="paciente-ubicacion-lado" class="form-label">Lado</label>
-                      <select class="form-select" id="paciente-ubicacion-lado" required disabled>
-                        <option value="">Selecciona lado...</option>
-                        <option value="Izquierda">Izquierda</option>
-                        <option value="Derecha">Derecha</option>
-                      </select>
-                    </div>
+    
+    <!-- Modal: Crear Paciente -->   
+<!-- Modal Nuevo Paciente -->
+<div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="nuevoPacienteLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-gradient shadow-sm align-items-center">
+        <div class="w-100">
+          <h5 class="modal-title d-flex align-items-center gap-2 mb-1" id="nuevoPacienteLabel">
+            <span style="font-family:'Fira Sans', 'Comic Sans MS', cursive;">👨‍⚕️ Agregar un Paciente</span>
+          </h5>
+          <div class="modal-subtitle small mt-0 mb-1 text-start" style="color:#fff;font-family:'Fira Sans', 'Comic Sans MS', cursive;">Rellena los datos personales y clínicos para registrar un nuevo paciente en el sistema.</div>
+        </div>
+        </h5>
+        <button type="button" class="btn border-0 bg-transparent p-0" data-bs-dismiss="modal" aria-label="Cerrar" style="font-size:1.7rem;line-height:1;color:#fff;">
+          <span aria-hidden="true" style="color:#fff;display:inline-block;transform:translate(-10px,-8px);font-size:3rem;">&times;</span>
+        </button>
+      </div>
+      <form id="formNuevoPaciente">
+        <div class="modal-body">
+          <!-- Datos personales -->
+          <div class="section-block mb-3">
+            <div class="section-title text-success"><i class="bi bi-person-badge me-2"></i>Datos personales</div>
+            <div class="row g-2">
+              <div class="col-md-8">
+                <div class="row g-2">
+                  <div class="col-md-6">
+                    <label for="nombre" class="form-label"><i class="bi bi-person"></i> Nombre</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" autocomplete="off" required>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="apellidos" class="form-label"><i class="bi bi-person-lines-fill"></i> Apellidos</label>
+                    <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="off" required>
                   </div>
                 </div>
-                <div class="col-md-6">
-                  <label for="paciente-proceso" class="form-label">Proceso</label>
-                    <select class="form-select" id="paciente-proceso" name="paciente-proceso">
-                      <option value="">Sin proceso</option>
+                <div class="row g-2 mt-2">
+                  <div class="col-md-6">
+                    <label for="sexo" class="form-label"><i class="bi bi-gender-ambiguous"></i> Sexo</label>
+                    <select class="form-select" id="sexo" name="sexo" required>
+                      <option value="">-</option>
+                      <option value="hombre">Hombre</option>
+                      <option value="mujer">Mujer</option>
                     </select>
-                </div>
-                <div class="col-md-6">
-                  <label for="paciente-proceso-especifico" class="form-label">Proceso / Acceso</label>
-                    <select class="form-select" id="paciente-proceso-especifico" name="paciente-proceso-especifico">
-                      <option value="">Selecciona tipo de acceso</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                  <div class="mb-2">
-                    <label for="select-incidencia-etiqueta" class="form-label">Añadir etiqueta de incidencia</label>
-                    <div class="input-group">
-                      <select id="select-incidencia-etiqueta" class="form-select"></select>
-                      <button type="button" class="btn btn-primary" id="btn-add-incidencia-etiqueta"><i class="bi bi-plus-circle"></i> Añadir</button>
-                    </div> 
                   </div>
-                  <div id="incidencias-flex-row" style="display:flex;flex-direction:row;gap:12px;flex-wrap:wrap;">
-                    <ul id="lista-incidencia-etiquetas" class="list-group mb-2" style="display:flex;flex-direction:row;gap:12px;flex-wrap:wrap; margin-bottom:0;width:auto;"></ul>
+                  <div class="col-md-6">
+                    <label for="nacimiento" class="form-label"><i class="bi bi-calendar-date"></i> Fecha de Nacimiento</label>
+                    <input type="date" class="form-control" id="nacimiento" name="nacimiento">
                   </div>
-                  <div class="form-text">Selecciona una o varias etiquetas que describan las incidencias del paciente. Para cada una puedes indicar motivo y fecha.</div>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-md-6">
+                    <label for="alta" class="form-label"><i class="bi bi-calendar-check"></i> Fecha de Alta</label>
+                    <input type="date" class="form-control" id="alta" name="alta">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="telefono" class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
+                    <input type="text" class="form-control" id="telefono" name="telefono" autocomplete="off">
+                  </div>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-md-6">
+                    <label for="correo" class="form-label"><i class="bi bi-envelope"></i> Correo</label>
+                    <input type="email" class="form-control" id="correo" name="correo" autocomplete="off">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="direccion" class="form-label"><i class="bi bi-geo-alt"></i> Dirección</label>
+                    <input type="text" class="form-control" id="direccion" name="direccion" autocomplete="off">
+                  </div>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-md-6">
+                    <label for="alergias" class="form-label"><i class="bi bi-exclamation-triangle"></i> Alergias</label>
+                    <input type="text" class="form-control" id="alergias" name="alergias" autocomplete="off">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="observaciones" class="form-label"><i class="bi bi-chat-dots"></i> Observaciones</label>
+                    <input type="text" class="form-control" id="observaciones" name="observaciones" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 d-flex flex-column align-items-end justify-content-start">
+                <div class="card avatar-card shadow-sm p-3 w-100 d-flex align-items-center justify-content-center mt-4">
+                  <label for="avatar" class="form-label mb-2 text-center w-100"><i class="bi bi-image"></i> Avatar</label>
+                  <div class="avatar-preview mb-2 d-flex justify-content-center w-100">
+                    <img id="avatarPreview" src="../assets/avatar-default.png" alt="Avatar" class="rounded-circle shadow-sm" style="width: 80px; height: 80px; object-fit: cover;">
+                  </div>
+                  <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*" style="max-width:180px;">
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-success">Guardar</button>
+          </div>
+          <!-- Datos clínicos -->
+          <div class="section-block mb-3">
+            <div class="section-title text-primary"><i class="bi bi-clipboard-pulse me-2"></i>Datos clínicos</div>
+            <div class="row g-2">
+              <div class="col-md-2">
+                <label for="profesional" class="form-label"><i class="bi bi-person-workspace"></i> Profesional a Cargo</label>
+                <select class="form-select" id="profesional" name="profesional" required>
+                  <option value="">Selecciona un profesional</option>
+                  <!-- Opciones dinámicas por JS -->
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="tipoAcceso" class="form-label"><i class="bi bi-door-open"></i> Tipo acceso</label>
+                <select class="form-select" id="tipoAcceso" name="tipoAcceso" required>
+                  <option value="">Selecciona tipo de acceso</option>
+                  <!-- Opciones dinámicas por JS -->
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="ubicacion" class="form-label"><i class="bi bi-geo"></i> Ubicación anatómica</label>
+                <select class="form-select" id="ubicacion" name="ubicacion" required>
+                  <option value="">Selecciona ubicación</option>
+                  <!-- Opciones dinámicas por JS -->
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
+                <select class="form-select" id="lado" name="lado">
+                  <option value="">-</option>
+                  <option value="Izquierda">Izquierda</option>
+                  <option value="Derecha">Derecha</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="pendiente" class="form-label"><i class="bi bi-diagram-3"></i> Pendiente</label>
+                <select class="form-select" id="pendiente" name="pendiente" required>
+                  <option value="">Sin estado</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label for="accesoPendiente" class="form-label"><i class="bi bi-key"></i> Acceso pendiente</label>
+                <select class="form-select" id="accesoPendiente" name="accesoPendiente">
+                  <option value="">Selecciona tipo de acceso</option>
+                </select>
+              </div>
+              <div class="col-md-2"></div>
+              <div class="col-md-2">
+                <label for="fechaInstalacionAcceso" class="form-label" id="labelFechaInstalacionAcceso" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha Instalación del Acceso</label>
+                <input type="date" class="form-control" id="fechaInstalacionAcceso" name="fechaInstalacionAcceso" style="display:none;">
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col-md-2">
+                <label for="fechaInstalacionAccesoPendiente" class="form-label" id="labelFechaInstalacionAccesoPendiente" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha del Acceso Pendiente</label>
+                <input type="date" class="form-control" id="fechaInstalacionAccesoPendiente" name="fechaInstalacionAccesoPendiente" style="display:none;">
+              </div>
             </div>
-          </form>
+          </div>
+          <!-- Etiquetas de incidencia -->
+          <div class="section-block mb-3">
+            <div class="section-title text-warning"><i class="bi bi-tags me-2"></i>Etiquetas de incidencia</div>
+            <div class="row g-2">
+              <div class="col-md-10">
+                <label for="etiquetasIncidencia" class="form-label"><i class="bi bi-tag"></i> Etiquetas de incidencia</label>
+                <input type="text" class="form-control" id="etiquetasIncidencia" name="etiquetasIncidencia" autocomplete="off">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-primary w-100" id="btnAddEtiqueta"><i class="bi bi-plus-circle"></i> Añadir Etiqueta</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+        <div class="modal-footer bg-gradient shadow-sm align-items-center">
+          <div class="row mt-4">
+            <div class="col-12 d-flex justify-content-end">
+              <button type="submit" class="btn btn-success btn-lg px-4" id="btnGuardarPaciente">
+                <i class="bi bi-save" style="padding-right: 8px; font-size:1.3rem;"></i> <span style="font-size:1.1rem;">Guardar Paciente</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
-
+  </div>
+</div>
 
     <!-- Bootstrap 5 JS y dependencias -->
   <script src="../node_modules/choices.js/public/assets/scripts/choices.min.js"></script>

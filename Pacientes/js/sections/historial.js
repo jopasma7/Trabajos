@@ -673,6 +673,8 @@ async function renderPacienteCard(paciente) {
 	const profesional = document.getElementById('pacienteProfesional');
 	const observaciones = document.getElementById('pacienteObservaciones');
 	const tipoAccesoElem = document.getElementById('paciente-tipoacceso-info');
+	// Definir historia correctamente para evitar ReferenceError
+	const historia = document.getElementById('pacienteHistoria');  
 
 	if (!paciente) {
 		avatar.src = '../assets/avatar-default.png';

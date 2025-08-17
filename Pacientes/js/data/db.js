@@ -18,9 +18,86 @@ if (isProd) {
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
+
 const db = new Database(dbPath);
 
-// Crear tabla profesionales si no existe
+// Crear tabla tipo_acceso (tipos de acceso vascular)
+db.prepare(`CREATE TABLE IF NOT EXISTS tipo_acceso (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  color TEXT,
+  icono TEXT,
+  ubicaciones TEXT
+)`).run();
+
+// Insertar tipos de acceso predeterminados si no existen
+insertarTiposAccesoPredeterminados();
+
+// Crear tabla acceso (relaciona paciente y tipo de acceso)
+db.prepare(`CREATE TABLE IF NOT EXISTS acceso (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  tipo_acceso_id INTEGER NOT NULL,
+  ubicacion_anatomica TEXT,
+  ubicacion_lado TEXT,
+  fecha_instalacion TEXT,
+  fecha_primera_puncion TEXT,
+  observaciones TEXT,
+  etiqueta_id INTEGER,
+  profesional_id INTEGER, -- Nuevo: profesional responsable
+  estado TEXT,            -- Nuevo: estado/proceso del acceso
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (tipo_acceso_id) REFERENCES tipo_acceso(id),
+  FOREIGN KEY (etiqueta_id) REFERENCES tags(id),
+  FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
+)`).run();
+db.prepare(`CREATE TABLE IF NOT EXISTS pendiente (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  pendiente_tipo_id INTEGER,
+  acceso_id INTEGER NOT NULL,
+  fecha TEXT,
+  -- motivo TEXT,  // Eliminado, ahora se usa pendiente_tipo_id
+  observaciones TEXT,
+  profesional_id INTEGER,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (acceso_id) REFERENCES tipo_acceso(id),
+  FOREIGN KEY (profesional_id) REFERENCES profesionales(id),
+  FOREIGN KEY (pendiente_tipo_id) REFERENCES pendiente_tipo(id)
+)`).run();
+
+  // Crear tabla pendiente_tipo (tipos de pendiente)
+  db.prepare(`CREATE TABLE IF NOT EXISTS pendiente_tipo (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL UNIQUE
+  )`).run();
+
+  // Insertar tipos de pendiente si no existen
+  const tiposPendiente = ['Confección / Reparación', 'Retiro', 'Maduración'];
+  tiposPendiente.forEach(nombre => {
+    const existe = db.prepare('SELECT 1 FROM pendiente_tipo WHERE nombre = ?').get(nombre);
+    if (!existe) {
+      db.prepare('INSERT INTO pendiente_tipo (nombre) VALUES (?)').run(nombre);
+    }
+  });
+
+// Crear tabla incidencias (eventos clínicos, incluyendo sepsis)
+db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  acceso_id INTEGER,
+  fecha TEXT,
+  tipo TEXT,
+  microorganismo_asociado TEXT,
+  medidas TEXT,
+  etiqueta_id INTEGER,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (acceso_id) REFERENCES acceso(id),
+  FOREIGN KEY (etiqueta_id) REFERENCES tags(id)
+)`).run();
+
+
 // Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,9 +105,10 @@ db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   color TEXT DEFAULT '#009879',
   descripcion TEXT,
   tipo TEXT DEFAULT 'incidencia',
-  icono TEXT,
-  ubicaciones TEXT
+  icono TEXT
 )`).run();
+
+// Crear tabla profesionales si no existe
 db.prepare(`CREATE TABLE IF NOT EXISTS profesionales (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
@@ -56,53 +134,24 @@ db.prepare(`CREATE TABLE IF NOT EXISTS agenda (
   categoria TEXT,
   completado INTEGER DEFAULT 0
 )`).run();
+
 // Crear tabla pacientes si no existe (solo tipo_acceso_id)
 db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   apellidos TEXT NOT NULL,
-  tipo_acceso_id INTEGER,
-  fecha_instalacion TEXT,
-  ubicacion_anatomica TEXT,
-  ubicacion_lado TEXT,
-  avatar TEXT
+  sexo TEXT,
+  fecha_nacimiento TEXT,
+  fecha_alta TEXT,
+  telefono TEXT,
+  correo TEXT,
+  direccion TEXT,
+  alergias TEXT,
+  observaciones TEXT,
+  avatar TEXT,
+  profesional_id INTEGER,
+  FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
 )`).run();
-// Añadir columna avatar si no existe
-try {
-  db.prepare('ALTER TABLE pacientes ADD COLUMN avatar TEXT').run();
-} catch (e) {}
-// Añadir columna en_lista_espera si no existe
-// Eliminadas migraciones de en_lista_espera y tipo_acceso_espera_id
-
-// Añadir nuevos campos si no existen
-const pacientesTableInfo = db.prepare("PRAGMA table_info(pacientes)").all();
-const addColumnIfMissing = (colName, colType) => {
-  if (!pacientesTableInfo.some(col => col.name === colName)) {
-    try {
-      db.prepare(`ALTER TABLE pacientes ADD COLUMN ${colName} ${colType}`).run();
-    } catch (e) {}
-  }
-};
-// Añadir columnas si no existen
-addColumnIfMissing('tipo_acceso_id', 'INTEGER');
-addColumnIfMissing('fecha_instalacion', 'TEXT');
-addColumnIfMissing('ubicacion_anatomica', 'TEXT');
-addColumnIfMissing('ubicacion_lado', 'TEXT');
-addColumnIfMissing('avatar', 'TEXT');
-addColumnIfMissing('profesional_asignado', 'TEXT');
-addColumnIfMissing('historia_clinica', 'TEXT');
-addColumnIfMissing('sexo', 'TEXT');
-addColumnIfMissing('telefono', 'TEXT');
-addColumnIfMissing('correo', 'TEXT');
-addColumnIfMissing('direccion', 'TEXT');
-addColumnIfMissing('alergias', 'TEXT');
-addColumnIfMissing('observaciones', 'TEXT');
-addColumnIfMissing('profesional_id', 'INTEGER');
-addColumnIfMissing('fecha_nacimiento', 'TEXT');
-addColumnIfMissing('fecha_alta', 'TEXT');
-addColumnIfMissing('proceso_actual', 'INTEGER'); // id etiqueta tipo "Proceso"
-addColumnIfMissing('acceso_proceso', 'INTEGER'); // id etiqueta tipo "Acceso"
-
 
 // Crear tabla historial_clinico (uno a muchos con pacientes)
 db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
@@ -121,59 +170,6 @@ db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
   FOREIGN KEY (tipo_evento) REFERENCES tags(id),
   FOREIGN KEY (diagnostico) REFERENCES tags(id)
 )`).run();
-// Migración: cambiar tipo_evento y diagnostico a INTEGER si eran TEXT
-// Migrar valores antiguos de tipo_evento y diagnostico a ids de tags si coinciden por nombre
-try {
-  const rows = db.prepare('SELECT id, tipo_evento, diagnostico FROM historial_clinico WHERE tipo_evento IS NULL OR diagnostico IS NULL').all();
-  const tags = db.prepare('SELECT id, nombre FROM tags').all();
-  const nombreToId = {};
-  tags.forEach(t => { nombreToId[t.nombre.toLowerCase()] = t.id; });
-  const updateStmt = db.prepare('UPDATE historial_clinico SET tipo_evento = ?, diagnostico = ? WHERE id = ?');
-  let migrados = 0;
-  rows.forEach(row => {
-    let tipoId = null, diagId = null;
-    if (row.tipo_evento && typeof row.tipo_evento === 'string') {
-      tipoId = nombreToId[row.tipo_evento.toLowerCase()] || null;
-    }
-    if (row.diagnostico && typeof row.diagnostico === 'string') {
-      diagId = nombreToId[row.diagnostico.toLowerCase()] || null;
-    }
-    if (tipoId !== null || diagId !== null) migrados++;
-    updateStmt.run(tipoId, diagId, row.id);
-  });
-  if (migrados > 0) {
-    console.log(`[MIGRACIÓN historial_clinico] Migrados ${migrados} registros de tipo_evento/diagnostico a ids de tags.`);
-  }
-} catch(e) { console.error('[MIGRACIÓN historial_clinico] Error:', e); }
-try {
-  const cols = db.prepare("PRAGMA table_info(historial_clinico)").all();
-  if (cols.find(c => c.name === 'tipo_evento' && c.type === 'TEXT')) {
-    db.prepare('ALTER TABLE historial_clinico RENAME TO historial_clinico_old').run();
-    db.prepare(`CREATE TABLE historial_clinico (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      paciente_id INTEGER NOT NULL,
-      fecha TEXT NOT NULL,
-      tipo_evento INTEGER,
-      motivo TEXT,
-      diagnostico INTEGER,
-      tratamiento TEXT,
-      notas TEXT,
-      adjuntos TEXT,
-      profesional TEXT,
-      archivado INTEGER DEFAULT 0,
-      FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-      FOREIGN KEY (tipo_evento) REFERENCES tags(id),
-      FOREIGN KEY (diagnostico) REFERENCES tags(id)
-    )`).run();
-    db.prepare(`INSERT INTO historial_clinico (id, paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional, archivado)
-      SELECT id, paciente_id, fecha, NULL, motivo, NULL, tratamiento, notas, adjuntos, profesional, archivado FROM historial_clinico_old`).run();
-    db.prepare('DROP TABLE historial_clinico_old').run();
-  }
-} catch(e) {}
-// Añadir columna archivado si no existe (migración)
-try {
-  db.prepare('ALTER TABLE historial_clinico ADD COLUMN archivado INTEGER DEFAULT 0').run();
-} catch (e) {}
 
 // Crear tabla incidencias (uno a muchos with pacientes)
 db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
@@ -184,27 +180,6 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 )`).run();
 
-// Crear tabla tags (etiquetas personalizables)
-// Añadir columna 'tipo', 'icono' y 'ubicaciones' a tags si no existen
-const tagsTableInfo = db.prepare("PRAGMA table_info(tags)").all();
-const hasTipo = tagsTableInfo.some(col => col.name === 'tipo');
-const hasIcono = tagsTableInfo.some(col => col.name === 'icono');
-const hasUbicaciones = tagsTableInfo.some(col => col.name === 'ubicaciones');
-if (!hasTipo) {
-  try {
-    db.prepare('ALTER TABLE tags ADD COLUMN tipo TEXT DEFAULT "incidencia"').run();
-  } catch (e) {}
-}
-if (!hasIcono) {
-  try {
-    db.prepare('ALTER TABLE tags ADD COLUMN icono TEXT').run();
-  } catch (e) {}
-}
-if (!hasUbicaciones) {
-  try {
-    db.prepare('ALTER TABLE tags ADD COLUMN ubicaciones TEXT').run();
-  } catch (e) {}
-}
 // Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -368,10 +343,8 @@ db.getTagById = function(tagId) {
 };
 
 db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
-  // arguments[5] = ubicaciones (array)
-  const ubicaciones = Array.isArray(arguments[5]) ? JSON.stringify(arguments[5]) : '[]';
-  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono, ubicaciones) VALUES (?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4], ubicaciones);
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4]);
   return { id: info.lastInsertRowid };
 };
 
@@ -395,33 +368,39 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, avatar, proceso_actual, acceso_proceso) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
-    paciente.tipo_acceso_id,
-    paciente.fecha_instalacion,
-    paciente.ubicacion_anatomica,
-    paciente.ubicacion_lado,
+    paciente.sexo || '',
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
     paciente.avatar || '',
-    paciente.proceso_actual || null,
-    paciente.acceso_proceso || null
+    paciente.profesional_id || null
   );
   return { id: info.lastInsertRowid };
 };
 
 db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, avatar = ?, proceso_actual = ?, acceso_proceso = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, fecha_alta = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
-    paciente.tipo_acceso_id,
-    paciente.fecha_instalacion,
-    paciente.ubicacion_anatomica,
-    paciente.ubicacion_lado,
+    paciente.sexo || '',
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
     paciente.avatar || '',
-    paciente.proceso_actual || null,
-    paciente.acceso_proceso || null,
+    paciente.profesional_id || null,
     paciente.id
   );
   return { changes: info.changes };
@@ -478,24 +457,63 @@ db.getHistorialArchivadoByPaciente = function(pacienteId) {
   return db.prepare('SELECT * FROM historial_clinico WHERE paciente_id = ? AND archivado = 1 ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 
+// Obtener paciente con datos de acceso para edición
+// Obtener todos los datos completos de todos los pacientes
+db.getPacientesCompletos = function() {
+  // Obtener todos los pacientes
+  const pacientes = db.prepare('SELECT * FROM pacientes').all();
+  return pacientes.map(paciente => {
+    // Acceso más reciente
+    const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? ORDER BY id DESC LIMIT 1').get(paciente.id);
+    // Tipo de acceso
+    let tipoAcceso = null;
+    if (acceso && acceso.tipo_acceso_id) {
+      tipoAcceso = db.prepare('SELECT * FROM tipo_acceso WHERE id = ?').get(acceso.tipo_acceso_id);
+    }
+    // Pendiente más reciente
+    const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(paciente.id);
+    // Etiquetas
+    const etiquetas = db.getEtiquetasByPaciente(paciente.id);
+    return {
+      ...paciente,
+      acceso: acceso || {},
+      tipo_acceso: tipoAcceso || {},
+      pendiente: pendiente || {},
+      etiquetas
+    };
+  });
+};
+db.getPacienteConAcceso = function(pacienteId) {
+  // Obtener datos de paciente
+  const paciente = db.prepare('SELECT * FROM pacientes WHERE id = ?').get(pacienteId);
+  if (!paciente) return null;
+  // Obtener acceso más reciente
+  const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? ORDER BY id DESC LIMIT 1').get(pacienteId);
+  // Tipo de acceso
+  let tipoAcceso = null;
+  if (acceso && acceso.tipo_acceso_id) {
+    tipoAcceso = db.prepare('SELECT * FROM tipo_acceso WHERE id = ?').get(acceso.tipo_acceso_id);
+  }
+  // Pendiente más reciente
+  const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(pacienteId);
+  // Etiquetas
+  const etiquetas = db.getEtiquetasByPaciente(pacienteId);
+  return {
+    ...paciente,
+    acceso: acceso || {},
+    tipo_acceso: tipoAcceso || {},
+    pendiente: pendiente || {},
+    etiquetas
+  };
+};
+
+
 // Desarchivar una entrada de historial clínico
 db.unarchiveHistorialClinico = function(id) {
   const stmt = db.prepare('UPDATE historial_clinico SET archivado = 0 WHERE id = ?');
   const info = stmt.run(id);
   return { changes: info.changes };
 };
-
-
-
-
-// Añadir columna categoria si no existe (migración)
-try {
-  db.prepare('ALTER TABLE agenda ADD COLUMN categoria TEXT').run();
-} catch (e) {}
-// Añadir columna completado si no existe (migración)
-try {
-  db.prepare('ALTER TABLE agenda ADD COLUMN completado INTEGER DEFAULT 0').run();
-} catch (e) {}
 
 // Pacientes con CHD pendiente de FAV
 // Se asume que tipo_acceso_id corresponde a CHD y proceso_actual corresponde a "Pendiente de confección / reparación" (proceso)
@@ -517,24 +535,24 @@ db.getPacientesCHDPendienteFAV = function() {
   return pacientes;
 };
 
-  // Pacientes con FAV pendiente retiro CHD
-  db.getPacientesFAVPendienteRetiroCHD = function() {
-    // Buscar el id de la etiqueta "Pendiente de Retiro" en tags tipo proceso
-    const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%retiro%');
-    if (!procesoTag) return [];
-    // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
-    const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
-    if (!favTag) return [];
-    // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
-    const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
-    if (!chdTag) return [];
-    // Filtrar pacientes con tipo_acceso_id = favTag.id, proceso_actual = procesoTag.id y acceso_proceso = chdTag.id
-    const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(favTag.id, procesoTag.id, chdTag.id);
-    pacientes.forEach(p => {
-      p.etiquetas = db.getEtiquetasByPaciente(p.id); 
-    });
-    return pacientes;
-  };
+// Pacientes con FAV pendiente retiro CHD
+db.getPacientesFAVPendienteRetiroCHD = function() {
+  // Buscar el id de la etiqueta "Pendiente de Retiro" en tags tipo proceso
+  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%retiro%');
+  if (!procesoTag) return [];
+  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
+  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
+  if (!favTag) return [];
+  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
+  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
+  if (!chdTag) return [];
+  // Filtrar pacientes con tipo_acceso_id = favTag.id, proceso_actual = procesoTag.id y acceso_proceso = chdTag.id
+  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ?").all(favTag.id, procesoTag.id, chdTag.id);
+  pacientes.forEach(p => {
+    p.etiquetas = db.getEtiquetasByPaciente(p.id); 
+  });
+  return pacientes;
+};
 
 // Pacientes con CHD y proceso madurativo de FAV
 db.getPacientesCHDFAVMadurativo = function() {
@@ -602,230 +620,364 @@ db.upsertEventos = function(eventos) {
   return true;
 };
  
-// --- Etiquetas predefinidas para Motivo de Derivación ---
-// Crear etiquetas de acceso de prueba si no existen
-const accesoTags = [
-  {
-    nombre: 'Fístula',
-    color: '#007bff',
-    tipo: 'acceso',
-    icono: '🩸',
-    ubicaciones: JSON.stringify(['Radio Cefálica', 'Braquio Cefálica'])
-  },
-  {
-    nombre: 'Prótesis',
-    color: '#28a745',
-    tipo: 'acceso',
-    icono: '🦾',
-    ubicaciones: JSON.stringify(['Radio Cefálica', 'Braquio Cefálica'])
-  },
-  {
-    nombre: 'Catéter',
-    color: '#ffc107',
-    tipo: 'acceso',
-    icono: '➰',
-    ubicaciones: JSON.stringify(['Yugular', 'Femoral'])
-  },
-  {
-    nombre: 'Prueba sin ubicaciones',
-    color: '#6c757d',
-    tipo: 'acceso',
-    icono: '🧪',
-    ubicaciones: JSON.stringify([])
+// Actualiza un paciente y sus relaciones normalizadas
+db.editPacienteCompleto = function(paciente) {
+  // Actualizar paciente principal
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, fecha_alta = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.sexo || '',
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
+    paciente.avatar || '',
+    paciente.profesional_id || null,
+    paciente.id
+  );
+
+  // Actualizar acceso si existe
+  const stmtAcceso = db.prepare('UPDATE acceso SET tipo_acceso_id = ?, fecha_instalacion = ?, ubicacion_anatomica = ?, ubicacion_lado = ?, profesional_id = ?, estado = ? WHERE paciente_id = ?');
+  stmtAcceso.run(
+    paciente.tipo_acceso_id || null,
+    paciente.fecha_instalacion || '',
+    paciente.ubicacion_anatomica || '',
+    paciente.ubicacion_lado || '',
+    paciente.profesional_id || null,
+    paciente.estado || '',
+    paciente.id
+  );
+
+  // Si no existe acceso, lo crea (opcional, robustez)
+  const accesoRow = db.prepare('SELECT id FROM acceso WHERE paciente_id = ?').get(paciente.id);
+  if (!accesoRow) {
+    const stmtAccesoInsert = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    stmtAccesoInsert.run(
+      paciente.id,
+      paciente.tipo_acceso_id || null,
+      paciente.fecha_instalacion || '',
+      paciente.ubicacion_anatomica || '',
+      paciente.ubicacion_lado || '',
+      paciente.profesional_id || null,
+      paciente.estado || ''
+    );
   }
-];
-const insertTagStmt = db.prepare('INSERT OR IGNORE INTO tags (nombre, color, tipo, icono, ubicaciones) VALUES (?, ?, ?, ?, ?)');
-accesoTags.forEach(tag => {
-  insertTagStmt.run(tag.nombre, tag.color, tag.tipo, tag.icono, tag.ubicaciones);
-});
-
-// Ejecutar al iniciar si la tabla tags existe
-// (Eliminado bloque duplicado, solo se llama al final)
-function crearEtiquetasMotivoDerivacion() {
-  const motivos = [
-    { nombre: 'Flujo insuficiente', color: '#e74c3c', descripcion: 'El flujo sanguíneo es menor al esperado.' },
-    { nombre: 'Disminución o pérdida del frémito', color: '#f39c12', descripcion: 'El frémito se percibe débil o ausente.' },
-    { nombre: 'Dificultad para la canulación', color: '#e67e22', descripcion: 'Problemas al intentar canalizar el acceso.' },
-    { nombre: 'Hematomas frecuentes', color: '#8e44ad', descripcion: 'Aparición repetida de hematomas en la zona.' },
-    { nombre: 'Aumento de la presión venosa', color: '#2980b9', descripcion: 'Presión venosa superior a lo normal.' },
-    { nombre: 'Sangramiento', color: '#c0392b', descripcion: 'Presencia de sangrado en el acceso.' },
-    { nombre: 'Edema', color: '#16a085', descripcion: 'Hinchazón o retención de líquidos en la extremidad.' },
-    { nombre: 'Circulación colateral', color: '#27ae60', descripcion: 'Desarrollo de circulación venosa alternativa.' },
-    { nombre: 'Dolor', color: '#d35400', descripcion: 'El paciente refiere dolor en la zona.' },
-    { nombre: 'Fav ocluida', color: '#34495e', descripcion: 'Fístula arteriovenosa ocluida o no funcional.' },
-    { nombre: 'Dilataciones', color: '#9b59b6', descripcion: 'Presencia de dilataciones venosas.' },
-    { nombre: 'Infección', color: '#e84393', descripcion: 'Signos de infección en el acceso o zona.' },
-    { nombre: 'Construcción FAV', color: '#00b894', descripcion: 'Motivo relacionado con la creación de una nueva FAV.' },
-    { nombre: 'Otros', color: '#636e72', descripcion: 'Otro motivo no especificado en la lista.' }
-  ];
-  motivos.forEach(motivo => {
-    const existe = db.prepare('SELECT 1 FROM tags WHERE LOWER(nombre) = LOWER(?)').get(motivo.nombre);
-    if (!existe) {
-      db.prepare('INSERT INTO tags (nombre, color, descripcion) VALUES (?, ?, ?)').run(motivo.nombre, motivo.color, motivo.descripcion);
-    }
-  });
-}
-
-// Ejecutar al iniciar si la tabla tags existe
-try {
-  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
-    crearEtiquetasMotivoDerivacion();
-  }
-} catch (e) { /* ignorar si no existe la tabla */ }
-
-
-// --- Insertar pacientes de prueba si la tabla está vacía ---
-// --- Método para agregar etiquetas de tipo Proceso por defecto ---
-db.insertarEtiquetasProcesoDemo = function() {
-  const etiquetasProceso = [
-    {
-      nombre: 'Pendiente de confección / reparación',
-      tipo: 'proceso',
-      color: '#f7b731',
-      descripcion: 'Paciente pendiente de confección o reparación de acceso vascular.'
-    },
-    {
-      nombre: 'Pendiente de Retiro',
-      tipo: 'proceso',
-      color: '#eb3b5a',
-      descripcion: 'Paciente pendiente de retiro de acceso vascular.'
-    },
-    {
-      nombre: 'Proceso Madurativo',
-      tipo: 'proceso',
-      color: '#20bf6b',
-      descripcion: 'Paciente en proceso madurativo del acceso vascular.'
-    } 
-  ];
-  const existeStmt = db.prepare('SELECT COUNT(*) as count FROM tags WHERE nombre = ? AND tipo = ?');
-  const insertStmt = db.prepare('INSERT INTO tags (nombre, tipo, color, descripcion) VALUES (?, ?, ?, ?)');
-  etiquetasProceso.forEach(tag => {
-    try {
-      const existe = existeStmt.get(tag.nombre, tag.tipo).count;
-      if (!existe) {
-        insertStmt.run(tag.nombre, tag.tipo, tag.color, tag.descripcion);
-        // Etiqueta creada
-      } else {
-        // Etiqueta ya existe
+    // Editar pendiente si existe en el objeto paciente, si no existe lo crea
+      if (
+        paciente.pendiente &&
+        paciente.pendiente.pendiente_tipo_id &&
+        paciente.pendiente.acceso_id
+      ) {
+        if (paciente.pendiente.id) {
+          db.editPendiente({
+            id: paciente.pendiente.id,
+            paciente_id: paciente.id,
+            acceso_id: paciente.pendiente.acceso_id,
+            fecha: paciente.pendiente.fecha,
+            observaciones: paciente.pendiente.observaciones || '',
+            profesional_id: paciente.pendiente.profesional_id,
+            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+          });
+        } else {
+          db.addPendiente({
+            paciente_id: paciente.id,
+            acceso_id: paciente.pendiente.acceso_id,
+            fecha: paciente.pendiente.fecha,
+            observaciones: paciente.pendiente.observaciones || '',
+            profesional_id: paciente.pendiente.profesional_id,
+            pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+          });
+        }
       }
-    } catch (e) {
-  // Error al crear etiqueta
-    }
-  });
+
+  return { changes: info.changes };
 };
-// --- Método para agregar etiquetas de tipo Proceso por defecto ---
-// Función para insertar 10 pacientes completos y realistas con imagen y registros en el historial clínico
-db.insertarPacientesDemo = function() {
-  // Obtener IDs válidos de tags para tipo_evento y diagnostico
-  const tagsEvento = db.prepare("SELECT id FROM tags WHERE tipo='evento' ORDER BY id ASC LIMIT 3").all();
-  const tagsDiagnostico = db.prepare("SELECT id FROM tags WHERE tipo='diagnostico' ORDER BY id ASC LIMIT 3").all();
-  // Obtener IDs válidos de tags para tipo_acceso_id
-  const tagsAcceso = db.prepare("SELECT id, nombre FROM tags WHERE tipo='acceso' ORDER BY id ASC LIMIT 3").all();
-  const tiposAcceso = [tagsAcceso[0]?.id || 1, tagsAcceso[1]?.id || 2, tagsAcceso[2]?.id || 3];
-  const ubicaciones = ['Radio Cefálica', 'Braquio Cefálica', 'Yugular', 'Femoral'];
-  const lados = ['Izquierda', 'Derecha'];
-  const pacientes = [
-    {
-      nombre: 'Alejandro', apellidos: 'García', sexo: 'M', telefono: '600123456', correo: 'alejandro.garcia@mail.com', direccion: 'Calle Mayor 1', fecha_nacimiento: '1985-03-12', historia_clinica: 'Diálisis desde 2020', alergias: 'Penicilina', profesional_asignado: 'Dr. Ruiz', observaciones: 'Buen estado general', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2024-01-15', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
-    },
-    {
-      nombre: 'María', apellidos: 'López', sexo: 'F', telefono: '600234567', correo: 'maria.lopez@mail.com', direccion: 'Av. Andalucía 23', fecha_nacimiento: '1990-07-25', historia_clinica: 'Trasplante renal en 2022', alergias: 'Ninguna', profesional_asignado: 'Dra. Gómez', observaciones: 'Control mensual', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2023-11-10', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
-    },
-    {
-      nombre: 'Juan', apellidos: 'Martínez', sexo: 'M', telefono: '600345678', correo: 'juan.martinez@mail.com', direccion: 'Calle Sol 15', fecha_nacimiento: '1978-11-02', historia_clinica: 'Fístula radiocefálica', alergias: 'Sulfas', profesional_asignado: 'Dr. García', observaciones: 'Pendiente revisión', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2022-09-05', ubicacion_anatomica: ubicaciones[2], ubicacion_lado: lados[0]
-    },
-    {
-      nombre: 'Lucía', apellidos: 'Sánchez', sexo: 'F', telefono: '600456789', correo: 'lucia.sanchez@mail.com', direccion: 'Plaza Nueva 8', fecha_nacimiento: '1988-05-18', historia_clinica: 'Catéter yugular', alergias: 'Latex', profesional_asignado: 'Dra. Pérez', observaciones: 'Alergia conocida', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2021-06-20', ubicacion_anatomica: ubicaciones[3], ubicacion_lado: lados[1]
-    },
-    {
-      nombre: 'Pedro', apellidos: 'Fernández', sexo: 'M', telefono: '600567890', correo: 'pedro.fernandez@mail.com', direccion: 'Calle Real 22', fecha_nacimiento: '1965-09-30', historia_clinica: 'Prótesis braquiocefálica', alergias: 'Ninguna', profesional_asignado: 'Dr. Torres', observaciones: 'Revisión anual', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2020-03-12', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
-    },
-    {
-      nombre: 'Laura', apellidos: 'Gómez', sexo: 'F', telefono: '600678901', correo: 'laura.gomez@mail.com', direccion: 'Av. Madrid 5', fecha_nacimiento: '1995-01-10', historia_clinica: 'Diálisis peritoneal', alergias: 'Aspirina', profesional_asignado: 'Dra. Romero', observaciones: 'Sin incidencias', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2023-05-18', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
-    },
-    {
-      nombre: 'David', apellidos: 'Díaz', sexo: 'M', telefono: '600789012', correo: 'david.diaz@mail.com', direccion: 'Calle Luna 3', fecha_nacimiento: '1982-06-21', historia_clinica: 'Catéter femoral', alergias: 'Ibuprofeno', profesional_asignado: 'Dr. Moreno', observaciones: 'Control trimestral', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[0], fecha_instalacion: '2022-12-01', ubicacion_anatomica: ubicaciones[2], ubicacion_lado: lados[0]
-    },
-    {
-      nombre: 'Carmen', apellidos: 'Ruiz', sexo: 'F', telefono: '600890123', correo: 'carmen.ruiz@mail.com', direccion: 'Plaza Vieja 7', fecha_nacimiento: '1972-12-05', historia_clinica: 'Fístula braquiocefálica', alergias: 'Ninguna', profesional_asignado: 'Dra. Herrera', observaciones: 'Estable', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2021-08-30', ubicacion_anatomica: ubicaciones[3], ubicacion_lado: lados[1]
-    },
-    {
-      nombre: 'Javier', apellidos: 'Moreno', sexo: 'M', telefono: '600901234', correo: 'javier.moreno@mail.com', direccion: 'Calle Norte 19', fecha_nacimiento: '1980-04-14', historia_clinica: 'Prótesis radiocefálica', alergias: 'Paracetamol', profesional_asignado: 'Dr. Campos', observaciones: 'Sin complicaciones', avatar: '../assets/hombre.jpg', tipo_acceso_id: tiposAcceso[2], fecha_instalacion: '2024-02-22', ubicacion_anatomica: ubicaciones[0], ubicacion_lado: lados[0]
-    },
-    {
-      nombre: 'Sara', apellidos: 'Muñoz', sexo: 'F', telefono: '600012345', correo: 'sara.munoz@mail.com', direccion: 'Av. Sevilla 11', fecha_nacimiento: '1993-08-27', historia_clinica: 'Diálisis desde 2021', alergias: 'Ninguna', profesional_asignado: 'Dra. León', observaciones: 'Buen cumplimiento', avatar: '../assets/mujer.jpg', tipo_acceso_id: tiposAcceso[1], fecha_instalacion: '2023-07-14', ubicacion_anatomica: ubicaciones[1], ubicacion_lado: lados[1]
-    }
-  ];
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, telefono, correo, direccion, fecha_nacimiento, historia_clinica, alergias, profesional_asignado, observaciones, avatar, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-  pacientes.forEach((p, idx) => {
-    const info = stmt.run(p.nombre, p.apellidos, p.sexo, p.telefono, p.correo, p.direccion, p.fecha_nacimiento, p.historia_clinica, p.alergias, p.profesional_asignado, p.observaciones, p.avatar, p.tipo_acceso_id, p.fecha_instalacion, p.ubicacion_anatomica, p.ubicacion_lado);
-    // Insertar 2-3 registros de historial clínico para cada paciente usando IDs válidos
-    const pacienteId = info.lastInsertRowid;
-    db.addHistorialClinico(pacienteId, '2025-08-01', tagsEvento[idx % tagsEvento.length]?.id || 1, 'Consulta inicial', tagsDiagnostico[idx % tagsDiagnostico.length]?.id || 1, 'Tratamiento base', 'Sin incidencias', '', p.profesional_asignado);
-    db.addHistorialClinico(pacienteId, '2025-08-10', tagsEvento[(idx+1) % tagsEvento.length]?.id || 1, 'Revisión', tagsDiagnostico[(idx+1) % tagsDiagnostico.length]?.id || 1, 'Ajuste de medicación', 'Mejoría clínica', '', p.profesional_asignado);
-    db.addHistorialClinico(pacienteId, '2025-08-20', tagsEvento[(idx+2) % tagsEvento.length]?.id || 1, 'Seguimiento', tagsDiagnostico[(idx+2) % tagsDiagnostico.length]?.id || 1, 'Sin cambios', 'Estable', '', p.profesional_asignado);
-    // Añadir incidencias de ejemplo para algunos pacientes
-    if (idx % 3 === 0) {
-      db.addIncidencia(pacienteId, 'Dolor en acceso vascular', '2025-07-15');
-      db.addIncidencia(pacienteId, 'Hematoma leve', '2025-07-20');
-    }
-    if (idx % 4 === 0) {
-      db.addIncidencia(pacienteId, 'Dificultad para canulación', '2025-06-10');
-    }
-  });
+// Inserta un paciente y sus relaciones normalizadas
+db.addPacienteCompleto = function(paciente) {
+  // Insertar paciente principal
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(
+    paciente.nombre,
+    paciente.apellidos,
+    paciente.sexo || '',
+    paciente.fecha_nacimiento || '',
+    paciente.fecha_alta || '',
+    paciente.telefono || '',
+    paciente.correo || '',
+    paciente.direccion || '',
+    paciente.alergias || '',
+    paciente.observaciones || '',
+    paciente.avatar || '',
+    paciente.profesional_id || null
+  );
+  const pacienteId = info.lastInsertRowid;
+
+  // Crear acceso asociado al paciente
+  const stmtAccesoInsert = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  const infoAcceso = stmtAccesoInsert.run(
+    pacienteId,
+    paciente.tipo_acceso_id || null,
+    paciente.fecha_instalacion || paciente.fecha_alta || '',
+    paciente.ubicacion_anatomica || '',
+    paciente.ubicacion_lado || '',
+    paciente.profesional_id || null,
+    paciente.estado || ''
+  );
+  const accesoId = infoAcceso.lastInsertRowid;
+
+  // Crear registro en tabla pendiente solo si pendiente.pendiente_tipo_id tiene valor
+  if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
+    db.addPendiente({
+      paciente_id: pacienteId,
+      acceso_id: paciente.pendiente.acceso_id, // valor correcto del formulario
+      fecha: paciente.pendiente.fecha || paciente.fecha_instalacion_pendiente || '',
+      observaciones: paciente.pendiente.observaciones || '',
+      profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
+      pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id
+    });
+  }
+
+  return { id: pacienteId, acceso_id: accesoId };
 };
+
+// --- Métodos para pendientes ---
+// Agregar pendiente
+db.addPendiente = function(pendiente) {
+  // acceso_id ahora representa tipo_acceso_id
+  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)`);
+  const info = stmt.run(
+    pendiente.paciente_id,
+    pendiente.acceso_id || null, // Debe ser el id de tipo_acceso
+    pendiente.fecha,
+    pendiente.observaciones || '',
+    pendiente.profesional_id || null,
+    pendiente.pendiente_tipo_id || null
+  );
+  return { id: info.lastInsertRowid };
+};
+
+// Editar pendiente
+db.editPendiente = function(pendiente) {
+  // acceso_id ahora representa tipo_acceso_id
+  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, acceso_id = ?, fecha = ?, observaciones = ?, profesional_id = ?, pendiente_tipo_id = ? WHERE id = ?`);
+  const info = stmt.run(
+    pendiente.paciente_id,
+    pendiente.acceso_id || null, // Debe ser el id de tipo_acceso
+    pendiente.fecha,
+    pendiente.observaciones || '',
+    pendiente.profesional_id || null,
+    pendiente.pendiente_tipo_id || null,
+    pendiente.id
+  );
+  return { changes: info.changes };
+};
+
+// Eliminar pendiente
+db.deletePendiente = function(id) {
+  const stmt = db.prepare('DELETE FROM pendiente WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
+
+// Obtener todos los pendientes
+db.getPendientes = function() {
+  return db.prepare(`SELECT * FROM pendiente ORDER BY fecha DESC, id DESC`).all();
+};
+
+// Obtener pendientes por paciente
+db.getPendientesByPaciente = function(pacienteId) {
+  return db.prepare(`SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC`).all(pacienteId);
+};
+
+// Obtener el pendiente más reciente de un paciente
+db.getPendienteActualByPaciente = function(pacienteId) {
+  // acceso_id ahora representa tipo_acceso_id
+  return db.prepare(`SELECT pendiente_tipo_id, acceso_id as tipo_acceso_id FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1`).get(pacienteId) || null;
+};
+
+
+
 
 // --- Ejemplos reales para pruebas ---
-
-// Método para agregar etiquetas de tipo Proceso por defecto
-
-
-// Insertar 10 pacientes completos y realistas al iniciar si la tabla está vacía
-const pacientesCountDemo = db.prepare('SELECT COUNT(*) as count FROM pacientes').get().count;
-if (pacientesCountDemo === 0) {
-  db.insertarPacientesDemo();
+function insertarTiposAccesoPredeterminados() {
+  const tipos = [
+    {
+      nombre: 'Fístula',
+      descripcion: 'Fístula arteriovenosa creada quirúrgicamente para hemodiálisis. Proporciona acceso vascular duradero y de bajo riesgo de infección.',
+      color: '#e63946',
+      icono: '🩸',
+      ubicaciones: [
+        'Radiocefálica (arteria radial → vena cefálica, antebrazo distal)',
+        'Radiobasílica (arteria radial → vena basílica, antebrazo distal)',
+        'Braquiocefálica (arteria braquial → vena cefálica, codo / brazo proximal)',
+        'Braquiobasílica (arteria braquial → vena basílica, brazo proximal)',
+        'Braquiorradial (arteria braquial → vena radial, codo / antebrazo proximal)',
+        'Fémoro-femoral (arteria femoral → vena femoral o safena, muslo)'
+      ]
+    },
+    {
+      nombre: 'Prótesis',
+      descripcion: 'Prótesis vascular o injerto sintético utilizado cuando no es posible crear una fístula. Alternativa para hemodiálisis.',
+      color: '#a8dadc',
+      icono: '🦾',
+      ubicaciones: [
+        'Injerto protésico en brazo (brazo medio / superior)',
+        'Injerto protésico femoral (muslo)',
+        'Injerto subclavio o axilar (tórax)'
+      ]
+    },
+    {
+      nombre: 'Catéter',
+      descripcion: 'Catéter venoso central, temporal o tunelizado, para acceso inmediato o prolongado. Mayor riesgo de infección.',
+      color: '#457b9d',
+      icono: '➰',
+      ubicaciones: [
+        'Yugular Interna',
+        'Subclavia',
+        'Femoral'
+      ]
+    },
+    {
+      nombre: 'Otro',
+      descripcion: 'Acceso vascular alternativo o no especificado, utilizado en situaciones especiales o transitorias.',
+      color: '#f1faee',
+      icono: '❓',
+      ubicaciones: ['Variable']
+    }
+  ];
+  tipos.forEach(tipo => {
+    const existe = db.prepare('SELECT 1 FROM tipo_acceso WHERE nombre = ?').get(tipo.nombre);
+    if (!existe) {
+      db.prepare(`INSERT INTO tipo_acceso (nombre, descripcion, color, icono, ubicaciones) VALUES (?, ?, ?, ?, ?)`)
+        .run(tipo.nombre, tipo.descripcion, tipo.color, tipo.icono, JSON.stringify(tipo.ubicaciones));
+    }
+  });
 }
 
-// Etiquetas por defecto para tipos de evento y diagnósticos
-const etiquetasEvento = [
-  { nombre: 'Consulta médica', descripcion: 'Visita médica programada para revisión o seguimiento.' },
-  { nombre: 'Prueba de laboratorio', descripcion: 'Análisis clínicos realizados al paciente.' },
-  { nombre: 'Intervención quirúrgica', descripcion: 'Procedimiento quirúrgico realizado.' },
-  { nombre: 'Seguimiento clínico', descripcion: 'Control periódico del estado del paciente.' },
-  { nombre: 'Urgencia', descripcion: 'Atención médica urgente por complicación.' },
-  { nombre: 'Alta hospitalaria', descripcion: 'Finalización de la estancia hospitalaria.' },
-  { nombre: 'Ingreso hospitalario', descripcion: 'Admisión del paciente en el hospital.' },
-  { nombre: 'Cambio de tratamiento', descripcion: 'Modificación en la pauta terapéutica.' },
-  { nombre: 'Revisión de medicación', descripcion: 'Evaluación y ajuste de medicamentos.' },
-  { nombre: 'Otro', descripcion: 'Evento no clasificado en las categorías anteriores.' }
-];
-const etiquetasDiagnostico = [
-  { nombre: 'Insuficiencia renal crónica', descripcion: 'Pérdida progresiva de la función renal.' },
-  { nombre: 'Hipertensión arterial', descripcion: 'Presión arterial elevada de forma crónica.' },
-  { nombre: 'Diabetes mellitus', descripcion: 'Alteración metabólica con hiperglucemia crónica.' },
-  { nombre: 'Infección de acceso vascular', descripcion: 'Infección localizada en el acceso vascular.' },
-  { nombre: 'Trombosis de fístula', descripcion: 'Obstrucción de la fístula por coágulo.' },
-  { nombre: 'Anemia', descripcion: 'Disminución de la concentración de hemoglobina.' },
-  { nombre: 'Hiperkalemia', descripcion: 'Elevación de los niveles de potasio en sangre.' },
-  { nombre: 'Edema pulmonar', descripcion: 'Acumulación de líquido en los pulmones.' },
-  { nombre: 'Sepsis', descripcion: 'Respuesta inflamatoria grave a una infección.' },
-  { nombre: 'Cardiopatía', descripcion: 'Enfermedad que afecta al corazón.' },
-  { nombre: 'Descompensación metabólica', descripcion: 'Alteración aguda del equilibrio metabólico.' },
-  { nombre: 'Fracaso renal agudo', descripcion: 'Pérdida súbita de la función renal.' }
-];
-const insertTag = db.prepare('INSERT OR IGNORE INTO tags (nombre, tipo, descripcion, color) VALUES (?, ?, ?, ?)');
-etiquetasEvento.forEach(e => insertTag.run(e.nombre, 'evento', e.descripcion, '#34c759'));
-etiquetasDiagnostico.forEach(e => insertTag.run(e.nombre, 'diagnostico', e.descripcion, '#14532d'));
-
-// Ejecutar al iniciar si la tabla tags existe (después de la definición)
-try {
-  if (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='tags'").get()) {
-    console.log('[DB] Llamando a insertarEtiquetasProcesoDemo()');
-    db.insertarEtiquetasProcesoDemo();
-    console.log('[DB] Fin llamada a insertarEtiquetasProcesoDemo()');
+/**
+ * Inserta 10 pacientes de prueba con todos los campos completos en pacientes, acceso y pendiente.
+ * Los datos son simulados y cubren todos los campos requeridos.
+ */
+db.insertarPacientesPrueba = function() {
+  // Asegurar que existe un profesional con id=1
+  let profesional = db.prepare('SELECT id FROM profesionales WHERE id = 1').get();
+  if (!profesional) {
+    const stmt = db.prepare('INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    stmt.run(
+      'Prueba',
+      'Demo',
+      'M',
+      'prueba@demo.com',
+      '600000001',
+      'Nefrólogo',
+      '12345',
+      '1980-01-01',
+      'Calle Falsa 123',
+      'Profesional de prueba',
+      ''
+    );
   }
-} catch (e) { console.error('[DB] Error comprobando tabla tags:', e); }
-// Conexión real a better-sqlite3 y creación de tablas necesarias
+  const nombres = [
+    'Juan', 'María', 'Pedro', 'Lucía', 'Carlos', 'Ana', 'Miguel', 'Sofía', 'José', 'Laura'
+  ];
+  const apellidos = [
+    'García', 'Martínez', 'López', 'Sánchez', 'Pérez', 'Gómez', 'Fernández', 'Ruiz', 'Díaz', 'Torres'
+  ];
+  const sexos = ['M', 'F'];
+  const direcciones = [
+    'Calle Mayor 1', 'Av. Libertad 23', 'Plaza Sol 5', 'Calle Luna 8', 'Av. Paz 12',
+    'Calle Río 3', 'Calle Mar 7', 'Av. Norte 15', 'Calle Sur 9', 'Plaza Este 2'
+  ];
+  const emails = [
+    'juan@test.com', 'maria@test.com', 'pedro@test.com', 'lucia@test.com', 'carlos@test.com',
+    'ana@test.com', 'miguel@test.com', 'sofia@test.com', 'jose@test.com', 'laura@test.com'
+  ];
+  const telefonos = [
+    '600111111', '600222222', '600333333', '600444444', '600555555',
+    '600666666', '600777777', '600888888', '600999999', '600000000'
+  ];
+  const alergias = [
+    'Ninguna', 'Penicilina', 'Sulfa', 'Latex', 'Aspirina', 'Ibuprofeno', 'Ninguna', 'Ninguna', 'Paracetamol', 'Ninguna'
+  ];
+  const observaciones = [
+    'Paciente estable', 'Requiere seguimiento', 'Historial de hipertensión', 'Diabético', 'Sin incidencias',
+    'Control mensual', 'Pendiente de análisis', 'Buen estado', 'Revisión anual', 'Sin observaciones'
+  ];
+  const fechaNacimiento = [
+    '1970-01-01', '1980-02-15', '1990-03-20', '1975-04-10', '1985-05-25',
+    '1995-06-30', '1978-07-12', '1988-08-18', '1998-09-22', '1972-10-05'
+  ];
+  const fechaAlta = [
+    '2023-01-10', '2023-02-12', '2023-03-15', '2023-04-18', '2023-05-20',
+    '2023-06-22', '2023-07-25', '2023-08-28', '2023-09-30', '2023-10-05'
+  ];
+  const profesional_id = 1;
+  const avatar = '';
+
+  // Obtener tipo_acceso_id válidos
+  const tiposAcceso = db.prepare('SELECT id FROM tipo_acceso').all();
+  // Obtener ubicaciones de acceso
+  const ubicaciones = ['Brazo', 'Pierna', 'Cuello', 'Tórax', 'Antebrazo', 'Muslo', 'Abdomen', 'Espalda', 'Mano', 'Pie'];
+  // Obtener pendiente_tipo_id válidos
+  const tiposPendiente = db.prepare('SELECT id FROM pendiente_tipo').all();
+
+  for (let i = 0; i < 10; i++) {
+    // Insertar paciente
+    const pacienteStmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    const pacienteInfo = pacienteStmt.run(
+      nombres[i],
+      apellidos[i],
+      sexos[i % 2],
+      fechaNacimiento[i],
+      fechaAlta[i],
+      telefonos[i],
+      emails[i],
+      direcciones[i],
+      alergias[i],
+      observaciones[i],
+      avatar,
+      profesional_id
+    );
+    const pacienteId = pacienteInfo.lastInsertRowid;
+
+    // Insertar acceso
+    const tipo_acceso_id = tiposAcceso[i % tiposAcceso.length].id;
+    const accesoStmt = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, ubicacion_anatomica, ubicacion_lado, fecha_instalacion, fecha_primera_puncion, observaciones, etiqueta_id, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    accesoStmt.run(
+      pacienteId,
+      tipo_acceso_id,
+      ubicaciones[i % ubicaciones.length],
+      i % 2 === 0 ? 'Izquierda' : 'Derecha',
+      fechaAlta[i],
+      fechaAlta[i],
+      observaciones[i],
+      null,
+      profesional_id,
+      'Activo'
+    );
+
+    // Insertar pendiente solo para algunos pacientes
+    if (i % 2 === 0) {
+      const pendiente_tipo_id = tiposPendiente[i % tiposPendiente.length].id;
+      const pendienteStmt = db.prepare('INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)');
+      pendienteStmt.run(
+        pacienteId,
+        tipo_acceso_id,
+        fechaAlta[i],
+        'Pendiente de revisión',
+        profesional_id,
+        pendiente_tipo_id
+      );
+    }
+  }
+};
 
 module.exports = db;
+
+// Llamar siempre al cargar el archivo para poblar la base de datos con pacientes de prueba
+db.insertarPacientesPrueba();
  
