@@ -103,12 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             await poblarSelectorProfesionales();
             if (nuevoId) {
-                selectorProfesional.value = nuevoId;
+                // Volver el selector a la opción por defecto tras guardar
+                selectorProfesional.value = '';
                 selectorProfesional.dispatchEvent(new Event('change'));
             } else {
                 form.reset();
                 avatarImg.src = '../assets/avatar-default.png';
                 avatarFeedback.textContent = '';
+                selectorProfesional.value = '';
+                selectorProfesional.dispatchEvent(new Event('change'));
             }
         });
     }
