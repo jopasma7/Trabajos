@@ -153,123 +153,51 @@ async function cargarTags() {
 }
 
 btnNuevaEtiqueta.addEventListener('click', () => {
-  formEtiqueta.reset();
+  // Limpiar campos del formulario
+  inputNombre.value = '';
+  inputColor.value = '';
+  inputDescripcion.value = '';
   inputId.value = '';
-  inputColor.value = '#009879';
-  ubicacionesAnatomicas = [];
-  renderizarUbicaciones();
-  // Si el tipo es acceso, poner emoji por defecto y mostrar ubicaciones
-  if (inputTipo.value === 'acceso') {
-    inputIcono.value = '🩸';
-    colorGroup.classList.add('d-none');
-    iconoGroup.classList.remove('d-none');
-    ubicacionesGroup.classList.remove('d-none');
-  } else {
-    inputIcono.value = '';
-    colorGroup.classList.remove('d-none');
-    iconoGroup.classList.add('d-none');
-    ubicacionesGroup.classList.add('d-none');
-  }
+  inputIcono.value = '';
+  // Preseleccionar tipo 'infeccion' (sin tilde, igual que en el HTML)
+  inputTipo.value = 'infeccion';
+  // Forzar evento change para actualizar visibilidad
+  inputTipo.dispatchEvent(new Event('change'));
+  // Abrir el modal
   modalEtiqueta.show();
-  document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Nueva Etiqueta';
-  paginaActualEtiquetas = 1;
-});
-// Mostrar/ocultar campos según el tipo seleccionado
-inputTipo.addEventListener('change', function() {
-  if (this.value === 'acceso') {
-    colorGroup.classList.add('d-none');
-    iconoGroup.classList.remove('d-none');
-    ubicacionesGroup.classList.remove('d-none');
-  } else {
-    colorGroup.classList.remove('d-none');
-    iconoGroup.classList.add('d-none');
-    ubicacionesGroup.classList.add('d-none');
-  }
 });
 
-tablaEtiquetas.addEventListener('click', async (e) => {
-  if (e.target.closest('.btn-editar')) {
-    const id = e.target.closest('.btn-editar').dataset.id;
-    const tag = tags.find(t => t.id == id);
-    if (tag) {
-      inputId.value = tag.id;
-      inputNombre.value = tag.nombre;
-      inputColor.value = tag.color;
-      inputDescripcion.value = tag.descripcion || '';
-      inputTipo.value = tag.tipo || 'incidencia';
-      inputIcono.value = tag.icono || '';
-      ubicacionesAnatomicas = Array.isArray(tag.ubicaciones) ? [...tag.ubicaciones] : [];
-      renderizarUbicaciones();
-      // Mostrar/ocultar campos según el tipo seleccionado
-      if (tag.tipo === 'acceso') {
-        colorGroup.classList.add('d-none');
-        iconoGroup.classList.remove('d-none');
-        ubicacionesGroup.classList.remove('d-none');
-        // Actualiza el botón con el emoji guardado
-        const iconoBtn = document.getElementById('etiqueta-icono-btn');
-        if (iconoBtn) iconoBtn.textContent = tag.icono || '🩸';
-      } else {
-        colorGroup.classList.remove('d-none');
-        iconoGroup.classList.add('d-none');
-        ubicacionesGroup.classList.add('d-none');
-      }
-      modalEtiqueta.show();
-      document.getElementById('modalEtiquetaLabel').textContent = '🏷️ Editar Etiqueta';
-    }
-  } else if (e.target.closest('.btn-eliminar')) {
-    const id = e.target.closest('.btn-eliminar').dataset.id;
-    await ipcRenderer.invoke('tags-delete', Number(id));
-    showAlert('Etiqueta eliminada correctamente', 'success');
-    cargarTags();
+// Función para mostrar/ocultar grupo emoji/color según el tipo
+function actualizarGruposTipo() {
+  if (inputTipo.value === 'infeccion') {
+    iconoGroup.style.display = '';
+    colorGroup.style.display = 'none';
+  } else {
+    iconoGroup.style.display = 'none';
+    colorGroup.style.display = '';
   }
-});
+}
+
+// Handler global para mostrar/ocultar grupo emoji/color según el tipo
+
+
 
 formEtiqueta.addEventListener('submit', async (e) => {
   e.preventDefault();
+  // Solo guardar etiquetas de tipo 'infección' y emoji
   const nombre = inputNombre.value.trim();
-  const color = inputColor.value;
-  const descripcion = inputDescripcion.value.trim();
   const tipo = inputTipo.value;
-  // Si es acceso y el icono está vacío, poner emoji por defecto
-  let icono = inputIcono.value.trim();
-  if (tipo === 'acceso' && !icono) {
-    icono = '🩸';
-    inputIcono.value = icono;
-  }
-  const id = inputId.value;
-  if (!nombre) return;
-  // Validación de unicidad (case-insensitive)
-  const nombreLower = nombre.toLowerCase();
-  const existe = tags.some(tag => tag.nombre.toLowerCase() === nombreLower && String(tag.id) !== String(id));
-  let errorDiv = document.getElementById('etiqueta-error');
-  if (!errorDiv) {
-    errorDiv = document.createElement('div');
-    errorDiv.id = 'etiqueta-error';
-    errorDiv.className = 'alert alert-danger py-2 px-3 mb-2';
-    formEtiqueta.querySelector('.modal-body').prepend(errorDiv);
-  }
-  if (existe) {
-    errorDiv.textContent = 'Ya existe una etiqueta con ese nombre.';
-    inputNombre.focus();
-    return;
-  } else {
-    errorDiv.textContent = '';
-    errorDiv.remove();
-  }
-  try {
-    const ubicaciones = (tipo === 'acceso') ? [...ubicacionesAnatomicas] : [];
-    if (id) {
-      await ipcRenderer.invoke('tags-update', { id: Number(id), nombre, color, descripcion, tipo, icono, ubicaciones });
-      showAlert('Etiqueta actualizada correctamente', 'success');
-    } else {
-      await ipcRenderer.invoke('tags-add', { nombre, color, descripcion, tipo, icono, ubicaciones });
-      showAlert('Etiqueta creada correctamente', 'success');
-    }
-    modalEtiqueta.hide();
-    cargarTags();
-  } catch (err) {
-    errorDiv.textContent = 'Error al guardar la etiqueta.';
-  }
+  const icono = inputIcono.value;
+  // Guardar etiqueta
+  const nuevaEtiqueta = {
+    nombre,
+    tipo,
+    icono
+  };
+  await ipcRenderer.invoke('tags-save', nuevaEtiqueta);
+  showAlert('Etiqueta guardada correctamente', 'success');
+  cargarTags();
+  modalEtiqueta.hide();
 });
 
 function renderizarUbicaciones() {
@@ -335,6 +263,8 @@ ubicacionInput.addEventListener('keydown', (e) => {
 window.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('etiquetas-section')) {
     cargarTags();
+    // Registrar el handler SOLO una vez al cargar la sección
+    inputTipo.addEventListener('change', actualizarGruposTipo);
   }
 });
 
