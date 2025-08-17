@@ -850,7 +850,7 @@ function insertarTiposAccesoPredeterminados() {
     {
       nombre: 'Prótesis',
       descripcion: 'Prótesis vascular o injerto sintético utilizado cuando no es posible crear una fístula. Alternativa para hemodiálisis.',
-      color: '#a8dadc',
+      color: '#b28900', // Nuevo color para Prótesis
       icono: '🦾',
       ubicaciones: [
         'Injerto protésico en brazo (brazo medio / superior)',
@@ -872,7 +872,7 @@ function insertarTiposAccesoPredeterminados() {
     {
       nombre: 'Otro',
       descripcion: 'Acceso vascular alternativo o no especificado, utilizado en situaciones especiales o transitorias.',
-      color: '#f1faee',
+      color: '#222', // Nuevo color para Otro
       icono: '❓',
       ubicaciones: ['Variable']
     }
