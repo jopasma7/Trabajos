@@ -1,3 +1,10 @@
+/* Limita el ancho de la columna de ubicación y muestra puntos suspensivos */
+.pacientes-ubicacion {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* Formularios dinámicos para incidencias seleccionadas */
 #incidencia-valores-container .incidencia-form {
   background: #f8fafc;

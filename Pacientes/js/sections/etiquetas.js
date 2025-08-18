@@ -1,3 +1,22 @@
+// Handler para editar etiquetas
+document.addEventListener('click', async function(e) {
+  if (e.target.classList.contains('btn-editar')) {
+    const tagId = e.target.getAttribute('data-id');
+    const tag = await ipcRenderer.invoke('tags-get', tagId);
+    // Rellenar el formulario con los datos
+    inputNombre.value = tag.nombre || '';
+    inputColor.value = tag.color || '#009879';
+    inputDescripcion.value = tag.descripcion || '';
+    inputId.value = tag.id || '';
+    inputIcono.value = tag.icono || '';
+    inputTipo.value = tag.tipo || 'incidencia';
+    // Microorganismo asociado
+    const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+    if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
+    inputTipo.dispatchEvent(new Event('change'));
+    modalEtiqueta.show();
+  }
+});
 // js/sections/etiquetas.js
 // Lógica de gestión de etiquetas (tags) para la sección Etiquetas
 
@@ -18,14 +37,8 @@ const inputIcono = document.getElementById('etiqueta-icono');
 const colorGroup = document.getElementById('etiqueta-color-group');
 const iconoGroup = document.getElementById('etiqueta-icono-group');
 const listaVacia = document.getElementById('tags-lista-vacia');
-// Ubicaciones anatómicas dinámicas
-const ubicacionesGroup = document.getElementById('etiqueta-ubicaciones-group');
-const ubicacionInput = document.getElementById('etiqueta-ubicacion-input');
-const ubicacionAddBtn = document.getElementById('etiqueta-ubicacion-add');
-const ubicacionesLista = document.getElementById('etiqueta-ubicaciones-lista');
-let ubicacionesAnatomicas = [];
 
-const cardEtiquetas = document.querySelector('#etiquetas-section .card');
+
 const paginacionEtiquetas = document.getElementById('paginacion-etiquetas');
 let paginaActualEtiquetas = 1;
 const etiquetasPorPagina = 4;
@@ -189,82 +202,50 @@ formEtiqueta.addEventListener('submit', async (e) => {
   const tipo = inputTipo.value;
   const icono = inputIcono.value;
   // Guardar etiqueta
+  // Buscar el input cada vez por si ha cambiado de lugar
+  const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+  const microorganismo = (tipo === 'infeccion' && inputMicroorganismoActual) ? inputMicroorganismoActual.value.trim() : '';
   const nuevaEtiqueta = {
+    id: inputId.value || undefined,
     nombre,
+    color: inputColor.value,
+    microorganismo_asociado: microorganismo,
+    descripcion: inputDescripcion.value,
     tipo,
     icono
   };
-  await ipcRenderer.invoke('tags-save', nuevaEtiqueta);
+  if (nuevaEtiqueta.id) {
+    await ipcRenderer.invoke('tags-update', nuevaEtiqueta);
+    showAlert('Etiqueta actualizada correctamente', 'success');
+  } else {
+    await ipcRenderer.invoke('tags-add', nuevaEtiqueta);
+    showAlert('Etiqueta guardada correctamente', 'success');
+  }
   showAlert('Etiqueta guardada correctamente', 'success');
   cargarTags();
   modalEtiqueta.hide();
 });
 
-function renderizarUbicaciones() {
-  ubicacionesLista.innerHTML = '';
-  if (!ubicacionesAnatomicas.length) {
-    ubicacionesLista.style.display = '';
-    return;
-  }
-  // Color azul Bootstrap (btn-success: #198754, btn-primary: #0d6efd)
-  const color = '#0d6efd';
-  // Crear contenedor flex row
-  const flexDiv = document.createElement('div');
-  flexDiv.style.display = 'flex';
-  flexDiv.style.flexDirection = 'row';
-  flexDiv.style.flexWrap = 'wrap';
-  flexDiv.style.gap = '8px';
-  flexDiv.style.paddingTop = '8px';
-  flexDiv.style.paddingBottom = '8px';
-  ubicacionesAnatomicas.forEach((ubic, idx) => {
-    const badge = document.createElement('span');
-    badge.className = 'badge d-flex align-items-center gap-1 px-3 py-2';
-    badge.style.background = color;
-    badge.style.color = '#fff';
-    badge.style.fontSize = '1em';
-    badge.style.maxWidth = '280px';
-    badge.style.overflow = 'hidden';
-    badge.style.textOverflow = 'ellipsis';
-    badge.style.whiteSpace = 'nowrap';
-    badge.innerHTML = `
-      <span style="flex:1;min-width:0;">${ubic}</span>
-      <button type="button" class="btn btn-sm btn-light ms-1 px-1 py-0" style="font-size:0.95em;line-height:1;" title="Eliminar ubicación">
-        <i class="bi bi-x"></i>
-      </button>
-    `;
-    const btnDel = badge.querySelector('button');
-    btnDel.onclick = () => {
-      ubicacionesAnatomicas.splice(idx, 1);
-      renderizarUbicaciones();
-    };
-    flexDiv.appendChild(badge);
-  });
-  ubicacionesLista.appendChild(flexDiv);
-}
 
-ubicacionAddBtn.addEventListener('click', () => {
-  const val = ubicacionInput.value.trim();
-  if (val && !ubicacionesAnatomicas.includes(val)) {
-    ubicacionesAnatomicas.push(val);
-    renderizarUbicaciones();
-    ubicacionInput.value = '';
-    ubicacionInput.focus();
-  }
-});
 
-ubicacionInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    ubicacionAddBtn.click();
-  }
-});
 
 // Inicialización automática al mostrar la sección
 window.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('etiquetas-section')) {
     cargarTags();
     // Registrar el handler SOLO una vez al cargar la sección
-    inputTipo.addEventListener('change', actualizarGruposTipo);
+      inputTipo.addEventListener('change', function() {
+        actualizarGruposTipo();
+        // Buscar el campo por id cada vez, por si ha cambiado de lugar
+        const grupoMicroorganismoActual = document.getElementById('grupo-microorganismo');
+        const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+        if (inputTipo.value === 'infeccion') {
+          if (grupoMicroorganismoActual) grupoMicroorganismoActual.style.display = '';
+        } else {
+          if (grupoMicroorganismoActual) grupoMicroorganismoActual.style.display = 'none';
+          if (inputMicroorganismoActual) inputMicroorganismoActual.value = '';
+        }
+      });
   }
 });
 

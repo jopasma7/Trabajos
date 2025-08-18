@@ -45,15 +45,6 @@ ipcMain.handle('perfil-cambiar-avatar', async () => {
 });
 
 // Ejemplo: Obtener todos los pacientes
-ipcMain.handle('get-pacientes', () => {
-  const stmt = db.prepare('SELECT * FROM pacientes');
-  const pacientes = stmt.all();
-  // Añadir etiquetas a cada paciente
-  pacientes.forEach(p => {
-    p.etiquetas = db.getEtiquetasByPaciente(p.id);
-  });
-  return pacientes;
-});
 
 // Handler: Pacientes con CHD pendiente de FAV
 ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
@@ -62,6 +53,10 @@ ipcMain.handle('get-pacientes-chd-pendiente-fav', () => {
 });
 
 // Handler: Pacientes con FAV pendiente retiro CHD
+// Handler para agregar múltiples infecciones a un paciente
+ipcMain.handle('add-infecciones', (event, pacienteId, infecciones) => {
+  return db.addInfecciones(pacienteId, infecciones);
+});
 ipcMain.handle('get-pacientes-fav-pendiente-retiro-chd', () => {
   // Filtrado por FAV pendiente de retiro CHD según lógica normalizada en db.js
   return db.getPacientesFAVPendienteRetiroCHD();
@@ -194,12 +189,14 @@ ipcMain.handle('tags-get', (event, tagId) => {
   return db.getTagById(tagId);
 });
 
-ipcMain.handle('tags-add', (event, { nombre, color, descripcion, tipo, icono, ubicaciones }) => {
-  return db.addTag(nombre, color, descripcion, tipo, icono);
+ipcMain.handle('tags-add', (event, tag) => {
+  // tag: { nombre, color, microorganismo_asociado, descripcion, tipo, icono }
+  return db.addTag(tag.nombre, tag.color, tag.microorganismo_asociado, tag.descripcion, tag.tipo, tag.icono);
 });
 
-ipcMain.handle('tags-update', (event, { id, nombre, color, descripcion, tipo, icono, ubicaciones }) => {
-  return db.updateTag(id, nombre, color, descripcion, tipo, icono, ubicaciones);
+ipcMain.handle('tags-update', (event, tag) => {
+  // tag: { id, nombre, color, microorganismo_asociado, descripcion, tipo, icono }
+  return db.updateTag(tag.id, tag.nombre, tag.color, tag.microorganismo_asociado, tag.descripcion, tag.tipo, tag.icono);
 });
 
 

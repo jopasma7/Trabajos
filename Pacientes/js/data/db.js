@@ -100,12 +100,40 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencias (
   FOREIGN KEY (etiqueta_id) REFERENCES tags(id)
 )`).run();
 
+// Crear tabla infecciones (solo infecciones, no incidencias)
+// Insertar múltiples infecciones en la tabla infecciones
+db.addInfecciones = function(pacienteId, infecciones) {
+  if (!Array.isArray(infecciones) || !pacienteId) return { error: 'Datos inválidos' };
+  const stmt = db.prepare(`INSERT INTO infecciones (paciente_id, tag_id, fecha_infeccion, observaciones, activo) VALUES (?, ?, ?, ?, 1)`);
+  let results = [];
+  for (const inf of infecciones) {
+    const fecha = inf.fecha || inf.fecha_infeccion || null;
+    const obs = inf.comentarios || inf.observaciones || '';
+    const tagId = inf.tagId || inf.tag_id || null;
+    if (!tagId) continue;
+    const info = stmt.run(pacienteId, tagId, fecha, obs);
+    results.push(info.lastInsertRowid);
+  }
+  return { ok: true, count: results.length, ids: results };
+};
+db.prepare(`CREATE TABLE IF NOT EXISTS infecciones (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  paciente_id INTEGER NOT NULL,
+  tag_id INTEGER NOT NULL,
+  fecha_infeccion TEXT NOT NULL,
+  observaciones TEXT,
+  activo INTEGER DEFAULT 1,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
+  FOREIGN KEY (tag_id) REFERENCES tags(id)
+)`).run();
+
 
 // Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
 db.prepare(`CREATE TABLE IF NOT EXISTS tags (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL UNIQUE,
   color TEXT DEFAULT '#009879',
+  microorganismo_asociado TEXT,
   descripcion TEXT,
   tipo TEXT DEFAULT 'incidencia', 
   icono TEXT
@@ -355,16 +383,16 @@ db.getTagById = function(tagId) {
 };
 
 db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
-  const stmt = db.prepare('INSERT INTO tags (nombre, color, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?)');
-  const info = stmt.run(nombre, color, descripcion, tipo, arguments[4]);
+  // arguments: nombre, color, microorganismo_asociado, descripcion, tipo, icono
+  const stmt = db.prepare('INSERT INTO tags (nombre, color, microorganismo_asociado, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(nombre, color, arguments[2], descripcion, tipo, arguments[5]);
   return { id: info.lastInsertRowid };
 };
 
 db.updateTag = function(id, nombre, color, descripcion, tipo = 'incidencia') {
-  // arguments[6] = ubicaciones (array)
-  const ubicaciones = Array.isArray(arguments[6]) ? JSON.stringify(arguments[6]) : '[]';
-  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, descripcion = ?, tipo = ?, icono = ?, ubicaciones = ? WHERE id = ?');
-  const info = stmt.run(nombre, color, descripcion, tipo, arguments[5], ubicaciones, id);
+  // arguments: id, nombre, color, microorganismo_asociado, descripcion, tipo, icono
+  const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, microorganismo_asociado = ?, descripcion = ?, tipo = ?, icono = ? WHERE id = ?');
+  const info = stmt.run(nombre, color, arguments[3], descripcion, tipo, arguments[6], id);
   return { changes: info.changes };
 };
 
@@ -476,7 +504,7 @@ db.getPacientesCompletos = function() {
   const pacientes = db.prepare('SELECT * FROM pacientes WHERE activo = 1').all();
   return pacientes.map(paciente => {
     // Acceso más reciente
-  const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
+    const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
     // Tipo de acceso
     let tipoAcceso = null;
     if (acceso && acceso.tipo_acceso_id) {
@@ -486,12 +514,19 @@ db.getPacientesCompletos = function() {
     const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(paciente.id);
     // Etiquetas
     const etiquetas = db.getEtiquetasByPaciente(paciente.id);
+    // Infecciones con tag
+    let infecciones = db.prepare('SELECT * FROM infecciones WHERE paciente_id = ? AND activo = 1').all(paciente.id);
+    infecciones = infecciones.map(inf => ({
+      ...inf,
+      tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inf.tag_id)
+    }));
     return {
       ...paciente,
       acceso: acceso || {},
       tipo_acceso: tipoAcceso || {},
       pendiente: pendiente || {},
-      etiquetas
+      etiquetas,
+      infecciones
     };
   });
 };
@@ -510,12 +545,19 @@ db.getPacienteConAcceso = function(pacienteId) {
   const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(pacienteId);
   // Etiquetas
   const etiquetas = db.getEtiquetasByPaciente(pacienteId);
+  // Infecciones con tag
+  let infecciones = db.prepare('SELECT * FROM infecciones WHERE paciente_id = ? AND activo = 1').all(pacienteId);
+  infecciones = infecciones.map(inf => ({
+    ...inf,
+    tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inf.tag_id)
+  }));
   return {
     ...paciente,
     acceso: acceso || {},
     tipo_acceso: tipoAcceso || {},
     pendiente: pendiente || {},
-    etiquetas
+    etiquetas,
+    infecciones
   };
 };
 
@@ -954,6 +996,9 @@ db.insertarPacientesPrueba = function() {
   const tiposPendiente = db.prepare('SELECT id FROM pendiente_tipo').all();
 
   for (let i = 0; i < 10; i++) {
+    // Comprobar si el paciente ya existe por nombre y apellidos
+    const existe = db.prepare('SELECT id FROM pacientes WHERE nombre = ? AND apellidos = ?').get(nombres[i], apellidos[i]);
+    if (existe) continue;
     // Insertar paciente
     const pacienteStmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     const pacienteInfo = pacienteStmt.run(
@@ -1007,20 +1052,37 @@ db.insertarPacientesPrueba = function() {
 // Crear etiquetas de tipo incidencia (motivos de derivación)
 db.crearEtiquetasIncidenciaMotivos = function() {
   const motivos = [
-    { nombre: 'Flujo insuficiente', color: '#009879' },
-    { nombre: 'Disminución o pérdida del frémito', color: '#1565c0' },
-    { nombre: 'Dificultad para la canulación', color: '#b28900' },
-    { nombre: 'Hematomas frecuentes', color: '#c62828' },
-    { nombre: 'Aumento de la presión venosa', color: '#3a8dde' },
-    { nombre: 'Sangramiento', color: '#ad1457' },
-    { nombre: 'Edema', color: '#00897b' },
-    { nombre: 'Circulación colateral', color: '#6d4c41' },
-    { nombre: 'Dolor', color: '#f57c00' },
-    { nombre: 'Fav ocluida', color: '#7b1fa2' }
+    { nombre: 'Flujo insuficiente', color: '#009879', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Disminución o pérdida del frémito', color: '#1565c0', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Dificultad para la canulación', color: '#b28900', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Hematomas frecuentes', color: '#c62828', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Aumento de la presión venosa', color: '#3a8dde', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Sangramiento', color: '#ad1457', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Edema', color: '#00897b', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Circulación colateral', color: '#6d4c41', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Dolor', color: '#f57c00', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' },
+    { nombre: 'Fav ocluida', color: '#7b1fa2', microorganismo_asociado: '', descripcion: '', tipo: 'incidencia', icono: '' }
   ];
-  const stmt = db.prepare('INSERT OR IGNORE INTO tags (nombre, color, tipo) VALUES (?, ?, ?)');
+  const stmt = db.prepare('INSERT OR IGNORE INTO tags (nombre, color, microorganismo_asociado, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?, ?)');
   motivos.forEach(m => {
-    stmt.run(m.nombre, m.color, 'incidencia');
+    stmt.run(m.nombre, m.color, m.microorganismo_asociado, m.descripcion, m.tipo, m.icono);
+  });
+
+  // Crear 10 etiquetas de infección
+  const infecciones = [
+    { nombre: 'Staphylococcus aureus', color: '#e53935', microorganismo_asociado: 'Staphylococcus aureus', descripcion: 'Infección por S. aureus', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Escherichia coli', color: '#43a047', microorganismo_asociado: 'Escherichia coli', descripcion: 'Infección por E. coli', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Klebsiella pneumoniae', color: '#1e88e5', microorganismo_asociado: 'Klebsiella pneumoniae', descripcion: 'Infección por K. pneumoniae', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Pseudomonas aeruginosa', color: '#fbc02d', microorganismo_asociado: 'Pseudomonas aeruginosa', descripcion: 'Infección por P. aeruginosa', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Enterococcus faecalis', color: '#8e24aa', microorganismo_asociado: 'Enterococcus faecalis', descripcion: 'Infección por E. faecalis', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Candida albicans', color: '#00897b', microorganismo_asociado: 'Candida albicans', descripcion: 'Infección por C. albicans', tipo: 'infeccion', icono: '🍄' },
+    { nombre: 'Streptococcus pyogenes', color: '#6d4c41', microorganismo_asociado: 'Streptococcus pyogenes', descripcion: 'Infección por S. pyogenes', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Acinetobacter baumannii', color: '#f57c00', microorganismo_asociado: 'Acinetobacter baumannii', descripcion: 'Infección por A. baumannii', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Proteus mirabilis', color: '#7b1fa2', microorganismo_asociado: 'Proteus mirabilis', descripcion: 'Infección por P. mirabilis', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Serratia marcescens', color: '#009688', microorganismo_asociado: 'Serratia marcescens', descripcion: 'Infección por S. marcescens', tipo: 'infeccion', icono: '🧫' }
+  ];
+  infecciones.forEach(i => {
+    stmt.run(i.nombre, i.color, i.microorganismo_asociado, i.descripcion, i.tipo, i.icono);
   });
 };
 

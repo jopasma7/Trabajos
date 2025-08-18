@@ -184,7 +184,7 @@ const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
 	const select = document.getElementById('filtro-paciente-historial');
 	if (!select) return;
-	const pacientes = await ipcRenderer.invoke('get-pacientes');
+	const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 	select.innerHTML = '';
 	if (!pacientes || pacientes.length === 0) {
 		console.warn('No se recibieron pacientes para el filtro.');
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 	   const select = document.getElementById('filtro-paciente-historial');
 	   let pacienteId = select && select.value ? Number(select.value) : null;
 	   if (pacienteId) {
-		   const pacientes = await ipcRenderer.invoke('get-pacientes');
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
 		   await renderPacienteCard(pacienteSel || null);
 	   } else {
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 	   renderHistorial();
 	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
 		   pacienteId = Number(this.value);
-		   const pacientes = await ipcRenderer.invoke('get-pacientes');
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
 		   await renderPacienteCard(pacienteSel || null);
 		   renderHistorial();

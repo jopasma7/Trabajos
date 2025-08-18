@@ -16,6 +16,9 @@ const fechaInputPend = document.getElementById('fechaInstalacionAccesoPendiente'
 // Variable temporal para guardar los valores de incidencias
 let incidenciaValoresTemp = {}
 
+// Variable global temporal para infecciones añadidas en el modal
+let infeccionesTemp = [];
+
 // Variables
 let pacientesGlobal = [];
 let etiquetasPorId = {};
@@ -54,29 +57,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 		});
 	}
 });
-function mostrarCamposFechaAcceso() {
-	// Tipo de Acceso
-	if (selectTipoAcceso && selectTipoAcceso.value) {
-		fechaLabel.style.display = '';
-		fechaInput.style.display = '';
-	} else {
-		fechaLabel.style.display = 'none';
-		fechaInput.style.display = 'none';
-		fechaInput.value = '';
-	}
 
-	// Pendiente: mostrar fechaInstalacionAccesoPendiente solo si es "Retiro"
-	if (selectPendiente) {
-		const retiroPendiente = tiposPendienteGlobal.find(tp => tp.nombre && tp.nombre.toLowerCase().includes('retiro'));
-		if (selectPendiente.value && retiroPendiente && String(selectPendiente.value) === String(retiroPendiente.id)) {
-			fechaLabelPend.style.display = '';
-			fechaInputPend.style.display = '';
-		} else {
-			fechaLabelPend.style.display = 'none';
-			fechaInputPend.style.display = 'none';
-			fechaInputPend.value = '';
-		}
+
+
+// Handler para el botón de añadir infección en el modal
+document.addEventListener('DOMContentLoaded', function() {
+	const btnAgregarInfeccion = document.getElementById('btn-agregar-infeccion');
+	if (btnAgregarInfeccion) {
+		btnAgregarInfeccion.addEventListener('click', function() {
+			const select = document.getElementById('infeccion-tags');
+			const fecha = document.getElementById('infeccion-fecha').value;
+			const comentarios = document.getElementById('infeccion-comentarios').value;
+			const lista = document.getElementById('infeccion-lista');
+			const selectedOptions = Array.from(select.selectedOptions);
+			if (selectedOptions.length === 0) {
+				select.focus();
+				mostrarMensaje('Selecciona al menos un tipo de infección', 'danger');
+				return;
+			}
+			if (!fecha) {
+				document.getElementById('infeccion-fecha').focus();
+				mostrarMensaje('La fecha de la infección es obligatoria', 'danger');
+				return;
+			}
+			// Añadir cada infección seleccionada a la lista temporal
+			selectedOptions.forEach(opt => {
+				infeccionesTemp.push({
+					tagId: opt.value,
+					nombre: opt.textContent,
+					color: opt.getAttribute('data-color') || '#1976d2',
+					fecha,
+					comentarios
+				});
+			});
+			// Limpiar selección y campos
+			select.selectedIndex = -1;
+			document.getElementById('infeccion-fecha').value = '';
+			document.getElementById('infeccion-comentarios').value = '';
+			// Renderizar lista visual
+			renderizarListaInfecciones();
+		});
 	}
+});
+
+// Función para actualizar la tabla de pacientes (evita ReferenceError)
+function actualizarTablaPacientes() {
+	const filtrados = filtrarPacientes();
+	const total = filtrados.length;
+	const inicio = (paginaActual - 1) * pacientesPorPagina;
+	const fin = inicio + pacientesPorPagina;
+	renderizarPacientes(filtrados.slice(inicio, fin));
+	renderizarPaginacion(total);
 }
 
 
@@ -95,6 +126,7 @@ if (btnNuevoPaciente) {
 
 // Handler global para los botones de eliminar en la tabla
 document.addEventListener('click', async function(e) {
+	// Botón de archivar
 	const btnArchivar = e.target.closest('.btn-archivar');
 	if (btnArchivar) {
 		const pacienteId = btnArchivar.getAttribute('data-id');
@@ -104,9 +136,10 @@ document.addEventListener('click', async function(e) {
 		mostrarMensaje('Paciente archivado correctamente', 'info');
 		return;
 	}
-	const btn = e.target.closest('.btn-eliminar');
-	if (btn) {
-		const pacienteId = btn.getAttribute('data-id');
+	// Botón de eliminar
+	const btnEliminar = e.target.closest('.btn-eliminar');
+	if (btnEliminar) {
+		const pacienteId = btnEliminar.getAttribute('data-id');
 		if (!pacienteId) return;
 		await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
 		cargarPacientes();
@@ -116,6 +149,38 @@ document.addEventListener('click', async function(e) {
 			modalInstance.hide();
 		}
 		mostrarMensaje('Paciente eliminado correctamente', 'success');
+		return;
+	}
+	// Botón de infección
+	const btnInfeccion = e.target.closest('.btn-infeccion');
+	if (btnInfeccion) {
+		const pacienteId = btnInfeccion.getAttribute('data-id');
+		if (!pacienteId) return;
+		// Guardar el id del paciente para la infección
+		window.pacienteInfeccionId = pacienteId;
+		// Limpiar campos del modal
+		document.getElementById('infeccion-tags').innerHTML = '';
+		document.getElementById('infeccion-fecha').value = '';
+		document.getElementById('infeccion-comentarios').value = '';
+		document.getElementById('infeccion-lista').innerHTML = '';
+		// Cargar tags de tipo infección
+	const tags = await ipcRenderer.invoke('tags-get-all');
+		const tagsInfeccion = tags.filter(tag => tag.tipo && tag.tipo.toLowerCase() === 'infeccion');
+		const select = document.getElementById('infeccion-tags');
+		tagsInfeccion.forEach(tag => {
+			const opt = document.createElement('option');
+			opt.value = tag.id;
+			opt.textContent = tag.icono ? tag.icono + ' ' + tag.nombre : tag.nombre;
+			opt.setAttribute('data-color', tag.color || '#1976d2');
+			select.appendChild(opt);
+		});
+		// Mostrar el modal
+		const modalEl = document.getElementById('modal-infeccion');
+		let modalInstance = bootstrap.Modal.getInstance(modalEl);
+		if (!modalInstance) {
+			modalInstance = new bootstrap.Modal(modalEl);
+		}
+		modalInstance.show();
 	}
 });
 
@@ -141,7 +206,6 @@ document.addEventListener('click', async function(e) {
 		// Recoger incidencias activas del paciente
 		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
 		let badgesHtml = '';
-		console.log('incidencias:', incidencias);
 		if (Array.isArray(paciente.etiquetas) && paciente.etiquetas.length > 0) {
 			badgesHtml = paciente.etiquetas.map(id => {
 				const tag = etiquetasPorId[id];
@@ -259,6 +323,95 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 
 
 
+// Mostrar/ocultar el botón Guardar en el modal de infección
+function actualizarBotonGuardarInfeccion() {
+	const btnGuardar = document.getElementById('btn-guardar-infecciones');
+	const lista = document.getElementById('infeccion-lista');
+	if (!btnGuardar) {
+		return;
+	}
+	// Ocultar si no hay lista o no hay infecciones
+	if (!lista || infeccionesTemp.length === 0) {
+		btnGuardar.classList.add('d-none');
+		btnGuardar.style.display = '';
+		return;
+	}
+	btnGuardar.style.display = '';
+	btnGuardar.classList.remove('d-none');
+}
+
+// Handler para el botón Guardar infecciones
+const btnGuardarInfecciones = document.getElementById('btn-guardar-infecciones');
+if (btnGuardarInfecciones) {
+    btnGuardarInfecciones.addEventListener('click', async function() {
+        if (infeccionesTemp.length === 0) return;
+        const pacienteId = window.pacienteInfeccionId;
+        if (!pacienteId) {
+            mostrarMensaje('No se ha seleccionado un paciente para guardar infecciones', 'danger');
+            return;
+        }
+        // Formatear infecciones para enviar solo los campos esperados por el backend
+        const infeccionesAEnviar = infeccionesTemp.map(inf => ({
+            tag_id: inf.tagId,
+            fecha_infeccion: inf.fecha,
+            observaciones: inf.comentarios,
+            activo: 1
+        }));
+        try {
+            await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
+            mostrarMensaje('Infecciones guardadas correctamente', 'success');
+            // Limpiar y cerrar modal
+            renderizarListaInfecciones();
+            actualizarBotonGuardarInfeccion();
+            cargarPacientes(); // Actualizar la tabla de pacientes
+            const modalEl = document.getElementById('modal-infeccion');
+            let modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+        } catch (err) {
+            mostrarMensaje('Error al guardar infecciones', 'danger');
+        }
+    });
+}
+
+// Actualizar botón Guardar cada vez que se renderiza la lista
+function renderizarListaInfecciones() {
+	const lista = document.getElementById('infeccion-lista');
+	if (!lista) return;
+	if (infeccionesTemp.length === 0) {
+		lista.innerHTML = '<div class="text-muted">No hay infecciones añadidas.</div>';
+	} else {
+		lista.innerHTML = '<div class="mb-2" style="font-weight:500;color:#1976d2;">Infecciones añadidas:</div>' +
+			infeccionesTemp.map((inf, idx) => `
+				<div class="card mb-2" style="border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+					<div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+						<div style="display:flex;align-items:center;gap:10px;">
+							<span class="badge" style="background:${inf.color};color:#fff;font-size:1em;">${inf.nombre}</span>
+							<span style="color:#222;font-size:0.97em;"><i class="bi bi-calendar-event me-1"></i>${inf.fecha}</span>
+							${inf.comentarios ? `<span style='color:#666;font-size:0.95em;'><i class='bi bi-chat-left-text me-1'></i>${inf.comentarios}</span>` : ''}
+						</div>
+						<button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-infeccion" data-idx="${idx}" title="Eliminar"><i class="bi bi-x"></i></button>
+					</div>
+				</div>
+			`).join('');
+		// Handler para eliminar infección
+		lista.querySelectorAll('.btn-eliminar-infeccion').forEach(btn => {
+			btn.addEventListener('click', function() {
+				const idx = Number(btn.getAttribute('data-idx'));
+				infeccionesTemp.splice(idx, 1);
+				renderizarListaInfecciones();
+			});
+		});
+	}
+	actualizarBotonGuardarInfeccion();
+}
+
+
+
+
+
+
+
+
 // Llenar select de Profesional a Cargo
 function llenarSelectProfesional() {
     const select = document.getElementById('profesional');
@@ -331,6 +484,31 @@ function llenarSelectUbicacion() {
 		}
 }
 
+function mostrarCamposFechaAcceso() {
+	// Tipo de Acceso
+	if (selectTipoAcceso && selectTipoAcceso.value) {
+		fechaLabel.style.display = '';
+		fechaInput.style.display = '';
+	} else {
+		fechaLabel.style.display = 'none';
+		fechaInput.style.display = 'none';
+		fechaInput.value = '';
+	}
+
+	// Pendiente: mostrar fechaInstalacionAccesoPendiente solo si es "Retiro"
+	if (selectPendiente) {
+		const retiroPendiente = tiposPendienteGlobal.find(tp => tp.nombre && tp.nombre.toLowerCase().includes('retiro'));
+		if (selectPendiente.value && retiroPendiente && String(selectPendiente.value) === String(retiroPendiente.id)) {
+			fechaLabelPend.style.display = '';
+			fechaInputPend.style.display = '';
+		} else {
+			fechaLabelPend.style.display = 'none';
+			fechaInputPend.style.display = 'none';
+			fechaInputPend.value = '';
+		}
+	}
+}
+
 
 /*********************************/
 /*           FUNCIONES           */
@@ -360,52 +538,53 @@ function filtrarPacientes() {
 }
 
 // Tabla de Pacientes
-async function renderizarPacientes() {
-	tablaPacientesBody.innerHTML = '';
-	const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+async function renderizarPacientes(pacientes) {
+    tablaPacientesBody.innerHTML = '';
 	pacientes.forEach(paciente => {
-		// tipo de acceso
-		let tipoAccesoHtml = '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
-		if (paciente.tipo_acceso && paciente.tipo_acceso.id) {
-			let iconHtml = '';
-			if (paciente.tipo_acceso.icono) {
-				if (paciente.tipo_acceso.icono.startsWith('bi-')) {
-					iconHtml = `<i class='bi ${paciente.tipo_acceso.icono}' style='color:${paciente.tipo_acceso.color || '#222'};font-size:1.15em;margin-right:4px;vertical-align:middle;'></i>`;
-				} else {
-					iconHtml = `<span style='font-size:1.15em;margin-right:4px;vertical-align:middle;'>${paciente.tipo_acceso.icono}</span>`;
-				}
-			}
-			tipoAccesoHtml = `<span class="badge" style="font-size:1em;font-weight:normal;background:none;color:${paciente.tipo_acceso.color || '#222'};padding:0;margin:0;">${iconHtml}${paciente.tipo_acceso.nombre}</span>`;
-		}
-		// ubicación
-		const acceso = paciente.acceso || {};
-		const ubicacionCompleta = (acceso.ubicacion_anatomica && acceso.ubicacion_lado)
-			? `${acceso.ubicacion_anatomica} ${acceso.ubicacion_lado}`
-			: (acceso.ubicacion_anatomica || acceso.ubicacion_lado || '');
-		// fecha instalación
-		let fechaFormateada = '';
-		let diasDetalle = '';
-		if (acceso.fecha_instalacion) {
-			const match = acceso.fecha_instalacion.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
-			if (match) {
-				fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
-				const fechaInst = new Date(`${match[1]}-${match[2]}-${match[3]}`);
-				const hoy = new Date();
-				fechaInst.setHours(0,0,0,0);
-				hoy.setHours(0,0,0,0);
-				const diffMs = hoy - fechaInst;
-				if (!isNaN(diffMs)) {
-					const diffDias = Math.floor(diffMs / (1000*60*60*24));
-					if (diffDias >= 0) {
-						diasDetalle = ` <span style='color:#888;font-size:0.95em;'>(${diffDias}d)</span>`;
-					} else {
-						diasDetalle = '';
-					}
-				}
-			} else {
-				fechaFormateada = acceso.fecha_instalacion;
-			}
-		}
+        // Obtener tipo de acceso
+        let tipoAccesoObj = paciente.tipo_acceso || paciente.acceso?.tipo_acceso || null;
+        let tipoAccesoHtml = '<span class="badge bg-secondary" style="font-size:1em;">Sin tipo</span>';
+        if (tipoAccesoObj && tipoAccesoObj.id) {
+            let iconHtml = '';
+            if (tipoAccesoObj.icono) {
+                if (tipoAccesoObj.icono.startsWith('bi-')) {
+                    iconHtml = `<i class='bi ${tipoAccesoObj.icono}' style='color:${tipoAccesoObj.color || '#222'};font-size:1.15em;margin-right:4px;vertical-align:middle;'></i>`;
+                } else {
+                    iconHtml = `<span style='font-size:1.15em;margin-right:4px;vertical-align:middle;'>${tipoAccesoObj.icono}</span>`;
+                }
+            }
+            tipoAccesoHtml = `<span class="badge" style="font-size:1em;font-weight:normal;background:none;color:${tipoAccesoObj.color || '#222'};padding:0;margin:0;">${iconHtml}${tipoAccesoObj.nombre}</span>`;
+        }
+        // Obtener ubicación anatómica y lado
+        let accesoObj = paciente.acceso || paciente;
+        const ubicacionCompleta = (accesoObj.ubicacion_anatomica && accesoObj.ubicacion_lado)
+            ? `${accesoObj.ubicacion_anatomica} ${accesoObj.ubicacion_lado}`
+            : (accesoObj.ubicacion_anatomica || accesoObj.ubicacion_lado || '');
+        // Obtener fecha instalación
+        let fechaInstalacion = accesoObj.fecha_instalacion || paciente.fecha_instalacion || '';
+        let fechaFormateada = '';
+        let diasDetalle = '';
+        if (fechaInstalacion) {
+            const match = fechaInstalacion.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
+            if (match) {
+                fechaFormateada = `${match[3]}/${match[2]}/${match[1]}`;
+                const fechaInst = new Date(`${match[1]}-${match[2]}-${match[3]}`);
+                const hoy = new Date();
+                fechaInst.setHours(0,0,0,0);
+                hoy.setHours(0,0,0,0);
+                const diffMs = hoy - fechaInst;
+                if (!isNaN(diffMs)) {
+                    const diffDias = Math.floor(diffMs / (1000*60*60*24));
+                    if (diffDias >= 0) {
+                        diasDetalle = ` <span style='color:#888;font-size:0.95em;'>(${diffDias}d)</span>`;
+                    } else {
+                        diasDetalle = '';
+                    }
+                }
+            } else {
+                fechaFormateada = fechaInstalacion;
+            }
+        }
 		// Etiquetas de incidencia: solo icono coloreado, con tooltip
 		let badgesHtml = '';
 		if (Array.isArray(paciente.etiquetas) && paciente.etiquetas.length > 0) {
@@ -416,21 +595,43 @@ async function renderizarPacientes() {
 				return `<i class=\"bi bi-tag-fill\" style=\"color:${tag.color};font-size:1.15em;margin-right:2px;vertical-align:middle;\" title=\"${tag.nombre.replace(/\"/g, '&quot;')}\"></i>`;
 			}).join(' ');
 		}
-		const tr = document.createElement('tr');
-		tr.innerHTML = `
-			<td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos}</td>
-			<td>${tipoAccesoHtml}</td>
-			<td>${ubicacionCompleta}</td>
-			<td>${fechaFormateada}${diasDetalle}</td>
-			<td>
-				<button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
-				<button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
-				<button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
-				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
-			</td>
-		`;
-		tablaPacientesBody.appendChild(tr);
-	});
+		// Mostrar los iconos de todos los tags de infecciones
+        let infeccionTagsHtml = '';
+        if (Array.isArray(paciente.infecciones) && paciente.infecciones.length > 0) {
+            // Ordenar por fecha_infeccion descendente
+            const infeccionesOrdenadas = paciente.infecciones.slice().sort((a, b) => (b.fecha_infeccion || '').localeCompare(a.fecha_infeccion || ''));
+            infeccionTagsHtml = infeccionesOrdenadas.map(inf => {
+                if (!inf.tag) return '';
+                const icono = inf.tag.icono || '';
+                const nombre = inf.tag.nombre || '';
+                const microorganismo = inf.tag.microorganismo_asociado || '';
+                let tooltip = nombre;
+                if (microorganismo && microorganismo !== nombre) {
+                    tooltip += ` (${microorganismo})`;
+                }
+                if (icono.startsWith('bi-')) {
+                    return `<i class='bi ${icono}' style='color:${inf.tag.color || '#1976d2'};font-size:1.15em;margin-left:4px;vertical-align:middle;' title='${tooltip.replace(/"/g, '&quot;')}'></i>`;
+                } else {
+                    return `<span style='font-size:1.15em;margin-left:4px;vertical-align:middle;color:${inf.tag.color || '#1976d2'};' title='${tooltip.replace(/"/g, '&quot;')}' >${icono}</span>`;
+                }
+            }).join('');
+        }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos} ${infeccionTagsHtml}</td>
+            <td>${tipoAccesoHtml}</td>
+            <td class="pacientes-ubicacion" title="${ubicacionCompleta}">${ubicacionCompleta}</td>
+            <td>${fechaFormateada}${diasDetalle}</td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
+                <button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-info btn-sm btn-infeccion" data-id="${paciente.id}" title="Añadir Infección"><i class="bi bi-bug"></i></button>
+                <button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
+                <button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
+            </td>
+        `;
+        tablaPacientesBody.appendChild(tr);
+    });
 }
 
 // Paginación
@@ -547,16 +748,11 @@ function renderizarPaginacion(totalPacientes) {
 
 // Cargar pacientes y renderizar
 function cargarPacientes() {
-	ipcRenderer.invoke('get-pacientes').then(pacientes => {
-        pacientesGlobal = pacientes;
-        paginaActual = 1;
-        const filtrados = filtrarPacientes();
-        const total = filtrados.length;
-        const inicio = (paginaActual - 1) * pacientesPorPagina;
-        const fin = inicio + pacientesPorPagina;
-        renderizarPacientes(filtrados.slice(inicio, fin));
-        renderizarPaginacion(total);
-    });
+	ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+		pacientesGlobal = pacientes;
+		paginaActual = 1;
+		actualizarTablaPacientes();
+	});
 }
 
 // Función global para mostrar mensajes flotantes (debe estar antes de cualquier uso)
@@ -715,7 +911,6 @@ async function crearPaciente() {
 	if (pacienteId && etiquetasSeleccionadas.length > 0) {
 		for (const id of etiquetasSeleccionadas) {
 			const incidencia = incidenciaValoresTemp[id];
-			console.log(`Guardando incidencia para paciente ${pacienteId} con etiqueta ${id}`, incidencia);
 			await ipcRenderer.invoke('add-incidencia-con-tag', {
 				pacienteId,
 				tagId: id,
@@ -989,7 +1184,6 @@ function renderIncidenciaValores(selectedIncidencias) {
 				return;
 			}
 			incidenciaValoresTemp[id] = { fecha, acceso, medidas, nombre, color };
-			console.log('incidenciaValoresTemp:', incidenciaValoresTemp); // Log al guardar incidencia
 			mostrarMensaje(`Incidencia "${nombre}" guardada`, 'success');
 			renderIncidenciaValores(selectedIncidencias);
 		});
