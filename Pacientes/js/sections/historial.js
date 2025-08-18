@@ -1,81 +1,5 @@
-// Renderizar timeline visual de eventos clínicos recientes
-function renderTimelinePaciente(eventos) {
-	const timeline = document.getElementById('timelinePaciente');
-	if (!timeline) return;
-	if (!eventos || eventos.length === 0) {
-		timeline.innerHTML = '<div class="text-muted">Sin datos de evolución disponibles.</div>';
-		return;
-	}
-	timeline.innerHTML = eventos.map(ev => `
-		<div class="d-flex align-items-start mb-3">
-			<div class="icon-circle bg-${ev.color}-subtle text-${ev.color} me-3" style="font-size:1.3em;">
-				<i class="${ev.icono}"></i>
-			</div>
-			<div>
-				<div class="fw-semibold text-${ev.color}">${ev.tipo} <span class="text-muted small ms-2">${ev.fecha}</span></div>
-				<div class="text-dark">${ev.descripcion}</div>
-			</div>
-		</div>
-	`).join('');
-}
+const { ipcRenderer } = require('electron');
 
-// Ejemplo de eventos clínicos recientes
-const eventosPaciente = [
-	{
-		fecha: '2025-08-01',
-		tipo: 'Consulta',
-		descripcion: 'Dolor abdominal. Diagnóstico: Gastritis aguda.',
-		icono: 'bi bi-person-badge',
-		color: 'primary'
-	},
-	{
-		fecha: '2025-08-10',
-		tipo: 'Prueba Laboratorio',
-		descripcion: 'Hemograma y bioquímica normales.',
-		icono: 'bi bi-flask',
-		color: 'info'
-	},
-	{
-		fecha: '2025-08-15',
-		tipo: 'Incidencia',
-		descripcion: 'Alergia detectada: Penicilina.',
-		icono: 'bi bi-exclamation-diamond',
-		color: 'danger'
-	},
-	{
-		fecha: '2025-08-20',
-		tipo: 'Tratamiento',
-		descripcion: 'Inicio de Omeprazol 20mg/día. Seguimiento semanal.',
-		icono: 'bi bi-capsule',
-		color: 'success'
-	},
-	{
-		fecha: '2025-08-25',
-		tipo: 'Cita de control',
-		descripcion: 'Control de evolución. Sin complicaciones.',
-		icono: 'bi bi-calendar-check',
-		color: 'secondary'
-	},
-	{
-		fecha: '2025-08-28',
-		tipo: 'Observación',
-		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
-		icono: 'bi bi-eye',
-		color: 'warning'
-	},
-	{
-		fecha: '2025-08-28',
-		tipo: 'Observación',
-		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
-		icono: 'bi bi-eye',
-		color: 'warning'
-	}
-];
-
-// Llama a la función con tus datos reales o de ejemplo
-document.addEventListener('DOMContentLoaded', function() {
-	renderTimelinePaciente(eventosPaciente);
-});
 // Función global para mostrar mensajes flotantes (copiada de agenda.js)
 // Poblar filtro de pacientes y actualizar historial
 // Función para obtener profesionales registrados
@@ -156,10 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
 				};
 			}
 		});
-	}
+}
 
-
-const { ipcRenderer } = require('electron');
 async function cargarPacientesHistorial() {
 	const select = document.getElementById('filtro-paciente-historial');
 	if (!select) return;
@@ -180,212 +102,6 @@ async function cargarPacientesHistorial() {
 		select.value = pacienteId;
 	}
 }
-
-// --- Poblar selectores de etiquetas de tipo evento y diagnóstico ---
-const etiquetas = require('../sections/etiquetas.js');
-let tagsGlobal = [];
-
-
-async function poblarSelectEtiquetasHistorial(tipoEventoSeleccionado = null, diagnosticoSeleccionado = null) {
-    // Esperar a que se carguen las etiquetas globales
-    if (!tagsGlobal.length) {
-        tagsGlobal = await ipcRenderer.invoke('tags-get-all');
-    }
-    // Evento
-    const selectEvento = document.getElementById('tipo-historial-etiqueta');
-    if (selectEvento) {
-        selectEvento.innerHTML = '';
-        const eventoOptions = tagsGlobal.filter(t => t.tipo === 'evento').map((tag, idx) => {
-            return {
-                value: tag.id,
-                label: tag.nombre,
-                customProperties: { color: tag.color || '#888' },
-                selected: tipoEventoSeleccionado ? String(tag.id) === String(tipoEventoSeleccionado) : idx === 0
-            };
-        });
-        eventoOptions.forEach(opt => {
-            const optElem = document.createElement('option');
-            optElem.value = opt.value;
-            optElem.textContent = opt.label;
-            if (opt.selected) optElem.selected = true;
-            optElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
-            selectEvento.appendChild(optElem);
-        });
-        if (selectEvento.choicesInstance) {
-            selectEvento.choicesInstance.destroy();
-            selectEvento.choicesInstance = null;
-        }
-        selectEvento.choicesInstance = new Choices(selectEvento, {
-            searchEnabled: false,
-            itemSelectText: '',
-            callbackOnCreateTemplates: function(template) {
-                return {
-                    choice: (classNames, data) => {
-                        let colorCircle = '';
-                        if (data.customProperties && data.customProperties.color) {
-                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
-                        }
-                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${colorCircle}${data.label}</div>`;
-                        return template(html);
-                    },
-                    item: (classNames, data) => {
-                        let colorCircle = '';
-                        if (data.customProperties && data.customProperties.color) {
-                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
-                        }
-                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${colorCircle}${data.label}</div>`;
-                        return template(html);
-                    }
-                };
-            }
-        });
-    }
-    // Diagnóstico
-    const selectDiagnostico = document.getElementById('diagnostico-historial-etiqueta');
-    if (selectDiagnostico) {
-        selectDiagnostico.innerHTML = '';
-        const diagOptions = tagsGlobal.filter(t => t.tipo === 'diagnostico').map((tag, idx) => {
-            return {
-                value: tag.id,
-                label: tag.nombre,
-                customProperties: { color: tag.color || '#888' },
-                selected: diagnosticoSeleccionado ? String(tag.id) === String(diagnosticoSeleccionado) : idx === 0
-            };
-        });
-        diagOptions.forEach(opt => {
-            const optElem = document.createElement('option');
-            optElem.value = opt.value;
-            optElem.textContent = opt.label;
-            if (opt.selected) optElem.selected = true;
-            optElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
-            selectDiagnostico.appendChild(optElem);
-        });
-        if (selectDiagnostico.choicesInstance) {
-            selectDiagnostico.choicesInstance.destroy();
-            selectDiagnostico.choicesInstance = null;
-        }
-        selectDiagnostico.choicesInstance = new Choices(selectDiagnostico, {
-            searchEnabled: false,
-            itemSelectText: '',
-            callbackOnCreateTemplates: function(template) {
-                return {
-                    choice: (classNames, data) => {
-                        let colorCircle = '';
-                        if (data.customProperties && data.customProperties.color) {
-                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
-                        }
-                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${colorCircle}${data.label}</div>`;
-                        return template(html);
-                    },
-                    item: (classNames, data) => {
-                        let colorCircle = '';
-                        if (data.customProperties && data.customProperties.color) {
-                            colorCircle = `<span style='display:inline-block;width:18px;height:18px;border-radius:50%;background:${data.customProperties.color};margin-right:8px;vertical-align:middle;'></span>`;
-                        }
-                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${colorCircle}${data.label}</div>`;
-                        return template(html);
-                    }
-                };
-            }
-        });
-    }
-}
-
-document.addEventListener('DOMContentLoaded', poblarSelectEtiquetasHistorial);
-document.getElementById('btn-add-historial').addEventListener('click', poblarSelectEtiquetasHistorial);
-
-
-document.addEventListener('DOMContentLoaded', async function() {
-	   await cargarPacientesHistorial();
-	   await poblarFiltroProfesionalHistorial();
-	   // Mostrar datos del paciente seleccionado por defecto
-	   const select = document.getElementById('filtro-paciente-historial');
-	   let pacienteId = select && select.value ? Number(select.value) : null;
-	   if (pacienteId) {
-		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
-		   await renderPacienteCard(pacienteSel || null);
-	   } else {
-		   await renderPacienteCard(null);
-	   }
-	   renderHistorial();
-	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
-		   pacienteId = Number(this.value);
-		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
-		   await renderPacienteCard(pacienteSel || null);
-		   renderHistorial();
-	   });
-	   document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
-		   renderHistorial();
-	   });
-	   document.getElementById('filtro-tipo-evento-historial').addEventListener('change', function() {
-		   renderHistorial();
-	   });
-	   document.getElementById('filtro-fecha-historial').addEventListener('change', function() {
-		   renderHistorial();
-	   });
-	   document.getElementById('filtro-profesional-historial').addEventListener('change', function() {
-			renderHistorial();
-		});
-	// Evitar duplicidad de submit
-	const form = document.getElementById('form-historial');
-	if (form._submitHandlerSet) return;
-	form.addEventListener('submit', async function(e) {
-		e.preventDefault();
-		// ...existing code...
-		const select = document.getElementById('filtro-paciente-historial');
-		let pacienteIdValue = select && select.value ? select.value : null;
-		// Validar que pacienteIdValue es un número válido
-		if (!pacienteIdValue || isNaN(Number(pacienteIdValue))) {
-			alert('Selecciona un paciente válido antes de guardar la entrada.');
-			return;
-		}
-		pacienteIdValue = Number(pacienteIdValue);
-		// Validar que pacienteIdValue > 0
-		if (pacienteIdValue <= 0) {
-			alert('Selecciona un paciente válido antes de guardar la entrada.');
-			return;
-		}
-		// Sincronizar pacienteId global
-		pacienteId = pacienteIdValue;
-		// Validar profesional-historial
-		const profesionalSelect = document.getElementById('profesional-historial');
-		if (!profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
-			mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
-			profesionalSelect.focus();
-			return;
-		}
-		const id = document.getElementById('id-historial').value;
-		const data = {
-			paciente_id: pacienteIdValue,
-			fecha: document.getElementById('fecha-historial').value,
-			tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
-			motivo: document.getElementById('motivo-historial').value,
-			diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
-			tratamiento: document.getElementById('tratamiento-historial').value,
-			notas: document.getElementById('notas-historial').value,
-			adjuntos: '', // Implementar adjuntos si lo necesitas
-			profesional: profesionalSelect.value
-		};
-		if (id) {
-			await ipcRenderer.invoke('historial-edit', id, data);
-		} else {
-			await ipcRenderer.invoke('historial-add', data);
-		}
-		document.getElementById('form-historial').reset();
-		document.getElementById('id-historial').value = '';
-		const modal = bootstrap.Modal.getInstance(document.getElementById('modal-historial'));
-		if (modal) modal.hide();
-		renderHistorial();
-	});
-	form._submitHandlerSet = true;
-});
-// Historial Clínico - JS
-// Usar window.ipcRenderer como en el resto de secciones
-let historialData = [];
-// Debes definir pacienteId según el paciente seleccionado en la app
-let pacienteId = window.pacienteId || null;
 
 async function renderHistorial() {
     const tbody = document.querySelector('#tabla-historial tbody');
@@ -512,22 +228,134 @@ async function renderHistorial() {
 	};
 }
 
+let tagsGlobal = [];
+let historialData = [];
 
+// Debes definir pacienteId según el paciente seleccionado en la app
+let pacienteId = window.pacienteId || null;
+
+// Llama a la función con tus datos reales o de ejemplo
+document.addEventListener('DOMContentLoaded', function() {
+	renderTimelinePaciente(eventosPaciente);
+});
+
+
+document.addEventListener('DOMContentLoaded', async function() {
+	   await cargarPacientesHistorial();
+	   await poblarFiltroProfesionalHistorial();
+	   // Mostrar datos del paciente seleccionado por defecto
+	   const select = document.getElementById('filtro-paciente-historial');
+	   let pacienteId = select && select.value ? Number(select.value) : null;
+	   if (pacienteId) {
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+		   await renderPacienteCard(pacienteSel || null);
+	   } else {
+		   await renderPacienteCard(null);
+	   }
+	   renderHistorial();
+	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
+		   pacienteId = Number(this.value);
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+		   await renderPacienteCard(pacienteSel || null);
+		   renderHistorial();
+	   });
+	   document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-tipo-evento-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-fecha-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-profesional-historial').addEventListener('change', function() {
+			renderHistorial();
+		});
+	// Evitar duplicidad de submit
+	const form = document.getElementById('form-historial');
+	if (form._submitHandlerSet) return;
+	form.addEventListener('submit', async function(e) {
+		e.preventDefault();
+		const select = document.getElementById('filtro-paciente-historial');
+		let pacienteIdValue = select && select.value ? select.value : null;
+		// Validar que pacienteIdValue es un número válido
+		if (!pacienteIdValue || isNaN(Number(pacienteIdValue))) {
+			alert('Selecciona un paciente válido antes de guardar la entrada.');
+			return;
+		}
+		pacienteIdValue = Number(pacienteIdValue);
+		// Validar que pacienteIdValue > 0
+		if (pacienteIdValue <= 0) {
+			alert('Selecciona un paciente válido antes de guardar la entrada.');
+			return;
+		}
+		// Sincronizar pacienteId global
+		pacienteId = pacienteIdValue;
+		// Validar profesional-historial
+		const profesionalSelect = document.getElementById('profesional-historial');
+		if (!profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
+			mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
+			profesionalSelect.focus();
+			return;
+		}
+		const id = document.getElementById('id-historial').value;
+		const data = {
+			paciente_id: pacienteIdValue,
+			fecha: document.getElementById('fecha-historial').value,
+			tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
+			motivo: document.getElementById('motivo-historial').value,
+			diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
+			tratamiento: document.getElementById('tratamiento-historial').value,
+			notas: document.getElementById('notas-historial').value,
+			adjuntos: '', // Implementar adjuntos si lo necesitas
+			profesional: profesionalSelect.value
+		};
+		if (id) {
+			await ipcRenderer.invoke('historial-edit', id, data);
+		} else {
+			await ipcRenderer.invoke('historial-add', data);
+		}
+		document.getElementById('form-historial').reset();
+	const idHistorialElem = document.getElementById('id-historial');
+	if (idHistorialElem) idHistorialElem.value = '';
+		const modal = bootstrap.Modal.getInstance(document.getElementById('modal-historial'));
+		if (modal) modal.hide();
+		renderHistorial();
+	});
+	form._submitHandlerSet = true;
+});
+
+
+// Historial Clínico - JS
 document.getElementById('btn-add-historial').addEventListener('click', function() {
+	console.log("Añadiendo nuevo historial clínico");
 	cargarProfesionalesEnHistorial();
 	document.getElementById('form-historial').reset();
-	document.getElementById('id-historial').value = '';
+	const idHistorialElem2 = document.getElementById('id-historial');
+	if (idHistorialElem2) idHistorialElem2.value = '';
 	const select = document.getElementById('filtro-paciente-historial');
-	const nombreDiv = document.getElementById('paciente-historial-nombre');
-	if (select && nombreDiv) {
+	const nombreSpan = document.getElementById('modalHistorialPaciente');
+	const avatarImg = document.getElementById('modalHistorialAvatar');
+	if (select && nombreSpan) {
 		const selectedOption = select.options[select.selectedIndex];
 		if (selectedOption) {
-			nombreDiv.textContent = `Paciente seleccionado: ${selectedOption.textContent}`;
-			nombreDiv.style.display = 'block';
+			nombreSpan.textContent = `Paciente: ${selectedOption.textContent}`;
+			// Si tienes el avatar, actualízalo aquí:
+			// avatarImg.src = ...;
 		} else {
-			nombreDiv.textContent = 'Selecciona un paciente antes de añadir entrada.';
-			nombreDiv.style.display = 'block';
+			nombreSpan.textContent = 'Paciente: [No seleccionado]';
 		}
+	}
+	// Establecer la fecha por defecto en hoy
+	const fechaInput = document.getElementById('fecha-historial');
+	if (fechaInput) {
+		const hoy = new Date();
+		const yyyy = hoy.getFullYear();
+		const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		const dd = String(hoy.getDate()).padStart(2, '0');
+		fechaInput.value = `${yyyy}-${mm}-${dd}`;
 	}
 });
 
@@ -737,33 +565,6 @@ async function renderPacienteCard(paciente) {
 	
 }
 
-function formatearFecha(fechaStr) {
-	if (!fechaStr) return '';
-	const partes = fechaStr.split('-');
-	if (partes.length === 3) {
-		return `${partes[2]}-${partes[1]}-${partes[0]}`;
-	}
-	return fechaStr;
-}
-
-
-
-// Poblar filtro de tipo de evento en la tabla
-async function poblarFiltroTipoEventoHistorial() {
-	const select = document.getElementById('filtro-tipo-evento-historial');
-	if (!select) return;
-	select.innerHTML = '<option value="">Todos</option>';
-	if (!tagsGlobal.length) {
-		tagsGlobal = await ipcRenderer.invoke('tags-get-all');
-	}
-	tagsGlobal.filter(t => t.tipo === 'evento').forEach(tag => {
-		const opt = document.createElement('option');
-		opt.value = tag.id;
-		opt.textContent = tag.nombre;
-		select.appendChild(opt);
-	});
-}
-document.addEventListener('DOMContentLoaded', poblarFiltroTipoEventoHistorial);
 
 // Poblar filtro de profesional en la tabla (única función, con avatar y Choices.js)
 async function poblarFiltroProfesionalHistorial() {
@@ -854,3 +655,92 @@ document.getElementById('filtro-paciente-historial').addEventListener('change', 
     renderHistorial();
 });
 
+
+
+/*****************************/
+/*        FUNCIONES         */
+/*****************************/
+
+// Formatear fecha
+function formatearFecha(fechaStr) {
+	if (!fechaStr) return '';
+	const partes = fechaStr.split('-');
+	if (partes.length === 3) {
+		return `${partes[2]}-${partes[1]}-${partes[0]}`;
+	}
+	return fechaStr;
+}
+
+// Renderizar timeline visual de eventos clínicos recientes
+function renderTimelinePaciente(eventos) {
+	const timeline = document.getElementById('timelinePaciente');
+	if (!timeline) return;
+	if (!eventos || eventos.length === 0) {
+		timeline.innerHTML = '<div class="text-muted">Sin datos de evolución disponibles.</div>';
+		return;
+	}
+	timeline.innerHTML = eventos.map(ev => `
+		<div class="d-flex align-items-start mb-3">
+			<div class="icon-circle bg-${ev.color}-subtle text-${ev.color} me-3" style="font-size:1.3em;">
+				<i class="${ev.icono}"></i>
+			</div>
+			<div>
+				<div class="fw-semibold text-${ev.color}">${ev.tipo} <span class="text-muted small ms-2">${ev.fecha}</span></div>
+				<div class="text-dark">${ev.descripcion}</div>
+			</div>
+		</div>
+	`).join('');
+}
+
+// Ejemplo de eventos clínicos recientes
+const eventosPaciente = [
+	{
+		fecha: '2025-08-01',
+		tipo: 'Consulta',
+		descripcion: 'Dolor abdominal. Diagnóstico: Gastritis aguda.',
+		icono: 'bi bi-person-badge',
+		color: 'primary'
+	},
+	{
+		fecha: '2025-08-10',
+		tipo: 'Prueba Laboratorio',
+		descripcion: 'Hemograma y bioquímica normales.',
+		icono: 'bi bi-flask',
+		color: 'info'
+	},
+	{
+		fecha: '2025-08-15',
+		tipo: 'Incidencia',
+		descripcion: 'Alergia detectada: Penicilina.',
+		icono: 'bi bi-exclamation-diamond',
+		color: 'danger'
+	},
+	{
+		fecha: '2025-08-20',
+		tipo: 'Tratamiento',
+		descripcion: 'Inicio de Omeprazol 20mg/día. Seguimiento semanal.',
+		icono: 'bi bi-capsule',
+		color: 'success'
+	},
+	{
+		fecha: '2025-08-25',
+		tipo: 'Cita de control',
+		descripcion: 'Control de evolución. Sin complicaciones.',
+		icono: 'bi bi-calendar-check',
+		color: 'secondary'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	}
+];

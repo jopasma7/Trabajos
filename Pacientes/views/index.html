@@ -505,67 +505,6 @@
                   </table>
                 </div>
               </div>
-              <!-- Modal para añadir/editar historial -->
-              <div class="modal fade" id="modal-historial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="modalHistorialLabel">Añadir entrada al historial</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
-                    <form id="form-historial">
-                      <div class="modal-body">
-                        <div class="mb-3">
-                          <div id="paciente-historial-nombre" class="alert alert-info py-2 px-3 mb-3" style="font-size:1.1em; font-weight:500; display:none;"></div>
-                          <label for="fecha-historial" class="form-label">Fecha</label>
-                          <input type="date" class="form-control" id="fecha-historial" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="tipo-historial" class="form-label">Tipo de Evento</label>
-                          <select class="form-select" id="tipo-historial-etiqueta" required>
-                            <option value="">Selecciona etiqueta de evento</option>
-                            <!-- Opciones dinámicas por JS: solo etiquetas tipo 'evento' -->
-                          </select>
-                        </div>
-                        <div class="mb-3">
-                          <label for="motivo-historial" class="form-label">Motivo</label>
-                          <input type="text" class="form-control" id="motivo-historial" required>
-                        </div>
-                        <div class="mb-3">
-                          <label for="diagnostico-historial" class="form-label">Diagnóstico</label>
-                          <select class="form-select" id="diagnostico-historial-etiqueta" required>
-                            <option value="">Selecciona etiqueta de diagnóstico</option>
-                            <!-- Opciones dinámicas por JS: solo etiquetas tipo 'diagnostico' -->
-                          </select>
-                        </div>
-                        <div class="mb-3">
-                          <label for="tratamiento-historial" class="form-label">Tratamiento</label>
-                          <textarea class="form-control" id="tratamiento-historial" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                          <label for="notas-historial" class="form-label">Notas</label>
-                          <textarea class="form-control" id="notas-historial" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                          <label for="adjuntos-historial" class="form-label">Adjuntos</label>
-                          <input type="file" class="form-control" id="adjuntos-historial" multiple>
-                        </div>
-                        <div class="mb-3">
-                          <label for="profesional-historial" class="form-label">Profesional</label>
-                          <select class="form-select" id="profesional-historial" name="profesional-historial">
-                            <!-- Opciones dinámicas por JS -->
-                          </select>
-                        </div>
-                        <input type="hidden" id="id-historial">
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success">Guardar</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
             </section>
             <!-- Medicaciones Section -->
             <section id="medicaciones-section" class="section d-none">
@@ -994,161 +933,243 @@
       </div>
     </div>
 
-<!-- Modal Nuevo Paciente -->
-<div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="nuevoPacienteLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-gradient shadow-sm align-items-center">
-        <div class="w-100">
-          <h5 class="modal-title d-flex align-items-center gap-2 mb-1" id="nuevoPacienteLabel">
-            <span style="font-family:'Fira Sans', 'Comic Sans MS', cursive;">👨‍⚕️ Agregar un Paciente</span>
-          </h5>
-          <div class="modal-subtitle small mt-0 mb-1 text-start" style="color:#fff;font-family:'Fira Sans', 'Comic Sans MS', cursive;">Rellena los datos personales y clínicos para registrar un nuevo paciente en el sistema.</div>
+    <!-- Modal: Añadir entrada al historial -->
+    <div class="modal fade" id="modal-historial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <!-- Header -->
+          <div class="modal-header bg-light">
+            <div class="d-flex align-items-center w-100">
+              <span class="fs-3 me-2">📝</span>
+              <div>
+                <h5 class="modal-title" id="modalHistorialLabel">Añadir entrada al historial</h5>
+                <div class="d-flex align-items-center mt-1">
+                  <img id="modalHistorialAvatar" src="../assets/avatar-default.png" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
+                  <span id="modalHistorialPaciente" class="fw-semibold text-primary">Paciente: [Nombre y apellidos]</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <!-- Formulario -->
+          <form id="form-historial" autocomplete="off">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="fecha-historial" class="form-label">Fecha</label>
+                  <input type="date" class="form-control" id="fecha-historial" required>
+                </div>
+                <div class="col-md-8">
+                  <label for="evento-historial" class="form-label">Evento</label>
+                  <select class="form-select" id="evento-historial" required>
+                    <option value="Registro">Registro</option>
+                    <option value="Infección">Infección</option>
+                    <option value="Incidencia">Incidencia</option>
+                    <option value="Cambio de acceso">Cambio de acceso</option>
+                    <option value="Fallecimiento">Fallecimiento</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label for="motivo-historial" class="form-label">Motivo / Descripción</label>
+                  <textarea class="form-control" id="motivo-historial" rows="2" required placeholder="Describe el motivo clínico, síntoma, diagnóstico o razón de la entrada..."></textarea>
+                </div>
+                <div class="col-12">
+                  <label for="adjuntos-historial" class="form-label">Adjuntos (opcional)</label>
+                  <input type="file" class="form-control" id="adjuntos-historial" multiple>
+                </div>
+                <div class="col-md-6">
+                  <label for="profesional-historial" class="form-label">Profesional responsable</label>
+                  <select class="form-select" id="profesional-historial" required>
+                    <!-- Opciones dinámicas -->
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="comentarios-historial" class="form-label">Comentarios adicionales (opcional)</label>
+                  <textarea class="form-control" id="comentarios-historial" rows="2" placeholder="Comentarios u observaciones (opcional)"></textarea>
+                </div>
+                <!-- Advertencia visual si evento es Fallecimiento -->
+                <div class="col-12" id="fallecimiento-alert" style="display:none;">
+                  <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span>Advertencia: Estás registrando un fallecimiento.</span>
+                  </div>
+                </div>
+                <!-- Etiquetas asociadas si evento es Infección o Incidencia -->
+                <div class="col-12" id="etiquetas-historial-group" style="display:none;">
+                  <label for="etiquetas-historial" class="form-label">Etiquetas asociadas</label>
+                  <select class="form-select" id="etiquetas-historial" multiple>
+                    <!-- Opciones dinámicas -->
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!-- Footer -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-save me-1"></i> Guardar entrada
+              </button>
+            </div>
+          </form>
         </div>
-        </h5>
-        <button type="button" class="btn border-0 bg-transparent p-0" data-bs-dismiss="modal" aria-label="Cerrar" style="font-size:1.7rem;line-height:1;color:#fff;">
-          <span aria-hidden="true" style="color:#fff;display:inline-block;transform:translate(-10px,-8px);font-size:3rem;">&times;</span>
-        </button>
       </div>
-      <form id="formNuevoPaciente">
-        <div class="modal-body">
-          <!-- Datos personales -->
-          <div class="section-block mb-1">
-            <div class="section-title text-success"><i class="bi bi-person-badge me-1"></i>Datos personales</div>
-            <div class="row g-1">
-              <div class="col-md-16">
+    </div>
+    <!-- Modal Nuevo Paciente -->
+    <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="nuevoPacienteLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-gradient shadow-sm align-items-center">
+            <div class="w-100">
+              <h5 class="modal-title d-flex align-items-center gap-2 mb-1" id="nuevoPacienteLabel">
+                <span style="font-family:'Fira Sans', 'Comic Sans MS', cursive;">👨‍⚕️ Agregar un Paciente</span>
+              </h5>
+              <div class="modal-subtitle small mt-0 mb-1 text-start" style="color:#fff;font-family:'Fira Sans', 'Comic Sans MS', cursive;">Rellena los datos personales y clínicos para registrar un nuevo paciente en el sistema.</div>
+            </div>
+            </h5>
+            <button type="button" class="btn border-0 bg-transparent p-0" data-bs-dismiss="modal" aria-label="Cerrar" style="font-size:1.7rem;line-height:1;color:#fff;">
+              <span aria-hidden="true" style="color:#fff;display:inline-block;transform:translate(-10px,-8px);font-size:3rem;">&times;</span>
+            </button>
+          </div>
+          <form id="formNuevoPaciente">
+            <div class="modal-body">
+              <!-- Datos personales -->
+              <div class="section-block mb-1">
+                <div class="section-title text-success"><i class="bi bi-person-badge me-1"></i>Datos personales</div>
+                <div class="row g-1">
+                  <div class="col-md-16">
+                    <div class="row g-2">
+                      <div class="col-md-2">
+                        <label for="nombre" class="form-label"><i class="bi bi-person"></i> Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" autocomplete="off" required>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="apellidos" class="form-label"><i class="bi bi-person-lines-fill"></i> Apellidos</label>
+                        <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="off" required>
+                      </div>
+                      <div class="col-md-1">
+                        <label for="sexo" class="form-label"><i class="bi bi-gender-ambiguous"></i> Sexo</label>
+                        <select class="form-select" id="sexo" name="sexo" required>
+                          <option value="">-</option>
+                          <option value="hombre">Hombre</option>
+                          <option value="mujer">Mujer</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label for="nacimiento" class="form-label"><i class="bi bi-calendar-date"></i> Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="nacimiento" name="nacimiento">
+                      </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-md-2">
+                        <label for="telefono" class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="correo" class="form-label"><i class="bi bi-envelope"></i> Correo</label>
+                        <input type="email" class="form-control" id="correo" name="correo" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="direccion" class="form-label"><i class="bi bi-geo-alt"></i> Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="alergias" class="form-label"><i class="bi bi-exclamation-triangle"></i> Alergias</label>
+                        <input type="text" class="form-control" id="alergias" name="alergias" autocomplete="off">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Datos clínicos -->
+              <div class="section-block mb-3">
+                <div class="section-title text-primary"><i class="bi bi-clipboard-pulse me-2"></i>Datos clínicos</div>
                 <div class="row g-2">
                   <div class="col-md-2">
-                    <label for="nombre" class="form-label"><i class="bi bi-person"></i> Nombre</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" autocomplete="off" required>
-                  </div>
-                  <div class="col-md-3">
-                    <label for="apellidos" class="form-label"><i class="bi bi-person-lines-fill"></i> Apellidos</label>
-                    <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="off" required>
-                  </div>
-                  <div class="col-md-1">
-                    <label for="sexo" class="form-label"><i class="bi bi-gender-ambiguous"></i> Sexo</label>
-                    <select class="form-select" id="sexo" name="sexo" required>
-                      <option value="">-</option>
-                      <option value="hombre">Hombre</option>
-                      <option value="mujer">Mujer</option>
+                    <label for="profesional" class="form-label"><i class="bi bi-person-workspace"></i> Profesional a Cargo</label>
+                    <select class="form-select" id="profesional" name="profesional" required>
+                      <option value="">Selecciona un profesional</option>
+                      <!-- Opciones dinámicas por JS -->
                     </select>
                   </div>
                   <div class="col-md-2">
-                    <label for="nacimiento" class="form-label"><i class="bi bi-calendar-date"></i> Fecha de Nacimiento</label>
-                    <input type="date" class="form-control" id="nacimiento" name="nacimiento">
+                    <label for="tipoAcceso" class="form-label"><i class="bi bi-door-open"></i> Tipo acceso</label>
+                    <select class="form-select" id="tipoAcceso" name="tipoAcceso" required>
+                      <option value="">Selecciona tipo de acceso</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="ubicacion" class="form-label"><i class="bi bi-geo"></i> Ubicación anatómica</label>
+                    <select class="form-select" id="ubicacion" name="ubicacion" required>
+                      <option value="">Selecciona ubicación</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
+                    <select class="form-select" id="lado" name="lado">
+                      <option value="">-</option>
+                      <option value="Izquierda">Izquierda</option>
+                      <option value="Derecha">Derecha</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="pendiente" class="form-label"><i class="bi bi-diagram-3"></i> Pendiente</label>
+                    <select class="form-select" id="pendiente" name="pendiente" required>
+                      <option value="">Sin estado</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="accesoPendiente" class="form-label"><i class="bi bi-key"></i> Acceso pendiente</label>
+                    <select class="form-select" id="accesoPendiente" name="accesoPendiente">
+                      <option value="">Selecciona tipo de acceso</option>
+                    </select>
+                  </div>
+                    <div class="col-md-2">
+                      <label for="alta" class="form-label"><i class="bi bi-calendar-check"></i> Fecha de Alta</label>
+                      <input type="date" class="form-control" id="alta" name="alta">
+                    </div>
+                  <div class="col-md-2">
+                    <label for="fechaInstalacionAcceso" class="form-label" id="labelFechaInstalacionAcceso" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha Instalación del Acceso</label>
+                    <input type="date" class="form-control" id="fechaInstalacionAcceso" name="fechaInstalacionAcceso" style="display:none;">
+                  </div>
+                  <div class="col-md-6">
+                    <label for="observaciones" class="form-label"><i class="bi bi-chat-dots"></i> Observaciones</label>
+                    <input type="text" class="form-control" id="observaciones" name="observaciones" autocomplete="off">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="fechaInstalacionAccesoPendiente" class="form-label" id="labelFechaInstalacionAccesoPendiente" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha del Acceso Pendiente</label>
+                    <input type="date" class="form-control" id="fechaInstalacionAccesoPendiente" name="fechaInstalacionAccesoPendiente" style="display:none;">
                   </div>
                 </div>
-                <div class="row g-2 mt-2">
-                  <div class="col-md-2">
-                    <label for="telefono" class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
-                    <input type="text" class="form-control" id="telefono" name="telefono" autocomplete="off">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="correo" class="form-label"><i class="bi bi-envelope"></i> Correo</label>
-                    <input type="email" class="form-control" id="correo" name="correo" autocomplete="off">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="direccion" class="form-label"><i class="bi bi-geo-alt"></i> Dirección</label>
-                    <input type="text" class="form-control" id="direccion" name="direccion" autocomplete="off">
-                  </div>
-                  <div class="col-md-2">
-                    <label for="alergias" class="form-label"><i class="bi bi-exclamation-triangle"></i> Alergias</label>
-                    <input type="text" class="form-control" id="alergias" name="alergias" autocomplete="off">
+              </div>
+              <!-- Etiquetas de incidencia -->
+              <div class="section-block mb-3">
+                <div class="section-title text-warning"><i class="bi bi-tags me-2"></i>Etiquetas de incidencia</div>
+                <div class="row g-2">
+                  <div class="col-md-12">
+                    <label for="etiquetasIncidencia" class="form-label"><i class="bi bi-tag"></i> Etiquetas de incidencia</label>
+                    <select class="form-select" id="etiquetasIncidencia" name="etiquetasIncidencia" multiple></select>
+                    <div id="incidencia-valores-container" class="mt-2"></div>
+                    <div id="etiquetas-activas-container" style="margin-top:8px;"></div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <!-- Datos clínicos -->
-          <div class="section-block mb-3">
-            <div class="section-title text-primary"><i class="bi bi-clipboard-pulse me-2"></i>Datos clínicos</div>
-            <div class="row g-2">
-              <div class="col-md-2">
-                <label for="profesional" class="form-label"><i class="bi bi-person-workspace"></i> Profesional a Cargo</label>
-                <select class="form-select" id="profesional" name="profesional" required>
-                  <option value="">Selecciona un profesional</option>
-                  <!-- Opciones dinámicas por JS -->
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label for="tipoAcceso" class="form-label"><i class="bi bi-door-open"></i> Tipo acceso</label>
-                <select class="form-select" id="tipoAcceso" name="tipoAcceso" required>
-                  <option value="">Selecciona tipo de acceso</option>
-                  <!-- Opciones dinámicas por JS -->
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label for="ubicacion" class="form-label"><i class="bi bi-geo"></i> Ubicación anatómica</label>
-                <select class="form-select" id="ubicacion" name="ubicacion" required>
-                  <option value="">Selecciona ubicación</option>
-                  <!-- Opciones dinámicas por JS -->
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label for="lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
-                <select class="form-select" id="lado" name="lado">
-                  <option value="">-</option>
-                  <option value="Izquierda">Izquierda</option>
-                  <option value="Derecha">Derecha</option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label for="pendiente" class="form-label"><i class="bi bi-diagram-3"></i> Pendiente</label>
-                <select class="form-select" id="pendiente" name="pendiente" required>
-                  <option value="">Sin estado</option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <label for="accesoPendiente" class="form-label"><i class="bi bi-key"></i> Acceso pendiente</label>
-                <select class="form-select" id="accesoPendiente" name="accesoPendiente">
-                  <option value="">Selecciona tipo de acceso</option>
-                </select>
-              </div>
-                <div class="col-md-2">
-                  <label for="alta" class="form-label"><i class="bi bi-calendar-check"></i> Fecha de Alta</label>
-                  <input type="date" class="form-control" id="alta" name="alta">
+            <div class="modal-footer bg-gradient shadow-sm align-items-center">
+              <div class="row mt-4">
+                <div class="col-12 d-flex justify-content-end">
+                  <button type="submit" class="btn btn-success btn-lg px-4" id="btnGuardarPaciente">
+                    <i class="bi bi-save" style="padding-right: 8px; font-size:1.3rem;"></i> <span style="font-size:1.1rem;">Guardar Paciente</span>
+                  </button>
                 </div>
-              <div class="col-md-2">
-                <label for="fechaInstalacionAcceso" class="form-label" id="labelFechaInstalacionAcceso" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha Instalación del Acceso</label>
-                <input type="date" class="form-control" id="fechaInstalacionAcceso" name="fechaInstalacionAcceso" style="display:none;">
-              </div>
-              <div class="col-md-6">
-                <label for="observaciones" class="form-label"><i class="bi bi-chat-dots"></i> Observaciones</label>
-                <input type="text" class="form-control" id="observaciones" name="observaciones" autocomplete="off">
-              </div>
-              <div class="col-md-2">
-                <label for="fechaInstalacionAccesoPendiente" class="form-label" id="labelFechaInstalacionAccesoPendiente" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha del Acceso Pendiente</label>
-                <input type="date" class="form-control" id="fechaInstalacionAccesoPendiente" name="fechaInstalacionAccesoPendiente" style="display:none;">
               </div>
             </div>
-          </div>
-          <!-- Etiquetas de incidencia -->
-          <div class="section-block mb-3">
-            <div class="section-title text-warning"><i class="bi bi-tags me-2"></i>Etiquetas de incidencia</div>
-            <div class="row g-2">
-              <div class="col-md-12">
-                <label for="etiquetasIncidencia" class="form-label"><i class="bi bi-tag"></i> Etiquetas de incidencia</label>
-                <select class="form-select" id="etiquetasIncidencia" name="etiquetasIncidencia" multiple></select>
-                <div id="incidencia-valores-container" class="mt-2"></div>
-                <div id="etiquetas-activas-container" style="margin-top:8px;"></div>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
-        <div class="modal-footer bg-gradient shadow-sm align-items-center">
-          <div class="row mt-4">
-            <div class="col-12 d-flex justify-content-end">
-              <button type="submit" class="btn btn-success btn-lg px-4" id="btnGuardarPaciente">
-                <i class="bi bi-save" style="padding-right: 8px; font-size:1.3rem;"></i> <span style="font-size:1.1rem;">Guardar Paciente</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
-  </div>
-</div>
     <!-- Modal de Incidencias -->
     <div class="modal fade" id="modal-incidencias" tabindex="-1" aria-labelledby="modalIncidenciasLabel" aria-hidden="true">
       <div class="modal-dialog modal-incidencias-wide">
