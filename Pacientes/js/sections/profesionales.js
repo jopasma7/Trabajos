@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectorProfesional = document.getElementById('selector-profesional');
     async function poblarSelectorProfesionales() {
         if (!selectorProfesional) return;
-        selectorProfesional.innerHTML = '<option value="">-- Selecciona un profesional --</option>';
+    selectorProfesional.innerHTML = '<option value="">-- Agregar un profesional --</option>';
         const profesionales = await ipcRenderer.invoke('get-profesionales');
         profesionales.forEach(prof => {
             const opt = document.createElement('option');

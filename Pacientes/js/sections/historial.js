@@ -848,7 +848,7 @@ document.addEventListener('DOMContentLoaded', poblarFiltroFechaHistorial);
 
 document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
     pacienteId = Number(this.value);
-    const pacientes = await ipcRenderer.invoke('get-pacientes');
+	const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
     const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
     await renderPacienteCard(pacienteSel || null);
     renderHistorial();
