@@ -1,3 +1,20 @@
+	// Limpiar infecciones añadidas
+	if (window.infeccionesTemp) window.infeccionesTemp = [];
+	// Limpiar comentarios y lista de infecciones
+	var comentariosInput = document.getElementById('infeccion-comentarios');
+	if (comentariosInput) comentariosInput.value = '';
+	var listaInfeccion = document.getElementById('infeccion-lista');
+	if (listaInfeccion) listaInfeccion.innerHTML = '';
+	// Poner la fecha actual por defecto en el campo de fecha de infección
+	var fechaInput = document.getElementById('infeccion-fecha');
+	if (fechaInput) {
+		var hoy = new Date();
+		var yyyy = hoy.getFullYear();
+		var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		var dd = String(hoy.getDate()).padStart(2, '0');
+		fechaInput.value = `${yyyy}-${mm}-${dd}`;
+	}
+	console.log('Etiquetas globales:', window.etiquetasGlobales);
 const { ipcRenderer } = require('electron');
 
 // Función global para mostrar mensajes flotantes (copiada de agenda.js)
@@ -241,6 +258,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 document.addEventListener('DOMContentLoaded', async function() {
+	// Cargar etiquetas globales al iniciar
+	window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
 	   await cargarPacientesHistorial();
 	   await poblarFiltroProfesionalHistorial();
 	   // Mostrar datos del paciente seleccionado por defecto
@@ -520,7 +539,28 @@ async function renderPacienteCard(paciente) {
     } else {
         avatar.src = paciente.sexo === 'M' ? '../assets/hombre.jpg' : (paciente.sexo === 'F' ? '../assets/mujer.jpg' : '../assets/avatar-default.png');
     }
-    nombre.textContent = paciente.nombre + (paciente.apellidos ? ' ' + paciente.apellidos : '');
+	let iconosInfeccion = '';
+	if (Array.isArray(paciente.infecciones) && paciente.infecciones.length > 0) {
+		paciente.infecciones.forEach(inf => {
+			if (inf.tag.emoji || inf.tag.icono || inf.tag.nombre) {
+				const nombreInf = inf.tag.nombre ? inf.tag.nombre : 'Infección';
+				if (inf.tag.emoji) {
+					iconosInfeccion += inf.tag.emoji;
+				} else if (inf.tag.icono) {
+					iconosInfeccion += inf.tag.icono;
+				}
+			}
+		});
+	}
+	nombre.innerHTML = paciente.nombre + (paciente.apellidos ? ' ' + paciente.apellidos : '') + " " + iconosInfeccion;
+	// Inicializar tooltips Bootstrap para los iconos de infección
+	if (nombre) {
+		var tooltipTriggerList = [].slice.call(nombre.querySelectorAll('[data-bs-toggle="tooltip"]'));
+		tooltipTriggerList.map(function(tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl);
+		});
+	}
+	//console.log(paciente.infecciones[0].tag.icono);
     let edad = '';
     let fechaNac = paciente.fecha_nacimiento || '';
 	let tipoAcceso = paciente.tipo_acceso_id ? (tagsGlobal ? (tagsGlobal.find(t => t.id === paciente.tipo_acceso_id)?.nombre || '') : '') : '';
@@ -564,7 +604,6 @@ async function renderPacienteCard(paciente) {
 	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
 	
 }
-
 
 // Poblar filtro de profesional en la tabla (única función, con avatar y Choices.js)
 async function poblarFiltroProfesionalHistorial() {
@@ -650,6 +689,7 @@ document.addEventListener('DOMContentLoaded', poblarFiltroFechaHistorial);
 document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
     pacienteId = Number(this.value);
 	const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+	console.log("Pacientes cargando:", pacientes);
     const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
     await renderPacienteCard(pacienteSel || null);
     renderHistorial();
@@ -744,3 +784,186 @@ const eventosPaciente = [
 		color: 'warning'
 	}
 ];
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Inicializar tooltips Bootstrap
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function(tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Event handler para el botón de infecciones
+  var btnInfeccion = document.getElementById('btn-historial-add-infeccion');
+  if (btnInfeccion) {
+    btnInfeccion.addEventListener('click', function() {
+      abrirMenuInfecciones();
+    });
+  }
+
+  // Event handler para el botón de incidencias (puedes añadir funcionalidad aquí)
+  var btnIncidencia = document.getElementById('btn-historial-add-incidencia');
+  if (btnIncidencia) {
+    btnIncidencia.addEventListener('click', function() {
+      // abrirMenuIncidencias(); // Si lo necesitas
+    });
+  }
+});
+
+// Función para abrir el menú de infecciones
+function abrirMenuInfecciones() {
+	var modal = document.getElementById('modal-infeccion');
+	if (modal) {
+		// Cargar etiquetas de tipo infección antes de mostrar el modal
+		var select = document.getElementById('infeccion-tags');
+		if (select) {
+			select.innerHTML = '';
+			// Si tienes una variable global window.etiquetasGlobales con todas las etiquetas
+							if (window.etiquetasGlobales && Array.isArray(window.etiquetasGlobales)) {
+								window.etiquetasGlobales.forEach(function(etiqueta) {
+									if (etiqueta.tipo === 'infeccion' || etiqueta.tipo === 'infección') {
+										var option = document.createElement('option');
+										option.value = etiqueta.id;
+																			if (etiqueta.icono) {
+																				option.textContent = `${etiqueta.icono} ${etiqueta.nombre}`;
+																			} else {
+																				option.textContent = etiqueta.nombre;
+																			}
+										select.appendChild(option);
+									}
+								});
+							}
+		}
+	// Limpiar infecciones temporales igual que en pacientes.js
+	window.infeccionesTemp = [];
+	// Limpiar el contenido visual de la lista de infecciones
+	var listaInfeccion = document.getElementById('infeccion-lista');
+	if (listaInfeccion) listaInfeccion.innerHTML = '';
+		var modalInstance = new bootstrap.Modal(modal);
+		modalInstance.show();
+	} else {
+		alert('No se encontró el modal de infección.');
+	}
+	
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // ...existing code...
+  cargarEtiquetasInfeccion();
+  // Choices.js eliminado, se usa el select nativo
+  // ...existing code...
+});
+
+function cargarEtiquetasInfeccion() {
+  // Suponiendo que tienes una variable global window.etiquetasGlobales con todas las etiquetas
+  // y cada etiqueta tiene { id, nombre, tipo }
+  var select = document.getElementById('infeccion-tags');
+  if (!select) return;
+  select.innerHTML = '';
+  if (window.etiquetasGlobales && Array.isArray(window.etiquetasGlobales)) {
+    window.etiquetasGlobales.forEach(function(etiqueta) {
+      if (etiqueta.tipo === 'infeccion' || etiqueta.tipo === 'infección') {
+        var option = document.createElement('option');
+        option.value = etiqueta.id;
+        option.textContent = etiqueta.nombre;
+        select.appendChild(option);
+      }
+    });
+  }
+}
+
+function agregarInfeccion() {
+  var tags = window.choicesInfeccion ? window.choicesInfeccion.getValue(true) : [];
+  var fecha = document.getElementById('infeccion-fecha').value;
+  var comentarios = document.getElementById('infeccion-comentarios').value;
+  var lista = document.getElementById('infeccion-lista');
+  if (!tags.length || !fecha) {
+    alert('Selecciona al menos un tipo de infección y una fecha.');
+    return;
+  }
+  // Mostrar resumen en la lista
+  var resumen = document.createElement('div');
+  resumen.className = 'alert alert-info mb-2';
+  resumen.innerHTML = '<b>Infección:</b> ' + tags.join(', ') + '<br><b>Fecha:</b> ' + fecha + (comentarios ? '<br><b>Comentarios:</b> ' + comentarios : '');
+  lista.appendChild(resumen);
+  document.getElementById('btn-guardar-infecciones').classList.remove('d-none');
+}
+
+function guardarInfecciones() {
+  // Aquí iría la lógica para guardar en la base de datos o actualizar la UI
+  alert('Infección guardada correctamente.');
+  var modal = document.getElementById('modal-infeccion');
+  if (modal) {
+    var modalInstance = bootstrap.Modal.getInstance(modal);
+    modalInstance.hide();
+  }
+}
+
+function resetearModalInfeccion() {
+  if (window.choicesInfeccion) window.choicesInfeccion.removeActiveItems();
+  document.getElementById('infeccion-fecha').value = '';
+  document.getElementById('infeccion-comentarios').value = '';
+  document.getElementById('infeccion-lista').innerHTML = '';
+  document.getElementById('btn-guardar-infecciones').classList.add('d-none');
+}
+
+// Mostrar icono de infección junto al nombre del paciente en la tarjeta
+function mostrarIconoInfeccionPaciente(infectado) {
+  var nombreElem = document.getElementById('pacienteNombre');
+  if (!nombreElem) return;
+  // Elimina icono previo si existe
+  var iconoPrevio = document.getElementById('icono-infeccion');
+  if (iconoPrevio) iconoPrevio.remove();
+  if (infectado) {
+    var span = document.createElement('span');
+    span.id = 'icono-infeccion';
+    span.className = 'ms-2';
+    span.innerHTML = '<i class="bi bi-bug text-danger" title="Paciente infectado"></i>';
+    nombreElem.appendChild(span);
+  }
+}
+
+function mostrarIconosInfeccionPaciente(infecciones) {
+  var iconosContainer = document.getElementById('iconos-infeccion-card');
+  if (!iconosContainer) return;
+  iconosContainer.innerHTML = '';
+  if (Array.isArray(infecciones) && infecciones.length) {
+    infecciones.forEach(function(tag) {
+      var span = document.createElement('span');
+      span.className = 'ms-1 icono-infeccion-paciente';
+      span.setAttribute('data-bs-toggle', 'tooltip');
+      span.setAttribute('data-bs-placement', 'top');
+      span.setAttribute('title', tag.nombre || 'Infección');
+      if (tag.emoji) {
+        span.textContent = tag.emoji;
+      } else if (tag.icono) {
+        span.innerHTML = '<i class="' + tag.icono + ' text-danger"></i>';
+      } else {
+        span.innerHTML = '<i class="bi bi-bug text-danger"></i>';
+      }
+      iconosContainer.appendChild(span);
+    });
+    var tooltipTriggerList = [].slice.call(iconosContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function(tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
+}
+
+function cargarDatosPacienteCard(paciente) {
+  console.debug('Paciente cargando seleccionado');
+  var nombreElem = document.getElementById('pacienteNombre');
+  if (nombreElem) {
+    var nombre = paciente.nombre || '';
+    var emoji = '';
+    if (Array.isArray(paciente.infeccion) && paciente.infeccion.length) {
+      var tag = paciente.infeccion[0];
+      if (tag.emoji) {
+        emoji = ' ' + tag.emoji;
+      } else if (tag.icono) {
+        emoji = ' ';
+      }
+    }
+    nombreElem.textContent = nombre + emoji;
+  }
+  // ...otros campos...
+}
