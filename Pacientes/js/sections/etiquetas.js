@@ -1,19 +1,26 @@
 // Handler para editar etiquetas
 document.addEventListener('click', async function(e) {
-  if (e.target.classList.contains('btn-editar-etiqueta')) {
-    const tagId = e.target.getAttribute('data-id');
+  const btnEditar = e.target.closest('.btn-editar-etiqueta');
+  if (btnEditar) {
+    const tagId = btnEditar.getAttribute('data-id');
     const tag = await ipcRenderer.invoke('tags-get', tagId);
     // Rellenar el formulario con los datos
-    inputNombre.value = tag.nombre || '';
-    inputColor.value = tag.color || '#009879';
-    inputDescripcion.value = tag.descripcion || '';
-    inputId.value = tag.id || '';
-    inputIcono.value = tag.icono || '';
-    inputTipo.value = tag.tipo || 'incidencia';
-    // Microorganismo asociado
-    const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
-    if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
+  inputNombre.value = tag.nombre || '';
+  inputColor.value = tag.color || '#009879';
+  inputDescripcion.value = tag.descripcion || '';
+  inputId.value = tag.id || '';
+  inputTipo.value = tag.tipo || 'incidencia';
+  // Microorganismo asociado
+  const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+  if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
     inputTipo.dispatchEvent(new Event('change'));
+    // Establecer el icono después del cambio de tipo para evitar que se sobrescriba
+    inputIcono.value = tag.icono || '';
+    // Actualizar el botón de emoji si existe
+    const btnIcono = document.getElementById('etiqueta-icono-btn');
+    if (btnIcono) {
+      btnIcono.textContent = tag.icono || '🩸';
+    }
     modalEtiqueta.show();
   }
 });
@@ -74,25 +81,27 @@ function renderTags() {
   const inicio = (paginaActualEtiquetas - 1) * etiquetasPorPagina;
   const fin = inicio + etiquetasPorPagina;
   const visibles = tagsFiltradas.slice(inicio, fin);
-  visibles.forEach(tag => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <i class="bi bi-tag-fill" style="color:${tag.color}"></i>
-      </td>
-      <td>${tag.nombre}</td>
-      <td>
-        ${tag.tipo === 'acceso' ? `<span class="badge" style="font-size:1em;">${tag.icono ? tag.icono : ''}</span>` : `<span class="badge" style="background:${tag.color}">${tag.color}</span>`}
-      </td>
-      <td>${tag.tipo ? tag.tipo.charAt(0).toUpperCase() + tag.tipo.slice(1) : ''}</td>
-      <td>${tag.descripcion ? tag.descripcion : ''}</td>
-      <td>
-        <button class="btn btn-sm btn-outline-primary me-1 btn-editar-etiqueta" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
-        <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${tag.id}"><i class="bi bi-trash"></i></button>
-      </td>
-    `;
-    tablaEtiquetas.appendChild(tr);
-  });
+    visibles.forEach(tag => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <i class="bi bi-tag-fill" style="color:${tag.color}"></i>
+          </td>
+          <td>${tag.nombre}</td>
+          <td>
+            ${(tag.icono && (tag.tipo === 'acceso' || tag.tipo === 'infeccion'))
+              ? `<span class="badge" style="font-size:1em;">${tag.icono}</span>`
+              : `<span class="badge" style="background:${tag.color}">${tag.color}</span>`}
+          </td>
+          <td>${tag.tipo ? tag.tipo.charAt(0).toUpperCase() + tag.tipo.slice(1) : ''}</td>
+          <td>${tag.descripcion ? tag.descripcion : ''}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary me-1 btn-editar-etiqueta" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${tag.id}"><i class="bi bi-trash"></i></button>
+          </td>
+        `;
+        tablaEtiquetas.appendChild(tr);
+    });
   renderizarPaginacionEtiquetas(total);
 }
 // Filtro de tipo de etiqueta

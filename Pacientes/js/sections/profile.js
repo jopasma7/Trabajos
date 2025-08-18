@@ -217,13 +217,7 @@ function setupProfileSection() {
                     headerName.textContent = 'Usuario';
                 }
             }
-            if (typeof mostrarMensaje === 'function') {
-                mostrarMensaje('Perfil guardado correctamente', 'success');
-            } else if (window.mostrarMensaje) {
-                window.mostrarMensaje('Perfil guardado correctamente', 'success');
-            } else {
-                alert('Perfil guardado correctamente');
-            }
+            window.mostrarMensaje('Perfil guardado correctamente', 'success');
         });
     });
 
