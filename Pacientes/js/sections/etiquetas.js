@@ -1,6 +1,6 @@
 // Handler para editar etiquetas
 document.addEventListener('click', async function(e) {
-  if (e.target.classList.contains('btn-editar')) {
+  if (e.target.classList.contains('btn-editar-etiqueta')) {
     const tagId = e.target.getAttribute('data-id');
     const tag = await ipcRenderer.invoke('tags-get', tagId);
     // Rellenar el formulario con los datos
@@ -87,7 +87,7 @@ function renderTags() {
       <td>${tag.tipo ? tag.tipo.charAt(0).toUpperCase() + tag.tipo.slice(1) : ''}</td>
       <td>${tag.descripcion ? tag.descripcion : ''}</td>
       <td>
-        <button class="btn btn-sm btn-outline-primary me-1 btn-editar" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-outline-primary me-1 btn-editar-etiqueta" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
         <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${tag.id}"><i class="bi bi-trash"></i></button>
       </td>
     `;

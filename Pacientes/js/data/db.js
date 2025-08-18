@@ -493,7 +493,7 @@ db.archiveHistorialClinico = function(id) {
   return { changes: info.changes };
 };
 
-db.getHistorialArchivadoByPaciente = function(pacienteId) {
+db.getHistorialArchivadoByPaciente = function(pacienteId) { 
   return db.prepare('SELECT * FROM historial_clinico WHERE paciente_id = ? AND archivado = 1 ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
 

@@ -39,6 +39,30 @@ async function cargarDatosGlobal() {
 }
 
 // DOCUMENT DOM
+// Captura errores JS globales y los muestra en consola y en la UI
+window.addEventListener('error', function(event) {
+	console.error('Error global:', event.message, event.filename, event.lineno, event.colno);
+	mostrarMensaje('Error JS: ' + event.message, 'danger');
+});
+window.addEventListener('unhandledrejection', function(event) {
+	console.error('Unhandled promise rejection:', event.reason);
+	mostrarMensaje('Error promesa: ' + event.reason, 'danger');
+});
+// Limpia backdrops después de cerrar cualquier modal
+document.addEventListener('hidden.bs.modal', function() {
+	limpiarBackdropsDuplicados();
+});
+// Elimina backdrops duplicados de Bootstrap Modal
+function limpiarBackdropsDuplicados() {
+	const backdrops = document.querySelectorAll('.modal-backdrop');
+	if (backdrops.length > 1) {
+		console.warn(`[MODAL BACKDROP] Encontrados ${backdrops.length} backdrops, eliminando duplicados.`);
+		backdrops.forEach((el, idx) => {
+			if (idx > 0) el.remove();
+		});
+	}
+}
+
 // Cargar los elementos en el DOM
 document.addEventListener('DOMContentLoaded', async () => {
 	await cargarDatosGlobal();
@@ -124,7 +148,7 @@ if (btnNuevoPaciente) {
     });
 }
 
-// Handler global para los botones de eliminar en la tabla
+// Handler global para los botones de la tabla
 document.addEventListener('click', async function(e) {
 	// Botón de archivar
 	const btnArchivar = e.target.closest('.btn-archivar');
@@ -176,21 +200,45 @@ document.addEventListener('click', async function(e) {
 		});
 		// Mostrar el modal
 		const modalEl = document.getElementById('modal-infeccion');
-		let modalInstance = bootstrap.Modal.getInstance(modalEl);
-		if (!modalInstance) {
-			modalInstance = new bootstrap.Modal(modalEl);
+		// Gestión robusta de instancia y listeners
+		if (!modalEl._modalInstance) {
+			modalEl._modalInstance = new bootstrap.Modal(modalEl);
+			// Listener único para limpiar instancia y variables al cerrar
+			modalEl.addEventListener('hidden.bs.modal', function handler() {
+				console.log('[MODAL EVENT] hidden.bs.modal (infeccion) fired');
+				// Limpiar instancia
+				modalEl._modalInstance = null;
+				// Limpiar variables temporales
+				window.pacienteEditando = null;
+				incidenciaValoresTemp = {};
+				// Limpiar contenedores visuales
+				const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
+				if (etiquetasActivasContainer) etiquetasActivasContainer.innerHTML = '';
+				const incidenciaContainer = document.getElementById('incidencia-valores-container');
+				if (incidenciaContainer) incidenciaContainer.innerHTML = '';
+				// Eliminar el listener para evitar acumulación
+				modalEl.removeEventListener('hidden.bs.modal', handler);
+			});
 		}
-		modalInstance.show();
+		console.log('[MODAL EVENT] Opening modal-infeccion');
+		limpiarBackdropsDuplicados();
+		modalEl._modalInstance.show();
+		// Limpiar infecciones temporales al abrir el modal de infección
+		infeccionesTemp = [];
 	}
 });
 
 // Handler para el botón de editar paciente
 document.addEventListener('click', async function(e) {
-	const btn = e.target.closest('.btn-editar');
+	const btn = e.target.closest('.btn-editar-paciente');
 	if (btn) {
-		const pacienteId = btn.getAttribute('data-id');
+		// Eliminar cualquier listener previo para evitar duplicados
+		btn.replaceWith(btn.cloneNode(true));
+		// Seleccionar el nuevo botón clonado
+		const newBtn = document.querySelector(`.btn-editar-paciente[data-id='${btn.getAttribute('data-id')}']`);
+		// Continuar con la lógica normal usando newBtn
+		const pacienteId = newBtn.getAttribute('data-id');
 		if (!pacienteId) return;
-		// Obtener datos completos del paciente
 		if (!datosGlobalesCargados) await cargarDatosGlobal();    
 		limpiarCamposNuevoPaciente();
 		llenarSelectProfesional();
@@ -200,17 +248,14 @@ document.addEventListener('click', async function(e) {
 		const paciente = await ipcRenderer.invoke('paciente-get-con-acceso', Number(pacienteId));
 		if (!paciente) return;
 		window.pacienteEditando = paciente;
-		// Mostrar etiquetas activas visualmente
 		const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
 		etiquetasActivasContainer.innerHTML = '<label for="etiquetas-activas-container" class="form-label"><i class="bi bi-tag-fill me-1"></i> Etiquetas Activas</label>';
-		// Recoger incidencias activas del paciente
 		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
 		let badgesHtml = '';
 		if (Array.isArray(paciente.etiquetas) && paciente.etiquetas.length > 0) {
 			badgesHtml = paciente.etiquetas.map(id => {
 				const tag = etiquetasPorId[id];
 				if (!tag || tag.tipo !== 'incidencia') return '';
-				// Buscar incidencia activa para esta etiqueta
 				const incidencia = incidencias.find(inc => String(inc.etiqueta_id) === String(id) && inc.activo);
 				let fecha = '';
 				let accesoBadge = '';
@@ -221,7 +266,6 @@ document.addEventListener('click', async function(e) {
 						else fecha = incidencia.fecha;
 					}
 					let accesoObj = null;
-					// Buscar por id y por nombre
 					if (incidencia.tipo_acceso_id) {
 						accesoObj = tiposAccesoGlobal.find(t => String(t.id) === String(incidencia.tipo_acceso_id));
 						if (accesoObj) {
@@ -229,11 +273,9 @@ document.addEventListener('click', async function(e) {
 							const badgeColor = accesoObj.nombre === 'Catéter' ? colorCateter : `${accesoObj.color}CC`;
 							accesoBadge = `<span class='badge' style='background:linear-gradient(270deg,#f8f9faCC 0%,${badgeColor} 100%);color:#222;font-size:1em;padding:4px 14px 4px 10px;border-radius:16px;margin-left:10px;box-shadow:0 1px 4px rgba(0,0,0,0.07);border:1.5px solid #e0e0e0;display:inline-flex;align-items:center;gap:6px;vertical-align:middle;' title='${accesoObj.nombre}'>${accesoObj.icono ? `<span style='font-size:1.3em;vertical-align:middle;margin-right:4px;'>${accesoObj.icono}</span>` : ''}<span style='font-weight:500;'>${accesoObj.nombre}</span></span>`;
 						} else {
-							// Si no está en tiposAccesoGlobal, mostrar el id
 							accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='${incidencia.tipo_acceso_id}'>${incidencia.tipo_acceso_id}</span>`;
 						}
 					} else if (incidencia.tipo_acceso_id) {
-						// Si existe tipo_acceso_id pero no está en tiposAccesoGlobal, mostrar el valor
 						accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='${incidencia.tipo_acceso_id}'>${incidencia.tipo_acceso_id}</span>`;
 					} else {
 						accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='Sin acceso'>Sin acceso</span>`;
@@ -241,20 +283,19 @@ document.addEventListener('click', async function(e) {
 				} else {
 					accesoBadge = `<span class='badge' style='background:#e0e0e0;color:#222;font-size:0.93em;margin-left:6px;vertical-align:middle;' title='Sin acceso'>Sin acceso</span>`;
 				}
-				return `<span style="display:inline-flex;align-items:center;margin-right:10px;"><i class="bi bi-tag-fill" style="color:${tag.color};font-size:1.15em;margin-right:4px;vertical-align:middle;" title="${tag.nombre.replace(/\"/g, '&quot;')}"></i><span style="font-size:0.97em;color:#14532d;">${tag.nombre}${fecha ? ' <span style=\"color:#666;font-size:0.93em;margin-left:4px;\">(' + fecha + ')</span>' : ''}${accesoBadge}</span></span>`;
+				return `<span style="display:inline-flex;align-items:center;margin-right:10px;"><i class="bi bi-tag-fill" style="color:${tag.color};font-size:1.15em;margin-right:4px;vertical-align:middle;" title="${tag.nombre.replace(/\"/g, '&quot;')}"></i><span style="font-size:0.97em;color:#14532d;">${tag.nombre}${fecha ? ' <span style=\"color:#666;font-size:0.93em;margin-left:4px;">(' + fecha + ')</span>' : ''}${accesoBadge}</span></span>`;
 			}).join(' ');
 		}
 		etiquetasActivasContainer.innerHTML += `<div style="margin-top:6px;">${badgesHtml}</div>`;
-		// Cargar datos en el formulario
 		document.getElementById('nombre').value = paciente.nombre || '';
 		document.getElementById('apellidos').value = paciente.apellidos || '';
 		document.getElementById('sexo').value = paciente.sexo || '';
 		document.getElementById('nacimiento').value = paciente.fecha_nacimiento || '';
 		document.getElementById('alta').value = paciente.fecha_alta || '';
 		document.getElementById('telefono').value = paciente.telefono || '';
-		document.getElementById('correo').value = paciente.correo || '';
-		document.getElementById('direccion').value = paciente.direccion || '';
-		document.getElementById('alergias').value = paciente.alergias || '';
+		document.getElementById('correo').value = paciente.correo || ''; 
+		document.getElementById('direccion').value = paciente.direccion || ''; 
+		document.getElementById('alergias').value = paciente.alergias || ''; 
 		document.getElementById('observaciones').value = paciente.observaciones || '';
 		document.getElementById('profesional').value = paciente.acceso?.profesional_id || paciente.profesional_id || '';
 		document.getElementById('tipoAcceso').value = paciente.acceso?.tipo_acceso_id || paciente.tipo_acceso_id || '';
@@ -267,17 +308,18 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('fechaInstalacionAccesoPendiente').value = paciente.pendiente?.fecha || '';
 		document.getElementById('etiquetasIncidencia').value = paciente.etiquetas_incidencia || '';
 		mostrarCamposFechaAcceso();
-		// Mostrar el modal de edición
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
 		if (!modalInstance) {
 			modalInstance = new bootstrap.Modal(modalEl);
 		}
+		limpiarBackdropsDuplicados();
 		modalInstance.show();
+	
 	}
 });
 
-// Handler para el botón de guardar paciente
+// Handler para el botón de guardar paciente 
 btnGuardarPaciente.addEventListener('click', function(e) {
     e.preventDefault();
 	if (window.pacienteEditando && window.pacienteEditando.id) {
@@ -297,7 +339,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			direccion: document.getElementById('direccion').value,
 			alergias: document.getElementById('alergias').value,
 			observaciones: document.getElementById('observaciones').value,
-			avatar: document.getElementById('avatar').value,
+			   avatar: document.getElementById('avatar') ? document.getElementById('avatar').value : '',
 			profesional_id: profesional.value,
 			tipo_acceso_id: tipoAcceso.value,
 			ubicacion_anatomica: ubicacion.value,
@@ -370,6 +412,8 @@ if (btnGuardarInfecciones) {
         } catch (err) {
             mostrarMensaje('Error al guardar infecciones', 'danger');
         }
+        // Limpiar infecciones temporales al guardar infecciones
+        infeccionesTemp = [];
     });
 }
 
@@ -616,7 +660,7 @@ async function renderizarPacientes(pacientes) {
                 }
             }).join('');
         }
-        const tr = document.createElement('tr');
+        const tr = document.createElement('tr'); 
         tr.innerHTML = `
             <td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos} ${infeccionTagsHtml}</td>
             <td>${tipoAccesoHtml}</td>
@@ -624,7 +668,7 @@ async function renderizarPacientes(pacientes) {
             <td>${fechaFormateada}${diasDetalle}</td>
             <td>
                 <button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
-                <button class="btn btn-outline-success btn-sm btn-editar" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
+				<button class="btn btn-outline-success btn-sm btn-editar-paciente" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-outline-info btn-sm btn-infeccion" data-id="${paciente.id}" title="Añadir Infección"><i class="bi bi-bug"></i></button>
                 <button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
                 <button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
@@ -746,9 +790,17 @@ function renderizarPaginacion(totalPacientes) {
 	}
 } 
 
-// Cargar pacientes y renderizar
+// Cargar pacientes
 function cargarPacientes() {
-	ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+	ipcRenderer.invoke('get-pacientes-completos').then(async pacientes => {
+		// Para cada paciente, obtener sus incidencias activas y asociar los IDs de etiquetas
+		for (const paciente of pacientes) {
+			const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
+			// Filtrar solo incidencias activas y de tipo etiqueta
+			paciente.etiquetas = incidencias
+				.filter(inc => inc.activo && inc.etiqueta_id)
+				.map(inc => inc.etiqueta_id);
+		}
 		pacientesGlobal = pacientes;
 		paginaActual = 1;
 		actualizarTablaPacientes();
@@ -934,6 +986,7 @@ async function crearPaciente() {
 	if (modalInstance) {
 		modalInstance.hide();
 	}
+	limpiarBackdropsDuplicados();
 	mostrarMensaje('Paciente creado correctamente', 'success');
 	incidenciaValoresTemp = {}; // Limpiar variable temporal tras guardar
 }
@@ -1017,7 +1070,7 @@ async function cargarEtiquetas() {
 }
 
 // Editar paciente existente
-async function editarPaciente(id) {
+async function editarPaciente(id) { 
 	const nombre = document.getElementById('nombre').value;
 	const apellidos = document.getElementById('apellidos').value;
 	const sexo = document.getElementById('sexo').value;
@@ -1099,6 +1152,26 @@ async function editarPaciente(id) {
 		},
 		// Eliminados: incidencia, incidencia_valores
 	};
+
+	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
+	const etiquetasSeleccionadas = Object.keys(incidenciaValoresTemp);
+	if (id && etiquetasSeleccionadas.length > 0) {
+		for (const etiquetaId of etiquetasSeleccionadas) {
+			const incidencia = incidenciaValoresTemp[etiquetaId];
+			await ipcRenderer.invoke('add-incidencia-con-tag', {
+				pacienteId: id,
+				tagId: etiquetaId,
+				tipo_acceso_id: incidencia.acceso ? Number(incidencia.acceso) : null,
+				fecha: incidencia.fecha,
+				tipo: incidencia.nombre,
+				microorganismo_asociado: null,
+				medidas: incidencia.medidas,
+				etiqueta_id: etiquetaId,
+				activo: 1
+			});
+		}
+	}
+
 	await ipcRenderer.invoke('update-paciente', paciente);
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');
@@ -1106,10 +1179,24 @@ async function editarPaciente(id) {
 	if (!modalInstance) {
 		modalInstance = new bootstrap.Modal(modalEl);
 	}
-	if (modalInstance) {
+	if (modalInstance) {    
 		modalInstance.hide();
+	}  
+	mostrarMensaje('Paciente editado correctamente', 'success'); 
+
+	// Limpieza robusta de variables y contenedores visuales al finalizar edición
+	window.pacienteEditando = null; 
+	incidenciaValoresTemp = {};
+	// Limpiar badges y valores visuales de incidencias activas
+	const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
+	if (etiquetasActivasContainer) {
+		etiquetasActivasContainer.innerHTML = '';
 	}
-	mostrarMensaje('Paciente editado correctamente', 'success');
+	// Limpiar formularios dinámicos de incidencias
+	const incidenciaContainer = document.getElementById('incidencia-valores-container');
+	if (incidenciaContainer) {
+		incidenciaContainer.innerHTML = '';
+	}
 }
 
 // Renderiza formularios dinámicos para cada incidencia seleccionada
@@ -1189,4 +1276,14 @@ function renderIncidenciaValores(selectedIncidencias) {
 		});
 	});
 }
+
+// Limpiar infecciones temporales al cerrar el modal de infección (evento Bootstrap)
+document.addEventListener('DOMContentLoaded', function() {
+    const modalInfeccionEl = document.getElementById('modal-infeccion');
+    if (modalInfeccionEl) {
+        modalInfeccionEl.addEventListener('hidden.bs.modal', function() {
+            infeccionesTemp = [];
+        });
+    }
+});
 
