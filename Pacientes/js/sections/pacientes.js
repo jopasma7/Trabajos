@@ -90,7 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	if (btnAgregarInfeccion) {
 		btnAgregarInfeccion.addEventListener('click', function() {
 			const select = document.getElementById('infeccion-tags');
-			const fecha = document.getElementById('infeccion-fecha').value;
+			const fechaInput = document.getElementById('infeccion-fecha');
+			let fecha = fechaInput.value;
 			const comentarios = document.getElementById('infeccion-comentarios').value;
 			const lista = document.getElementById('infeccion-lista');
 			const selectedOptions = Array.from(select.selectedOptions);
@@ -99,10 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
 				mostrarMensaje('Selecciona al menos un tipo de infección', 'danger');
 				return;
 			}
+			// Si el campo de fecha está vacío, poner la fecha actual por defecto
 			if (!fecha) {
-				document.getElementById('infeccion-fecha').focus();
-				mostrarMensaje('La fecha de la infección es obligatoria', 'danger');
-				return;
+				const hoy = new Date();
+				const yyyy = hoy.getFullYear();
+				const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+				const dd = String(hoy.getDate()).padStart(2, '0');
+				fecha = `${yyyy}-${mm}-${dd}`;
+				fechaInput.value = fecha;
 			}
 			// Añadir cada infección seleccionada a la lista temporal
 			selectedOptions.forEach(opt => {
@@ -116,7 +121,12 @@ document.addEventListener('DOMContentLoaded', function() {
 			});
 			// Limpiar selección y campos
 			select.selectedIndex = -1;
-			document.getElementById('infeccion-fecha').value = '';
+			// Poner la fecha actual por defecto tras agregar
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			fechaInput.value = `${yyyy}-${mm}-${dd}`;
 			document.getElementById('infeccion-comentarios').value = '';
 			// Renderizar lista visual
 			renderizarListaInfecciones();
@@ -184,7 +194,15 @@ document.addEventListener('click', async function(e) {
 		window.pacienteInfeccionId = pacienteId;
 		// Limpiar campos del modal
 		document.getElementById('infeccion-tags').innerHTML = '';
-		document.getElementById('infeccion-fecha').value = '';
+		// Poner la fecha actual por defecto en el campo de fecha de incidencia
+		const fechaInput = document.getElementById('infeccion-fecha');
+		if (fechaInput) {
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			fechaInput.value = `${yyyy}-${mm}-${dd}`;
+		}
 		document.getElementById('infeccion-comentarios').value = '';
 		document.getElementById('infeccion-lista').innerHTML = '';
 		// Cargar tags de tipo infección
@@ -660,20 +678,20 @@ async function renderizarPacientes(pacientes) {
                 }
             }).join('');
         }
-        const tr = document.createElement('tr'); 
-        tr.innerHTML = `
-            <td>${badgesHtml} ${paciente.nombre} ${paciente.apellidos} ${infeccionTagsHtml}</td>
-            <td>${tipoAccesoHtml}</td>
-            <td class="pacientes-ubicacion" title="${ubicacionCompleta}">${ubicacionCompleta}</td>
-            <td>${fechaFormateada}${diasDetalle}</td>
-            <td>
-                <button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
+		const tr = document.createElement('tr'); 
+		tr.innerHTML = `
+			<td>${infeccionTagsHtml} ${paciente.nombre} ${paciente.apellidos}</td>
+			<td>${tipoAccesoHtml}</td>
+			<td class="pacientes-ubicacion" title="${ubicacionCompleta}">${badgesHtml} ${ubicacionCompleta}</td>
+			<td>${fechaFormateada}${diasDetalle}</td>
+			<td>
+				<button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
 				<button class="btn btn-outline-success btn-sm btn-editar-paciente" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-outline-info btn-sm btn-infeccion" data-id="${paciente.id}" title="Añadir Infección"><i class="bi bi-bug"></i></button>
-                <button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
-                <button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
-            </td>
-        `;
+				<button class="btn btn-outline-info btn-sm btn-infeccion" data-id="${paciente.id}" title="Añadir Infección"><i class="bi bi-bug"></i></button>
+				<button class="btn btn-outline-warning btn-sm btn-archivar" data-id="${paciente.id}" title="Archivar paciente"><i class="bi bi-archive"></i></button>
+				<button class="btn btn-outline-danger btn-sm btn-eliminar" data-id="${paciente.id}"><i class="bi bi-trash"></i></button>
+			</td>
+		`;
         tablaPacientesBody.appendChild(tr);
     });
 }
@@ -809,25 +827,46 @@ function cargarPacientes() {
 
 // Función global para mostrar mensajes flotantes (debe estar antes de cualquier uso)
 function mostrarMensaje(texto, tipo = 'success') {
-  let alerta = document.createElement('div');
-  alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
-  alerta.style.zIndex = 9999;
-  let icon = '';
-  if (tipo === 'success') icon = '<span class="alert-icon">✨</span>';
-  else if (tipo === 'danger') icon = '<span class="alert-icon">❌</span>';
-  else if (tipo === 'warning') icon = '<span class="alert-icon">⚠️</span>';
-  else if (tipo === 'info') icon = '<span class="alert-icon">ℹ️</span>';
-  alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
-  document.body.appendChild(alerta); 
-  // Cerrar al hacer click en la alerta
-  alerta.onclick = () => alerta.remove();
-  setTimeout(() => {
-    if (document.body.contains(alerta)) {
-      alerta.classList.remove('show');
-      alerta.classList.add('hide');
-      setTimeout(() => alerta.remove(), 500);
-    }
-  }, 3000);
+	let alerta = document.createElement('div');
+	alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
+	alerta.style.zIndex = 9999;
+			let icon = '';
+			switch (tipo) {
+				case 'success':
+					icon = '<span class="alert-icon">✨🎉</span>';
+					break;
+				case 'danger':
+					icon = '<span class="alert-icon">❌😱🚨</span>';
+					break;
+				case 'warning':
+					icon = '<span class="alert-icon">⚠️🧐🔔</span>';
+					break;
+				case 'info':
+					icon = '<span class="alert-icon">ℹ️👀💡</span>';
+					break;
+				case 'delete':
+					icon = '<span class="alert-icon">🗑️</span>';
+					break;
+				case 'edit':
+					icon = '<span class="alert-icon">✏️</span>';
+					break;
+				case 'archive':
+					icon = '<span class="alert-icon">📦</span>';
+					break;
+				default:
+					icon = '<span class="alert-icon">💬</span>';
+			}
+	alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
+	document.body.appendChild(alerta);
+	// Cerrar al hacer click en la alerta
+	alerta.onclick = () => alerta.remove();
+	setTimeout(() => {
+		if (document.body.contains(alerta)) {
+			alerta.classList.remove('show');
+			alerta.classList.add('hide');
+			setTimeout(() => alerta.remove(), 500);
+		}
+	}, 3000);
 }
 
 // Limpia todos los campos del modal de nuevo paciente
@@ -836,7 +875,15 @@ function limpiarCamposNuevoPaciente() {
 	document.getElementById('apellidos').value = '';
 	document.getElementById('sexo').value = '';
 	document.getElementById('nacimiento').value = '';
-	document.getElementById('alta').value = '';
+	// Poner la fecha actual por defecto en el campo de alta
+	const altaInput = document.getElementById('alta');
+	if (altaInput) {
+		const hoy = new Date();
+		const yyyy = hoy.getFullYear();
+		const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		const dd = String(hoy.getDate()).padStart(2, '0');
+		altaInput.value = `${yyyy}-${mm}-${dd}`;
+	}
 	document.getElementById('telefono').value = '';
 	document.getElementById('correo').value = '';
 	document.getElementById('direccion').value = '';
@@ -1239,13 +1286,19 @@ function renderIncidenciaValores(selectedIncidencias) {
 		});
 		selectAccesoHtml += `</select>`;
 
+		// Fecha actual por defecto en formato yyyy-mm-dd
+		const hoy = new Date();
+		const yyyy = hoy.getFullYear();
+		const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		const dd = String(hoy.getDate()).padStart(2, '0');
+		const fechaDefault = `${yyyy}-${mm}-${dd}`;
 		formDiv.innerHTML = `
 			<div class=\"row align-items-center g-2 justify-content-between\">
 				<div class=\"col-auto\">
 					<span class=\"badge\" style=\"background:${color};color:#fff;font-size:0.95em;\" title=\"${nombre}\">${nombre}</span>
 				</div>
 				<div class=\"col d-flex justify-content-end align-items-center\">
-					<input type=\"date\" class=\"form-control form-control-sm me-2\" placeholder=\"Fecha\" name=\"fecha-${id}\" required />
+					<input type=\"date\" class=\"form-control form-control-sm me-2\" placeholder=\"Fecha\" name=\"fecha-${id}\" required value=\"${fechaDefault}\" />
 					${selectAccesoHtml}
 					<input type=\"text\" class=\"form-control form-control-sm ms-2 me-2\" placeholder=\"Medidas\" name=\"medidas-${id}\" style=\"min-width:120px;\" />
 					<button type=\"button\" class=\"btn btn-success btn-sm btn-guardar-incidencia ms-2\" data-id=\"${id}\">Guardar</button>
