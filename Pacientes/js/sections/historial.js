@@ -851,3 +851,13 @@ async function renderPacienteCard(paciente) {
 	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
 	
 }
+
+
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-editar-paciente');
+    const contenedorHistorial = document.getElementById('historial-section');
+    if (btn && contenedorHistorial && contenedorHistorial.contains(btn)) {
+        window.origenModalEditarPaciente = 'historial';
+        // ...abrir modal de edición aquí...
+    }
+});

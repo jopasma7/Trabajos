@@ -33,7 +33,7 @@ let ubicacionesGlobal = [];
 async function cargarDatosGlobal() {
     profesionalesGlobal = await ipcRenderer.invoke('get-profesionales');
     tiposAccesoGlobal = await ipcRenderer.invoke('tipo-acceso-get-all');
-		tiposPendienteGlobal = await ipcRenderer.invoke('pendiente-tipos-get');
+	tiposPendienteGlobal = await ipcRenderer.invoke('pendiente-tipos-get');
     ubicacionesGlobal = await ipcRenderer.invoke('get-ubicaciones-anatomicas');
 	datosGlobalesCargados = true;
 }
@@ -175,9 +175,12 @@ document.addEventListener('click', async function(e) {
 
 // Handler para el botón de editar paciente
 document.addEventListener('click', async function(e) {
-	const btn = e.target.closest('.btn-editar-paciente');
-	if (btn) {
-		// Eliminar cualquier listener previo para evitar duplicados
+    const btn = e.target.closest('.btn-editar-paciente');
+    const contenedorPacientes = document.getElementById('pacientes-section');
+    if (btn && contenedorPacientes && contenedorPacientes.contains(btn)) {
+        window.origenModalEditarPaciente = 'pacientes';
+        console.log("Origen del modal de edición: pacientes");
+        // Eliminar cualquier listener previo para evitar duplicados
 		btn.replaceWith(btn.cloneNode(true));
 		// Seleccionar el nuevo botón clonado
 		const newBtn = document.querySelector(`.btn-editar-paciente[data-id='${btn.getAttribute('data-id')}']`);
@@ -1121,10 +1124,6 @@ function renderIncidenciaValores(selectedIncidencias) {
 		});
 	});
 }
-
-
-
-
 
 // MODAL DE INFECCIONES
 
