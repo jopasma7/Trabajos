@@ -251,9 +251,15 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('ubicacion').value = paciente.acceso?.ubicacion_anatomica || paciente.ubicacion_anatomica || '';
 		document.getElementById('lado').value = paciente.acceso?.ubicacion_lado || paciente.ubicacion_lado || '';
 		document.getElementById('pendiente').value = paciente.pendiente?.pendiente_tipo_id || '';
-		document.getElementById('accesoPendiente').value = paciente.pendiente?.acceso_id || '';
+		document.getElementById('accesoPendiente').value = paciente.pendiente?.tabla_acceso_id_vinculado || paciente.pendiente?.pendiente_tipo_acceso_id || '';
+		// Fecha primera punción
+		if (document.getElementById('fechaPrimeraPuncion')) {
+			document.getElementById('fechaPrimeraPuncion').value = paciente.acceso?.fecha_primera_puncion || paciente.fecha_primera_puncion || '';
+		}
+		if (document.getElementById('fechaInstalacionAccesoPendiente')) {
+			document.getElementById('fechaInstalacionAccesoPendiente').value = paciente.pendiente?.fecha_instalacion_acceso_pendiente || '';
+		}
 		document.getElementById('fechaInstalacionAcceso').value = paciente.acceso?.fecha_instalacion || paciente.fecha_instalacion || '';
-		document.getElementById('fechaInstalacionAccesoPendiente').value = paciente.pendiente?.fecha || '';
 		document.getElementById('etiquetasIncidencia').value = paciente.etiquetas_incidencia || '';
 		mostrarCamposFechaAcceso();
 		const modalEl = document.getElementById('modal-paciente');
@@ -296,11 +302,12 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
 			pendiente: {
 				id: window.pacienteEditando?.pendiente?.id || null,
-				acceso_id: document.getElementById('accesoPendiente').value,
-				fecha: document.getElementById('fechaInstalacionAccesoPendiente').value,
+				tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+				fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 				observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
 				profesional_id: profesional.value,
 				pendiente_tipo_id: document.getElementById('pendiente').value,
+				pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 				paciente_id: window.pacienteEditando.id
 			}
 		};
@@ -401,10 +408,23 @@ function mostrarCamposFechaAcceso() {
 		if (selectPendiente.value && retiroPendiente && String(selectPendiente.value) === String(retiroPendiente.id)) {
 			fechaLabelPend.style.display = '';
 			fechaInputPend.style.display = '';
+			const fechaLabelPrimeraPuncion = document.getElementById('labelFechaPrimeraPuncion');
+			const fechaInputPrimeraPuncion = document.getElementById('fechaPrimeraPuncion');
+			if (fechaLabelPrimeraPuncion && fechaInputPrimeraPuncion) {
+				fechaLabelPrimeraPuncion.style.display = '';
+				fechaInputPrimeraPuncion.style.display = '';
+			}
 		} else {
 			fechaLabelPend.style.display = 'none';
 			fechaInputPend.style.display = 'none';
 			fechaInputPend.value = '';
+			const fechaLabelPrimeraPuncion = document.getElementById('labelFechaPrimeraPuncion');
+			const fechaInputPrimeraPuncion = document.getElementById('fechaPrimeraPuncion');
+			if (fechaLabelPrimeraPuncion && fechaInputPrimeraPuncion) {
+				fechaLabelPrimeraPuncion.style.display = 'none';
+				fechaInputPrimeraPuncion.style.display = 'none';
+				fechaInputPrimeraPuncion.value = '';
+			}
 		}
 	}
 }
@@ -692,6 +712,7 @@ function limpiarCamposNuevoPaciente() {
 	document.getElementById('accesoPendiente').value = '';
 	document.getElementById('fechaInstalacionAcceso').value = '';
 	document.getElementById('fechaInstalacionAccesoPendiente').value = '';
+	if (document.getElementById('fechaPrimeraPuncion')) document.getElementById('fechaPrimeraPuncion').value = '';
 	// Limpiar select de Choices.js correctamente
 	const etiquetasSelect = document.getElementById('etiquetasIncidencia');
 	if (window.etiquetasChoices) {
@@ -775,31 +796,34 @@ async function crearPaciente() {
 		tipo_acceso_id: tipoAcceso,
 		ubicacion_anatomica: ubicacion,
 		ubicacion_lado: document.getElementById('lado').value,
-		activo: 1,
+		activo: true,
 		pendiente: {
-			acceso_id: document.getElementById('accesoPendiente').value,
-			fecha: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 			observaciones: '',
 			profesional_id: profesional,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
-			activo: 1
+			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
+			activo: true
 		},
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		fecha_instalacion_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
 		acceso: {
 			tipo_acceso_id: tipoAcceso,
-			ubicacion_anatomica: ubicacion,
+			activo: true,
 			ubicacion_lado: document.getElementById('lado').value,
 			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
+			fecha_primera_puncion: document.getElementById('fechaPrimeraPuncion').value,
 			profesional_id: profesional,
-			activo: 1
+			activo: true
 		}
 	};
+	console.log('Paciente a guardar:', paciente);
 	// Llama al ipcHandler para añadir paciente y obtiene el id
 	const result = await ipcRenderer.invoke('add-paciente', paciente);
 	const pacienteId = result && result.id ? result.id : null;
-
+			
 	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
 	const etiquetasSeleccionadas = Object.keys(incidenciaValoresTemp);
 	if (pacienteId && etiquetasSeleccionadas.length > 0) {
@@ -814,7 +838,7 @@ async function crearPaciente() {
 				microorganismo_asociado: null,
 				medidas: incidencia.medidas,
 				etiqueta_id: id,
-				activo: 1
+				activo: true
 			});
 		}
 	}
@@ -973,16 +997,17 @@ async function editarPaciente(id) {
 		ubicacion_lado: document.getElementById('lado').value,
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
-		activo: 1,
+		activo: true,
 		pendiente: {
 			id: window.pacienteEditando?.pendiente?.id || null,
-			acceso_id: document.getElementById('accesoPendiente').value,
-			fecha: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 			observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
 			profesional_id: document.getElementById('profesional').value,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
+			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 			paciente_id: id,
-			activo: 1
+			activo: true
 		},
 		acceso: {
 			tipo_acceso_id: document.getElementById('tipoAcceso').value,
@@ -990,7 +1015,7 @@ async function editarPaciente(id) {
 			ubicacion_lado: document.getElementById('lado').value,
 			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 			profesional_id: document.getElementById('profesional').value,
-			activo: 1
+			activo: true
 		},
 		// Eliminados: incidencia, incidencia_valores
 	};
@@ -1009,7 +1034,7 @@ async function editarPaciente(id) {
 				microorganismo_asociado: null,
 				medidas: incidencia.medidas,
 				etiqueta_id: etiquetaId,
-				activo: 1
+				activo: true
 			});
 		}
 	}
@@ -1150,7 +1175,7 @@ if (btnGuardarInfecciones) {
             tag_id: inf.tagId,
             fecha_infeccion: inf.fecha,
             observaciones: inf.comentarios,
-            activo: 1
+            activo: true
         }));
         try {
             await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);

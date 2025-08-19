@@ -58,15 +58,17 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pendiente (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,
   pendiente_tipo_id INTEGER,
-  acceso_id INTEGER NOT NULL,
-  fecha TEXT,
+  tabla_acceso_id_vinculado INTEGER NOT NULL,
+  fecha_instalacion_acceso_pendiente TEXT,
   observaciones TEXT,
   profesional_id INTEGER,
   activo INTEGER DEFAULT 1,
+  pendiente_tipo_acceso_id INTEGER,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id),
-  FOREIGN KEY (acceso_id) REFERENCES tipo_acceso(id),
+  FOREIGN KEY (tabla_acceso_id_vinculado) REFERENCES acceso(id),
   FOREIGN KEY (profesional_id) REFERENCES profesionales(id),
-  FOREIGN KEY (pendiente_tipo_id) REFERENCES pendiente_tipo(id)
+  FOREIGN KEY (pendiente_tipo_id) REFERENCES pendiente_tipo(id),
+  FOREIGN KEY (pendiente_tipo_acceso_id) REFERENCES tipo_acceso(id)
 )`).run();
 
 // Crear tabla pendiente_tipo (tipos de pendiente)
@@ -283,7 +285,7 @@ db.getIncidenciasByPaciente = function(pacienteId) {
 
 // Crear una incidencia y asociar un tag (motivo y fecha personalizados)
 db.addIncidenciaConTag = function(pacienteId, tagId, motivo, fecha) {
-  // Insertar nueva incidencia con todos los campos relevantes
+  // Insertar nueva incidencia with todos los campos relevantes
   // Si motivo se usaba como tipo, ahora se guarda en tipo
   // Los argumentos: pacienteId, tagId, tipo_acceso_id, fecha, tipo, microorganismo_asociado, medidas, etiqueta_id, activo
   const insertIncidencia = db.prepare(`
@@ -511,7 +513,7 @@ db.getPacientesCompletos = function() {
       tipoAcceso = db.prepare('SELECT * FROM tipo_acceso WHERE id = ?').get(acceso.tipo_acceso_id);
     }
     // Pendiente más reciente
-    const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(paciente.id);
+    const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha_instalacion_acceso_pendiente DESC, id DESC LIMIT 1').get(paciente.id);
     // Etiquetas
     const etiquetas = db.getEtiquetasByPaciente(paciente.id);
     // Infecciones con tag
@@ -542,7 +544,7 @@ db.getPacienteConAcceso = function(pacienteId) {
     tipoAcceso = db.prepare('SELECT * FROM tipo_acceso WHERE id = ?').get(acceso.tipo_acceso_id);
   }
   // Pendiente más reciente
-  const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha DESC, id DESC LIMIT 1').get(pacienteId);
+  const pendiente = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? ORDER BY fecha_instalacion_acceso_pendiente DESC, id DESC LIMIT 1').get(pacienteId);
   // Etiquetas
   const etiquetas = db.getEtiquetasByPaciente(pacienteId);
   // Infecciones con tag
@@ -572,38 +574,71 @@ db.unarchiveHistorialClinico = function(id) {
 // Pacientes con CHD pendiente de FAV
 // Se asume que tipo_acceso_id corresponde a CHD y proceso_actual corresponde a "Pendiente de confección / reparación" (proceso)
 db.getPacientesCHDPendienteFAV = function() {
-  // Buscar el id de la etiqueta "Pendiente de confección / reparación" en tags tipo proceso
-  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%confección%');
-  if (!procesoTag) return [];
-  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
-  const accesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
-  if (!accesoTag) return [];
-  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
-  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
-  if (!favTag) return [];
-  // Filtrar pacientes con tipo_acceso_id = accesoTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(accesoTag.id, procesoTag.id, favTag.id);
+  // Consulta robusta: pacientes con pendiente activa de tipo 'Confección / Reparación' y acceso 'Fístula'
+  const pacientes = db.prepare(`SELECT p.* FROM pacientes p
+    INNER JOIN pendiente pen ON pen.paciente_id = p.id
+    INNER JOIN pendiente_tipo pt ON pen.pendiente_tipo_id = pt.id
+    WHERE pen.activo = 1 AND p.activo = 1
+      AND pt.nombre LIKE '%Confección%'
+      AND pen.acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%')
+  `).all();
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
+    // Acceso más reciente y datos relevantes
+    const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(p.id);
+    if (acceso) {
+      // Formatear fecha de instalación DD-MM-YYYY
+      if (acceso.fecha_instalacion) {
+        const partes = acceso.fecha_instalacion.split('-');
+        p.fecha_instalacion = partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : acceso.fecha_instalacion;
+      } else {
+        p.fecha_instalacion = undefined;
+      }
+      // Ubicación CHD y lado
+      p.ubicacion_chd = acceso.ubicacion_anatomica || undefined;
+      p.ubicacion_lado = acceso.ubicacion_lado || undefined;
+    } else {
+      p.fecha_instalacion = undefined;
+      p.ubicacion_chd = undefined;
+      p.ubicacion_lado = undefined;
+    }
   });
   return pacientes;
 };
 
 // Pacientes con FAV pendiente retiro CHD
 db.getPacientesFAVPendienteRetiroCHD = function() {
-  // Buscar el id de la etiqueta "Pendiente de Retiro" en tags tipo proceso
-  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%retiro%');
-  if (!procesoTag) return [];
-  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
-  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
-  if (!favTag) return [];
-  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
-  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
-  if (!chdTag) return [];
-  // Filtrar pacientes con tipo_acceso_id = favTag.id, proceso_actual = procesoTag.id y acceso_proceso = chdTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(favTag.id, procesoTag.id, chdTag.id);
+  // Obtener pacientes con acceso FAV y pendiente retiro CHD, todos activos
+  // Buscar pacientes con acceso FAV funcional y pendiente de retiro de CHD (catéter)
+  const pacientes = db.prepare(`
+    SELECT p.* FROM pacientes p
+    WHERE p.activo = 1
+      AND EXISTS (
+        SELECT 1 FROM acceso a
+        INNER JOIN tipo_acceso ta ON a.tipo_acceso_id = ta.id
+        WHERE a.paciente_id = p.id AND a.activo = 1 AND ta.nombre LIKE '%Fístula%'
+      )
+      AND EXISTS (
+        SELECT 1 FROM pendiente pen
+        INNER JOIN pendiente_tipo pt ON pen.pendiente_tipo_id = pt.id
+        WHERE pen.paciente_id = p.id AND pen.activo = 1 AND pt.nombre LIKE '%Retiro%'
+      )
+  `).all();
   pacientes.forEach(p => {
-    p.etiquetas = db.getEtiquetasByPaciente(p.id); 
+    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+    // Acceso FAV funcional
+    const accesoFAV = db.prepare("SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%') ORDER BY id DESC LIMIT 1").get(p.id);
+    // Acceso pendiente (catéter CHD)
+    const accesoCHD = db.prepare("SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Catéter%') ORDER BY id DESC LIMIT 1").get(p.id);
+    // Pendiente de retiro CHD
+    const pendienteCHD = db.prepare("SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 AND pendiente_tipo_id IN (SELECT id FROM pendiente_tipo WHERE nombre LIKE '%Retiro%') ORDER BY id DESC LIMIT 1").get(p.id);
+    // Llenar campos para el reporte
+    p.ubicacion_fav = accesoFAV ? [accesoFAV.ubicacion_anatomica, accesoFAV.ubicacion_lado].filter(Boolean).join(' | ') : '';
+    p.fecha_instalacion_fav = accesoFAV && accesoFAV.fecha_instalacion ? accesoFAV.fecha_instalacion.split('-').reverse().join('-') : '';
+  p.fecha_primera_puncion = accesoFAV && accesoFAV.fecha_primera_puncion ? accesoFAV.fecha_primera_puncion.split('-').reverse().join('-') : '';
+    p.ubicacion_chd = accesoCHD ? [accesoCHD.ubicacion_anatomica, accesoCHD.ubicacion_lado].filter(Boolean).join(' | ') : '';
+    p.fecha_instalacion_chd = accesoCHD && accesoCHD.fecha_instalacion ? accesoCHD.fecha_instalacion.split('-').reverse().join('-') : '';
+    p.observaciones = p.observaciones || '';
   });
   return pacientes;
 };
@@ -724,27 +759,29 @@ db.editPacienteCompleto = function(paciente) {
       if (
         paciente.pendiente &&
         paciente.pendiente.pendiente_tipo_id &&
-        paciente.pendiente.acceso_id
+        paciente.pendiente.tabla_acceso_id_vinculado
       ) {
         if (paciente.pendiente.id) {
           db.editPendiente({
             id: paciente.pendiente.id,
             paciente_id: paciente.id,
-            acceso_id: paciente.pendiente.acceso_id,
-            fecha: paciente.pendiente.fecha,
+            tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado,
+            fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente,
             observaciones: paciente.pendiente.observaciones || '',
             profesional_id: paciente.pendiente.profesional_id,
             pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+            pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
             activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
           });
         } else {
           db.addPendiente({
             paciente_id: paciente.id,
-            acceso_id: paciente.pendiente.acceso_id,
-            fecha: paciente.pendiente.fecha,
+            tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado,
+            fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente,
             observaciones: paciente.pendiente.observaciones || '',
             profesional_id: paciente.pendiente.profesional_id,
             pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+            pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
             activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
           });
         }
@@ -773,13 +810,15 @@ db.addPacienteCompleto = function(paciente) {
   const pacienteId = info.lastInsertRowid;
 
   // Crear acceso asociado al paciente
-  const stmtAccesoInsert = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  const stmtAccesoInsert = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const infoAcceso = stmtAccesoInsert.run(
     pacienteId,
     paciente.tipo_acceso_id || null,
     paciente.fecha_instalacion || paciente.fecha_alta || '',
     paciente.ubicacion_anatomica || '',
     paciente.ubicacion_lado || '',
+    (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
+    (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
     paciente.profesional_id || null,
     paciente.estado || ''
   );
@@ -789,11 +828,12 @@ db.addPacienteCompleto = function(paciente) {
   if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
     db.addPendiente({
       paciente_id: pacienteId,
-      acceso_id: paciente.pendiente.acceso_id, // valor correcto del formulario
-      fecha: paciente.pendiente.fecha || paciente.fecha_instalacion_pendiente || '',
+      tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado, // valor correcto del formulario
+      fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente || paciente.fecha_instalacion_pendiente || '',
       observaciones: paciente.pendiente.observaciones || '',
       profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
       pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+      pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
       activo: typeof paciente.pendiente.activo === 'undefined' ? 1 : paciente.pendiente.activo ? 1 : 0
     });
   }
@@ -805,15 +845,16 @@ db.addPacienteCompleto = function(paciente) {
 // Agregar pendiente
 db.addPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, pendiente_tipo_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, observaciones, profesional_id, activo, pendiente_tipo_acceso_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     pendiente.paciente_id,
-    pendiente.acceso_id || null,
-    pendiente.fecha,
+    pendiente.pendiente_tipo_id || null,
+    pendiente.tabla_acceso_id_vinculado || null,
+    pendiente.fecha_instalacion_acceso_pendiente || null,
     pendiente.observaciones || '',
     pendiente.profesional_id || null,
-    pendiente.pendiente_tipo_id || null,
-    typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0
+    typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
+    pendiente.pendiente_tipo_acceso_id || null
   );
   return { id: info.lastInsertRowid };
 };
@@ -821,15 +862,16 @@ db.addPendiente = function(pendiente) {
 // Editar pendiente
 db.editPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, acceso_id = ?, fecha = ?, observaciones = ?, profesional_id = ?, pendiente_tipo_id = ?, activo = ? WHERE id = ?`);
+  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, pendiente_tipo_id = ?, tabla_acceso_id_vinculado = ?, fecha_instalacion_acceso_pendiente = ?, observaciones = ?, profesional_id = ?, activo = ?, pendiente_tipo_acceso_id = ? WHERE id = ?`);
   const info = stmt.run(
     pendiente.paciente_id,
-    pendiente.acceso_id || null,
-    pendiente.fecha,
+    pendiente.pendiente_tipo_id || null,
+    pendiente.tabla_acceso_id_vinculado || null,
+    pendiente.fecha_instalacion_acceso_pendiente || null,
     pendiente.observaciones || '',
     pendiente.profesional_id || null,
-    pendiente.pendiente_tipo_id || null,
     typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
+    pendiente.pendiente_tipo_acceso_id || null,
     pendiente.id
   );
   return { changes: info.changes };
@@ -851,12 +893,12 @@ db.archivarPendiente = function(id) {
 
 // Obtener todos los pendientes
 db.getPendientes = function() {
-  return db.prepare(`SELECT * FROM pendiente WHERE activo = 1 ORDER BY fecha DESC, id DESC`).all();
+  return db.prepare(`SELECT * FROM pendiente WHERE activo = 1 ORDER BY fecha_instalacion_acceso_pendiente DESC, id DESC`).all();
 };
 
 // Obtener pendientes por paciente
 db.getPendientesByPaciente = function(pacienteId) {
-  return db.prepare(`SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 ORDER BY fecha DESC, id DESC`).all(pacienteId);
+  return db.prepare(`SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 ORDER BY fecha_instalacion_acceso_pendiente DESC, id DESC`).all(pacienteId);
 };
 
 // Obtener el pendiente más reciente de un paciente
@@ -865,7 +907,7 @@ db.getPendienteActualByPaciente = function(pacienteId) {
   return db.prepare(`
     SELECT * FROM pendiente
     WHERE paciente_id = ? AND activo = 1
-    ORDER BY fecha DESC, id DESC LIMIT 1
+    ORDER BY fecha_instalacion_acceso_pendiente DESC, id DESC LIMIT 1
   `).get(pacienteId) || null;
 };
 
@@ -1036,7 +1078,7 @@ db.insertarPacientesPrueba = function() {
     // Insertar pendiente solo para algunos pacientes
     if (i % 2 === 0) {
       const pendiente_tipo_id = tiposPendiente[i % tiposPendiente.length].id;
-      const pendienteStmt = db.prepare('INSERT INTO pendiente (paciente_id, acceso_id, fecha, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)');
+      const pendienteStmt = db.prepare('INSERT INTO pendiente (paciente_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)');
       pendienteStmt.run(
         pacienteId,
         tipo_acceso_id,

@@ -18,7 +18,7 @@ async function obtenerPacientesCHDPendienteFAV() {
   return pacientes.map((p, idx) => [
     idx + 1,
     `${p.nombre} ${p.apellidos}`,
-    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
+    [p.ubicacion_chd, p.ubicacion_lado].filter(Boolean).join(' | '),
     p.fecha_instalacion,
     p.observaciones || ''
   ]);
@@ -31,9 +31,11 @@ async function obtenerPacientesFAVPendienteRetiroCHD() {
   return pacientes.map((p, idx) => [
     idx + 1,
     `${p.nombre} ${p.apellidos}`,
-    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
-    p.fecha_instalacion,
-    p.fecha_retiro_chd || '',
+    p.ubicacion_fav || '',
+    p.fecha_instalacion_fav || '',
+    '', // Fecha Primera Punción (futuro)
+    '', // Ubicación CHD (futuro)
+    p.fecha_instalacion_chd || '',
     p.observaciones || ''
   ]);
 }
@@ -200,7 +202,7 @@ document.getElementById('btn-generar-reporte-chd').addEventListener('click', asy
       mes,
       anio,
       profesional,
-      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Observaciones'],
+      columnas: ['Nº', 'Usuario', 'Ubicación CHD', 'Fecha de Instalación', 'Observaciones'],
       datos
     });
   }, 200);
@@ -219,7 +221,7 @@ document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEvent
       mes,
       anio,
       profesional,
-      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha retiro CHD', 'Observaciones'],
+      columnas: ['Nº', 'Usuario', 'Ubicación FAV', 'Fecha de Instalación FAV', 'Fecha Primera Punción', 'Ubicación CHD', 'Fecha de instalación CHD', 'Observaciones'],
       datos
     });
   }, 200);
