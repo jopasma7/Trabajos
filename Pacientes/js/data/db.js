@@ -581,12 +581,14 @@ db.unarchiveHistorialClinico = function(id) {
 // Se asume que tipo_acceso_id corresponde a CHD y proceso_actual corresponde a "Pendiente de confección / reparación" (proceso)
 db.getPacientesCHDPendienteFAV = function() {
   // Consulta robusta: pacientes con pendiente activa de tipo 'Confección / Reparación' y acceso 'Fístula'
-  const pacientes = db.prepare(`SELECT p.* FROM pacientes p
+  const pacientes = db.prepare(`
+    SELECT p.* FROM pacientes p
+    INNER JOIN acceso a_chd ON a_chd.paciente_id = p.id AND a_chd.activo = 1 AND a_chd.tipo_acceso_id = (SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER('%catéter%'))
     INNER JOIN pendiente pen ON pen.paciente_id = p.id
     INNER JOIN pendiente_tipo pt ON pen.pendiente_tipo_id = pt.id
     WHERE pen.activo = 1 AND p.activo = 1
       AND pt.nombre LIKE '%Confección%'
-      AND pen.acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%')
+      AND pen.tabla_acceso_id_vinculado IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%')
   `).all();
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
@@ -614,68 +616,86 @@ db.getPacientesCHDPendienteFAV = function() {
 
 // Pacientes con FAV pendiente retiro CHD
 db.getPacientesFAVPendienteRetiroCHD = function() {
-  // Obtener pacientes con acceso FAV y pendiente retiro CHD, todos activos
-  // Buscar pacientes con acceso FAV funcional y pendiente de retiro de CHD (catéter)
+  // Buscar el id de tipo_acceso para Fístula y Catéter
+  const favTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%fístula%');
+  const chdTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%catéter%');
+  if (!favTipo || !chdTipo) return [];
+
+  // Consulta: pacientes con acceso FAV actual y pendiente de retiro CHD (catéter) activo
   const pacientes = db.prepare(`
-    SELECT p.*, pen.fecha_instalacion_acceso_pendiente AS fecha_instalacion_chd
+    SELECT p.*
     FROM pacientes p
-    LEFT JOIN pendiente pen ON pen.paciente_id = p.id AND pen.activo = 1 AND pen.pendiente_tipo_id = 2
+    INNER JOIN acceso a_fav ON a_fav.paciente_id = p.id AND a_fav.activo = 1 AND a_fav.tipo_acceso_id = ?
+    INNER JOIN pendiente pen ON pen.paciente_id = p.id AND pen.activo = 1 AND pen.pendiente_tipo_id = (SELECT id FROM pendiente_tipo WHERE nombre LIKE '%Retiro%') AND pen.pendiente_tipo_acceso_id = ?
     WHERE p.activo = 1
-      AND EXISTS (
-        SELECT 1 FROM acceso a
-        INNER JOIN tipo_acceso ta ON a.tipo_acceso_id = ta.id
-        WHERE a.paciente_id = p.id AND a.activo = 1 AND ta.nombre LIKE '%Fístula%'
-      )
-      AND EXISTS (
-        SELECT 1 FROM pendiente pen2
-        INNER JOIN pendiente_tipo pt ON pen2.pendiente_tipo_id = pt.id
-        WHERE pen2.paciente_id = p.id AND pen2.activo = 1 AND pt.nombre LIKE '%Retiro%'
-      )
-  `).all();
+  `).all(favTipo.id, chdTipo.id);
+
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
-    // Acceso FAV funcional
-    const accesoFAV = db.prepare("SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%') ORDER BY id DESC LIMIT 1").get(p.id);
-    // Acceso pendiente (catéter CHD)
-    const accesoCHD = db.prepare("SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Catéter%') ORDER BY id DESC LIMIT 1").get(p.id);
-    // Pendiente de retiro CHD
-    const pendienteCHD = db.prepare("SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 AND pendiente_tipo_id IN (SELECT id FROM pendiente_tipo WHERE nombre LIKE '%Retiro%') ORDER BY id DESC LIMIT 1").get(p.id);
+    // Acceso FAV actual
+    const accesoFAV = db.prepare("SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id = ? ORDER BY id DESC LIMIT 1").get(p.id, favTipo.id);
+    // Pendiente de retiro CHD (catéter)
+    const pendienteCHD = db.prepare("SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 AND pendiente_tipo_id = (SELECT id FROM pendiente_tipo WHERE nombre LIKE '%Retiro%') AND pendiente_tipo_acceso_id = ? ORDER BY id DESC LIMIT 1").get(p.id, chdTipo.id);
     // Llenar campos para el reporte
-    p.ubicacion_fav = accesoFAV ? [accesoFAV.ubicacion_anatomica, accesoFAV.ubicacion_lado].filter(Boolean).join(' | ') : '';
-    p.fecha_instalacion_fav = accesoFAV && accesoFAV.fecha_instalacion ? accesoFAV.fecha_instalacion.split('-').reverse().join('-') : '';
+  p.ubicacion_fav = accesoFAV ? [accesoFAV.ubicacion_anatomica, accesoFAV.ubicacion_lado].filter(Boolean).join(' | ') : '';
+  p.fecha_instalacion_fav = accesoFAV && accesoFAV.fecha_instalacion ? accesoFAV.fecha_instalacion.split('-').reverse().join('-') : '';
   p.fecha_primera_puncion = accesoFAV && accesoFAV.fecha_primera_puncion ? accesoFAV.fecha_primera_puncion : '';
-  p.ubicacion_chd = accesoCHD ? accesoCHD.ubicacion_anatomica : '';
-  p.lado_chd = accesoCHD ? accesoCHD.ubicacion_lado : '';
-        // Sobrescribir con la fecha de pendiente si existe
-        if (typeof p.fecha_instalacion_chd === 'string' && p.fecha_instalacion_chd.length > 0) {
-          // Ya viene de la consulta SQL LEFT JOIN pendiente
-        } else if (accesoCHD && accesoCHD.fecha_instalacion) {
-          p.fecha_instalacion_chd = accesoCHD.fecha_instalacion;
-        } else {
-          p.fecha_instalacion_chd = '';
-        }
-    p.observaciones = p.observaciones || '';
+  // Devolver ubicacion_chd y lado_chd por separado, sin concatenar
+  p.ubicacion_chd = pendienteCHD ? pendienteCHD.ubicacion_chd : '';
+  p.lado_chd = pendienteCHD ? pendienteCHD.lado_chd : '';
+  p.fecha_instalacion_chd = pendienteCHD ? pendienteCHD.fecha_instalacion_acceso_pendiente : '';
+  p.observaciones = pendienteCHD ? pendienteCHD.observaciones : (p.observaciones || '');
   });
   return pacientes;
 };
 
 // Pacientes con CHD y proceso madurativo de FAV
 db.getPacientesCHDFAVMadurativo = function() {
+  
   // Buscar el id de la etiqueta "Proceso Madurativo" en tags tipo proceso
   const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%madurativo%');
   if (!procesoTag) return [];
-  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
-  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
-  if (!chdTag) return [];
-  // Buscar el id de la etiqueta "Fístula" en tags tipo acceso (FAV)
-  const favTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%fístula%');
-  if (!favTag) return [];
-  // Filtrar pacientes con tipo_acceso_id = chdTag.id, proceso_actual = procesoTag.id y acceso_proceso = favTag.id
-  const pacientes = db.prepare("SELECT * FROM pacientes WHERE tipo_acceso_id = ? AND proceso_actual = ? AND acceso_proceso = ? AND activo = 1").all(chdTag.id, procesoTag.id, favTag.id);
-  pacientes.forEach(p => {
-    p.etiquetas = db.getEtiquetasByPaciente(p.id);
+  // Buscar el id de la etiqueta "Catéter" en tipo_acceso (CHD)
+  const chdTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%catéter%');
+  if (!chdTipo) return [];
+  // Buscar el id de la etiqueta "Fístula" en tipo_acceso (FAV)
+  const favTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%fístula%');
+  if (!favTipo) return [];
+  // Consulta: pacientes con acceso CHD activo y pendiente activo con FAV en pendiente_tipo_acceso_id
+  // Obtener el id de pendiente_tipo para 'Maduración'
+  const maduracionTipo = db.prepare("SELECT id FROM pendiente_tipo WHERE LOWER(nombre) LIKE LOWER(?)").get('%maduración%');
+  if (!maduracionTipo) return [];
+  const rows = db.prepare(`
+    SELECT p.id, p.nombre, p.apellidos,
+           a_chd.ubicacion_anatomica AS ubicacion_chd,
+           a_chd.fecha_instalacion AS fecha_instalacion_chd,
+           pen.ubicacion_chd AS ubicacion_fav,
+           pen.fecha_instalacion_acceso_pendiente AS fecha_instalacion_fav,
+           pen.observaciones
+    FROM pacientes p
+    JOIN acceso a_chd ON a_chd.paciente_id = p.id AND a_chd.activo = 1 AND a_chd.tipo_acceso_id = ?
+    JOIN pendiente pen ON pen.paciente_id = p.id AND pen.activo = 1 AND pen.pendiente_tipo_acceso_id = ? AND pen.pendiente_tipo_id = ?
+    WHERE p.activo = 1
+  `).all(chdTipo.id, favTipo.id, maduracionTipo.id);
+  // Formatear resultado para la tabla
+  const resultado = rows.map((p, idx) => ({
+    numero: idx + 1,
+    usuario: `${p.nombre} ${p.apellidos}`,
+    ubicacion_chd: p.ubicacion_chd || '',
+    fecha_instalacion_chd: p.fecha_instalacion_chd || '',
+    ubicacion_fav: p.ubicacion_fav || '',
+    fecha_instalacion_fav: p.fecha_instalacion_fav || '',
+    observaciones: p.observaciones || ''
+  }));
+  
+  console.log('Pacientes CHD-FAV Madurativo:', resultado);
+    console.log('DEBUG IDs usados en consulta CHD-FAV Madurativo:', {
+    chdTipo: chdTipo.id,
+    favTipo: favTipo.id,
+    maduracionTipo: maduracionTipo.id
   });
-  return pacientes;
+
+  return resultado;
 };
 
 // Pacientes con CHD y diagnóstico de Sepsis
@@ -947,12 +967,12 @@ function insertarTiposAccesoPredeterminados() {
       color: '#e63946',
       icono: '🩸',
       ubicaciones: [
-        'Radiocefálica (arteria radial → vena cefálica, antebrazo distal)',
-        'Radiobasílica (arteria radial → vena basílica, antebrazo distal)',
-        'Braquiocefálica (arteria braquial → vena cefálica, codo / brazo proximal)',
-        'Braquiobasílica (arteria braquial → vena basílica, brazo proximal)',
-        'Braquiorradial (arteria braquial → vena radial, codo / antebrazo proximal)',
-        'Fémoro-femoral (arteria femoral → vena femoral o safena, muslo)'
+        'Radiocefálica',
+        'Radiobasílica',
+        'Braquiocefálica',
+        'Braquiobasílica',
+        'Braquiorradial',
+        'Fémoro-femoral'
       ]
     },
     {
@@ -969,7 +989,7 @@ function insertarTiposAccesoPredeterminados() {
     {
       nombre: 'Catéter',
       descripcion: 'Catéter venoso central, temporal o tunelizado, para acceso inmediato o prolongado. Mayor riesgo de infección.',
-  color: '#5dade2',
+      color: '#5dade2',
       icono: '➰',
       ubicaciones: [
         'Yugular Interna',
@@ -999,6 +1019,7 @@ function insertarTiposAccesoPredeterminados() {
  * Los datos son simulados y cubren todos los campos requeridos.
  */
 db.insertarPacientesPrueba = function() {
+  const sexos = ['hombre', 'mujer'];
   // Asegurar que existe un profesional con id=1
   let profesional = db.prepare('SELECT id FROM profesionales WHERE id = 1').get();
   if (!profesional) {
@@ -1023,7 +1044,6 @@ db.insertarPacientesPrueba = function() {
   const apellidos = [
     'García', 'Martínez', 'López', 'Sánchez', 'Pérez', 'Gómez', 'Fernández', 'Ruiz', 'Díaz', 'Torres'
   ];
-  const sexos = ['M', 'F'];
   const direcciones = [
     'Calle Mayor 1', 'Av. Libertad 23', 'Plaza Sol 5', 'Calle Luna 8', 'Av. Paz 12',
     'Calle Río 3', 'Calle Mar 7', 'Av. Norte 15', 'Calle Sur 9', 'Plaza Este 2'
@@ -1056,8 +1076,22 @@ db.insertarPacientesPrueba = function() {
 
   // Obtener tipo_acceso_id válidos
   const tiposAcceso = db.prepare('SELECT id FROM tipo_acceso').all();
-  // Obtener ubicaciones de acceso
-  const ubicaciones = ['Brazo', 'Pierna', 'Cuello', 'Tórax', 'Antebrazo', 'Muslo', 'Abdomen', 'Espalda', 'Mano', 'Pie'];
+  // Ubicaciones válidas según insertarTiposAccesoPredeterminados()
+  const ubicaciones = [
+    'Radiocefálica',
+    'Radiobasílica',
+    'Braquiocefálica',
+    'Braquiobasílica',
+    'Braquiorradial',
+    'Fémoro-femoral',
+    'Injerto protésico en brazo (brazo medio / superior)',
+    'Injerto protésico femoral (muslo)',
+    'Injerto subclavio o axilar (tórax)',
+    'Yugular Interna',
+    'Subclavia',
+    'Femoral',
+    'Variable'
+  ];
   // Obtener pendiente_tipo_id válidos
   const tiposPendiente = db.prepare('SELECT id FROM pendiente_tipo').all();
 
@@ -1085,12 +1119,13 @@ db.insertarPacientesPrueba = function() {
 
     // Insertar acceso
     const tipo_acceso_id = tiposAcceso[i % tiposAcceso.length].id;
+    const lado = i % 2 === 0 ? 'Izquierda' : 'Derecha';
     const accesoStmt = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, ubicacion_anatomica, ubicacion_lado, fecha_instalacion, fecha_primera_puncion, observaciones, etiqueta_id, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     accesoStmt.run(
       pacienteId,
       tipo_acceso_id,
       ubicaciones[i % ubicaciones.length],
-      i % 2 === 0 ? 'Izquierda' : 'Derecha',
+      lado,
       fechaAlta[i],
       fechaAlta[i],
       observaciones[i],
