@@ -51,6 +51,11 @@ window.addEventListener('unhandledrejection', function(event) {
 // Limpia backdrops después de cerrar cualquier modal
 document.addEventListener('hidden.bs.modal', function() {
 	limpiarBackdropsDuplicados();
+	// Ocultar campos CHD al cerrar el modal de paciente
+	const chdUbicacionGroup = document.getElementById('chd-ubicacion-group');
+	const chdLadoGroup = document.getElementById('chd-lado-group');
+	if (chdUbicacionGroup) chdUbicacionGroup.style.display = 'none';
+	if (chdLadoGroup) chdLadoGroup.style.display = 'none';
 });
 // Elimina backdrops duplicados de Bootstrap Modal
 function limpiarBackdropsDuplicados() {
@@ -63,8 +68,31 @@ function limpiarBackdropsDuplicados() {
 	}
 }
 
+function llenarSelectUbicacionCHD() {
+    const select = document.getElementById('chd-ubicacion');
+    if (!select) return;
+    select.innerHTML = '<option value="">Seleccione...</option>';
+	const selectTipoAcceso = document.getElementById('accesoPendiente');
+	const tipoAccesoId = selectTipoAcceso?.value;
+	// Buscar el nombre real del tipo de acceso por id
+	const tipoAccesoObj = tiposAccesoGlobal.find(t => String(t.id) === String(tipoAccesoId));
+	const tipoAccesoNombre = tipoAccesoObj?.nombre;
+	const obj = ubicacionesGlobal.find(u => u.acceso === tipoAccesoNombre);
+		if (obj && Array.isArray(obj.ubicaciones)) {
+			obj.ubicaciones.forEach(ubic => {
+				if (ubic) {
+					select.innerHTML += `<option value="${ubic}">${ubic}</option>`;
+				}
+			});
+		}
+}
+
 // Cargar los elementos en el DOM
 document.addEventListener('DOMContentLoaded', async () => {
+	await cargarDatosGlobal();
+	if (document.getElementById('accesoPendiente')) {
+		document.getElementById('accesoPendiente').addEventListener('change', llenarSelectUbicacionCHD);
+	}
 	await cargarDatosGlobal();
 	cargarPacientes();
 	cargarEtiquetas();
@@ -80,7 +108,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 			mostrarCamposFechaAcceso();
 		});
 	}
+	displayCamposCHD();
+	
 });
+
+function displayCamposCHD(){
+	// Mostrar/ocultar campos CHD según selección de accesoPendiente
+	const accesoPendienteSelect = document.getElementById('accesoPendiente');
+	const chdUbicacionGroup = document.getElementById('chd-ubicacion-group');
+	const chdLadoGroup = document.getElementById('chd-lado-group');
+	// Buscar id de tipo acceso CHD en tiposAccesoGlobal
+	let chdTipoAccesoId = null;
+	if (Array.isArray(tiposAccesoGlobal)) {
+		const chdTipo = tiposAccesoGlobal.find(tipo => tipo.nombre && tipo.nombre.toLowerCase().includes('catéter'));
+		if (chdTipo) chdTipoAccesoId = String(chdTipo.id);
+	}
+	if (chdUbicacionGroup && chdLadoGroup && accesoPendienteSelect) {
+		chdUbicacionGroup.style.display = 'none';
+		chdLadoGroup.style.display = 'none';
+		const pendienteSelect = document.getElementById('pendiente');
+		function mostrarCamposCHD() {
+			const accesoCateter = chdTipoAccesoId && accesoPendienteSelect.value === chdTipoAccesoId;
+			const pendienteRetiro = pendienteSelect && pendienteSelect.options[pendienteSelect.selectedIndex]?.text?.toLowerCase().includes('retiro');
+			if (accesoCateter && pendienteRetiro) {
+				chdUbicacionGroup.style.display = '';
+				chdLadoGroup.style.display = '';
+			} else {
+				chdUbicacionGroup.style.display = 'none';
+				chdLadoGroup.style.display = 'none';
+			}
+		}
+	accesoPendienteSelect.addEventListener('change', mostrarCamposCHD);
+	if (pendienteSelect) pendienteSelect.addEventListener('change', mostrarCamposCHD);
+	mostrarCamposCHD();
+	}
+}
 
 
 // Función para actualizar la tabla de pacientes (evita ReferenceError)
@@ -179,7 +241,6 @@ document.addEventListener('click', async function(e) {
     const contenedorPacientes = document.getElementById('pacientes-section');
     if (btn && contenedorPacientes && contenedorPacientes.contains(btn)) {
         window.origenModalEditarPaciente = 'pacientes';
-        console.log("Origen del modal de edición: pacientes");
         // Eliminar cualquier listener previo para evitar duplicados
 		btn.replaceWith(btn.cloneNode(true));
 		// Seleccionar el nuevo botón clonado
@@ -252,6 +313,13 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('lado').value = paciente.acceso?.ubicacion_lado || paciente.ubicacion_lado || '';
 		document.getElementById('pendiente').value = paciente.pendiente?.pendiente_tipo_id || '';
 		document.getElementById('accesoPendiente').value = paciente.pendiente?.tabla_acceso_id_vinculado || paciente.pendiente?.pendiente_tipo_acceso_id || '';
+		llenarSelectUbicacionCHD();
+		if (document.getElementById('chd-ubicacion')) {
+			document.getElementById('chd-ubicacion').value = paciente.pendiente?.ubicacion_chd || '';
+		}
+		if (document.getElementById('chd-lado')) {
+			document.getElementById('chd-lado').value = paciente.pendiente?.lado_chd || '';
+		}
 		// Fecha primera punción
 		if (document.getElementById('fechaPrimeraPuncion')) {
 			document.getElementById('fechaPrimeraPuncion').value = paciente.acceso?.fecha_primera_puncion || paciente.fecha_primera_puncion || '';
@@ -262,6 +330,7 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('fechaInstalacionAcceso').value = paciente.acceso?.fecha_instalacion || paciente.fecha_instalacion || '';
 		document.getElementById('etiquetasIncidencia').value = paciente.etiquetas_incidencia || '';
 		mostrarCamposFechaAcceso();
+		displayCamposCHD();
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
 		if (!modalInstance) {
@@ -281,6 +350,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 		const tipoAcceso = document.getElementById('tipoAcceso');
 		const profesional = document.getElementById('profesional');
 		const ubicacion = document.getElementById('ubicacion');
+		const ubicacion_chd = document.getElementById('chd-ubicacion');
 		const paciente = {
 			id: window.pacienteEditando.id,
 			nombre: document.getElementById('nombre').value,
@@ -306,6 +376,8 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 				fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 				observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
 				profesional_id: profesional.value,
+				ubicacion_chd: ubicacion_chd.value,
+				lado_chd: document.getElementById('chd-lado').value,
 				pendiente_tipo_id: document.getElementById('pendiente').value,
 				pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 				paciente_id: window.pacienteEditando.id
@@ -711,6 +783,8 @@ function limpiarCamposNuevoPaciente() {
 	document.getElementById('pendiente').value = '';
 	document.getElementById('accesoPendiente').value = '';
 	document.getElementById('fechaInstalacionAcceso').value = '';
+	if (document.getElementById('chd-ubicacion')) document.getElementById('chd-ubicacion').value = '';
+	if (document.getElementById('chd-lado')) document.getElementById('chd-lado').value = '';
 	document.getElementById('fechaInstalacionAccesoPendiente').value = '';
 	if (document.getElementById('fechaPrimeraPuncion')) document.getElementById('fechaPrimeraPuncion').value = '';
 	// Limpiar select de Choices.js correctamente
@@ -800,6 +874,8 @@ async function crearPaciente() {
 		pendiente: {
 			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
 			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
+			lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
 			observaciones: '',
 			profesional_id: profesional,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
@@ -819,7 +895,7 @@ async function crearPaciente() {
 			activo: true
 		}
 	};
-	console.log('Paciente a guardar:', paciente);
+	const etiquetasSeleccionadass = Object.keys(incidenciaValoresTemp);
 	// Llama al ipcHandler para añadir paciente y obtiene el id
 	const result = await ipcRenderer.invoke('add-paciente', paciente);
 	const pacienteId = result && result.id ? result.id : null;
@@ -868,8 +944,6 @@ async function cargarEtiquetas() {
 	etiquetas.forEach(tag => {
 		etiquetasPorId[tag.id] = tag;
 	});
-	// Eliminar log de etiquetas
-	// etiquetasSelect.innerHTML = etiquetas
 	etiquetasSelect.innerHTML = etiquetas
 		.filter(tag => tag.tipo && tag.tipo.toLowerCase() === 'incidencia')
 		.map(tag => `<option value="${tag.id}" data-color="${tag.color || ''}" data-icono="${tag.icono || ''}">${tag.icono ? tag.icono + ' ' : ''}${tag.nombre}</option>`)
@@ -943,6 +1017,7 @@ async function editarPaciente(id) {
 	const profesional = document.getElementById('profesional');
 	const tipoAcceso = document.getElementById('tipoAcceso');
 	const ubicacion = document.getElementById('ubicacion');
+	const ubicacion_chd = document.getElementById('chd-ubicacion');
 	const fechaInstalacionAcceso = document.getElementById('fechaInstalacionAcceso').value;
 	if (!nombre) {
 		document.getElementById('nombre').focus();
@@ -1004,6 +1079,8 @@ async function editarPaciente(id) {
 			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 			observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
 			profesional_id: document.getElementById('profesional').value,
+			ubicacion_chd: ubicacion_chd.value,
+			lado_chd: document.getElementById('chd-lado').value,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
 			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 			paciente_id: id,
@@ -1025,20 +1102,20 @@ async function editarPaciente(id) {
 	if (id && etiquetasSeleccionadas.length > 0) {
 		for (const etiquetaId of etiquetasSeleccionadas) {
 			const incidencia = incidenciaValoresTemp[etiquetaId];
-			await ipcRenderer.invoke('add-incidencia-con-tag', {
-				pacienteId: id,
-				tagId: etiquetaId,
+			const incidenciaPayload = {
+				pacienteId: Number(id),
+				tagId: Number(etiquetaId),
 				tipo_acceso_id: incidencia.acceso ? Number(incidencia.acceso) : null,
-				fecha: incidencia.fecha,
-				tipo: incidencia.nombre,
-				microorganismo_asociado: null,
-				medidas: incidencia.medidas,
-				etiqueta_id: etiquetaId,
-				activo: true
-			});
+				fecha: typeof incidencia.fecha === 'string' ? incidencia.fecha : null,
+				tipo: typeof incidencia.nombre === 'string' ? incidencia.nombre : null,
+				microorganismo_asociado: incidencia.microorganismo_asociado || null,
+				medidas: typeof incidencia.medidas === 'string' ? incidencia.medidas : null,
+				etiqueta_id: Number(etiquetaId),
+				activo: 1
+			};
+			await ipcRenderer.invoke('add-incidencia-con-tag', incidenciaPayload);
 		}
 	}
-
 	await ipcRenderer.invoke('update-paciente', paciente);
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');

@@ -1118,7 +1118,7 @@
                   <div class="col-md-2">
                     <label for="lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
                     <select class="form-select" id="lado" name="lado">
-                      <option value="">-</option>
+                      <option value="">Selecciona lado</option>
                       <option value="Izquierda">Izquierda</option>
                       <option value="Derecha">Derecha</option>
                     </select>
@@ -1154,6 +1154,22 @@
                   <div class="col-md-2">
                     <label for="fechaInstalacionAccesoPendiente" class="form-label" id="labelFechaInstalacionAccesoPendiente" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha del Acceso Pendiente</label>
                     <input type="date" class="form-control" id="fechaInstalacionAccesoPendiente" name="fechaInstalacionAccesoPendiente" style="display:none;">
+                  </div>
+                  <div class="col-md-8"></div>
+                                    <div class="col-md-2" id="chd-ubicacion-group" style="display:none;">
+                    <label for="chd-ubicacion" class="form-label"><i class="bi bi-geo"></i> CHD Ubicación anatómica</label>
+                    <select class="form-select" id="chd-ubicacion" name="chd-ubicacion" required>
+                      <option value="">Selecciona ubicación</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2" id="chd-lado-group" style="display:none;">
+                    <label for="chd-lado" class="form-label"><i class="bi bi-arrow-left-right"></i> CHD Lado</label>
+                    <select class="form-select" id="chd-lado" name="chd-lado">
+                      <option value="">Selecciona lado</option>
+                      <option value="Izquierda">Izquierda</option>
+                      <option value="Derecha">Derecha</option>
+                    </select>
                   </div>
                 </div>
               </div>

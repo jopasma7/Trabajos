@@ -33,8 +33,8 @@ async function obtenerPacientesFAVPendienteRetiroCHD() {
     `${p.nombre} ${p.apellidos}`,
     p.ubicacion_fav || '',
     p.fecha_instalacion_fav || '',
-    '', // Fecha Primera Punción (futuro)
-    '', // Ubicación CHD (futuro)
+    p.fecha_primera_puncion || '',
+    p.ubicacion_chd || '',
     p.fecha_instalacion_chd || '',
     p.observaciones || ''
   ]);
