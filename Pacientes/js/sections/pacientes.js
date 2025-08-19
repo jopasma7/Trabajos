@@ -83,57 +83,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 
-
-// Handler para el botón de añadir infección en el modal
-document.addEventListener('DOMContentLoaded', function() {
-	const btnAgregarInfeccion = document.getElementById('btn-agregar-infeccion');
-	if (btnAgregarInfeccion) {
-		btnAgregarInfeccion.addEventListener('click', function() {
-			const select = document.getElementById('infeccion-tags');
-			const fechaInput = document.getElementById('infeccion-fecha');
-			let fecha = fechaInput.value;
-			const comentarios = document.getElementById('infeccion-comentarios').value;
-			const lista = document.getElementById('infeccion-lista');
-			const selectedOptions = Array.from(select.selectedOptions);
-			if (selectedOptions.length === 0) {
-				select.focus();
-				mostrarMensaje('Selecciona al menos un tipo de infección', 'danger');
-				return;
-			}
-			// Si el campo de fecha está vacío, poner la fecha actual por defecto
-			if (!fecha) {
-				const hoy = new Date();
-				const yyyy = hoy.getFullYear();
-				const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-				const dd = String(hoy.getDate()).padStart(2, '0');
-				fecha = `${yyyy}-${mm}-${dd}`;
-				fechaInput.value = fecha;
-			}
-			// Añadir cada infección seleccionada a la lista temporal
-			selectedOptions.forEach(opt => {
-				infeccionesTemp.push({
-					tagId: opt.value,
-					nombre: opt.textContent,
-					color: opt.getAttribute('data-color') || '#1976d2',
-					fecha,
-					comentarios
-				});
-			});
-			// Limpiar selección y campos
-			select.selectedIndex = -1;
-			// Poner la fecha actual por defecto tras agregar
-			const hoy = new Date();
-			const yyyy = hoy.getFullYear();
-			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
-			const dd = String(hoy.getDate()).padStart(2, '0');
-			fechaInput.value = `${yyyy}-${mm}-${dd}`;
-			document.getElementById('infeccion-comentarios').value = '';
-			// Renderizar lista visual
-			renderizarListaInfecciones();
-		});
-	}
-});
-
 // Función para actualizar la tabla de pacientes (evita ReferenceError)
 function actualizarTablaPacientes() {
 	const filtrados = filtrarPacientes();
@@ -206,7 +155,7 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('infeccion-comentarios').value = '';
 		document.getElementById('infeccion-lista').innerHTML = '';
 		// Cargar tags de tipo infección
-	const tags = await ipcRenderer.invoke('tags-get-all');
+		const tags = await ipcRenderer.invoke('tags-get-all');
 		const tagsInfeccion = tags.filter(tag => tag.tipo && tag.tipo.toLowerCase() === 'infeccion');
 		const select = document.getElementById('infeccion-tags');
 		tagsInfeccion.forEach(tag => {
@@ -217,30 +166,8 @@ document.addEventListener('click', async function(e) {
 			select.appendChild(opt);
 		});
 		// Mostrar el modal
-		const modalEl = document.getElementById('modal-infeccion');
-		// Gestión robusta de instancia y listeners
-		if (!modalEl._modalInstance) {
-			modalEl._modalInstance = new bootstrap.Modal(modalEl);
-			// Listener único para limpiar instancia y variables al cerrar
-			modalEl.addEventListener('hidden.bs.modal', function handler() {
-				console.log('[MODAL EVENT] hidden.bs.modal (infeccion) fired');
-				// Limpiar instancia
-				modalEl._modalInstance = null;
-				// Limpiar variables temporales
-				window.pacienteEditando = null;
-				incidenciaValoresTemp = {};
-				// Limpiar contenedores visuales
-				const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
-				if (etiquetasActivasContainer) etiquetasActivasContainer.innerHTML = '';
-				const incidenciaContainer = document.getElementById('incidencia-valores-container');
-				if (incidenciaContainer) incidenciaContainer.innerHTML = '';
-				// Eliminar el listener para evitar acumulación
-				modalEl.removeEventListener('hidden.bs.modal', handler);
-			});
-		}
-		console.log('[MODAL EVENT] Opening modal-infeccion');
-		limpiarBackdropsDuplicados();
-		modalEl._modalInstance.show();
+		abrirMenuInfeccionesDesdePacientes(pacienteId);
+		
 		// Limpiar infecciones temporales al abrir el modal de infección
 		infeccionesTemp = [];
 	}
@@ -380,98 +307,6 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 		crearPaciente();
 	}
 });
-
-
-
-// Mostrar/ocultar el botón Guardar en el modal de infección
-function actualizarBotonGuardarInfeccion() {
-	const btnGuardar = document.getElementById('btn-guardar-infecciones');
-	const lista = document.getElementById('infeccion-lista');
-	if (!btnGuardar) {
-		return;
-	}
-	// Ocultar si no hay lista o no hay infecciones
-	if (!lista || infeccionesTemp.length === 0) {
-		btnGuardar.classList.add('d-none');
-		btnGuardar.style.display = '';
-		return;
-	}
-	btnGuardar.style.display = '';
-	btnGuardar.classList.remove('d-none');
-}
-
-// Handler para el botón Guardar infecciones
-const btnGuardarInfecciones = document.getElementById('btn-guardar-infecciones');
-if (btnGuardarInfecciones) {
-    btnGuardarInfecciones.addEventListener('click', async function() {
-        if (infeccionesTemp.length === 0) return;
-        const pacienteId = window.pacienteInfeccionId;
-        if (!pacienteId) {
-            mostrarMensaje('No se ha seleccionado un paciente para guardar infecciones', 'danger');
-            return;
-        }
-        // Formatear infecciones para enviar solo los campos esperados por el backend
-        const infeccionesAEnviar = infeccionesTemp.map(inf => ({
-            tag_id: inf.tagId,
-            fecha_infeccion: inf.fecha,
-            observaciones: inf.comentarios,
-            activo: 1
-        }));
-        try {
-            await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
-            mostrarMensaje('Infecciones guardadas correctamente', 'success');
-            // Limpiar y cerrar modal
-            renderizarListaInfecciones();
-            actualizarBotonGuardarInfeccion();
-            cargarPacientes(); // Actualizar la tabla de pacientes
-            const modalEl = document.getElementById('modal-infeccion');
-            let modalInstance = bootstrap.Modal.getInstance(modalEl);
-            if (modalInstance) modalInstance.hide();
-        } catch (err) {
-            mostrarMensaje('Error al guardar infecciones', 'danger');
-        }
-        // Limpiar infecciones temporales al guardar infecciones
-        infeccionesTemp = [];
-    });
-}
-
-// Actualizar botón Guardar cada vez que se renderiza la lista
-function renderizarListaInfecciones() {
-	const lista = document.getElementById('infeccion-lista');
-	if (!lista) return;
-	if (infeccionesTemp.length === 0) {
-		lista.innerHTML = '<div class="text-muted">No hay infecciones añadidas.</div>';
-	} else {
-		lista.innerHTML = '<div class="mb-2" style="font-weight:500;color:#1976d2;">Infecciones añadidas:</div>' +
-			infeccionesTemp.map((inf, idx) => `
-				<div class="card mb-2" style="border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
-					<div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
-						<div style="display:flex;align-items:center;gap:10px;">
-							<span class="badge" style="background:${inf.color};color:#fff;font-size:1em;">${inf.nombre}</span>
-							<span style="color:#222;font-size:0.97em;"><i class="bi bi-calendar-event me-1"></i>${inf.fecha}</span>
-							${inf.comentarios ? `<span style='color:#666;font-size:0.95em;'><i class='bi bi-chat-left-text me-1'></i>${inf.comentarios}</span>` : ''}
-						</div>
-						<button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-infeccion" data-idx="${idx}" title="Eliminar"><i class="bi bi-x"></i></button>
-					</div>
-				</div>
-			`).join('');
-		// Handler para eliminar infección
-		lista.querySelectorAll('.btn-eliminar-infeccion').forEach(btn => {
-			btn.addEventListener('click', function() {
-				const idx = Number(btn.getAttribute('data-idx'));
-				infeccionesTemp.splice(idx, 1);
-				renderizarListaInfecciones();
-			});
-		});
-	}
-	actualizarBotonGuardarInfeccion();
-}
-
-
-
-
-
-
 
 
 // Llenar select de Profesional a Cargo
@@ -1287,6 +1122,51 @@ function renderIncidenciaValores(selectedIncidencias) {
 	});
 }
 
+
+
+
+
+// MODAL DE INFECCIONES
+
+// Handler para el botón Guardar infecciones
+const btnGuardarInfecciones = document.getElementById('btn-guardar-infecciones'); 
+if (btnGuardarInfecciones) {
+    btnGuardarInfecciones.addEventListener('click', async function() {
+        if (infeccionesTemp.length === 0) return;
+        let pacienteId;
+        if (window.origenModalInfeccion === 'pacientes') {
+            pacienteId = Number(window.pacienteIdOtraSeccion) || null;
+        } else if (window.origenModalInfeccion === 'historial') {
+            const select = document.getElementById('filtro-paciente-historial');
+            pacienteId = select && select.value ? Number(select.value) : null;
+        } else {
+            pacienteId = window.pacienteInfeccionId || null;
+        }
+        if (!pacienteId) {
+            mostrarMensaje('No se ha seleccionado un paciente para guardar infecciones', 'danger');
+            return;
+        }
+        // Formatear infecciones para enviar solo los campos esperados por el backend
+        const infeccionesAEnviar = infeccionesTemp.map(inf => ({
+            tag_id: inf.tagId,
+            fecha_infeccion: inf.fecha,
+            observaciones: inf.comentarios,
+            activo: 1
+        }));
+        try {
+            await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
+            mostrarMensaje('Infecciones guardadas correctamente', 'success');
+            infeccionesTemp = [];
+            const lista = document.getElementById('infeccion-lista');
+            if (lista) lista.innerHTML = '';
+            const modal = document.getElementById('modal-infeccion');
+            bootstrap.Modal.getInstance(modal).hide();
+        } catch (err) {
+            mostrarMensaje('Error al guardar infecciones', 'danger');
+        }
+    });
+}
+
 // Limpiar infecciones temporales al cerrar el modal de infección (evento Bootstrap)
 document.addEventListener('DOMContentLoaded', function() {
     const modalInfeccionEl = document.getElementById('modal-infeccion');
@@ -1297,3 +1177,130 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Abrir Modal de Infecciones
+function abrirMenuInfeccionesDesdePacientes(pacienteId) {
+    var modal = document.getElementById('modal-infeccion');
+    window.origenModalInfeccion = 'pacientes';
+    window.pacienteIdOtraSeccion = pacienteId;
+    if (modal) {
+        var select = document.getElementById('infeccion-tags');
+        if (select) {
+            select.innerHTML = '';
+            if (window.etiquetasGlobales && Array.isArray(window.etiquetasGlobales)) {
+                window.etiquetasGlobales.forEach(function(etiqueta) {
+                    if (etiqueta.tipo === 'infeccion' || etiqueta.tipo === 'infección') {
+                        var option = document.createElement('option');
+                        option.value = etiqueta.id;
+                        option.textContent = etiqueta.icono ? `${etiqueta.icono} ${etiqueta.nombre}` : etiqueta.nombre;
+                        select.appendChild(option);
+                    }
+                });
+            }
+        }
+        window.infeccionesTemp = [];
+        var listaInfeccion = document.getElementById('infeccion-lista');
+        if (listaInfeccion) listaInfeccion.innerHTML = '';
+        var modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    } else {
+        alert('No se encontró el modal de infección.');
+    }
+}
+
+// Handler para el botón de añadir infección en el modal
+document.addEventListener('DOMContentLoaded', function() {
+	const btnAgregarInfeccion = document.getElementById('btn-agregar-infeccion');
+	if (btnAgregarInfeccion) {
+		btnAgregarInfeccion.addEventListener('click', function() {
+			const select = document.getElementById('infeccion-tags');
+			const fechaInput = document.getElementById('infeccion-fecha');
+			let fecha = fechaInput.value;
+			const comentarios = document.getElementById('infeccion-comentarios').value;
+			const lista = document.getElementById('infeccion-lista');
+			const selectedOptions = Array.from(select.selectedOptions);
+			if (selectedOptions.length === 0) {
+				select.focus();
+				mostrarMensaje('Selecciona al menos un tipo de infección', 'danger');
+				return;
+			}
+			// Si el campo de fecha está vacío, poner la fecha actual por defecto
+			if (!fecha) {
+				const hoy = new Date();
+				const yyyy = hoy.getFullYear();
+				const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+				const dd = String(hoy.getDate()).padStart(2, '0');
+				fecha = `${yyyy}-${mm}-${dd}`;
+				fechaInput.value = fecha;
+			}
+			// Añadir cada infección seleccionada a la lista temporal
+			selectedOptions.forEach(opt => {
+				infeccionesTemp.push({
+					tagId: opt.value,
+					nombre: opt.textContent,
+					color: opt.getAttribute('data-color') || '#1976d2',
+					fecha,
+					comentarios
+				});
+			});
+			// Limpiar selección y campos
+			select.selectedIndex = -1;
+			// Poner la fecha actual por defecto tras agregar
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			fechaInput.value = `${yyyy}-${mm}-${dd}`;
+			document.getElementById('infeccion-comentarios').value = '';
+			// Renderizar lista visual
+			renderizarListaInfecciones();
+		});
+	}
+});
+// Mostrar/ocultar el botón Guardar en el modal de infección
+function actualizarBotonGuardarInfeccion() {
+	const btnGuardar = document.getElementById('btn-guardar-infecciones');
+	const lista = document.getElementById('infeccion-lista');
+	if (!btnGuardar) {
+		return;
+	}
+	// Ocultar si no hay lista o no hay infecciones
+	if (!lista || infeccionesTemp.length === 0) {
+		btnGuardar.classList.add('d-none');
+		btnGuardar.style.display = '';
+		return;
+	}
+	btnGuardar.style.display = '';
+	btnGuardar.classList.remove('d-none');
+}
+
+// Actualizar botón Guardar cada vez que se renderiza la lista
+function renderizarListaInfecciones() {
+	const lista = document.getElementById('infeccion-lista');
+	if (!lista) return;
+	if (infeccionesTemp.length === 0) {
+		lista.innerHTML = '<div class="text-muted">No hay infecciones añadidas.</div>';
+	} else {
+		lista.innerHTML = '<div class="mb-2" style="font-weight:500;color:#1976d2;">Infecciones añadidas:</div>' +
+			infeccionesTemp.map((inf, idx) => `
+				<div class="card mb-2" style="border-radius:10px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,0.07);">
+					<div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+						<div style="display:flex;align-items:center;gap:10px;">
+							<span class="badge" style="background:${inf.color};color:#fff;font-size:1em;">${inf.nombre}</span>
+							<span style="color:#222;font-size:0.97em;"><i class="bi bi-calendar-event me-1"></i>${inf.fecha}</span>
+							${inf.comentarios ? `<span style='color:#666;font-size:0.95em;'><i class='bi bi-chat-left-text me-1'></i>${inf.comentarios}</span>` : ''}
+						</div>
+						<button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-infeccion" data-idx="${idx}" title="Eliminar"><i class="bi bi-x"></i></button>
+					</div>
+				</div>
+			`).join('');
+		// Handler para eliminar infección
+		lista.querySelectorAll('.btn-eliminar-infeccion').forEach(btn => {
+			btn.addEventListener('click', function() {
+				const idx = Number(btn.getAttribute('data-idx'));
+				infeccionesTemp.splice(idx, 1);
+				renderizarListaInfecciones();
+			});
+		});
+	}
+	actualizarBotonGuardarInfeccion();
+}
