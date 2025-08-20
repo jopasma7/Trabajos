@@ -27,12 +27,18 @@ async function obtenerPacientesCHDPendienteFAV() {
 // Función para obtener pacientes con Acceso FAV y pendiente retiro CHD
 async function obtenerPacientesFAVPendienteRetiroCHD() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
-  const pacientes = await ipcRenderer.invoke('get-pacientes-fav-pendiente-retiro-chd');
-  return pacientes.map((p, idx) => [
+  const pacientesRaw = await ipcRenderer.invoke('get-pacientes-fav-pendiente-retiro-chd');
+  // Filtrar pacientes: solo mostrar si ubicacion_chd o lado_chd NO están ambos vacíos
+  const pacientesFiltrados = pacientesRaw.filter(p => {
+    const ubicacion = (p.ubicacion_chd || '').trim();
+    const lado = (p.lado_chd || '').trim();
+    return ubicacion.length > 0 || lado.length > 0;
+  });
+  return pacientesFiltrados.map((p, idx) => [
     idx + 1,
     `${p.nombre} ${p.apellidos}`,
     p.ubicacion_fav || '',
-    p.fecha_instalacion_fav || '',
+    p.fecha_instalacion_fav || '', // sin formatear aquí
     p.fecha_primera_puncion || '',
     p.ubicacion_chd || '',
     p.fecha_instalacion_chd || '',
@@ -44,28 +50,23 @@ async function obtenerPacientesFAVPendienteRetiroCHD() {
 async function obtenerPacientesCHDFAVMadurativo() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
   const pacientes = await ipcRenderer.invoke('get-pacientes-chd-fav-madurativo');
-  return pacientes.map((p, idx) => [
-    idx + 1,
-    `${p.nombre} ${p.apellidos}`,
-    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
-    p.fecha_instalacion,
-    p.fecha_maduracion_fav || '',
-    p.observaciones || ''
+  // Los campos ya vienen formateados desde el backend
+  return pacientes.map(p => [
+    p.numero,
+    p.usuario,
+    p.ubicacion_chd,
+    p.fecha_instalacion_chd,
+    p.ubicacion_fav && p.ubicacion_fav.trim() !== '' ? p.ubicacion_fav : '⚠️ Sin datos',
+    p.fecha_instalacion_fav && p.fecha_instalacion_fav.trim() !== '' ? p.fecha_instalacion_fav : '⚠️ Sin datos',
+    p.observaciones
   ]);
 }
 
 // Función para obtener pacientes con Sepsis CHD
 async function obtenerPacientesSepsisCHD() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
-  const pacientes = await ipcRenderer.invoke('get-pacientes-sepsis-chd');
-  return pacientes.map((p, idx) => [
-    idx + 1,
-    `${p.nombre} ${p.apellidos}`,
-    `${p.ubicacion_anatomica || ''} ${p.ubicacion_lado || ''}`.trim(),
-    p.fecha_instalacion,
-    p.fecha_sepsis || '',
-    p.observaciones || ''
-  ]);
+  // El backend ya devuelve los datos en el formato correcto
+  return await ipcRenderer.invoke('get-pacientes-sepsis-chd');
 }
 
 function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true, descripcion = '' }) {
@@ -112,7 +113,9 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
     document.body.appendChild(modal);
     // Eliminar el modal del DOM al cerrarse para evitar solapamiento de campos
     modal.addEventListener('hidden.bs.modal', () => {
-      modal.parentNode.removeChild(modal);
+      if (modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+      }
     });
   }
   // Actualizar SIEMPRE el título y la descripción del modal antes de mostrarlo
@@ -124,15 +127,19 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
   if (descripcionElem) {
     descripcionElem.innerHTML = descripcion;
   }
-  // Poblar la tabla, rellenando con filas vacías hasta completar 15
+  // Poblar la tabla, mostrando solo 5 filas si hay menos de 5 pacientes; si hay más, solo los pacientes reales
   const tbody = modal.querySelector('#reporte-generico-body');
   tbody.innerHTML = '';
-  const minFilas = 15;
-  const totalFilas = Math.max(minFilas, datos.length);
-  for (let i = 0; i < totalFilas; i++) {
-    const item = datos[i] || Array(columnas.length).fill('&nbsp;');
-    tbody.innerHTML += `<tr>${item.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+  let rows = datos.slice();
+  const minFilas = 5;
+  if (rows.length < minFilas) {
+    while (rows.length < minFilas) {
+      rows.push(Array(columnas.length).fill('&nbsp;'));
+    }
   }
+  rows.forEach(item => {
+    tbody.innerHTML += `<tr>${item.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+  });
   // Actualizar el campo Profesional en el modal (sin bold, solo texto)
   const profesionalDiv = modal.querySelector('#profesional-reporte-modal');
   if (profesionalDiv) {
@@ -211,7 +218,26 @@ document.getElementById('btn-generar-reporte-chd').addEventListener('click', asy
 // Evento para el nuevo reporte: Acceso FAV, pendiente retiro CHD
 document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEventListener('click', async function() {
   setTimeout(async () => {
-    const datos = await obtenerPacientesFAVPendienteRetiroCHD();
+    const datosRaw = await obtenerPacientesFAVPendienteRetiroCHD();
+    const formatearFecha = fecha => {
+      if (!fecha) return '';
+      // Si la fecha está en formato YYYY-MM-DD, la convertimos a DD-MM-YYYY
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        const [a, m, d] = fecha.split('-');
+        return `${d}-${m}-${a}`;
+      }
+      return fecha;
+    };
+    const datos = datosRaw.map(row => [
+      row[0], // Nº
+      row[1], // Usuario
+      row[2], // Ubicación FAV
+      formatearFecha(row[3]), // Fecha de Instalación FAV SOLO aquí
+      formatearFecha(row[4]), // Fecha Primera Punción
+      row[5], // Ubicación CHD
+      formatearFecha(row[6]), // Fecha de instalación CHD
+      row[7]  // Observaciones
+    ]);
     const profesional = await getNombreCompletoProfesional();
     const mes = 'Agosto';
     const anio = '2025';
@@ -230,7 +256,22 @@ document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEvent
 // Evento para reporte: CHD, FAV en proceso Madurativo
 document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListener('click', async function() {
   setTimeout(async () => {
-    const datos = await obtenerPacientesCHDFAVMadurativo();
+    const datosRaw = await obtenerPacientesCHDFAVMadurativo();
+    const formatearFecha = fecha => {
+      if (!fecha) return '';
+      const partes = fecha.split('-');
+      if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
+      return fecha;
+    };
+    const datos = datosRaw.map(row => [
+      row[0], // Nº
+      row[1], // Usuario
+      row[2], // Ubicación CHD
+      formatearFecha(row[3]), // Fecha de Instalación CHD
+      row[4], // Ubicación FAV
+      formatearFecha(row[5]), // Fecha de instalación FAV
+      row[6]  // Observaciones
+    ]);
     const profesional = await getNombreCompletoProfesional();
     const mes = 'Agosto';
     const anio = '2025';
@@ -240,7 +281,7 @@ document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListen
       mes,
       anio,
       profesional,
-      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha maduración FAV', 'Observaciones'],
+      columnas: ['Nº', 'Usuario', 'Ubicación CHD', 'Fecha de Instalación CHD', 'Ubicación FAV', 'Fecha de instalación FAV', 'Observaciones'],
       datos
     });
   }, 200);
@@ -249,18 +290,35 @@ document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListen
 // Evento para reporte: Sepsis CHD
 document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('click', async function() {
   setTimeout(async () => {
-    const datos = await obtenerPacientesSepsisCHD();
-    const profesional = await getNombreCompletoProfesional();
-    const mes = 'Agosto';
-    const anio = '2025';
-    mostrarModalReporte({
-      titulo: 'Sepsis CHD',
-      descripcion: 'Reporte de pacientes con sepsis asociada a CHD. Permite el seguimiento de casos de infección grave vinculados al catéter, facilitando la gestión clínica y la prevención de complicaciones.',
-      mes,
-      anio,
-      profesional,
-      columnas: ['N°', 'Usuario', 'Ubicación', 'Fecha de instalación', 'Fecha Sepsis', 'Observaciones'],
-      datos
-    });
+  const datosRaw = await obtenerPacientesSepsisCHD();
+  const profesional = await getNombreCompletoProfesional();
+  const mes = 'Agosto';
+  const anio = '2025';
+  // Invertir el orden para mostrar la fecha más reciente primero
+  const formatearFecha = fecha => {
+    if (!fecha) return '';
+    const partes = fecha.split('-');
+    if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
+    return fecha;
+  };
+  const datos = datosRaw
+    .filter(row => row && (row.paciente || row.fecha_diagnostico || row.microorganismo || row.medidas))
+    .map((row, idx) => [
+      (row.numero !== undefined ? row.numero : idx + 1),
+      row.paciente || '',
+      formatearFecha(row.fecha_diagnostico),
+      row.microorganismo || '',
+      row.medidas || ''
+    ])
+    .reverse();
+  mostrarModalReporte({
+    titulo: 'Sepsis CHD',
+    descripcion: 'Reporte de pacientes con infecciones asociadas a CHD. Permite el seguimiento de casos de infección grave vinculados al catéter, facilitando la gestión clínica y la prevención de complicaciones.',
+    mes,
+    anio,
+    profesional,
+    columnas: ['Nº', 'Paciente', 'Fecha de Diagnóstico', 'Microorganismo asociado', 'Medidas'],
+    datos
+  });
   }, 200);
 });

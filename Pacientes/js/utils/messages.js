@@ -1,8 +1,23 @@
 // Función global para mostrar mensajes flotantes
 function mostrarMensaje(texto, tipo = 'success') {
+	// Crear contenedor de toasts si no existe
+	let toastContainer = document.getElementById('toast-messages-container');
+	if (!toastContainer) {
+		toastContainer = document.createElement('div');
+		toastContainer.id = 'toast-messages-container';
+		toastContainer.style.position = 'fixed';
+		toastContainer.style.top = '20px';
+		toastContainer.style.right = '20px';
+		toastContainer.style.zIndex = 9999;
+		toastContainer.style.display = 'flex';
+		toastContainer.style.flexDirection = 'column';
+		toastContainer.style.gap = '10px';
+		document.body.appendChild(toastContainer);
+	}
 	let alerta = document.createElement('div');
-	alerta.className = `alert custom-alert alert-${tipo} position-fixed top-0 end-0 m-4 fade show`;
-	alerta.style.zIndex = 9999;
+	alerta.className = `alert custom-alert alert-${tipo} fade show`;
+	alerta.style.minWidth = '260px';
+	alerta.style.boxShadow = '0 2px 12px rgba(0,0,0,0.12)';
 	let icon = '';
 	switch (tipo) {
 		case 'success':
@@ -30,11 +45,11 @@ function mostrarMensaje(texto, tipo = 'success') {
 			icon = '<span class="alert-icon">💬</span>';
 	}
 	alerta.innerHTML = `${icon}<span class="alert-content">${texto}</span>`;
-	document.body.appendChild(alerta);
+	toastContainer.appendChild(alerta);
 	// Cerrar al hacer click en la alerta
 	alerta.onclick = () => alerta.remove();
 	setTimeout(() => {
-		if (document.body.contains(alerta)) {
+		if (toastContainer.contains(alerta)) {
 			alerta.classList.remove('show');
 			alerta.classList.add('hide');
 			setTimeout(() => alerta.remove(), 500);

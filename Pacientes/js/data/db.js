@@ -693,15 +693,29 @@ db.getPacientesCHDFAVMadurativo = function() {
 
 // Pacientes con CHD y diagnóstico de Sepsis
 db.getPacientesSepsisCHD = function() {
-  // Buscar el id de la etiqueta "Catéter" en tags tipo acceso (CHD)
-  const chdTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'acceso'").get('%catéter%');
-  if (!chdTag) return [];
-  // Buscar pacientes con tipo_acceso_id = chdTag.id y al menos una incidencia con cualquier etiqueta de tipo incidencia
-  const pacientes = db.prepare(`SELECT DISTINCT p.* FROM pacientes p JOIN incidencias i ON p.id = i.paciente_id JOIN incidencia_tags it ON i.id = it.incidencia_id JOIN tags t ON it.tag_id = t.id WHERE p.tipo_acceso_id = ? AND t.tipo = 'incidencia' AND p.activo = 1`).all(chdTag.id);
-  pacientes.forEach(p => {
-    p.etiquetas = db.getEtiquetasByPaciente(p.id);
-  });
-  return pacientes;
+  // Seleccionar infecciones activas asociadas a CHD (catéter) y pacientes activos
+  const rows = db.prepare(`
+    SELECT 
+      inf.id as id,
+      p.nombre || ' ' || p.apellidos as paciente,
+      inf.fecha_infeccion as fecha_diagnostico,
+      t.microorganismo_asociado as microorganismo,
+      inf.observaciones as medidas
+    FROM infecciones inf
+    JOIN pacientes p ON p.id = inf.paciente_id
+    JOIN tags t ON t.id = inf.tag_id
+    WHERE inf.activo = 1 AND p.activo = 1
+      AND t.tipo = 'infeccion'
+    ORDER BY inf.fecha_infeccion DESC
+  `).all();
+  // Añadir número correlativo
+  return rows.map((row, idx) => ({
+    numero: idx + 1,
+    paciente: row.paciente,
+    fecha_diagnostico: row.fecha_diagnostico,
+    microorganismo: row.microorganismo,
+    medidas: row.medidas
+  }));
 };
 
 

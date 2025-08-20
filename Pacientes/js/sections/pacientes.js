@@ -113,29 +113,42 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function displayCamposCHD(){
-	// Mostrar/ocultar campos CHD según selección de accesoPendiente
+	// Mostrar/ocultar campos CHD y fechaInstalacionAccesoPendiente según selección de accesoPendiente y pendiente
 	const accesoPendienteSelect = document.getElementById('accesoPendiente');
 	const chdUbicacionGroup = document.getElementById('chd-ubicacion-group');
 	const chdLadoGroup = document.getElementById('chd-lado-group');
-	// Buscar id de tipo acceso CHD en tiposAccesoGlobal
+	const fechaLabelPend = document.getElementById('labelFechaInstalacionAccesoPendiente');
+	const fechaInputPend = document.getElementById('fechaInstalacionAccesoPendiente');
+	// Buscar id de tipo acceso CHD y FAV en tiposAccesoGlobal
 	let chdTipoAccesoId = null;
+	let favTipoAccesoId = null;
 	if (Array.isArray(tiposAccesoGlobal)) {
 		const chdTipo = tiposAccesoGlobal.find(tipo => tipo.nombre && tipo.nombre.toLowerCase().includes('catéter'));
 		if (chdTipo) chdTipoAccesoId = String(chdTipo.id);
+		const favTipo = tiposAccesoGlobal.find(tipo => tipo.nombre && (tipo.nombre.toLowerCase().includes('fístula') || tipo.nombre.toLowerCase().includes('fav')));
+		if (favTipo) favTipoAccesoId = String(favTipo.id);
 	}
-	if (chdUbicacionGroup && chdLadoGroup && accesoPendienteSelect) {
+	if (chdUbicacionGroup && chdLadoGroup && accesoPendienteSelect && fechaLabelPend && fechaInputPend) {
 		chdUbicacionGroup.style.display = 'none';
 		chdLadoGroup.style.display = 'none';
+		fechaLabelPend.style.display = 'none';
+		fechaInputPend.style.display = 'none';
 		const pendienteSelect = document.getElementById('pendiente');
 		function mostrarCamposCHD() {
 			const accesoCateter = chdTipoAccesoId && accesoPendienteSelect.value === chdTipoAccesoId;
+			const accesoFAV = favTipoAccesoId && accesoPendienteSelect.value === favTipoAccesoId;
 			const pendienteRetiro = pendienteSelect && pendienteSelect.options[pendienteSelect.selectedIndex]?.text?.toLowerCase().includes('retiro');
-			if (accesoCateter && pendienteRetiro) {
+			const pendienteMaduracion = pendienteSelect && pendienteSelect.options[pendienteSelect.selectedIndex]?.text?.toLowerCase().includes('maduración');
+			if ((accesoCateter && pendienteRetiro) || (accesoFAV && pendienteMaduracion)) {
 				chdUbicacionGroup.style.display = '';
 				chdLadoGroup.style.display = '';
+				fechaLabelPend.style.display = '';
+				fechaInputPend.style.display = '';
 			} else {
 				chdUbicacionGroup.style.display = 'none';
 				chdLadoGroup.style.display = 'none';
+				fechaLabelPend.style.display = 'none';
+				fechaInputPend.style.display = 'none';
 			}
 		}
 	accesoPendienteSelect.addEventListener('change', mostrarCamposCHD);
@@ -351,6 +364,29 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 		const profesional = document.getElementById('profesional');
 		const ubicacion = document.getElementById('ubicacion');
 		const ubicacion_chd = document.getElementById('chd-ubicacion');
+		// Validación condicional de campos visibles
+		const fechaInstalacionAccesoPendiente = document.getElementById('fechaInstalacionAccesoPendiente');
+		const chdUbicacion = document.getElementById('chd-ubicacion');
+		const chdLado = document.getElementById('chd-lado');
+		let errorFocus = null;
+		// Solo si el campo está visible (display !== 'none')
+		// Usar getComputedStyle para verificar visibilidad real
+		if (fechaInstalacionAccesoPendiente && window.getComputedStyle(fechaInstalacionAccesoPendiente).display !== 'none' && !fechaInstalacionAccesoPendiente.value) {
+			fechaInstalacionAccesoPendiente.focus();
+			mostrarMensaje('El campo Fecha Instalación Acceso Pendiente es obligatorio', 'danger');
+			errorFocus = true;
+		}
+		if (chdUbicacion && chdUbicacion.parentElement && window.getComputedStyle(chdUbicacion.parentElement).display !== 'none' && !chdUbicacion.value) {
+			chdUbicacion.focus();
+			mostrarMensaje('El campo Ubicación CHD es obligatorio', 'danger');
+			errorFocus = true;
+		}
+		if (chdLado && chdLado.parentElement && window.getComputedStyle(chdLado.parentElement).display !== 'none' && !chdLado.value) {
+			chdLado.focus();
+			mostrarMensaje('El campo Lado CHD es obligatorio', 'danger');
+			errorFocus = true;
+		}
+		if (errorFocus) return;
 		const paciente = {
 			id: window.pacienteEditando.id,
 			nombre: document.getElementById('nombre').value,
@@ -474,10 +510,22 @@ function mostrarCamposFechaAcceso() {
 		fechaInput.value = '';
 	}
 
-	// Pendiente: mostrar fechaInstalacionAccesoPendiente solo si es "Retiro"
-	if (selectPendiente) {
+	// Pendiente: mostrar fechaInstalacionAccesoPendiente si es "Retiro" o si accesoPendiente es Fístula y pendiente es Maduración
+	if (selectPendiente && document.getElementById('accesoPendiente')) {
 		const retiroPendiente = tiposPendienteGlobal.find(tp => tp.nombre && tp.nombre.toLowerCase().includes('retiro'));
-		if (selectPendiente.value && retiroPendiente && String(selectPendiente.value) === String(retiroPendiente.id)) {
+		const maduracionPendiente = tiposPendienteGlobal.find(tp => tp.nombre && tp.nombre.toLowerCase().includes('maduración'));
+		const accesoPendienteSelect = document.getElementById('accesoPendiente');
+		// Buscar el id de Fístula en tiposAccesoGlobal
+		let fistulaTipoAccesoId = null;
+		if (Array.isArray(tiposAccesoGlobal)) {
+			const fistulaTipo = tiposAccesoGlobal.find(tipo => tipo.nombre && (tipo.nombre.toLowerCase().includes('fístula') || tipo.nombre.toLowerCase().includes('fav')));
+			if (fistulaTipo) fistulaTipoAccesoId = String(fistulaTipo.id);
+		}
+		const esRetiro = selectPendiente.value && retiroPendiente && String(selectPendiente.value) === String(retiroPendiente.id);
+		const esMaduracionFistula = maduracionPendiente && fistulaTipoAccesoId &&
+			String(selectPendiente.value) === String(maduracionPendiente.id) &&
+			String(accesoPendienteSelect.value) === String(fistulaTipoAccesoId);
+		if (esRetiro || esMaduracionFistula) {
 			fechaLabelPend.style.display = '';
 			fechaInputPend.style.display = '';
 			const fechaLabelPrimeraPuncion = document.getElementById('labelFechaPrimeraPuncion');
@@ -819,6 +867,28 @@ async function crearPaciente() {
 	const tipoAcceso = document.getElementById('tipoAcceso').value;
 	const ubicacion = document.getElementById('ubicacion').value;
 	const fechaInstalacionAcceso = document.getElementById('fechaInstalacionAcceso').value;
+	// Validación condicional de campos visibles
+	const fechaInstalacionAccesoPendiente = document.getElementById('fechaInstalacionAccesoPendiente');
+	const chdUbicacion = document.getElementById('chd-ubicacion');
+	const chdLado = document.getElementById('chd-lado');
+	let errorFocus = null;
+	// Usar getComputedStyle para verificar visibilidad real
+	if (fechaInstalacionAccesoPendiente && window.getComputedStyle(fechaInstalacionAccesoPendiente).display !== 'none' && !fechaInstalacionAccesoPendiente.value) {
+		fechaInstalacionAccesoPendiente.focus();
+		mostrarMensaje('El campo Fecha Instalación Acceso Pendiente es obligatorio', 'danger');
+		errorFocus = true;
+	}
+	if (chdUbicacion && chdUbicacion.parentElement && window.getComputedStyle(chdUbicacion.parentElement).display !== 'none' && !chdUbicacion.value) {
+		chdUbicacion.focus();
+		mostrarMensaje('El campo Ubicación CHD es obligatorio', 'danger');
+		errorFocus = true;
+	}
+	if (chdLado && chdLado.parentElement && window.getComputedStyle(chdLado.parentElement).display !== 'none' && !chdLado.value) {
+		chdLado.focus();
+		mostrarMensaje('El campo Lado CHD es obligatorio', 'danger');
+		errorFocus = true;
+	}
+	if (errorFocus) return;
 	if (!nombre) {
 		document.getElementById('nombre').focus();
 		mostrarMensaje('El campo Nombre es obligatorio', 'danger');
@@ -1254,17 +1324,19 @@ if (btnGuardarInfecciones) {
             observaciones: inf.comentarios,
             activo: true
         }));
-        try {
-            await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
-            mostrarMensaje('Infecciones guardadas correctamente', 'success');
-            infeccionesTemp = [];
-            const lista = document.getElementById('infeccion-lista');
-            if (lista) lista.innerHTML = '';
-            const modal = document.getElementById('modal-infeccion');
-            bootstrap.Modal.getInstance(modal).hide();
-        } catch (err) {
-            mostrarMensaje('Error al guardar infecciones', 'danger');
-        }
+		try {
+			await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
+			mostrarMensaje('Infecciones guardadas correctamente', 'success');
+			infeccionesTemp = [];
+			const lista = document.getElementById('infeccion-lista');
+			if (lista) lista.innerHTML = '';
+			const modal = document.getElementById('modal-infeccion');
+			bootstrap.Modal.getInstance(modal).hide();
+			// Actualizar la tabla de pacientes tras guardar infecciones
+			cargarPacientes();
+		} catch (err) {
+			mostrarMensaje('Error al guardar infecciones', 'danger');
+		}
     });
 }
 
@@ -1334,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', function() {
 				fechaInput.value = fecha;
 			}
 			// Añadir cada infección seleccionada a la lista temporal
-			selectedOptions.forEach(opt => {
+			selectedOptions.forEach(opt => { 
 				infeccionesTemp.push({
 					tagId: opt.value,
 					nombre: opt.textContent,

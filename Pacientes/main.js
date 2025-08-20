@@ -22,17 +22,16 @@ require('./js/ipcHandlers.js'); // Asegura que los handlers de agenda estén act
 function createWindow() {
   // Creamos una nueva instancia de BrowserWindow (ventana de la app)
   const win = new BrowserWindow({
-    width: 800, // Ancho de la ventana
-    height: 600, // Alto de la ventana
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: true, // Permite usar Node.js en el frontend
       contextIsolation: false // Desactiva el aislamiento de contexto
     }
   });
+  win.maximize();
   // Cargamos el archivo HTML principal desde la carpeta views
   win.loadFile('views/index.html');
-  // Abrir DevTools automáticamente para depuración
-  win.webContents.openDevTools();
 }
 
 
