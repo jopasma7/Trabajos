@@ -651,17 +651,12 @@ db.getPacientesFAVPendienteRetiroCHD = function() {
 
 // Pacientes con CHD y proceso madurativo de FAV
 db.getPacientesCHDFAVMadurativo = function() {
-  
-  // Buscar el id de la etiqueta "Proceso Madurativo" en tags tipo proceso
-  const procesoTag = db.prepare("SELECT id FROM tags WHERE LOWER(nombre) LIKE LOWER(?) AND tipo = 'proceso'").get('%madurativo%');
-  if (!procesoTag) return [];
   // Buscar el id de la etiqueta "Catéter" en tipo_acceso (CHD)
   const chdTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%catéter%');
   if (!chdTipo) return [];
   // Buscar el id de la etiqueta "Fístula" en tipo_acceso (FAV)
   const favTipo = db.prepare("SELECT id FROM tipo_acceso WHERE LOWER(nombre) LIKE LOWER(?)").get('%fístula%');
   if (!favTipo) return [];
-  // Consulta: pacientes con acceso CHD activo y pendiente activo con FAV en pendiente_tipo_acceso_id
   // Obtener el id de pendiente_tipo para 'Maduración'
   const maduracionTipo = db.prepare("SELECT id FROM pendiente_tipo WHERE LOWER(nombre) LIKE LOWER(?)").get('%maduración%');
   if (!maduracionTipo) return [];
@@ -687,14 +682,12 @@ db.getPacientesCHDFAVMadurativo = function() {
     fecha_instalacion_fav: p.fecha_instalacion_fav || '',
     observaciones: p.observaciones || ''
   }));
-  
-  console.log('Pacientes CHD-FAV Madurativo:', resultado);
-    console.log('DEBUG IDs usados en consulta CHD-FAV Madurativo:', {
-    chdTipo: chdTipo.id,
-    favTipo: favTipo.id,
-    maduracionTipo: maduracionTipo.id
+  console.log('[CHD-FAV Madurativo] Pacientes:', resultado);
+  console.log('[CHD-FAV Madurativo] DEBUG IDs usados en consulta:', {
+    chdTipo,
+    favTipo,
+    maduracionTipo
   });
-
   return resultado;
 };
 
