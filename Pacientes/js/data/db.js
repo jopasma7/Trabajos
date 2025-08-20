@@ -504,8 +504,11 @@ db.getHistorialArchivadoByPaciente = function(pacienteId) {
 // Obtener paciente con datos de acceso para edición
 // Obtener todos los datos completos de todos los pacientes
 db.getPacientesCompletos = function() {
-  // Obtener todos los pacientes
+  // Obtener todos los pacientes activos
   const pacientes = db.prepare('SELECT * FROM pacientes WHERE activo = 1').all();
+  if (pacientes.length === 0) {
+    return [];
+  }
   return pacientes.map(paciente => {
     // Acceso más reciente
     const acceso = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
@@ -524,7 +527,6 @@ db.getPacientesCompletos = function() {
       ...inf,
       tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inf.tag_id)
     }));
-    // Si pendiente tiene ubicacion_chd y lado_chd, combinarlos
     return {
       ...paciente,
       acceso: acceso || {},
@@ -682,12 +684,11 @@ db.getPacientesCHDFAVMadurativo = function() {
     fecha_instalacion_fav: p.fecha_instalacion_fav || '',
     observaciones: p.observaciones || ''
   }));
-  console.log('[CHD-FAV Madurativo] Pacientes:', resultado);
-  console.log('[CHD-FAV Madurativo] DEBUG IDs usados en consulta:', {
-    chdTipo,
-    favTipo,
-    maduracionTipo
-  });
+  return resultado;
+  //   chdTipo,
+  //   favTipo,
+  //   maduracionTipo
+  // });
   return resultado;
 };
 
