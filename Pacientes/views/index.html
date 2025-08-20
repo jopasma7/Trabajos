@@ -165,6 +165,7 @@
           </header>
           <!-- Dashboard Section -->
           <section id="dashboard-section" class="section">
+            <!-- Cards originales -->
             <div class="row g-4 mb-4">
               <div class="col-md-3">
                 <div class="card shadow border-0 bg-success text-white">
@@ -199,6 +200,78 @@
                     <div class="mb-2"><i class="bi bi-capsule fs-2"></i></div>
                     <div class="card-title">Prótesis</div>
                     <div class="card-text fs-3">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Panel de notificaciones y accesos rápidos -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-8">
+                <div class="card shadow border-0">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-bell-fill me-2"></i> Notificaciones recientes</h5>
+                    <ul id="dashboard-notificaciones" class="list-group list-group-flush"></ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card shadow border-0">
+                  <div class="card-body text-center">
+                    <h5 class="card-title"><i class="bi bi-lightning-charge me-2"></i> Accesos rápidos</h5>
+                    <div class="d-grid gap-2">
+                      <button class="btn btn-outline-success" id="btn-agregar-paciente"><i class="bi bi-person-plus me-1"></i> Agregar Paciente</button>
+                      <button class="btn btn-outline-primary" id="btn-crear-cita"><i class="bi bi-calendar-plus me-1"></i> Crear Cita</button>
+                      <button class="btn btn-outline-info" id="btn-ver-reportes"><i class="bi bi-bar-chart-fill me-1"></i> Ver Reportes</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gráfica y próximas citas -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-7">
+                <div class="card shadow border-0">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i> Pacientes por mes</h5>
+                    <canvas id="dashboard-chart-pacientes" height="120"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <div class="card shadow border-0">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-calendar-event me-2"></i> Próximas citas</h5>
+                    <table class="table table-sm table-hover">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Paciente</th>
+                          <th>Profesional</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="dashboard-citas"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Perfil profesional -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-12">
+                <div class="card shadow border-0">
+                  <div class="card-body d-flex align-items-center">
+                    <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle me-3" width="64" height="64">
+                    <div>
+                      <h5 class="mb-1" id="dashboard-nombre-profesional">Nombre Profesional</h5>
+                      <p class="mb-0 text-muted" id="dashboard-cargo-profesional">Especialidad</p>
+                    </div>
+                    <div class="ms-auto">
+                      <button class="btn btn-outline-secondary"><i class="bi bi-gear me-1"></i> Configurar Perfil</button>
+                    </div>
                   </div>
                 </div>
               </div>
