@@ -233,7 +233,7 @@ document.addEventListener('click', async function(e) {
 		});
 		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		cargarPacientes();
-		mostrarMensaje('Paciente archivado correctamente', 'info');
+		mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
 	// Actualizar cards del dashboard
 	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 		return;
@@ -262,7 +262,7 @@ document.addEventListener('click', async function(e) {
 		if (modalInstance) {
 			modalInstance.hide();
 		}
-		mostrarMensaje('Paciente eliminado correctamente', 'success');
+		mostrarMensaje(`Paciente eliminado correctamente: <b>${nombreCompleto}</b>`, 'success');
 	// Actualizar cards del dashboard
 	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 		return;
@@ -680,9 +680,15 @@ async function renderizarPacientes(pacientes) {
             ? `${accesoObj.ubicacion_anatomica} ${accesoObj.ubicacion_lado}`
             : (accesoObj.ubicacion_anatomica || accesoObj.ubicacion_lado || '');
         // Obtener fecha instalación
-        let fechaInstalacion = accesoObj.fecha_instalacion || paciente.fecha_instalacion || '';
-        let fechaFormateada = '';
-        let diasDetalle = '';
+		let fechaInstalacion = accesoObj.fecha_instalacion || paciente.fecha_instalacion || '';
+		let fechaFormateada = '';
+		let diasDetalle = '';
+		let relojEmoji = '';
+		// Estado pendiente: mostrar emoji reloj de arena
+		const esPendiente = paciente.proceso_actual === 'pendiente' || paciente.pendiente?.pendiente_tipo_id;
+		if (esPendiente) {
+			relojEmoji = '<span title="Pendiente" style="font-size:1.15em;vertical-align:middle;margin-right:2px;">⏳</span>';
+		}
         if (fechaInstalacion) {
             const match = fechaInstalacion.match(/^([0-9]{4})-([0-9]{2})-([0-9]{2})/);
             if (match) {
@@ -740,7 +746,7 @@ async function renderizarPacientes(pacientes) {
 			<td>${infeccionTagsHtml} ${paciente.nombre} ${paciente.apellidos}</td>
 			<td>${tipoAccesoHtml}</td>
 			<td class="pacientes-ubicacion" title="${ubicacionCompleta}">${badgesHtml} ${ubicacionCompleta}</td>
-			<td>${fechaFormateada}${diasDetalle}</td>
+			<td>${relojEmoji}${fechaFormateada}${diasDetalle}</td>
 			<td>
 				<button class="btn btn-outline-primary btn-sm btn-historial" data-id="${paciente.id}" title="Ver Historial Clínico"><i class="bi bi-journal-medical"></i></button>
 				<button class="btn btn-outline-success btn-sm btn-editar-paciente" data-id="${paciente.id}"><i class="bi bi-pencil"></i></button>
@@ -1103,7 +1109,13 @@ async function crearPaciente() {
 		modalInstance.hide();
 	}
 	limpiarBackdropsDuplicados();
-	mostrarMensaje('Paciente creado correctamente', 'success');
+	if (window.pacienteEditando && window.pacienteEditando.id) {
+		const nombreCompleto = document.getElementById('nombre').value + ' ' + document.getElementById('apellidos').value;
+		mostrarMensaje(`Paciente editado correctamente: <b>${nombreCompleto}</b>`, 'success');
+	} else {
+		const nombreCompleto = document.getElementById('nombre').value + ' ' + document.getElementById('apellidos').value;
+		mostrarMensaje(`Paciente creado correctamente: <b>${nombreCompleto}</b>`, 'success');
+	}
 	incidenciaValoresTemp = {}; // Limpiar variable temporal tras guardar
 	// Actualizar cards del dashboard
 	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
@@ -1326,7 +1338,7 @@ async function editarPaciente(id) {
 	if (modalInstance) {    
 		modalInstance.hide();
 	}  
-	mostrarMensaje('Paciente editado correctamente', 'success'); 
+	mostrarMensaje(`Paciente editado correctamente: <b>${paciente.nombre} ${paciente.apellidos}</b>`, 'success'); 
 
 	// Limpieza robusta de variables y contenedores visuales al finalizar edición
 	window.pacienteEditando = null; 
