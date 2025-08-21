@@ -16,6 +16,47 @@ window.cargarDatosDashboard = async function() {
 	const { ipcRenderer } = require('electron');
 	let pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 
+	// Cargar próximas citas para el dashboard
+	let citas = [];
+	try {
+		citas = await ipcRenderer.invoke('agenda-cargar');
+		console.log('[Dashboard] Todas las citas cargadas:', citas);
+	} catch (e) {
+		citas = [];
+	}
+	// Filtrar próximas citas (hoy o futuras)
+	const hoy = new Date();
+	const proximas = (Array.isArray(citas) ? citas : []).filter(cita => {
+		if (!cita.fecha || !cita.hora) return false;
+		const fechaHora = new Date(cita.fecha + 'T' + cita.hora);
+		return fechaHora >= hoy;
+	}).sort((a, b) => {
+		// Ordenar por fecha y hora ascendente
+		const fa = new Date(a.fecha + 'T' + a.hora);
+		const fb = new Date(b.fecha + 'T' + b.hora);
+		return fa - fb;
+	}).slice(0, 5); // Solo mostrar las 5 próximas
+	console.log('[Dashboard] Próximas citas filtradas:', proximas);
+
+	const citasTbody = document.getElementById('dashboard-citas');
+	if (citasTbody) {
+		if (proximas.length === 0) {
+			citasTbody.innerHTML = '<tr><td colspan="3" class="text-muted text-center">No hay próximas citas</td></tr>';
+		} else {
+			citasTbody.innerHTML = proximas.map(cita => {
+				const fecha = cita.fecha ? cita.fecha.split('-').reverse().join('/') : '';
+				const hora = cita.hora || '';
+				const paciente = cita.paciente || cita.titulo || '';
+				const estado = cita.completado ? '<span class="badge bg-success">Completada</span>' : '<span class="badge bg-warning text-dark">Pendiente</span>';
+				return `<tr>
+					<td>${fecha} ${hora}</td>
+					<td>${paciente}</td>
+					<td>${estado}</td>
+				</tr>`;
+			}).join('');
+		}
+	}
+
 	// Log para depuración
 
 

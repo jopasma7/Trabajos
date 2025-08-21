@@ -159,6 +159,7 @@ function setupAgendaSection() {
             } else {
                 mostrarMensaje('Evento eliminado correctamente', 'success');
             }
+            if (window.cargarDatosDashboard) window.cargarDatosDashboard();
           });
         }
       });
@@ -205,7 +206,10 @@ function setupAgendaSection() {
       mostrarMensaje('Evento creado correctamente', 'success');
     }
     agenda.setEventos(eventos);
-    agenda.guardarEventos(() => agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento));
+    agenda.guardarEventos(() => {
+      agenda.renderAgenda(agendaBody, openModalEditar, eliminarEvento);
+      if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+    });
     modalEvento.hide(); 
   };
   // Al iniciar, poner el filtro de fecha al día de hoy
@@ -441,6 +445,7 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
           agenda.setEventos(eventos);
           agenda.guardarEventos(() => {
             // Solo renderizar columnas afectadas, pero usando los filtros activos
+            if (window.cargarDatosDashboard) window.cargarDatosDashboard();
             const filtroEventos = window._agendaFiltroEventos || 'todos';
             const filtroCategoria = window._agendaFiltroCategoria || '';
             const busquedaTexto = window._agendaBusquedaTexto || '';
@@ -835,6 +840,7 @@ function asignarListenerCompletar(btn, openModalEditar, eliminarEvento) {
   agenda.guardarEventos(() => {
         // Actualizar solo la card del evento
         const card = btn.closest('.agenda-evento-calendario');
+        if (window.cargarDatosDashboard) window.cargarDatosDashboard();
         if (card) {
           const ev = eventos[idx];
           let claseNuevo = '';

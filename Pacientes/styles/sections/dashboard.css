@@ -46,3 +46,78 @@
 	background: linear-gradient(135deg, #14532d 60%, #009879 100%) !important;
 	color: #fff !important;
 }
+
+/* --- Próximas citas dashboard (nuevo estilo minimalista y elegante) --- */
+#dashboard-proximas-citas {
+	background: #fff;
+	border-radius: 1.25rem;
+	box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,152,121,0.04);
+	border: 1.5px solid #e6f9e6;
+	padding: 2.1rem 1.3rem 1.3rem 1.3rem;
+	margin-bottom: 2.2rem;
+	animation: fadeInCitas 0.7s cubic-bezier(.4,2,.3,1);
+}
+@keyframes fadeInCitas {
+	from { opacity: 0; transform: translateY(24px) scale(0.98); }
+	to { opacity: 1; transform: none; }
+}
+#dashboard-proximas-citas .card-title {
+	font-size: 1.18rem;
+	font-weight: 900;
+	color: #009879;
+	letter-spacing: 0.8px;
+	margin-bottom: 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+#dashboard-proximas-citas .card-title i {
+	font-size: 1.35em;
+	color: #38bfa7;
+}
+#dashboard-proximas-citas .card {
+	background: #f8fdf8;
+	border-radius: 1rem;
+	box-shadow: 0 2px 12px rgba(0,152,121,0.06);
+	border: 1px solid #e0ffe0;
+}
+#dashboard-proximas-citas .card-body {
+	padding: 1.1rem 0.8rem 0.8rem 0.8rem;
+}
+#dashboard-proximas-citas table.table {
+	background: transparent;
+	border-radius: 0.7rem;
+	overflow: hidden;
+	margin-bottom: 0;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+#dashboard-proximas-citas table.table thead th {
+	background: #e6f9e6;
+	color: #009879;
+	font-weight: 700;
+	border-bottom: 1.5px solid #e0ffe0;
+	font-size: 1.07rem;
+	letter-spacing: 0.4px;
+	text-align: center;
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+#dashboard-proximas-citas table.table tbody tr {
+	transition: background 0.18s;
+}
+#dashboard-proximas-citas table.table tbody tr:hover {
+	background: #e0ffe0;
+}
+#dashboard-proximas-citas table.table td {
+	border: none;
+	font-size: 1.03rem;
+	vertical-align: middle;
+	padding: 0.55rem 0.7rem;
+	text-align: center;
+	color: #222;
+}
+#dashboard-proximas-citas table.table .text-muted {
+	color: #b2b2b2 !important;
+}
