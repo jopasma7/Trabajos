@@ -243,20 +243,25 @@ document.addEventListener('click', async function(e) {
 		const paciente = pacientesGlobal.find(p => p.id == pacienteId);
 		const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
 		await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
-		// Notificación: paciente archivado
-		await ipcRenderer.invoke('notificaciones-add', {
-			tipo: 'Pacientes',
-			mensaje: `Se archivó el paciente ${nombreCompleto}`,
-			fecha: new Date().toISOString(),
-			usuario_id: null,
-			paciente_id: pacienteId,
-			extra: ''
-		});
+		// Validar que paciente_id es válido antes de enviar la notificación
+		const pacienteIdValidoArchivar = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
+		if (pacienteIdValidoArchivar) {
+			await ipcRenderer.invoke('notificaciones-add', {
+				tipo: 'Pacientes',
+				mensaje: `Se archivó el paciente ${nombreCompleto}`,
+				fecha: new Date().toISOString(),
+				usuario_id: null,
+				paciente_id: pacienteId,
+				extra: ''
+			});
+		} else {
+			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
+		}
 		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		cargarPacientes();
 		mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
-	// Actualizar cards del dashboard
-	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+		// Actualizar cards del dashboard
+		if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 		return;
 	}
 	// Botón de eliminar
@@ -267,16 +272,30 @@ document.addEventListener('click', async function(e) {
 		// Obtener datos del paciente para el mensaje
 		const paciente = pacientesGlobal.find(p => p.id == pacienteId);
 		const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
+		// Validar que paciente_id es válido antes de enviar la notificación
+		const pacienteIdValido = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
+		if (pacienteIdValido) {
+			// Buscar profesional_id válido del paciente si existe
+			let usuarioId = null;
+			if (paciente && paciente.profesional_id && !isNaN(Number(paciente.profesional_id)) && Number(paciente.profesional_id) > 0) {
+				usuarioId = paciente.profesional_id;
+			} else {
+				usuarioId = 0; // Valor seguro si la base lo permite, si no, omitir el campo
+			}
+			const notificacionPayload = {
+				tipo: 'Pacientes',
+				mensaje: `Se eliminó el paciente ${nombreCompleto}`,
+				fecha: new Date().toISOString(),
+				usuario_id: usuarioId,
+				paciente_id: pacienteId,
+				extra: `Nombre: ${nombreCompleto}`
+			};
+			console.log('[DEBUG][notificaciones-add][eliminar] Payload:', notificacionPayload);
+			await ipcRenderer.invoke('notificaciones-add', notificacionPayload);
+		} else {
+			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
+		}
 		await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
-		// Notificación: paciente eliminado
-		await ipcRenderer.invoke('notificaciones-add', {
-			tipo: 'Pacientes',
-			mensaje: `Se eliminó el paciente ${nombreCompleto}`,
-			fecha: new Date().toISOString(),
-			usuario_id: null,
-			paciente_id: pacienteId,
-			extra: ''
-		});
 		cargarPacientes();
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -284,8 +303,9 @@ document.addEventListener('click', async function(e) {
 			modalInstance.hide();
 		}
 		mostrarMensaje(`Paciente eliminado correctamente: <b>${nombreCompleto}</b>`, 'success');
-	// Actualizar cards del dashboard
-	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+		// Actualizar cards del dashboard
+		if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		return;
 	}
 	// Botón de infección
@@ -1316,6 +1336,28 @@ async function editarPaciente(id) {
 		// Eliminados: incidencia, incidencia_valores
 	};
 
+		const result = await ipcRenderer.invoke('update-paciente', paciente);
+		// Solo registrar notificación si hubo cambios
+		if (result && result.changes > 0) {
+			console.log('[DEBUG] Notificación de edición creada para paciente:', paciente.id, paciente.nombre, paciente.apellidos, 'changes:', result.changes);
+			// Validar que los IDs existen y son válidos antes de enviar la notificación
+			const profesionalIdValido = paciente.profesional_id && !isNaN(Number(paciente.profesional_id)) && Number(paciente.profesional_id) > 0;
+			const pacienteIdValido = paciente.id && !isNaN(Number(paciente.id)) && Number(paciente.id) > 0;
+			if (profesionalIdValido && pacienteIdValido) { 
+				await ipcRenderer.invoke('notificaciones-add', {
+					tipo: 'Pacientes',
+					mensaje: `Se editó el paciente ${paciente.nombre} ${paciente.apellidos}`,
+					fecha: new Date().toISOString(),
+					usuario_id: paciente.profesional_id,
+					paciente_id: paciente.id,
+					extra: ''
+				});
+				if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+			} else {
+				console.warn('[DEBUG] Notificación NO enviada: profesional_id o paciente_id inválido', paciente.profesional_id, paciente.id);
+			}
+		}
+
 	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
 	const etiquetasSeleccionadas = Object.keys(incidenciaValoresTemp);
 	if (id && etiquetasSeleccionadas.length > 0) {
@@ -1349,17 +1391,24 @@ async function editarPaciente(id) {
 			if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		}
 	}
-	await ipcRenderer.invoke('update-paciente', paciente);
-	// Notificación: paciente editado
-	await ipcRenderer.invoke('notificaciones-add', {
-		tipo: 'Pacientes',
-		mensaje: `Se editó el paciente ${paciente.nombre} ${paciente.apellidos}`,
-		fecha: new Date().toISOString(),
-		usuario_id: paciente.profesional_id || null,
-		paciente_id: paciente.id,
-		extra: ''
-	});
-	if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+	 // (Ya se realiza la notificación solo si hubo cambios)
+	// Recargar datos clínicos del paciente editado y actualizar el formulario/modal
+	const pacienteActualizado = await ipcRenderer.invoke('paciente-get-con-acceso', id);
+	if (pacienteActualizado) {
+		// Actualizar campos clínicos en el formulario/modal
+		document.getElementById('tipoAcceso').value = pacienteActualizado.tipo_acceso_id || '';
+		document.getElementById('fechaInstalacionAcceso').value = pacienteActualizado.fecha_instalacion || '';
+		document.getElementById('ubicacion').value = pacienteActualizado.ubicacion_anatomica || '';
+		document.getElementById('lado').value = pacienteActualizado.ubicacion_lado || '';
+		document.getElementById('profesional').value = pacienteActualizado.profesional_id || '';
+		if (pacienteActualizado.pendiente) {
+			document.getElementById('pendiente').value = pacienteActualizado.pendiente.pendiente_tipo_id || '';
+			document.getElementById('accesoPendiente').value = pacienteActualizado.pendiente.tabla_acceso_id_vinculado || '';
+			document.getElementById('fechaInstalacionAccesoPendiente').value = pacienteActualizado.pendiente.fecha_instalacion_acceso_pendiente || '';
+			document.getElementById('chd-ubicacion').value = pacienteActualizado.pendiente.ubicacion_chd || '';
+			document.getElementById('chd-lado').value = pacienteActualizado.pendiente.lado_chd || '';
+		}
+	}
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');
 	let modalInstance = bootstrap.Modal.getInstance(modalEl);
