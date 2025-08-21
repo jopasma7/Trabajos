@@ -1,3 +1,4 @@
+const { ipcRenderer } = require('electron');
 // Función para actualizar las cards del dashboard con datos reales
 window.actualizarDashboardCards = function(data) {
 	const cards = document.querySelectorAll('#dashboard-section .card-text.fs-3');
@@ -12,14 +13,13 @@ window.actualizarDashboardCards = function(data) {
 // Obtener datos reales desde el backend (usando IPC)
 window.cargarDatosDashboard = async function() {
 	// window.electronAPI o window.api depende de tu preload.js
-	const { ipcRenderer } = require('electron');
 	let pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 
 	// Cargar próximas citas para el dashboard
 	let citas = [];
 	try {
 		citas = await ipcRenderer.invoke('agenda-cargar');
-		console.log('[Dashboard] Todas las citas cargadas:', citas);
+	// ...
 	} catch (e) {
 		citas = [];
 	}
@@ -35,7 +35,7 @@ window.cargarDatosDashboard = async function() {
 		const fb = new Date(b.fecha + 'T' + b.hora);
 		return fa - fb;
 	}).slice(0, 5); // Solo mostrar las 5 próximas
-	console.log('[Dashboard] Próximas citas filtradas:', proximas);
+	// ...
 
 	const citasTbody = document.getElementById('dashboard-citas');
 	if (citasTbody) {
@@ -56,7 +56,7 @@ window.cargarDatosDashboard = async function() {
 		}
 	}
 
-	// Log para depuración
+	// ...
 
 
 		// Contadores robustos
@@ -100,6 +100,23 @@ window.cargarDatosDashboard = async function() {
 document.addEventListener('DOMContentLoaded', () => {
 	cargarDatosDashboard();
 
+	// --- Mostrar notificaciones recientes en el dashboard ---
+	ipcRenderer.invoke('notificaciones-get-recientes', 10).then(notificaciones => {
+		const ul = document.getElementById('dashboard-notificaciones');
+		if (!ul) return;
+		if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
+			ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
+			return;
+		}
+		ul.innerHTML = notificaciones.map(n => {
+			const fecha = n.fecha ? n.fecha.replace('T', ' ').slice(0, 16) : '';
+			return `<li class="list-group-item d-flex justify-content-between align-items-center">
+				<span><strong>${n.tipo}</strong>: ${n.mensaje}</span>
+				<small class="text-muted">${fecha}</small>
+			</li>`;
+		}).join('');
+	});
+
 	// Botón Configurar Perfil navega a la sección de perfil
 	const btnConfigPerfil = document.querySelector('#dashboard-section .btn-outline-secondary');
 	if (btnConfigPerfil) {
@@ -110,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	// Cargar datos del profesional en el card del dashboard
-	const { ipcRenderer } = require('electron');
 	ipcRenderer.invoke('perfil-cargar').then(data => {
 		const nombreEl = document.getElementById('dashboard-nombre-profesional');
 		const cargoEl = document.getElementById('dashboard-cargo-profesional');
@@ -135,8 +151,32 @@ document.addEventListener('DOMContentLoaded', () => {
 	});
 });
 
+async function actualizarNotificacionesDashboard() {
+    const notificaciones = await ipcRenderer.invoke('notificaciones-get-recientes', 10);
+    const ul = document.getElementById('dashboard-notificaciones');
+    if (!ul) return;
+    if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
+        ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
+        return;
+    }
+    ul.innerHTML = notificaciones.map(n => {
+        const fecha = n.fecha ? n.fecha.replace('T', ' ').slice(0, 16) : '';
+        return `<li class="list-group-item d-flex justify-content-between align-items-center">
+            <span><strong>${n.tipo}</strong>: ${n.mensaje}</span>
+            <small class="text-muted">${fecha}</small>
+        </li>`;
+    }).join('');
+}
+
+// Permite disparar el evento desde cualquier sección tras una acción relevante
+window.refrescarNotificacionesDashboard = function() {
+    window.dispatchEvent(new Event('notificacion-nueva'));
+}
+
 // Al pulsar cualquier card del dashboard, ir a la sección de pacientes
 document.addEventListener('DOMContentLoaded', () => {
+	actualizarNotificacionesDashboard();
+    window.addEventListener('notificacion-nueva', actualizarNotificacionesDashboard);
 	// Solo aplicar a los cards dentro de #dashboard-pacientes-cards
 	document.querySelectorAll('#dashboard-pacientes-cards .card').forEach(card => {
 		card.style.cursor = 'pointer';

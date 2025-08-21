@@ -290,6 +290,15 @@ ipcMain.handle('pendiente-tipos-get', () => {
   return db.prepare('SELECT id, nombre FROM pendiente_tipo').all();
 });
 
+// --- Notificaciones ---
+ipcMain.handle('notificaciones-get-recientes', (event, limit = 10) => {
+  return db.getRecentNotifications(limit);
+});
+
+ipcMain.handle('notificaciones-add', (event, notification) => {
+  return db.addNotification(notification);
+});
+
 ipcMain.handle('pendientes-get-by-paciente', (event, pacienteId) => {
   return db.getPendientesByPaciente(pacienteId);
 });

@@ -206,7 +206,7 @@
               </div>
             </div>
 
-            <!-- Panel de notificaciones (accesos rápidos eliminado) -->
+            <!-- Panel de notificaciones recientes -->
             <div class="row g-4 mb-4">
               <div class="col-md-12">
                 <div class="card shadow border-0">
@@ -221,7 +221,7 @@
             <!-- Gráfica y próximas citas -->
             <div class="row g-4 mb-4">
               <div class="col-md-7">
-                <div class="card shadow border-0">
+                <div class="card shadow border-0" id="dashboard-grafica-pacientes">
                   <div class="card-body">
                     <h5 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i> Pacientes por mes</h5>
                     <canvas id="dashboard-chart-pacientes" height="120"></canvas>
@@ -1323,10 +1323,10 @@
   <script src="../assets/js/jspdf.umd.min.js"></script>
   <script src="../assets/js/jspdf.plugin.autotable.min.js"></script>
   <script src="../assets/js/chart.min.js"></script>
-  <script src="../js/sections/dashboard.js"></script>
+  <!-- <script src="../js/sections/dashboard.js"></script> -->
   <script src="../js/utils/messages.js"></script>
   <script src="../js/utils/emoji-picker.js"></script>
-  <script src="../js/sections/agenda.js"></script>
+  <!-- <script src="../js/sections/agenda.js"></script> -->
   <script src="../js/renderer.js"></script>
   </body>
 </html> 

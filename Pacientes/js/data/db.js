@@ -1196,6 +1196,18 @@ db.crearEtiquetasIncidenciaMotivos = function() {
 };
 
 module.exports = db;
+// --- Notificaciones ---
+const getRecentNotifications = (limit = 10) => {
+  return db.prepare(`SELECT * FROM notificaciones ORDER BY fecha DESC LIMIT ?`).all(limit);
+};
+
+const addNotification = ({ tipo, mensaje, fecha, usuario_id = null, paciente_id = null, extra = null }) => {
+  const stmt = db.prepare(`INSERT INTO notificaciones (tipo, mensaje, fecha, usuario_id, paciente_id, extra) VALUES (?, ?, ?, ?, ?, ?)`);
+  return stmt.run(tipo, mensaje, fecha, usuario_id, paciente_id, extra);
+};
+
+module.exports.getRecentNotifications = getRecentNotifications;
+module.exports.addNotification = addNotification;
 
 // Llamar siempre al cargar el archivo para poblar la base de datos con pacientes de prueba
 db.insertarPacientesPrueba();

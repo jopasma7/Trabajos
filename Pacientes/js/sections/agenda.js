@@ -1,12 +1,10 @@
-// (El contador de eventos próximos se actualiza ahora dentro de renderAgenda)
-
 // Función global para mostrar mensajes flotantes (debe estar antes de cualquier uso)
 // js/sections/agenda.js
 // Lógica profesional de la sección Agenda
-const { ipcRenderer } = require('electron');
+
 const hoy = new Date();
 const hoyKey = hoy.toISOString().slice(0,10);
-
+const { ipcRenderer } = require('electron');
 let eventos = [];
 
 function setupAgendaSection() {
