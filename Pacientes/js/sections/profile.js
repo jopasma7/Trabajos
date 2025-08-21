@@ -217,6 +217,27 @@ function setupProfileSection() {
                     headerName.textContent = 'Usuario';
                 }
             }
+                // Actualizar card profesional en dashboard
+                const nombreEl = document.getElementById('dashboard-nombre-profesional');
+                const cargoEl = document.getElementById('dashboard-cargo-profesional');
+                const avatarEl = document.querySelector('#dashboard-section img.rounded-circle');
+                if (nombreEl) {
+                    let nombreCompleto = '';
+                    if (perfil.nombre && perfil.nombre.trim() !== '') nombreCompleto += perfil.nombre.trim();
+                    if (perfil.apellido && perfil.apellido.trim() !== '') nombreCompleto += (nombreCompleto ? ' ' : '') + perfil.apellido.trim();
+                    nombreEl.textContent = nombreCompleto || 'Nombre Profesional';
+                }
+                if (cargoEl) {
+                    cargoEl.textContent = perfil.cargo && perfil.cargo.trim() !== '' ? perfil.cargo.trim() : 'Especialidad';
+                }
+                if (avatarEl) {
+                    if (perfil.avatar) {
+                        avatarEl.src = perfil.avatar;
+                    } else {
+                        const sexo = perfil.sexo || 'hombre';
+                        avatarEl.src = sexo === 'mujer' ? '../assets/mujer.jpg' : '../assets/hombre.jpg';
+                    }
+                }
             window.mostrarMensaje('Perfil guardado correctamente', 'success');
         });
     });

@@ -1,0 +1,48 @@
+/* Estilos modernos para los cards del Dashboard */
+#dashboard-pacientes-cards .card {
+	transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.18s;
+	border-radius: 1.25rem;
+	box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1.5px 6px rgba(0,0,0,0.04);
+	border: none;
+	overflow: hidden;
+}
+#dashboard-pacientes-cards .card:hover {
+	transform: translateY(-4px) scale(1.03);
+	box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+	z-index: 2;
+}
+#dashboard-section .card-title {
+		font-size: 1rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	margin-bottom: 0.5rem;
+}
+#dashboard-section .card-text.fs-3 {
+		font-size: 1.7rem !important;
+	font-weight: 900;
+	margin-bottom: 0.25rem;
+	text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+#dashboard-section .card-body {
+	padding: 2rem 1.2rem 1.2rem 1.2rem;
+}
+#dashboard-section .card .mb-2 i {
+		font-size: 2rem !important;
+	filter: drop-shadow(0 2px 6px rgba(0,0,0,0.10));
+}
+#dashboard-section .card.bg-success {
+	background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+	color: #fff;
+}
+#dashboard-section .card.bg-white.text-success {
+	background: linear-gradient(135deg, #fff 60%, #e0ffe0 100%);
+	color: #009879;
+}
+#dashboard-section .card[style*="linear-gradient(135deg, #34c759"] {
+	background: linear-gradient(135deg, #34c759 60%, #009879 100%) !important;
+	color: #fff !important;
+}
+#dashboard-section .card[style*="linear-gradient(135deg, #14532d"] {
+	background: linear-gradient(135deg, #14532d 60%, #009879 100%) !important;
+	color: #fff !important;
+}

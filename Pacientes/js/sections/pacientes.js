@@ -192,6 +192,8 @@ document.addEventListener('click', async function(e) {
 		await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
 		cargarPacientes();
 		mostrarMensaje('Paciente archivado correctamente', 'info');
+	// Actualizar cards del dashboard
+	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 		return;
 	}
 	// Botón de eliminar
@@ -207,6 +209,8 @@ document.addEventListener('click', async function(e) {
 			modalInstance.hide();
 		}
 		mostrarMensaje('Paciente eliminado correctamente', 'success');
+	// Actualizar cards del dashboard
+	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 		return;
 	}
 	// Botón de infección
@@ -1001,6 +1005,8 @@ async function crearPaciente() {
 	limpiarBackdropsDuplicados();
 	mostrarMensaje('Paciente creado correctamente', 'success');
 	incidenciaValoresTemp = {}; // Limpiar variable temporal tras guardar
+	// Actualizar cards del dashboard
+	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 }
 
 async function cargarEtiquetas() {
@@ -1211,6 +1217,8 @@ async function editarPaciente(id) {
 	if (incidenciaContainer) {
 		incidenciaContainer.innerHTML = '';
 	}
+	// Actualizar cards del dashboard
+	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
 }
 
 // Renderiza formularios dinámicos para cada incidencia seleccionada

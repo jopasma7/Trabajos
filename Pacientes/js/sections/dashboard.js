@@ -1,11 +1,6 @@
 
-
-// dashboard.js
-// Lógica específica para la sección Dashboard
-
-
 // Función para actualizar las cards del dashboard con datos reales
-function actualizarDashboardCards(data) {
+window.actualizarDashboardCards = function(data) {
 	const cards = document.querySelectorAll('#dashboard-section .card-text.fs-3');
 	if (cards.length >= 4) {
 		cards[0].textContent = data.pacientes;
@@ -16,7 +11,7 @@ function actualizarDashboardCards(data) {
 }
 
 // Obtener datos reales desde el backend (usando IPC)
-async function cargarDatosDashboard() {
+window.cargarDatosDashboard = async function() {
 	// window.electronAPI o window.api depende de tu preload.js
 	const { ipcRenderer } = require('electron');
 	let pacientes = await ipcRenderer.invoke('get-pacientes-completos');
@@ -53,7 +48,7 @@ async function cargarDatosDashboard() {
 		});
 
 
-		actualizarDashboardCards({
+		window.actualizarDashboardCards({
 			pacientes: totalPacientes,
 			fistula: totalFistula,
 			cateter: totalCateter,
@@ -63,4 +58,50 @@ async function cargarDatosDashboard() {
 
 document.addEventListener('DOMContentLoaded', () => {
 	cargarDatosDashboard();
+
+	// Botón Configurar Perfil navega a la sección de perfil
+	const btnConfigPerfil = document.querySelector('#dashboard-section .btn-outline-secondary');
+	if (btnConfigPerfil) {
+		btnConfigPerfil.addEventListener('click', () => {
+			const perfilBtn = document.querySelector('[data-section="perfil"]');
+			if (perfilBtn) perfilBtn.click();
+		});
+	}
+
+	// Cargar datos del profesional en el card del dashboard
+	const { ipcRenderer } = require('electron');
+	ipcRenderer.invoke('perfil-cargar').then(data => {
+		const nombreEl = document.getElementById('dashboard-nombre-profesional');
+		const cargoEl = document.getElementById('dashboard-cargo-profesional');
+			const avatarEl = document.querySelector('#dashboard-section img.rounded-circle');
+		if (nombreEl) {
+			let nombreCompleto = '';
+			if (data && data.nombre) nombreCompleto += data.nombre.trim();
+			if (data && data.apellido) nombreCompleto += (nombreCompleto ? ' ' : '') + data.apellido.trim();
+			nombreEl.textContent = nombreCompleto || 'Nombre Profesional';
+		}
+		if (cargoEl) {
+			cargoEl.textContent = (data && data.cargo) ? data.cargo.trim() : 'Especialidad';
+		}
+			if (avatarEl) {
+				if (data && data.avatar) {
+					avatarEl.src = data.avatar;
+				} else {
+					const sexo = (data && data.sexo) ? data.sexo : 'hombre';
+					avatarEl.src = sexo === 'mujer' ? '../assets/mujer.jpg' : '../assets/hombre.jpg';
+				}
+			}
+	});
+});
+
+// Al pulsar cualquier card del dashboard, ir a la sección de pacientes
+document.addEventListener('DOMContentLoaded', () => {
+	// Solo aplicar a los cards dentro de #dashboard-pacientes-cards
+	document.querySelectorAll('#dashboard-pacientes-cards .card').forEach(card => {
+		card.style.cursor = 'pointer';
+		card.addEventListener('click', () => {
+			const pacientesBtn = document.querySelector('[data-section="pacientes"]');
+			if (pacientesBtn) pacientesBtn.click();
+		});
+	});
 });
