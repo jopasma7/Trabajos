@@ -327,3 +327,14 @@ ipcMain.handle('get-ubicaciones-anatomicas', () => {
   }));
 });
 
+// Handler: Incidencias por tipo para estadísticas
+ipcMain.handle('get-incidencias-por-tipo', () => {
+  return db.getIncidenciasPorTipo ? db.getIncidenciasPorTipo() : [];
+});
+
+// Handler: Ranking de profesionales para estadísticas
+ipcMain.handle('get-ranking-profesionales', () => {
+  return db.getRankingProfesionales ? db.getRankingProfesionales() : [];
+});
+
+

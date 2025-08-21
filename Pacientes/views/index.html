@@ -57,6 +57,7 @@
   <link rel="stylesheet" href="../styles/sections/dashboard.css">
   <link rel="stylesheet" href="../styles/sections/modal-global.css">
   <link rel="stylesheet" href="../styles/sections/reportes.css">
+    <link rel="stylesheet" href="../styles/sections/stats.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -587,12 +588,51 @@
               </div>
             </section>
             <!-- Estadísticas Section -->
-            <section id="estadisticas-section" class="section d-none">
-              <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Estadísticas</h2>
+            <section id="estadisticas-section" class="section">
+              <div class="row g-4 mb-4 justify-content-center">
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-primary" style="font-size:1.35rem;"><i class="bi bi-pie-chart-fill me-2"></i> Pacientes por tipo de acceso</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:140px;">
+                      <canvas id="stats-chart-acceso" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Distribución actual de pacientes según el tipo de acceso vascular.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-info" style="font-size:1.35rem;"><i class="bi bi-people-fill me-2"></i> Distribución por sexo</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-sexo-edad" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Visualización de pacientes por sexo.</div>
+                  </div>
+                </div>
               </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Aquí se mostrarán estadísticas avanzadas.</p>
+              <div class="row g-4 mb-4 justify-content-center">
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.35rem;"><i class="bi bi-bar-chart-line-fill me-2"></i> Evolución mensual de pacientes</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-evolucion" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Altas y bajas de pacientes por mes. <span class="stats-highlight">Tendencia y crecimiento.</span></div>
+                  </div>
+                </div>
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-warning" style="font-size:1.35rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Incidencias por tipo</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-incidencias" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description mb-2" style="font-size:0.92em;">Cantidad de incidencias registradas por tipo y mes.</div>
+                    <h6 class="mb-2 fw-bold text-info mt-4" style="font-size:1.35rem;"><i class="bi bi-bar-chart-fill me-2"></i> Distribución por edad</h6>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-edad" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Visualización de pacientes por rangos de edad.</div>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -1312,6 +1352,8 @@
   <script src="../js/utils/messages.js"></script>
   <script src="../js/utils/emoji-picker.js"></script>
   <!-- <script src="../js/sections/agenda.js"></script> -->
+
+  <script src="../js/sections/stats.js"></script>
   <script src="../js/renderer.js"></script>
   </body>
 </html> 

@@ -11,9 +11,9 @@ const fechaInput = document.getElementById('fechaInstalacionAcceso');
 const selectTipoAcceso = document.getElementById('tipoAcceso');
 const selectPendiente = document.getElementById('pendiente');
 const fechaLabelPend = document.getElementById('labelFechaInstalacionAccesoPendiente');
-const fechaInputPend = document.getElementById('fechaInstalacionAccesoPendiente');
+const fechaInputPend = document.getElementById('fechaInstalacionAccesoPendiente'); 
 
-// Variable temporal para guardar los valores de incidencias
+// Variable temporal para guardar los valores de incidencias 
 let incidenciaValoresTemp = {}
 
 // Variable global temporal para infecciones añadidas en el modal

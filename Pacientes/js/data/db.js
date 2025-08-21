@@ -732,6 +732,33 @@ db.getPacientesSepsisCHD = function() {
   }));
 };
 
+// Estadísticas: Incidencias por tipo
+db.getIncidenciasPorTipo = function() {
+  // Agrupa incidencias activas por tipo
+  const rows = db.prepare(`
+    SELECT tipo, COUNT(*) as cantidad
+    FROM incidencias
+    WHERE activo = 1
+    GROUP BY tipo
+    ORDER BY cantidad DESC
+  `).all();
+  return rows;
+};
+
+// Estadísticas: Ranking de profesionales
+db.getRankingProfesionales = function() {
+  // Cuenta pacientes atendidos por profesional
+  const rows = db.prepare(`
+    SELECT p.nombre || ' ' || p.apellidos as nombre, COUNT(pa.id) as pacientes_atendidos
+    FROM profesionales p
+    LEFT JOIN pacientes pa ON pa.profesional_id = p.id AND pa.activo = 1
+    GROUP BY p.id
+    ORDER BY pacientes_atendidos DESC
+  `).all();
+  return rows;
+};
+
+
 
 // --- Métodos de agenda ---
 db.getAllEventos = function() {
