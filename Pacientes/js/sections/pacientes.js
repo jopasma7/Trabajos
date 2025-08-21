@@ -71,7 +71,7 @@ function limpiarBackdropsDuplicados() {
 function llenarSelectUbicacionCHD() {
     const select = document.getElementById('chd-ubicacion');
     if (!select) return;
-    select.innerHTML = '<option value="">Seleccione...</option>';
+	select.innerHTML = '<option value="">Seleccionar Ubicación</option>';
 	const selectTipoAcceso = document.getElementById('accesoPendiente');
 	const tipoAccesoId = selectTipoAcceso?.value;
 	// Buscar el nombre real del tipo de acceso por id
@@ -122,7 +122,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 	}
 	// Listener para mostrar fechaInstalacionAccesoPendiente cuando se selecciona "Retiro" en pendiente
 	if (selectPendiente) {
+		// Inicialmente ocultar accesoPendiente
+	const accesoPendienteGroup = document.getElementById('accesoPendiente-group');
+	if (accesoPendienteGroup) accesoPendienteGroup.style.display = 'none';
 		selectPendiente.addEventListener('change', function() {
+			// Mostrar accesoPendiente solo si la opción seleccionada NO es 'No Pendiente'
+			if (accesoPendienteGroup) {
+				if (selectPendiente.selectedIndex === 0) {
+					accesoPendienteGroup.style.display = 'none';
+				} else {
+					accesoPendienteGroup.style.display = '';
+				}
+			}
 			mostrarCamposFechaAcceso();
 		});
 	}
@@ -172,11 +183,21 @@ function displayCamposCHD(){
 				chdLadoGroup.style.display = '';
 				fechaLabelPend.style.display = '';
 				fechaInputPend.style.display = '';
+				// Mostrar fechaPrimeraPuncion también
+				const labelFechaPrimeraPuncion = document.getElementById('labelFechaPrimeraPuncion');
+				const fechaPrimeraPuncion = document.getElementById('fechaPrimeraPuncion');
+				if (labelFechaPrimeraPuncion) labelFechaPrimeraPuncion.style.display = '';
+				if (fechaPrimeraPuncion) fechaPrimeraPuncion.style.display = '';
 			} else {
 				chdUbicacionGroup.style.display = 'none';
 				chdLadoGroup.style.display = 'none';
 				fechaLabelPend.style.display = 'none';
 				fechaInputPend.style.display = 'none';
+				// Ocultar fechaPrimeraPuncion también
+				const labelFechaPrimeraPuncion = document.getElementById('labelFechaPrimeraPuncion');
+				const fechaPrimeraPuncion = document.getElementById('fechaPrimeraPuncion');
+				if (labelFechaPrimeraPuncion) labelFechaPrimeraPuncion.style.display = 'none';
+				if (fechaPrimeraPuncion) fechaPrimeraPuncion.style.display = 'none';
 			}
 		}
 	accesoPendienteSelect.addEventListener('change', mostrarCamposCHD);
@@ -382,8 +403,18 @@ document.addEventListener('click', async function(e) {
 		llenarSelectUbicacion();
 		document.getElementById('ubicacion').value = paciente.acceso?.ubicacion_anatomica || paciente.ubicacion_anatomica || '';
 		document.getElementById('lado').value = paciente.acceso?.ubicacion_lado || paciente.ubicacion_lado || '';
-		document.getElementById('pendiente').value = paciente.pendiente?.pendiente_tipo_id || '';
+		const pendienteSelect = document.getElementById('pendiente');
+		pendienteSelect.value = paciente.pendiente?.pendiente_tipo_id || '';
 		document.getElementById('accesoPendiente').value = paciente.pendiente?.tabla_acceso_id_vinculado || paciente.pendiente?.pendiente_tipo_acceso_id || '';
+		// Ocultar accesoPendiente si pendiente es 'No Pendiente' al editar
+		const accesoPendienteGroup = document.getElementById('accesoPendiente-group');
+		if (accesoPendienteGroup) {
+			if (pendienteSelect.selectedIndex === 0) {
+				accesoPendienteGroup.style.display = 'none';
+			} else {
+				accesoPendienteGroup.style.display = '';
+			}
+		}
 		llenarSelectUbicacionCHD();
 		if (document.getElementById('chd-ubicacion')) {
 			document.getElementById('chd-ubicacion').value = paciente.pendiente?.ubicacion_chd || '';
@@ -489,7 +520,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 function llenarSelectProfesional() {
     const select = document.getElementById('profesional');
     if (!select) return;
-    select.innerHTML = '<option value="">Seleccione...</option>';
+	select.innerHTML = '<option value="">Seleccionar Profesional</option>';
     profesionalesGlobal.forEach(prof => {
         select.innerHTML += `<option value="${prof.id}">${prof.nombre} ${prof.apellidos || ''}</option>`;
 	});
@@ -501,7 +532,7 @@ function llenarSelectTipoAcceso() {
     const selectAcceso = document.getElementById('tipoAcceso');
     const selectPendiente = document.getElementById('accesoPendiente');
 		if (selectAcceso) {
-			selectAcceso.innerHTML = '<option value="">Seleccione...</option>';
+		selectAcceso.innerHTML = '<option value="">Establecer Tipo de Acceso</option>';
 			tiposAccesoGlobal.forEach(tipo => {
 				let iconHtml = '';
 				if (tipo.icono) {
@@ -515,7 +546,7 @@ function llenarSelectTipoAcceso() {
 			});
 		}
 	if (selectPendiente) {
-		selectPendiente.innerHTML = '<option value="">Seleccione...</option>';
+		selectPendiente.innerHTML = '<option value="">Seleccionar Acceso Pendiente</option>';
 		tiposAccesoGlobal.forEach(tipo => {
 			let iconHtml = '';
 			if (tipo.icono) {
@@ -533,7 +564,7 @@ function llenarSelectTipoAcceso() {
 function llenarSelectPendiente() {
     const select = document.getElementById('pendiente');
     if (!select) return;
-    select.innerHTML = '<option value="">Seleccione...</option>';
+	select.innerHTML = '<option value="">No Pendiente</option>';
     tiposPendienteGlobal.forEach(tipo => {
         select.innerHTML += `<option value="${tipo.id}">${tipo.nombre}</option>`;
 	});
@@ -543,7 +574,7 @@ function llenarSelectPendiente() {
 function llenarSelectUbicacion() {
     const select = document.getElementById('ubicacion');
     if (!select) return;
-    select.innerHTML = '<option value="">Seleccione...</option>';
+	select.innerHTML = '<option value="">Seleccionar Ubicación</option>';
 	const selectTipoAcceso = document.getElementById('tipoAcceso');
 	const tipoAccesoId = selectTipoAcceso?.value;
 	// Buscar el nombre real del tipo de acceso por id
