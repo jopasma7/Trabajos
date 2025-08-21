@@ -1,4 +1,3 @@
-
 // Función para actualizar las cards del dashboard con datos reales
 window.actualizarDashboardCards = function(data) {
 	const cards = document.querySelectorAll('#dashboard-section .card-text.fs-3');
@@ -86,7 +85,7 @@ window.cargarDatosDashboard = async function() {
 			if (tipo.includes('fístula')) totalFistula++;
 			else if (tipo.includes('catéter')) totalCateter++;
 			else if (tipo.includes('prótesis')) totalProtesis++;
-		});
+	});
 
 
 		window.actualizarDashboardCards({
@@ -95,6 +94,7 @@ window.cargarDatosDashboard = async function() {
 			cateter: totalCateter,
 			protesis: totalProtesis
 		});
+		window.renderGraficaPacientesPorMes(pacientes);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -146,3 +146,49 @@ document.addEventListener('DOMContentLoaded', () => {
 		});
 	});
 });
+
+// --- Gráfica de pacientes por mes ---
+window.renderGraficaPacientesPorMes = function(pacientes) {
+  // Agrupar pacientes por mes de alta
+  const meses = {};
+  pacientes.forEach(p => {
+    const fechaAlta = p.fecha_alta || p.fecha_creacion || '';
+    if (!fechaAlta) return;
+    const [y, m] = fechaAlta.split('-');
+    if (!y || !m) return;
+    const key = `${y}-${m}`;
+    meses[key] = (meses[key] || 0) + 1;
+  });
+  // Ordenar meses
+  const labels = Object.keys(meses).sort();
+  const data = labels.map(m => meses[m]);
+  // Crear o actualizar la gráfica
+  const ctx = document.getElementById('dashboard-chart-pacientes').getContext('2d');
+  if (window._graficaPacientesPorMes) window._graficaPacientesPorMes.destroy();
+  window._graficaPacientesPorMes = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.map(l => {
+        const [y, m] = l.split('-');
+        return `${m}/${y}`;
+      }),
+      datasets: [{
+        label: 'Pacientes por mes',
+        data,
+        backgroundColor: '#34c759',
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        title: { display: false }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { color: '#eee' } }
+      }
+    }
+  });
+};
