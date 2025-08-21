@@ -209,10 +209,15 @@
             <!-- Panel de notificaciones recientes -->
             <div class="row g-4 mb-4">
               <div class="col-md-12">
-                <div class="card shadow border-0">
-                  <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-bell-fill me-2"></i> Notificaciones recientes</h5>
-                    <ul id="dashboard-notificaciones" class="list-group list-group-flush"></ul>
+                <div class="card shadow border-0" id="dashboard-notificaciones-container">
+                  <div class="card-body p-0">
+                    <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-2 border-bottom bg-gradient" style="background: linear-gradient(90deg, #34c759 0%, #009879 100%);">
+                      <h5 class="card-title mb-0 text-white fw-bold"><i class="bi bi-bell-fill me-2 text-warning"></i> Notificaciones recientes</h5>
+                      <span class="badge bg-light text-success px-3 py-2 shadow-sm" style="font-size:1.05em;">En tiempo real</span>
+                    </div>
+                    <ul id="dashboard-notificaciones" class="list-group list-group-flush px-3 py-3" style="background: #f8f9fa; border-radius:0 0 1rem 1rem;">
+                      <!-- Notificaciones dinámicas -->
+                    </ul>
                   </div>
                 </div>
               </div>

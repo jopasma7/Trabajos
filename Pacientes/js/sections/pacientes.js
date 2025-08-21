@@ -196,13 +196,14 @@ document.addEventListener('click', async function(e) {
 		await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
 		// Notificación: paciente archivado
 		await ipcRenderer.invoke('notificaciones-add', {
-			tipo: 'Paciente archivado',
+			tipo: 'Pacientes',
 			mensaje: `Se archivó el paciente ${nombreCompleto}`,
 			fecha: new Date().toISOString(),
 			usuario_id: null,
 			paciente_id: pacienteId,
 			extra: ''
 		});
+		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		cargarPacientes();
 		mostrarMensaje('Paciente archivado correctamente', 'info');
 	// Actualizar cards del dashboard
@@ -220,7 +221,7 @@ document.addEventListener('click', async function(e) {
 		await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
 		// Notificación: paciente eliminado
 		await ipcRenderer.invoke('notificaciones-add', {
-			tipo: 'Paciente eliminado',
+			tipo: 'Pacientes',
 			mensaje: `Se eliminó el paciente ${nombreCompleto}`,
 			fecha: new Date().toISOString(),
 			usuario_id: null,
@@ -1004,13 +1005,14 @@ async function crearPaciente() {
 	// Notificación: paciente añadido
 	if (pacienteId) {
 		await ipcRenderer.invoke('notificaciones-add', {
-			tipo: 'Paciente añadido',
+			tipo: 'Pacientes',
 			mensaje: `Se añadió el paciente ${paciente.nombre} ${paciente.apellidos}`,
 			fecha: new Date().toISOString(),
 			usuario_id: paciente.profesional_id || null,
 			paciente_id: pacienteId,
 			extra: ''
 		});
+		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 	}
 			
 	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
@@ -1033,13 +1035,14 @@ async function crearPaciente() {
 			const paciente = pacientesGlobal.find(p => p.id == pacienteId);
 			const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
 			await ipcRenderer.invoke('notificaciones-add', {
-				tipo: 'Incidencia añadida',
+				tipo: 'Incidencia',
 				mensaje: `Se añadió una incidencia (${incidencia.nombre}) al paciente ${nombreCompleto}`,
 				fecha: new Date().toISOString(),
 				usuario_id: paciente ? paciente.profesional_id : null,
 				paciente_id: pacienteId,
 				extra: ''
 			});
+			if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		}
 	}
 	// Actualiza la tabla y cierra el modal
@@ -1243,26 +1246,30 @@ async function editarPaciente(id) {
 			// Notificación: incidencia añadida
 			const pacienteObj = pacientesGlobal.find(p => p.id == id);
 			const nombreCompleto = pacienteObj ? `${pacienteObj.nombre} ${pacienteObj.apellidos}` : `ID ${id}`;
+			const tag = etiquetasPorId[etiquetaId];
+			const color = tag && tag.color ? tag.color : '#009879';
 			await ipcRenderer.invoke('notificaciones-add', {
-				tipo: 'Incidencia añadida',
-				mensaje: `Se añadió una incidencia (${incidenciaPayload.tipo}) al paciente ${nombreCompleto}`,
+				tipo: 'Incidencia',
+				mensaje: `El paciente <strong>${nombreCompleto}</strong> ha sufrido una incidencia (<i class='bi bi-tag-fill' style='color:${color};font-size:1.1em;vertical-align:-0.1em;'></i> <strong>${incidenciaPayload.tipo}</strong>) y se ha añadido a su historial.`,
 				fecha: new Date().toISOString(),
 				usuario_id: pacienteObj ? pacienteObj.profesional_id : null,
 				paciente_id: id,
 				extra: ''
 			});
+			if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 		}
 	}
 	await ipcRenderer.invoke('update-paciente', paciente);
 	// Notificación: paciente editado
 	await ipcRenderer.invoke('notificaciones-add', {
-		tipo: 'Paciente editado',
+		tipo: 'Pacientes',
 		mensaje: `Se editó el paciente ${paciente.nombre} ${paciente.apellidos}`,
 		fecha: new Date().toISOString(),
 		usuario_id: paciente.profesional_id || null,
 		paciente_id: paciente.id,
 		extra: ''
 	});
+	if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');
 	let modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -1412,13 +1419,14 @@ if (btnGuardarInfecciones) {
 				const icono = tag && tag.icono ? tag.icono : '';
 				const nombre = tag && tag.nombre ? tag.nombre : 'Infección';
 				ipcRenderer.invoke('notificaciones-add', {
-					tipo: 'Infección añadida',
-					mensaje: `${icono} Se añadió una infección (${nombre}) al paciente ${nombreCompleto}`,
+					tipo: 'Infección',
+					mensaje: `El paciente <strong>${nombreCompleto}</strong> se ha infectado de <strong>${nombre}</strong> ${icono}`,
 					fecha: new Date().toISOString(),
 					usuario_id: paciente ? paciente.profesional_id : null,
 					paciente_id: pacienteId,
 					extra: ''
 				});
+				if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 			});
 			mostrarMensaje('Infecciones guardadas correctamente', 'success');
 			infeccionesTemp = [];

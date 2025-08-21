@@ -152,20 +152,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function actualizarNotificacionesDashboard() {
-    const notificaciones = await ipcRenderer.invoke('notificaciones-get-recientes', 10);
+	const notificaciones = await ipcRenderer.invoke('notificaciones-get-recientes', 5);
     const ul = document.getElementById('dashboard-notificaciones');
     if (!ul) return;
     if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
         ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
         return;
     }
-    ul.innerHTML = notificaciones.map(n => {
-        const fecha = n.fecha ? n.fecha.replace('T', ' ').slice(0, 16) : '';
-        return `<li class="list-group-item d-flex justify-content-between align-items-center">
-            <span><strong>${n.tipo}</strong>: ${n.mensaje}</span>
-            <small class="text-muted">${fecha}</small>
-        </li>`;
-    }).join('');
+	ul.innerHTML = notificaciones.map(n => {
+		let fecha = '';
+		if (n.fecha) {
+			const d = new Date(n.fecha);
+			const dia = String(d.getDate()).padStart(2, '0');
+			const mes = String(d.getMonth() + 1).padStart(2, '0');
+			const anio = d.getFullYear();
+			const hora = String(d.getHours()).padStart(2, '0');
+			const min = String(d.getMinutes()).padStart(2, '0');
+			fecha = `${dia}-${mes}-${anio} ${hora}:${min}`;
+		}
+	// Buscar nombre de paciente y ponerlo en negrita (nombre completo)
+	let mensaje = n.mensaje.replace(/(al paciente |del paciente |a la paciente |de la paciente )(.*?)([.,;]|$)/i, (match, pre, nombre, fin) => `${pre}<strong>${nombre.trim()}</strong>${fin}`);
+		return `<li class="list-group-item d-flex justify-content-between align-items-center">
+			<span><strong>${n.tipo}</strong>: ${mensaje}</span>
+			<small class="text-muted">${fecha}</small>
+		</li>`;
+	}).join('');
 }
 
 // Permite disparar el evento desde cualquier sección tras una acción relevante
