@@ -1379,7 +1379,7 @@ async function editarPaciente(id) {
 			const pacienteObj = pacientesGlobal.find(p => p.id == id);
 			const nombreCompleto = pacienteObj ? `${pacienteObj.nombre} ${pacienteObj.apellidos}` : `ID ${id}`;
 			const tag = etiquetasPorId[etiquetaId];
-			const color = tag && tag.color ? tag.color : '#009879';
+			const color = tag && tag.color ? tag.color : '#009879'; 
 			await ipcRenderer.invoke('notificaciones-add', {
 				tipo: 'Incidencia',
 				mensaje: `El paciente <strong>${nombreCompleto}</strong> ha sufrido una incidencia (<i class='bi bi-tag-fill' style='color:${color};font-size:1.1em;vertical-align:-0.1em;'></i> <strong>${incidenciaPayload.tipo}</strong>) y se ha añadido a su historial.`,

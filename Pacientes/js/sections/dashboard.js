@@ -243,3 +243,65 @@ window.renderGraficaPacientesPorMes = function(pacientes) {
     }
   });
 };
+
+// Comportamiento de click en los cards de pacientes del dashboard
+document.addEventListener('DOMContentLoaded', function() {
+	const cards = document.querySelectorAll('#dashboard-pacientes-cards .card');
+	// Card 0: Total pacientes (no hace nada)
+	// Card 1: Fístula
+	// Card 2: Catéter
+	// Card 3: Prótesis
+		// Mapea el nombre al id real del tipo de acceso (ajusta según tu base de datos)
+		const tipoAccesoIds = {
+			'Fístula': 1,
+			'Catéter': 2,
+			'Prótesis': 3
+		};
+		const tipoAccesoNombres = ['Fístula', 'Catéter', 'Prótesis'];
+			cards.forEach((card, idx) => {
+				card.style.cursor = 'pointer';
+				card.addEventListener('click', function() {
+					// Mostrar sección pacientes
+					document.querySelectorAll('.section').forEach(s => s.classList.add('d-none'));
+					document.getElementById('pacientes-section').classList.remove('d-none');
+					// Poner filtro de tipo de acceso
+					const filtro = document.getElementById('filtro-tipoacceso');
+					if (filtro) {
+						if (idx === 0) {
+							filtro.value = '';
+							console.debug('[Dashboard Card Click] idx:', idx, 'Todos');
+						} else {
+							const nombre = tipoAccesoNombres[idx-1];
+							const id = tipoAccesoIds[nombre];
+							filtro.value = id;
+							console.debug('[Dashboard Card Click] idx:', idx, 'nombre:', nombre, 'id:', id);
+						}
+						filtro.dispatchEvent(new Event('change'));
+					}
+				});
+			});
+				// Al acceder a la sección de pacientes desde el menú lateral, poner filtro en Todos solo si no venimos de un card
+				let accesoDesdeCard = false;
+				cards.forEach((card, idx) => {
+					card.addEventListener('click', function() {
+						accesoDesdeCard = true;
+						// ...resto del código...
+					});
+				});
+				const pacientesNav = document.querySelector('[data-section="pacientes"]');
+				if (pacientesNav) {
+					pacientesNav.addEventListener('click', function() {
+						setTimeout(() => {
+							if (!accesoDesdeCard) {
+								const filtro = document.getElementById('filtro-tipoacceso');
+								if (filtro) {
+									filtro.value = '';
+									filtro.dispatchEvent(new Event('change'));
+									console.debug('[Pacientes Nav Click] Todos');
+								}
+							}
+							accesoDesdeCard = false;
+						}, 100);
+					});
+				}
+});
