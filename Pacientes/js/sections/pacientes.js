@@ -90,6 +90,24 @@ function llenarSelectUbicacionCHD() {
 // Cargar los elementos en el DOM
 document.addEventListener('DOMContentLoaded', async () => {
 	await cargarDatosGlobal();
+	// Llenar el select de filtro de tipo de acceso en la tabla de pacientes DESPUÉS de cargar los datos globales
+	if (filtroTipoAcceso) {
+		filtroTipoAcceso.innerHTML = '<option value="">Todos</option>';
+		if (Array.isArray(tiposAccesoGlobal)) {
+			tiposAccesoGlobal.forEach(tipo => {
+				let iconHtml = '';
+				if (tipo.icono) {
+					if (tipo.icono.startsWith('bi-')) {
+						iconHtml = `<i class='bi ${tipo.icono}' style='font-size:1em;vertical-align:middle;color:${tipo.color || '#222'};'></i> `;
+					} else {
+						iconHtml = `<span style='font-size:1em;vertical-align:middle;color:${tipo.color || '#222'};'>${tipo.icono}</span> `;
+					}
+				}
+				filtroTipoAcceso.innerHTML += `<option value='${tipo.id}'>${iconHtml}${tipo.nombre}</option>`;
+			});
+		}
+	}
+	await cargarDatosGlobal();
 	if (document.getElementById('accesoPendiente')) {
 		document.getElementById('accesoPendiente').addEventListener('change', llenarSelectUbicacionCHD);
 	}
@@ -109,7 +127,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 		});
 	}
 	displayCamposCHD();
-	
+
+	// Listeners para filtros de la tabla pacientes
+	if (inputBusqueda) {
+		inputBusqueda.addEventListener('input', actualizarTablaPacientes);
+	}
+	if (filtroTipoAcceso) {
+		filtroTipoAcceso.addEventListener('change', actualizarTablaPacientes);
+	}
+	if (filtroPendiente) {
+		filtroPendiente.addEventListener('change', actualizarTablaPacientes);
+	}
 });
 
 function displayCamposCHD(){
@@ -590,23 +618,42 @@ function mostrarCamposFechaAcceso() {
 
 // Filtros
 function filtrarPacientes() {
-	let filtrados = [...pacientesGlobal];
-	const texto = (inputBusqueda?.value || '').toLowerCase();
-	const tipo = filtroTipoAcceso?.value || '';
-	const pendiente = filtroPendiente?.value || '';
-	if (texto) {
-		filtrados = filtrados.filter(p =>
-			p.nombre.toLowerCase().includes(texto) ||
-			(p.apellidos && p.apellidos.toLowerCase().includes(texto))
-		);
-	}
-	if (tipo) {
-		filtrados = filtrados.filter(p => Number(p.tipo_acceso_id) === Number(tipo));
-	}
-	if (pendiente) {
-		filtrados = filtrados.filter(p => String(p.proceso_actual) === String(pendiente));
-	}
-	return filtrados;
+		let filtrados = [...pacientesGlobal];
+		// Filtro por nombre/apellidos (soporta búsqueda por palabras separadas)
+		const texto = (inputBusqueda?.value || '').toLowerCase().trim();
+		if (texto) {
+			const palabras = texto.split(/\s+/);
+			filtrados = filtrados.filter(p => {
+				const nombreCompleto = `${p.nombre} ${p.apellidos}`.toLowerCase();
+				return palabras.every(palabra => nombreCompleto.includes(palabra));
+			});
+		}
+
+		// Filtro por tipo de acceso (usa id y muestra icono en el select)
+		const tipo = filtroTipoAcceso?.value || '';
+		if (tipo) {
+			filtrados = filtrados.filter(p => {
+				// Puede venir como id o como nombre
+				const tipoAccesoObj = p.tipo_acceso || p.acceso?.tipo_acceso || null;
+				return tipoAccesoObj && (String(tipoAccesoObj.id) === String(tipo) || tipoAccesoObj.nombre === tipo);
+			});
+		}
+
+		// Filtro por estado: Todos, Infectado, Incidencias, Pendiente
+		const estado = filtroPendiente?.value || '';
+		if (estado) {
+			filtrados = filtrados.filter(p => {
+				if (estado === 'infectado') {
+					return Array.isArray(p.infecciones) && p.infecciones.length > 0;
+				} else if (estado === 'incidencias') {
+					return Array.isArray(p.etiquetas) && p.etiquetas.some(id => etiquetasPorId[id]?.tipo === 'incidencia');
+				} else if (estado === 'pendiente') {
+					return p.proceso_actual === 'pendiente' || p.pendiente?.pendiente_tipo_id;
+				}
+				return true;
+			});
+		}
+		return filtrados;
 }
 
 // Tabla de Pacientes
