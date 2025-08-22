@@ -208,17 +208,16 @@ db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   paciente_id INTEGER NOT NULL,
   fecha TEXT NOT NULL,
-  tipo_evento INTEGER,
+  tipo_evento TEXT,
   motivo TEXT,
-  diagnostico INTEGER,
+  diagnostico TEXT,
   tratamiento TEXT,
   notas TEXT,
   adjuntos TEXT,
-  profesional TEXT,
+  profesional_id INTEGER,
   archivado INTEGER DEFAULT 0,
   FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE SET NULL,
-  FOREIGN KEY (tipo_evento) REFERENCES tags(id),
-  FOREIGN KEY (diagnostico) REFERENCES tags(id)
+  FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
 )`).run();
 
 // Crear tabla tags (etiquetas personalizables) antes de cualquier migración o uso
@@ -487,7 +486,7 @@ db.getHistorialClinicoByPaciente = function(pacienteId) {
 };
 
 db.addHistorialClinico = function(pacienteId, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional) {
-  const stmt = db.prepare('INSERT INTO historial_clinico (paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO historial_clinico (paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(pacienteId, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional);
   return { id: info.lastInsertRowid };
 };

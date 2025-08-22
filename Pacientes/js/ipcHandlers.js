@@ -155,8 +155,8 @@ ipcMain.handle('historial-get', (event, pacienteId) => {
   return db.getHistorialClinicoByPaciente(pacienteId);
 });
 
-ipcMain.handle('historial-add', (event, { paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional }) => {
-  return db.addHistorialClinico(paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional);
+ipcMain.handle('historial-add', (event, { paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional_id }) => {
+  return db.addHistorialClinico(paciente_id, fecha, tipo_evento, motivo, diagnostico, tratamiento, notas, adjuntos, profesional_id);
 });
 
 // Editar una entrada de historial clínico

@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // 1. Pacientes por tipo de acceso
   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-  console.log('[DEBUG] pacientes:', pacientes);
   let fistula = 0, cateter = 0, protesis = 0;
   pacientes.forEach(p => {
     const tipo = p.tipo_acceso?.nombre?.toLowerCase() || '';
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // 3. Incidencias por tipo
   const incidencias = await ipcRenderer.invoke('get-incidencias-por-tipo');
-  console.log('[DEBUG] incidencias:', incidencias);
   window.renderStatsIncidencias({
     labels: incidencias.map(i => i.tipo),
     counts: incidencias.map(i => i.cantidad)

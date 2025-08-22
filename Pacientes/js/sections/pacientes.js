@@ -266,11 +266,12 @@ document.addEventListener('click', async function(e) {
 			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
 		}
 		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
-		cargarPacientes();
-		mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
-		// Actualizar cards del dashboard
-		if (window.cargarDatosDashboard) window.cargarDatosDashboard();
-		return;
+	cargarPacientes();
+	mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
+	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
+	// Actualizar cards del dashboard
+	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+	return;
 	}
 	// Botón de eliminar
 	const btnEliminar = e.target.closest('.btn-eliminar');
@@ -298,13 +299,13 @@ document.addEventListener('click', async function(e) {
 				paciente_id: pacienteId,
 				extra: `Nombre: ${nombreCompleto}`
 			};
-			console.log('[DEBUG][notificaciones-add][eliminar] Payload:', notificacionPayload);
 			await ipcRenderer.invoke('notificaciones-add', notificacionPayload);
 		} else {
 			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
 		}
-		await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
-		cargarPacientes();
+	await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
+	cargarPacientes();
+	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
 		if (modalInstance) {
@@ -1131,6 +1132,7 @@ async function crearPaciente() {
 	const etiquetasSeleccionadass = Object.keys(incidenciaValoresTemp);
 	// Llama al ipcHandler para añadir paciente y obtiene el id
 	const result = await ipcRenderer.invoke('add-paciente', paciente);
+	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 
 	const pacienteId = result && result.id ? result.id : null;
 	// Notificación: paciente añadido
@@ -1144,8 +1146,16 @@ async function crearPaciente() {
 			extra: ''
 		});
 		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+
+		// Crear entrada de historial tipo Registro
+		if (window.addEntradasHistorial) {
+			   await window.addEntradasHistorial('Registro', {
+				   paciente_id: pacienteId,
+				   profesional_id: paciente.profesional_id ? Number(paciente.profesional_id) : null
+			   });
+		}
 	}
-			
+
 	// Guardar incidencias si hay etiquetas seleccionadas y pacienteId válido
 	const etiquetasSeleccionadas = Object.keys(incidenciaValoresTemp);
 	if (pacienteId && etiquetasSeleccionadas.length > 0) {
@@ -1363,10 +1373,10 @@ async function editarPaciente(id) {
 		// Eliminados: incidencia, incidencia_valores
 	};
 
-		const result = await ipcRenderer.invoke('update-paciente', paciente);
+	const result = await ipcRenderer.invoke('update-paciente', paciente);
+	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 		// Solo registrar notificación si hubo cambios
 		if (result && result.changes > 0) {
-			console.log('[DEBUG] Notificación de edición creada para paciente:', paciente.id, paciente.nombre, paciente.apellidos, 'changes:', result.changes);
 			// Validar que los IDs existen y son válidos antes de enviar la notificación
 			const profesionalIdValido = paciente.profesional_id && !isNaN(Number(paciente.profesional_id)) && Number(paciente.profesional_id) > 0;
 			const pacienteIdValido = paciente.id && !isNaN(Number(paciente.id)) && Number(paciente.id) > 0;
@@ -1553,28 +1563,28 @@ function renderIncidenciaValores(selectedIncidencias) {
 // Handler para el botón Guardar infecciones
 const btnGuardarInfecciones = document.getElementById('btn-guardar-infecciones'); 
 if (btnGuardarInfecciones) {
-    btnGuardarInfecciones.addEventListener('click', async function() {
-        if (infeccionesTemp.length === 0) return;
-        let pacienteId;
-        if (window.origenModalInfeccion === 'pacientes') {
-            pacienteId = Number(window.pacienteIdOtraSeccion) || null;
-        } else if (window.origenModalInfeccion === 'historial') {
-            const select = document.getElementById('filtro-paciente-historial');
-            pacienteId = select && select.value ? Number(select.value) : null;
-        } else {
-            pacienteId = window.pacienteInfeccionId || null;
-        }
-        if (!pacienteId) {
-            mostrarMensaje('No se ha seleccionado un paciente para guardar infecciones', 'danger');
-            return;
-        }
-        // Formatear infecciones para enviar solo los campos esperados por el backend
-        const infeccionesAEnviar = infeccionesTemp.map(inf => ({
-            tag_id: inf.tagId,
-            fecha_infeccion: inf.fecha,
-            observaciones: inf.comentarios,
-            activo: true
-        }));
+	btnGuardarInfecciones.addEventListener('click', async function() {
+		if (infeccionesTemp.length === 0) return;
+		let pacienteId;
+		if (window.origenModalInfeccion === 'pacientes') {
+			pacienteId = Number(window.pacienteIdOtraSeccion) || null;
+		} else if (window.origenModalInfeccion === 'historial') {
+			const select = document.getElementById('filtro-paciente-historial');
+			pacienteId = select && select.value ? Number(select.value) : null;
+		} else {
+			pacienteId = window.pacienteInfeccionId || null;
+		}
+		if (!pacienteId) {
+			mostrarMensaje('No se ha seleccionado un paciente para guardar infecciones', 'danger');
+			return;
+		}
+		// Formatear infecciones para enviar solo los campos esperados por el backend
+		const infeccionesAEnviar = infeccionesTemp.map(inf => ({
+			tag_id: inf.tagId,
+			fecha_infeccion: inf.fecha,
+			observaciones: inf.comentarios,
+			activo: true
+		}));
 		try {
 			await ipcRenderer.invoke('add-infecciones', pacienteId, infeccionesAEnviar);
 			// Notificaciones por cada infección añadida
@@ -1601,11 +1611,19 @@ if (btnGuardarInfecciones) {
 			const modal = document.getElementById('modal-infeccion');
 			bootstrap.Modal.getInstance(modal).hide();
 			// Actualizar la tabla de pacientes tras guardar infecciones
-			cargarPacientes();
+			// Actualizar la tabla de pacientes tras guardar infecciones y refrescar pacientesGlobal
+			await cargarPacientes();
+			// Actualizar el card del paciente en la sección de historial si está presente
+			if (window.origenModalInfeccion === 'historial' && typeof window.renderPacienteCard === 'function') {
+				// Obtener todos los pacientes completos y filtrar por ID
+				const pacientesCompletos = await ipcRenderer.invoke('get-pacientes-completos');
+				const pacienteActualizado = pacientesCompletos.find(p => p.id == pacienteId);
+				window.renderPacienteCard(pacienteActualizado);
+			}
 		} catch (err) {
 			mostrarMensaje('Error al guardar infecciones', 'danger');
 		}
-    });
+	});
 }
 
 // Limpiar infecciones temporales al cerrar el modal de infección (evento Bootstrap)
