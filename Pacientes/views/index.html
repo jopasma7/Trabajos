@@ -276,17 +276,17 @@
           <section id="pacientes-section" class="section d-none">
             <div class="card shadow-sm p-3">
               <div class="row g-2 mb-3 align-items-end">
-                <div class="col-md-4">
-                  <label for="busqueda-pacientes" class="form-label mb-1">Buscar por nombre o apellidos</label>
+                <div class="col-md-2">
+                  <label for="busqueda-pacientes" class="form-label mb-1">Nombre o apellidos</label>
                   <input type="text" class="form-control" id="busqueda-pacientes" placeholder="Buscar paciente...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                   <label for="filtro-tipoacceso" class="form-label mb-1">Tipo de Acceso</label>
                   <select id="filtro-tipoacceso" class="form-select">
                     <option value="">Todos</option>
                   </select>
                 </div>
-                  <div class="col-md-3">
+                  <div class="col-md-2">
                     <label for="filtro-pendiente" class="form-label mb-1">Estado</label>
                     <select id="filtro-pendiente" class="form-select">
                       <option value="">Todos</option>
@@ -294,6 +294,14 @@
                       <option value="incidencias">🏷️ Incidencias</option>
                       <option value="pendiente">⏳ Pendiente</option>
                     </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-fecha-pacientes-inicio" class="form-label mb-1">Fecha Inicio</label>
+                    <input type="date" id="filtro-fecha-pacientes-inicio" class="form-control">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-fecha-pacientes-fin" class="form-label mb-1">Fecha Fin</label>
+                    <input type="date" id="filtro-fecha-pacientes-fin" class="form-control">
                   </div>
                 <div class="col-md-2 text-end">
                   <button class="btn btn-success ms-auto col-md-2 d-flex justify-content-center align-items-end me-3 btn-nuevo-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente" style="width: 150px;">

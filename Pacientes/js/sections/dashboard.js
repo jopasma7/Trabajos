@@ -254,8 +254,8 @@ document.addEventListener('DOMContentLoaded', function() {
 		// Mapea el nombre al id real del tipo de acceso (ajusta según tu base de datos)
 		const tipoAccesoIds = {
 			'Fístula': 1,
-			'Catéter': 2,
-			'Prótesis': 3
+			'Prótesis': 2,
+			'Catéter': 3
 		};
 		const tipoAccesoNombres = ['Fístula', 'Catéter', 'Prótesis'];
 			cards.forEach((card, idx) => {
@@ -291,17 +291,44 @@ document.addEventListener('DOMContentLoaded', function() {
 				const pacientesNav = document.querySelector('[data-section="pacientes"]');
 				if (pacientesNav) {
 					pacientesNav.addEventListener('click', function() {
-						setTimeout(() => {
-							if (!accesoDesdeCard) {
-								const filtro = document.getElementById('filtro-tipoacceso');
-								if (filtro) {
-									filtro.value = '';
-									filtro.dispatchEvent(new Event('change'));
-									console.debug('[Pacientes Nav Click] Todos');
-								}
-							}
-							accesoDesdeCard = false;
-						}, 100);
+						accesoDesdeCard = false;
 					});
 				}
+
+				// Reiniciar filtros al salir de la sección de pacientes
+				document.querySelectorAll('[data-section]:not([data-section="pacientes"])').forEach(nav => {
+					nav.addEventListener('click', function() {
+						setTimeout(() => {
+							const pacientesSection = document.getElementById('pacientes-section');
+							if (pacientesSection && pacientesSection.classList.contains('d-none')) {
+								const filtroTipoAcceso = document.getElementById('filtro-tipoacceso');
+								const filtroPendiente = document.getElementById('filtro-pendiente');
+								const inputBusqueda = document.getElementById('busqueda-pacientes');
+								const filtroFechaInicio = document.getElementById('filtro-fecha-pacientes-inicio');
+								const filtroFechaFin = document.getElementById('filtro-fecha-pacientes-fin');
+								if (filtroTipoAcceso) {
+									filtroTipoAcceso.value = '';
+									filtroTipoAcceso.dispatchEvent(new Event('change'));
+								}
+								if (filtroPendiente) {
+									filtroPendiente.value = '';
+									filtroPendiente.dispatchEvent(new Event('change'));
+								}
+								if (inputBusqueda) {
+									inputBusqueda.value = '';
+									inputBusqueda.dispatchEvent(new Event('input'));
+								}
+								if (filtroFechaInicio) {
+									filtroFechaInicio.value = '';
+									filtroFechaInicio.dispatchEvent(new Event('change'));
+								}
+								if (filtroFechaFin) {
+									filtroFechaFin.value = '';
+									filtroFechaFin.dispatchEvent(new Event('change'));
+								}
+								console.debug('[Pacientes Section Exit] Reiniciar todos los filtros');
+							}
+						}, 100);
+					});
+				});
 });

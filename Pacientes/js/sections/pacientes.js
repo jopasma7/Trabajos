@@ -1,6 +1,8 @@
 const { ipcRenderer } = require('electron');
 
 // Elementos del DOM
+const filtroFechaPacientesInicio = document.getElementById('filtro-fecha-pacientes-inicio');
+const filtroFechaPacientesFin = document.getElementById('filtro-fecha-pacientes-fin');
 const tablaPacientesBody = document.querySelector('#pacientes-section tbody');
 const inputBusqueda = document.getElementById('busqueda-pacientes');
 const filtroTipoAcceso = document.getElementById('filtro-tipoacceso');
@@ -89,7 +91,13 @@ function llenarSelectUbicacionCHD() {
 
 // Cargar los elementos en el DOM
 document.addEventListener('DOMContentLoaded', async () => {
-	await cargarDatosGlobal();
+	if (filtroFechaPacientesInicio) {
+		filtroFechaPacientesInicio.addEventListener('change', actualizarTablaPacientes);
+	}
+	if (filtroFechaPacientesFin) {
+		filtroFechaPacientesFin.addEventListener('change', actualizarTablaPacientes);
+	}
+	await cargarDatosGlobal(); 
 	// Llenar el select de filtro de tipo de acceso en la tabla de pacientes DESPUÉS de cargar los datos globales
 	if (filtroTipoAcceso) {
 		filtroTipoAcceso.innerHTML = '<option value="">Todos</option>';
@@ -669,7 +677,26 @@ function mostrarCamposFechaAcceso() {
 
 // Filtros
 function filtrarPacientes() {
-		let filtrados = [...pacientesGlobal];
+	let filtrados = [...pacientesGlobal];
+	// Filtrar por rango de fechas
+	const fechaInicio = filtroFechaPacientesInicio?.value;
+	const fechaFin = filtroFechaPacientesFin?.value;
+	if (fechaInicio || fechaFin) {
+		filtrados = filtrados.filter(p => {
+			let fechaInstalacion = p.fecha_instalacion || p.fecha_alta || '';
+			if (!fechaInstalacion || !p.nombre) return false;
+			// Extraer solo la parte YYYY-MM-DD
+			fechaInstalacion = fechaInstalacion.slice(0, 10);
+			if (fechaInicio && fechaFin) {
+				return fechaInstalacion >= fechaInicio && fechaInstalacion <= fechaFin;
+			} else if (fechaInicio) {
+				return fechaInstalacion >= fechaInicio;
+			} else if (fechaFin) {
+				return fechaInstalacion <= fechaFin;
+			}
+			return true;
+		});
+	}
 		// Filtro por nombre/apellidos (soporta búsqueda por palabras separadas)
 		const texto = (inputBusqueda?.value || '').toLowerCase().trim();
 		if (texto) {
