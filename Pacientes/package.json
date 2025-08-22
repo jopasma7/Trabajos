@@ -21,8 +21,11 @@
     "electron-reloader": "^1.2.3"
   },
   "dependencies": {
+    "@joeattardi/emoji-button": "^4.6.4",
     "better-sqlite3": "^12.2.0",
-    "choices.js": "^11.1.0"
+    "choices.js": "^11.1.0",
+    "emoji-button": "^2.2.2",
+    "emoji-picker-element": "^1.26.3"
   },
   "build": {
     "appId": "alejandro.hospitalapp",
