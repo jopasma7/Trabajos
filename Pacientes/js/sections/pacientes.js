@@ -377,7 +377,8 @@ document.addEventListener('click', async function(e) {
 		llenarSelectPendiente();
 		const paciente = await ipcRenderer.invoke('paciente-get-con-acceso', Number(pacienteId));
 		if (!paciente) return;
-		window.pacienteEditando = paciente;
+	window.pacienteEditando = paciente;
+	window.pacienteOriginalEditando = JSON.parse(JSON.stringify(paciente));
 		const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
 		etiquetasActivasContainer.innerHTML = '<label for="etiquetas-activas-container" class="form-label"><i class="bi bi-tag-fill me-1"></i> Etiquetas Activas</label>';
 		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
@@ -1373,6 +1374,8 @@ async function editarPaciente(id) {
 		// Eliminados: incidencia, incidencia_valores
 	};
 
+	await registrarCambiosClinicosHistorial(window.pacienteOriginalEditando, paciente);
+
 	const result = await ipcRenderer.invoke('update-paciente', paciente);
 	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 		// Solo registrar notificación si hubo cambios
@@ -1764,4 +1767,89 @@ function renderizarListaInfecciones() {
 		});
 	}
 	actualizarBotonGuardarInfeccion();
+}
+
+async function registrarCambiosClinicosHistorial(pacienteAnterior, pacienteNuevo) {
+	function sonEquivalentesVacios(a, b) {
+		const vacios = [undefined, null, '', 'undefined', 'null'];
+		return vacios.includes(a) && vacios.includes(b);
+	}
+    // --- Registro de cambios clínicos en historial ---
+    const camposClinicos = [
+        { key: 'tipo_acceso_id', nombre: 'Tipo de acceso', icono: true, tipo: 'acceso' },
+        { key: 'ubicacion_anatomica', nombre: 'Ubicación anatómica', icono: false },
+        { key: 'ubicacion_lado', nombre: 'Lado de acceso', icono: false },
+        { key: 'fecha_instalacion', nombre: 'Fecha de instalación', icono: false },
+        { key: 'alergias', nombre: 'Alergias', icono: false },
+        { key: 'observaciones', nombre: 'Observaciones', icono: false },
+        { key: 'pendiente_tipo_acceso_id', nombre: 'Acceso pendiente', icono: true, tipo: 'acceso' },
+        { key: 'fecha_instalacion_acceso_pendiente', nombre: 'Fecha instalación acceso pendiente', icono: false },
+    ];
+
+    // Unificar estructura para comparar correctamente
+	function normalizarPaciente(p) {
+		const out = { ...p };
+		if (p.acceso) {
+			for (const key in p.acceso) {
+				if (typeof p.acceso[key] !== 'undefined') {
+					out[key] = p.acceso[key];
+				}
+			}
+		}
+		if (p.pendiente) {
+			for (const key in p.pendiente) {
+				if (typeof p.pendiente[key] !== 'undefined') {
+					out['pendiente_' + key] = p.pendiente[key];
+				}
+			}
+			// Normalización específica para campos alternativos de acceso pendiente
+			if (typeof p.pendiente.tabla_acceso_id_vinculado !== 'undefined') {
+				out.pendiente_tipo_acceso_id = p.pendiente.pendiente_tipo_acceso_id ?? p.pendiente.tabla_acceso_id_vinculado;
+			}
+			if (typeof p.pendiente.tabla_acceso_vinculado !== 'undefined') {
+				out.pendiente_tipo_acceso = p.pendiente.pendiente_tipo_acceso ?? p.pendiente.tabla_acceso_vinculado;
+			}
+			if (typeof p.pendiente.tabla_acceso_fecha_vinculado !== 'undefined') {
+				out.pendiente_acceso_fecha = p.pendiente.pendiente_acceso_fecha ?? p.pendiente.tabla_acceso_fecha_vinculado;
+			}
+			if (typeof p.pendiente.tabla_acceso_notas_vinculado !== 'undefined') {
+				out.pendiente_acceso_notas = p.pendiente.pendiente_acceso_notas ?? p.pendiente.tabla_acceso_notas_vinculado;
+			}
+		}
+		return out;
+	}
+    const pacienteAntNorm = normalizarPaciente(pacienteAnterior);
+    const pacienteNueNorm = normalizarPaciente(pacienteNuevo);
+
+    const cambios = [];
+	for (const campo of camposClinicos) {
+	let valorAnterior = pacienteAntNorm[campo.key] || '';
+	let valorNuevo = pacienteNueNorm[campo.key] || '';
+	// Evitar registrar cambios si ambos valores son equivalentes vacíos
+	if (String(valorAnterior) !== String(valorNuevo) && !sonEquivalentesVacios(valorAnterior, valorNuevo)) {
+			if (campo.icono && campo.tipo === 'acceso') {
+				const accesoAnt = tiposAccesoGlobal.find(t => String(t.id) === String(valorAnterior));
+				const accesoNue = tiposAccesoGlobal.find(t => String(t.id) === String(valorNuevo));
+				const nombreAnt = accesoAnt ? `${accesoAnt.icono ? accesoAnt.icono + ' ' : ''}${accesoAnt.nombre}` : (valorAnterior ? valorAnterior : '[Sin acceso]');
+				const nombreNue = accesoNue ? `${accesoNue.icono ? accesoNue.icono + ' ' : ''}${accesoNue.nombre}` : (valorNuevo ? valorNuevo : '[Sin acceso]');
+				cambios.push(`${campo.nombre}: ${nombreAnt} → ${nombreNue}`);
+			} else {
+				cambios.push(`${campo.nombre}: ${valorAnterior} → ${valorNuevo}`);
+			}
+		}
+	}
+	if (cambios.length > 0) {
+	console.log('[Cambios clínicos detectados]', cambios);
+		console.log('[Cambios clínicos detectados]', cambios);
+		const motivo = cambios.map(c => `• ${c}`).join('<br>');
+		await ipcRenderer.invoke('historial-add', {
+			paciente_id: pacienteNuevo.id,
+			fecha: new Date().toISOString().slice(0, 10),
+			tipo_evento: `Actualización de datos clínicos`,
+			motivo,
+			profesional_id: pacienteNuevo.profesional_id,
+			notas: '',
+			adjuntos: ''
+		});
+	}
 }

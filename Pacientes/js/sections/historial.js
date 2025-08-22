@@ -717,14 +717,22 @@ async function renderTimelinePacienteDB() {
 			else if (tipo.includes('tratamiento')) { icono = 'bi bi-capsule'; colorClass = 'success'; }
 			else if (tipo.includes('control')) { icono = 'bi bi-calendar-check'; colorClass = 'secondary'; }
 			else if (tipo.includes('observación')) { icono = 'bi bi-eye'; colorClass = 'warning'; }
+			else if (tipo.includes('actualización')) { icono = 'bi bi-arrow-repeat'; colorClass = 'info'; }
+		}
+		// Si contiene "actualización" en el tipo_evento, aseguramos que la palabra esté presente
+		let tipoEventoMostrar = item.tipo_evento;
+		if (String(item.tipo_evento).toLowerCase().includes('actualización') && !item.tipo_evento.includes('Actualización')) {
+			tipoEventoMostrar = 'Actualización de ' + item.tipo_evento.replace(/actualización de /i, '');
 		}
 		timeline.innerHTML += `
 			<div class="card shadow-sm border-0 mb-2 timeline-event bg-light">
-				<div class="card-body d-flex align-items-center">
-					<span class="icon-circle bg-${colorClass} text-white me-3"><i class="${icono}"></i></span>
-					<div>
-						<div class="fw-bold text-${colorClass}">${item.tipo_evento ? item.tipo_evento : 'Evento'} - ${formatearFecha(item.fecha)}</div>
-						<div>${item.motivo ? item.motivo : ''}</div>
+				<div class="card-body d-flex align-items-center" style="gap: 0.75rem;">
+					<span class="icon-circle bg-${colorClass} text-white flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-size:1.5em;">
+						<i class="${icono}"></i>
+					</span>
+					<div class="flex-grow-1" style="min-width:0;">
+						<div class="fw-bold text-${colorClass}" style="word-break:break-word;">${tipoEventoMostrar ? tipoEventoMostrar : 'Evento'} - ${formatearFecha(item.fecha)}</div>
+						<div style="word-break:break-word;">${item.motivo ? item.motivo : ''}</div>
 					</div>
 				</div>
 			</div>
