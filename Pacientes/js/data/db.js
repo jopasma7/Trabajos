@@ -792,6 +792,29 @@ db.upsertEventos = function(eventos) {
   });  
   return true;
 };
+
+// Inserta una incidencia desde el modal, recibe un objeto con todos los campos
+db.addIncidenciasModal = function(incidencia) {
+  // Ajusta los campos según la estructura de la tabla incidencias
+  const stmt = db.prepare(`INSERT INTO incidencias (paciente_id, tipo_acceso_id, fecha, tipo, medidas, etiqueta_id, activo) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+  const info = stmt.run(
+    incidencia.paciente_id,
+    incidencia.tipo_acceso_id,
+    incidencia.fecha,
+    incidencia.tipo,
+    incidencia.medidas,
+    incidencia.etiqueta_id,
+    incidencia.activo
+  );
+  return { success: info.changes > 0, id: info.lastInsertRowid };
+};
+// Inserta una incidencia con motivo y fecha como antes
+db.addIncidencia = function(pacienteId, motivo, fecha) {
+  const stmt = db.prepare('INSERT INTO incidencias (paciente_id, motivo, fecha) VALUES (?, ?, ?)');
+  const info = stmt.run(pacienteId, motivo, fecha);
+  return { success: info.changes > 0, id: info.lastInsertRowid };
+};
+
  
 // Actualiza un paciente y sus relaciones normalizadas
 db.editPacienteCompleto = function(paciente) {

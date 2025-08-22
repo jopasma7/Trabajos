@@ -246,6 +246,13 @@ ipcMain.handle('incidencias-add', (event, { pacienteId, motivo, fecha }) => {
   return db.addIncidencia(pacienteId, motivo, fecha);
 });
 
+// Nuevo handler para agregar incidencia desde el modal
+ipcMain.handle('incidencias-modal-add', (event, incidencia) => {
+  // Llama a la función db.addIncidenciasModal con el objeto incidencia
+  return db.addIncidenciasModal(incidencia);
+});
+
+
 ipcMain.handle('incidencias-delete', (event, incidenciaId) => {
   return db.deleteIncidencia(incidenciaId);
 });

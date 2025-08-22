@@ -74,6 +74,31 @@ const eventosPaciente = [
 
 
 document.addEventListener('DOMContentLoaded', async function() {
+	// --- Modal Incidencia: rellenar selectores dinámicamente ---
+	const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+	const incidenciaAccesoSelect = document.getElementById('incidenciaAcceso');
+
+	// Rellenar tipos de incidencia desde etiquetas tipo 'incidencia'
+	if (incidenciaTipoSelect && window.etiquetasGlobales) {
+		incidenciaTipoSelect.innerHTML = '';
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.innerHTML = `<i class='${tag.icono || ''}'></i> ${tag.nombre}`;
+			incidenciaTipoSelect.appendChild(option);
+		});
+	}
+
+	// Rellenar tipos de acceso con iconos
+	if (incidenciaAccesoSelect && window.etiquetasGlobales) {
+		incidenciaAccesoSelect.innerHTML = '';
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'acceso').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.innerHTML = `<i class='${tag.icono || ''}'></i> ${tag.nombre}`;
+			incidenciaAccesoSelect.appendChild(option);
+		});
+	}
 	// Cargar etiquetas globales al iniciar
 	window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
 	   await cargarPacientesHistorial();
@@ -141,7 +166,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 			paciente_id: pacienteIdValue,
 			fecha: document.getElementById('fecha-historial').value,
 			tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
-			motivo: document.getElementById('motivo-historial').value,
+			// motivo eliminado, no existe en la tabla incidencias
 			diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
 			tratamiento: document.getElementById('tratamiento-historial').value,
 			notas: document.getElementById('notas-historial').value,
@@ -257,7 +282,7 @@ async function renderHistorial() {
 			<tr data-dinamico="true">
 				<td>${formatearFecha(item.fecha)}</td>
 				<td>${nombreEvento}</td>
-				<td>${item.motivo}</td>
+				<!-- motivo eliminado, no existe en la tabla incidencias -->
 				<td>${profesionalHtml}</td>
 				<td>
 					<button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
@@ -464,7 +489,136 @@ document.addEventListener('DOMContentLoaded', function() {
 	var btnIncidencia = document.getElementById('btn-historial-add-incidencia');
 	if (btnIncidencia) {
 		btnIncidencia.addEventListener('click', function() {
-		// abrirMenuIncidencias(); // Si lo necesitas
+		// Handler para guardar incidencia
+		const formIncidencia = document.getElementById('form-incidencia');
+		if (formIncidencia && !formIncidencia._submitHandlerSet) {
+			formIncidencia.addEventListener('submit', async function(e) {
+				e.preventDefault();
+				const selectPaciente = document.getElementById('filtro-paciente-historial');
+				const pacienteId = selectPaciente && selectPaciente.value ? Number(selectPaciente.value) : null;
+				const tipoIncidenciaId = document.getElementById('incidenciaTipo')?.value || '';
+				const fecha = document.getElementById('incidenciaFecha')?.value || '';
+				const medidas = document.getElementById('incidenciaMedidas')?.value || '';
+				let tipoAccesoId = null;
+				let etiquetaId = null;
+				await ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+					if (pacienteSel && pacienteSel.tipo_acceso) {
+						tipoAccesoId = pacienteSel.tipo_acceso.id;
+					}
+				});
+				// El campo tipo es el nombre del tipo de incidencia (no el id)
+				let tipoIncidenciaNombre = '';
+				if (window.etiquetasGlobales && tipoIncidenciaId) {
+					const tag = window.etiquetasGlobales.find(t => String(t.id) === String(tipoIncidenciaId));
+					if (tag) {
+						tipoIncidenciaNombre = tag.nombre;
+						etiquetaId = tag.id;
+					}
+				}
+				if (!pacienteId || !tipoIncidenciaNombre || !fecha) {
+					alert('Faltan datos obligatorios.');
+					return;
+				}
+				// Construir objeto incidencia según la tabla
+				const nuevaIncidencia = {
+					paciente_id: pacienteId,
+					tipo_acceso_id: tipoAccesoId,
+					fecha: fecha,
+					tipo: tipoIncidenciaNombre,
+					medidas: medidas,
+					etiqueta_id: etiquetaId,
+					activo: 1
+				};
+				// Guardar en la base de datos
+				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
+				if (resultado && resultado.success) {
+					mostrarMensaje('Incidencia guardada correctamente', 'success');
+					// Cerrar el modal
+					var modalIncidencia = document.getElementById('modal-incidencia');
+					if (modalIncidencia) {
+						var modal = bootstrap.Modal.getInstance(modalIncidencia);
+						if (modal) modal.hide();
+					}
+					// Actualizar historial si es necesario
+					renderHistorial();
+				} else {
+					mostrarMensaje('Error al guardar la incidencia', 'danger');
+				}
+			});
+			formIncidencia._submitHandlerSet = true;
+		}
+		// Limpiar campos al cerrar el modal de incidencias
+		var modalIncidencia = document.getElementById('modal-incidencia');
+		if (modalIncidencia) {
+			modalIncidencia.addEventListener('hidden.bs.modal', function() {
+				const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+				const fechaInput = document.getElementById('incidenciaFecha');
+				const medidasInput = document.getElementById('incidenciaMedidas');
+				const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+				const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+				const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+				if (incidenciaTipoSelect) incidenciaTipoSelect.selectedIndex = -1;
+				if (fechaInput) fechaInput.value = '';
+				if (medidasInput) medidasInput.value = '';
+				if (accesoIcono) accesoIcono.textContent = '';
+				if (accesoNombre) accesoNombre.textContent = '';
+				if (accesoDescripcion) accesoDescripcion.textContent = '';
+			});
+		}
+		// Establecer la fecha del modal en el día de hoy
+		const fechaInput = document.getElementById('incidenciaFecha');
+		if (fechaInput) {
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			fechaInput.value = `${yyyy}-${mm}-${dd}`;
+		}
+			// Rellenar selectores cada vez que se abre el modal
+			const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+			const incidenciaAccesoSelect = document.getElementById('incidenciaAcceso');
+			// Rellenar tipos de incidencia desde etiquetas tipo 'incidencia'
+			if (incidenciaTipoSelect && window.etiquetasGlobales) {
+				incidenciaTipoSelect.innerHTML = '';
+				window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
+					const option = document.createElement('option');
+					option.value = tag.id;
+					option.innerHTML = `${tag.icono ? `<i class='${tag.icono}'></i> ` : ''}${tag.nombre}`;
+					incidenciaTipoSelect.appendChild(option);
+				});
+			}
+			// Mostrar log y rellenar el textbox de tipo de acceso
+			const select = document.getElementById('filtro-paciente-historial');
+			let pacienteId = select && select.value ? Number(select.value) : null;
+	const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+	const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+	const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+			if (pacienteId) {
+				ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+					console.log('Datos del paciente seleccionado:', pacienteSel);
+					if (pacienteSel && pacienteSel.tipo_acceso) {
+						console.log('Tipo de acceso del paciente:', pacienteSel.tipo_acceso);
+						if (accesoIcono) accesoIcono.textContent = pacienteSel.tipo_acceso.icono || '';
+						if (accesoNombre) accesoNombre.textContent = pacienteSel.tipo_acceso.nombre || '';
+						if (accesoDescripcion) accesoDescripcion.textContent = pacienteSel.tipo_acceso.descripcion || '';
+					} else {
+						if (accesoIcono) accesoIcono.textContent = '';
+						if (accesoNombre) accesoNombre.textContent = '';
+						if (accesoDescripcion) accesoDescripcion.textContent = '';
+					}
+				});
+			} else {
+				if (accesoInput) accesoInput.value = '';
+				console.log('No hay paciente seleccionado.');
+			}
+			// Abre el modal profesional de incidencias
+			var modalIncidencia = document.getElementById('modal-incidencia');
+			if (modalIncidencia) {
+				var modal = new bootstrap.Modal(modalIncidencia);
+				modal.show();
+			}
 		});
 	}
 });
@@ -809,12 +963,25 @@ async function renderPacienteCard(paciente) {
 	}
 	//console.log(paciente.infecciones[0].tag.icono);
     let edad = '';
-    let fechaNac = paciente.fecha_nacimiento || '';
-	let tipoAcceso = paciente.tipo_acceso_id ? (tagsGlobal ? (tagsGlobal.find(t => t.id === paciente.tipo_acceso_id)?.nombre || '') : '') : '';
-	let ubicacion = paciente.ubicacion_anatomica || '';
-	let lado = paciente.ubicacion_lado || '';
-	let acceso_final = `${tipoAcceso ? tipoAcceso : ''}${ubicacion ? ', ' + ubicacion : ''}${lado ? ', ' + lado : ''}`;
-    if (tipoAccesoElem) tipoAccesoElem.textContent = acceso_final || '';
+	let fechaNac = paciente.fecha_nacimiento || '';
+	let acceso_final = '';
+	console.log(paciente);
+	if (paciente.tipo_acceso) {
+		// Usar datos del objeto acceso si existe
+		let accesoObj = paciente.acceso || {};
+		let tipoAcceso = paciente.tipo_acceso;
+		let ubicacion = accesoObj.ubicacion_anatomica || paciente.ubicacion_anatomica || '';
+		let lado = accesoObj.ubicacion_lado || paciente.ubicacion_lado || '';
+		acceso_final = `${tipoAcceso.icono ? tipoAcceso.icono + ' ' : ''}${tipoAcceso.nombre ? tipoAcceso.nombre : ''}`;
+		if (ubicacion) acceso_final += ', ' + ubicacion;
+		if (lado) acceso_final += ', ' + lado;
+		if (tipoAccesoElem) {
+			tipoAccesoElem.textContent = acceso_final;
+			tipoAccesoElem.title = tipoAcceso.descripcion || '';
+		}
+	} else {
+		if (tipoAccesoElem) tipoAccesoElem.textContent = '';
+	}
 	if (fechaNac) {
         const nacimiento = new Date(fechaNac);
         const hoy = new Date();
