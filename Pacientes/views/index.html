@@ -1374,6 +1374,27 @@
       </div>
     </div>
 
+    <!-- Modal Confirmación Eliminar/Archivar -->
+    <div class="modal fade" id="modal-confirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold" id="modalConfirmacionLabel">
+              <span id="modal-confirmacion-icono" class="me-2"></span>
+              <span id="modal-confirmacion-titulo">¿Confirmar acción?</span>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <p id="modal-confirmacion-mensaje" class="mb-3">¿Estás seguro de que deseas realizar esta acción?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" id="btn-confirmar-accion">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
 
     <!-- Bootstrap 5 JS y dependencias -->

@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 		filtroTipoAcceso.addEventListener('change', actualizarTablaPacientes);
 	}
 	if (filtroPendiente) {
-		filtroPendiente.addEventListener('change', actualizarTablaPacientes);
+		filtroPendiente.addEventListener('change', cargarPacientes);
 	}
 });
 
@@ -250,73 +250,93 @@ document.addEventListener('click', async function(e) {
 		// Obtener datos del paciente para el mensaje
 		const paciente = pacientesGlobal.find(p => p.id == pacienteId);
 		const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
-		await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
-		// Validar que paciente_id es válido antes de enviar la notificación
-		const pacienteIdValidoArchivar = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
-		if (pacienteIdValidoArchivar) {
-			await ipcRenderer.invoke('notificaciones-add', {
-				tipo: 'Pacientes',
-				mensaje: `Se archivó el paciente ${nombreCompleto}`,
-				fecha: new Date().toISOString(),
-				usuario_id: null,
-				paciente_id: pacienteId,
-				extra: ''
-			});
-		} else {
-			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
-		}
-		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
-	cargarPacientes();
-	mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
-	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
-	// Actualizar cards del dashboard
-	if (window.cargarDatosDashboard) window.cargarDatosDashboard();
-	return;
-	}
-	// Botón de eliminar
-	const btnEliminar = e.target.closest('.btn-eliminar');
-	if (btnEliminar) {
-		const pacienteId = btnEliminar.getAttribute('data-id');
-		if (!pacienteId) return;
-		// Obtener datos del paciente para el mensaje
-		const paciente = pacientesGlobal.find(p => p.id == pacienteId);
-		const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
-		// Validar que paciente_id es válido antes de enviar la notificación
-		const pacienteIdValido = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
-		if (pacienteIdValido) {
-			// Buscar profesional_id válido del paciente si existe
-			let usuarioId = null;
-			if (paciente && paciente.profesional_id && !isNaN(Number(paciente.profesional_id)) && Number(paciente.profesional_id) > 0) {
-				usuarioId = paciente.profesional_id;
-			} else {
-				usuarioId = 0; // Valor seguro si la base lo permite, si no, omitir el campo
-			}
-			const notificacionPayload = {
-				tipo: 'Pacientes',
-				mensaje: `Se eliminó el paciente ${nombreCompleto}`,
-				fecha: new Date().toISOString(),
-				usuario_id: usuarioId,
-				paciente_id: pacienteId,
-				extra: `Nombre: ${nombreCompleto}`
-			};
-			await ipcRenderer.invoke('notificaciones-add', notificacionPayload);
-		} else {
-			console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
-		}
-	await ipcRenderer.invoke('delete-paciente', Number(pacienteId));
-	cargarPacientes();
-	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
-		const modalEl = document.getElementById('modal-paciente');
-		let modalInstance = bootstrap.Modal.getInstance(modalEl);
-		if (modalInstance) {
+		// Mostrar modal de confirmación personalizado
+		const modalConfirmacion = document.getElementById('modal-confirmacion');
+		if (!modalConfirmacion) return;
+		document.getElementById('modal-confirmacion-titulo').textContent = '¿Archivar paciente?';
+		document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción archivará al paciente "${nombreCompleto}". No podrás desarchivarlo más adelante hasta que se implemente el funcionamiento.`;
+		const icono = document.getElementById('modal-confirmacion-icono');
+		icono.innerHTML = '<i class="bi bi-archive-fill text-warning" style="font-size:1.7em;"></i>';
+		// Cambiar color del header y botón
+		modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-danger','bg-success');
+		modalConfirmacion.querySelector('.modal-header').classList.add('bg-warning');
+		const btnConfirmar = document.getElementById('btn-confirmar-accion');
+		btnConfirmar.classList.remove('btn-danger','btn-success');
+		btnConfirmar.classList.add('btn-warning');
+
+		// Mostrar el modal
+		const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+		modalInstance.show();
+
+		// Evitar listeners duplicados
+		btnConfirmar.onclick = async function() {
 			modalInstance.hide();
-		}
-		mostrarMensaje(`Paciente eliminado correctamente: <b>${nombreCompleto}</b>`, 'success');
-		// Actualizar cards del dashboard
-		if (window.cargarDatosDashboard) window.cargarDatosDashboard();
-		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+			await ipcRenderer.invoke('archivar-paciente', Number(pacienteId));
+			const pacienteIdValidoArchivar = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
+			if (pacienteIdValidoArchivar) {
+				await ipcRenderer.invoke('notificaciones-add', {
+					tipo: 'Pacientes',
+					mensaje: `Se archivó el paciente ${nombreCompleto}`,
+					fecha: new Date().toISOString(),
+					usuario_id: null,
+					paciente_id: pacienteId,
+					extra: ''
+				});
+			} else {
+				console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
+			}
+			if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+			cargarPacientes();
+			mostrarMensaje(`Paciente archivado correctamente: <b>${nombreCompleto}</b>`, 'info');
+			if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
+			if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+		};
 		return;
 	}
+	// Botón de eliminar
+    const btnEliminar = e.target.closest('.btn-eliminar');
+    if (btnEliminar) {
+        const pacienteId = btnEliminar.getAttribute('data-id');
+        if (!pacienteId) return;
+        const paciente = pacientesGlobal.find(p => p.id == pacienteId);
+        const nombreCompleto = paciente ? `${paciente.nombre} ${paciente.apellidos}` : `ID ${pacienteId}`;
+        const modalConfirmacion = document.getElementById('modal-confirmacion');
+        if (!modalConfirmacion) return;
+        document.getElementById('modal-confirmacion-titulo').textContent = '¿Eliminar paciente?';
+        document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción eliminará permanentemente al paciente "${nombreCompleto}". No podrás recuperar sus datos después.`;
+        const icono = document.getElementById('modal-confirmacion-icono');
+        icono.innerHTML = '<i class="bi bi-trash-fill text-danger" style="font-size:1.7em;"></i>';
+        modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-warning','bg-success');
+        modalConfirmacion.querySelector('.modal-header').classList.add('bg-danger');
+        const btnConfirmar = document.getElementById('btn-confirmar-accion');
+        btnConfirmar.classList.remove('btn-warning','btn-success');
+        btnConfirmar.classList.add('btn-danger');
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+        modalInstance.show();
+        btnConfirmar.onclick = async function() {
+            modalInstance.hide();
+            await ipcRenderer.invoke('eliminar-paciente', Number(pacienteId));
+            const pacienteIdValidoEliminar = pacienteId && !isNaN(Number(pacienteId)) && Number(pacienteId) > 0;
+            if (pacienteIdValidoEliminar) {
+                await ipcRenderer.invoke('notificaciones-add', {
+                    tipo: 'Pacientes',
+                    mensaje: `Se eliminó el paciente ${nombreCompleto}`,
+                    fecha: new Date().toISOString(),
+                    usuario_id: null,
+                    paciente_id: pacienteId,
+                    extra: ''
+                });
+            } else {
+                console.warn('[DEBUG] Notificación NO enviada: paciente_id inválido', pacienteId);
+            }
+            if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
+            cargarPacientes();
+            mostrarMensaje(`Paciente eliminado correctamente: <b>${nombreCompleto}</b>`, 'danger');
+            if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
+            if (window.cargarDatosDashboard) window.cargarDatosDashboard();
+        };
+        return;
+    }
 	// Botón de infección
 	const btnInfeccion = e.target.closest('.btn-infeccion');
 	if (btnInfeccion) {
@@ -460,7 +480,6 @@ document.addEventListener('click', async function(e) {
 		}
 		// Fecha primera punción
 		if (document.getElementById('fechaPrimeraPuncion')) {
-			console.log('[DEBUG] Valor fecha_primera_puncion:', paciente.acceso?.fecha_primera_puncion);
 			document.getElementById('fechaPrimeraPuncion').value = paciente.acceso?.fecha_primera_puncion ?? '';
 		}
 		if (document.getElementById('fechaInstalacionAccesoPendiente')) {
@@ -526,7 +545,6 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			paciente_id: id,
 			activo: true
 		};
-		console.log('[DEBUG][FRONT] pendiente antes de guardar:', pendienteObj);
 		const paciente = {
 			id: window.pacienteEditando.id,
 			nombre: document.getElementById('nombre').value,
@@ -740,9 +758,9 @@ function filtrarPacientes() {
 			});
 		}
 
-		// Filtro por estado: Todos, Infectado, Incidencias, Pendiente
+		// Filtro por estado: Todos, Infectado, Incidencias, Pendiente, Archivado
 		const estado = filtroPendiente?.value || '';
-		if (estado) {
+		if (estado && estado !== 'archivado') {
 			filtrados = filtrados.filter(p => {
 				if (estado === 'infectado') {
 					return Array.isArray(p.infecciones) && p.infecciones.length > 0;
@@ -973,16 +991,23 @@ function renderizarPaginacion(totalPacientes) {
 } 
 
 // Cargar pacientes
-function cargarPacientes() {
-	ipcRenderer.invoke('get-pacientes-completos').then(async pacientes => {
-		// Para cada paciente, obtener sus incidencias activas y asociar los IDs de etiquetas
-		for (const paciente of pacientes) {
-			const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
-			// Filtrar solo incidencias activas y de tipo etiqueta
-			paciente.etiquetas = incidencias
-				.filter(inc => inc.activo && inc.etiqueta_id)
-				.map(inc => inc.etiqueta_id);
-		}
+async function cargarPacientes() {
+	const estado = filtroPendiente?.value || '';
+	let pacientes;
+	if (estado === 'archivado') {
+		pacientes = await ipcRenderer.invoke('get-pacientes-archivados');
+		console.log('Cargando pacientes archivados:', pacientes);
+	} else {
+		pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+	}
+	// Para cada paciente, obtener sus incidencias activas y asociar los IDs de etiquetas
+	for (const paciente of pacientes) {
+		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
+		// Filtrar solo incidencias activas y de tipo etiqueta
+		paciente.etiquetas = incidencias
+			.filter(inc => inc.activo && inc.etiqueta_id)
+			.map(inc => inc.etiqueta_id);
+	}
 	const paginaAnterior = paginaActual;
 	pacientesGlobal = pacientes;
 	// Calcular el total de páginas con los nuevos datos
@@ -990,7 +1015,6 @@ function cargarPacientes() {
 	// Si la página anterior sigue existiendo, mantenerla. Si no, ir a la última disponible.
 	paginaActual = Math.min(paginaAnterior, totalPaginas);
 	actualizarTablaPacientes();
-	});
 }
 
 
@@ -1401,12 +1425,10 @@ async function editarPaciente(id) {
 		},
 		// Eliminados: incidencia, incidencia_valores
 	};
-	console.log('[DEBUG] Editando paciente:', paciente);
 
 	await registrarCambiosClinicosHistorial(window.pacienteOriginalEditando, paciente);
 
 	const result = await ipcRenderer.invoke('update-paciente', paciente);
-	console.log('[DEBUG][FRONT] pendiente después de guardar:', paciente.pendiente);
 	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 		// Solo registrar notificación si hubo cambios
 		if (result && result.changes > 0) {
@@ -1424,7 +1446,6 @@ async function editarPaciente(id) {
 				});
 				if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 			} else {
-				console.warn('[DEBUG] Notificación NO enviada: profesional_id o paciente_id inválido', paciente.profesional_id, paciente.id);
 			}
 		}
 

@@ -1,3 +1,4 @@
+
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -44,7 +45,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS notificaciones (
   leido INTEGER DEFAULT 0,
   fecha TEXT DEFAULT CURRENT_TIMESTAMP,
   extra TEXT,
-  FOREIGN KEY(paciente_id) REFERENCES pacientes(id) ON DELETE SET NULL
+  FOREIGN KEY(paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE
 )`).run();
 
 // Crear tabla acceso (relaciona paciente y tipo de acceso)
@@ -216,7 +217,7 @@ db.prepare(`CREATE TABLE IF NOT EXISTS historial_clinico (
   adjuntos TEXT,
   profesional_id INTEGER,
   archivado INTEGER DEFAULT 0,
-  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE SET NULL,
+  FOREIGN KEY (paciente_id) REFERENCES pacientes(id) ON DELETE CASCADE,
   FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
 )`).run();
 
@@ -472,6 +473,11 @@ db.getPacienteAvatar = function(pacienteId) {
   const stmt = db.prepare('SELECT avatar FROM pacientes WHERE id = ?');
   const row = stmt.get(pacienteId);
   return row ? row.avatar : '';
+};
+
+// Obtener solo pacientes archivados
+db.getPacientesArchivados = function() {
+  return db.prepare('SELECT * FROM pacientes WHERE activo = 0').all();
 };
 
 db.deletePaciente = function(id) {

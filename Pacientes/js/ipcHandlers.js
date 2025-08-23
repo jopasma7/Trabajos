@@ -205,6 +205,12 @@ ipcMain.handle('tags-delete', (event, id) => {
 });
 
 
+// Handler para obtener pacientes archivados
+ipcMain.handle('get-pacientes-archivados', () => {
+  return db.getPacientesArchivados();
+});
+
+
 // --- IPC para incidencias ---
 
 // Guardar etiquetas de incidencias para el paciente (incidencia más reciente)
