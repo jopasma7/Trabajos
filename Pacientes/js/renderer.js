@@ -8,6 +8,7 @@ const agenda = require('../js/sections/agenda.js');
 const etiquetas = require('../js/sections/etiquetas.js');
 require('../js/sections/profesionales.js');
 
+
 // Navegación entre secciones con Bootstrap (global)
 document.addEventListener('DOMContentLoaded', () => {
 	const navLinks = document.querySelectorAll('.nav-link[data-section]');
@@ -20,9 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 		agenda: document.getElementById('agenda-section'),
 		etiquetas: document.getElementById('etiquetas-section'),
 		historial: document.getElementById('historial-section'),
-		medicaciones: document.getElementById('medicaciones-section'),
-		alertas: document.getElementById('alertas-section'),
-		documentos: document.getElementById('documentos-section'),
 		estadisticas: document.getElementById('estadisticas-section'),
 		profesionales: document.getElementById('profesionales-section')
 	};
@@ -141,45 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
                sectionTitle.style.marginBottom = '0.5rem';
                sectionTitle.style.display = 'flex';
                sectionTitle.style.alignItems = 'center';
-           } else if (section === 'medicaciones') {
-               sectionTitle.innerHTML = `
-                   <span style="font-size:1.3em;">💊</span>
-                   <span style="color:#1f2937;">Medicaciones</span>
-                   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Tratamientos y prescripciones</span>
-               `;
-               sectionTitle.className = '';
-               sectionTitle.style.fontSize = '1.7rem';
-               sectionTitle.style.fontWeight = '800';
-               sectionTitle.style.color = '#1f2937';
-               sectionTitle.style.marginBottom = '0.5rem';
-               sectionTitle.style.display = 'flex';
-               sectionTitle.style.alignItems = 'center';
-           } else if (section === 'alertas') {
-               sectionTitle.innerHTML = `
-                   <span style="font-size:1.3em;">🔔</span>
-                   <span style="color:#1f2937;">Alertas</span>
-                   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Notificaciones y avisos</span>
-               `;
-               sectionTitle.className = '';
-               sectionTitle.style.fontSize = '1.7rem';
-               sectionTitle.style.fontWeight = '800';
-               sectionTitle.style.color = '#1f2937';
-               sectionTitle.style.marginBottom = '0.5rem';
-               sectionTitle.style.display = 'flex';
-               sectionTitle.style.alignItems = 'center';
-           } else if (section === 'documentos') {
-               sectionTitle.innerHTML = `
-                   <span style="font-size:1.3em;">📁</span>
-                   <span style="color:#1f2937;">Documentos</span>
-                   <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Archivos y gestión documental</span>
-               `;
-               sectionTitle.className = '';
-               sectionTitle.style.fontSize = '1.7rem';
-               sectionTitle.style.fontWeight = '800';
-               sectionTitle.style.color = '#1f2937';
-               sectionTitle.style.marginBottom = '0.5rem';
-               sectionTitle.style.display = 'flex';
-               sectionTitle.style.alignItems = 'center';
            } else if (section === 'estadisticas') {
                sectionTitle.innerHTML = `
                    <span style="font-size:1.3em;">📈</span>
@@ -219,16 +178,58 @@ document.addEventListener('DOMContentLoaded', () => {
 		// Ya no refrescamos manualmente la agenda aquí; setupAgendaSection gestiona los eventos y renderizado.
 	}
 
-	navLinks.forEach(link => {
-		link.addEventListener('click', (e) => {
-			e.preventDefault();
-				showSection(link.dataset.section);
-				// Si es la sección etiquetas, recargar lista
-				if (link.dataset.section === 'etiquetas') {
-					etiquetas.cargarTags();
-				}
-		});
-	});
+
+    let currentSection = 'dashboard';
+    navLinks.forEach(link => {
+        link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const nextSection = link.dataset.section;
+            console.log('Sidebar click:', nextSection);
+
+            // Si salimos de historial, refrescar card/timeline
+            if (currentSection === 'historial' && nextSection !== 'historial') {
+                setTimeout(async () => {
+                    try {
+                        const selectPaciente = document.getElementById('filtro-paciente-historial');
+                        if (selectPaciente) {
+                            const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+                            console.log('Pacientes obtenidos (salida historial):', pacientes);
+                            selectPaciente.innerHTML = '';
+                            pacientes.forEach(p => {
+                                const opt = document.createElement('option');
+                                opt.value = p.id;
+                                opt.textContent = `${p.nombre} ${p.apellidos}`;
+                                selectPaciente.appendChild(opt);
+                            });
+                            let pacienteSel = null;
+                            if (pacientes.length > 0) {
+                                selectPaciente.value = pacientes[0].id;
+                                pacienteSel = pacientes[0];
+                                console.log('Paciente seleccionado:', pacienteSel);
+                            }
+                            if (window.renderPacienteCard) {
+                                console.log('Llamando a renderPacienteCard (salida historial)...');
+                                await window.renderPacienteCard(pacienteSel);
+                            }
+                            if (window.renderTimelinePacienteDB) {
+                                console.log('Llamando a renderTimelinePacienteDB (salida historial)...');
+                                await window.renderTimelinePacienteDB();
+                            }
+                        }
+                    } catch (err) { console.error('Error al salir de historial:', err); }
+                }, 150);
+            }
+
+            showSection(nextSection);
+
+            // Si es la sección etiquetas, recargar lista
+            if (nextSection === 'etiquetas') {
+                etiquetas.cargarTags();
+            }
+
+            currentSection = nextSection;
+        });
+    });
 
 	// Mostrar dashboard por defecto
 	showSection('dashboard');

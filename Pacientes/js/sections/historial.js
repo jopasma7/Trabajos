@@ -1,5 +1,4 @@
-// Asegura disponibilidad global de la función
-window.addEntradasHistorial = addEntradasHistorial;
+
 const { ipcRenderer } = require('electron');
 
 var fechaInput = document.getElementById('infeccion-fecha');
@@ -16,6 +15,10 @@ const filtro_profesional_historial = document.getElementById('filtro-profesional
 const filtro_fecha_historial = document.getElementById('filtro-fecha-historial');
 const timeline = document.getElementById('timelinePaciente');
 const avatar = document.getElementById('pacienteAvatarInput');
+
+// Asegura disponibilidad global de la función
+window.addEntradasHistorial = addEntradasHistorial;
+window.modoHistorialModal = 'nuevo';
 
 let paciente_seleccionado = null;
 let tagsGlobal = [];
@@ -76,6 +79,19 @@ const eventosPaciente = [
 
 
 document.addEventListener('DOMContentLoaded', async function() {
+	// Mostrar alerta al interactuar con el campo de adjuntos
+	const adjuntosInput = document.getElementById('adjuntos-historial');
+	if (adjuntosInput) {
+		adjuntosInput.addEventListener('click', function(e) {
+			e.preventDefault();
+			mostrarMensaje('La funcionalidad de adjuntar archivos estará disponible próximamente.', 'warning');
+		});
+		adjuntosInput.addEventListener('change', function(e) {
+			e.preventDefault();
+			mostrarMensaje('La funcionalidad de adjuntar archivos estará disponible próximamente.', 'warning');
+			this.value = '';
+		});
+	}
 	// --- Modal Incidencia: rellenar selectores dinámicamente ---
 	const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
 	const incidenciaAccesoSelect = document.getElementById('incidenciaAcceso');
@@ -141,65 +157,67 @@ document.addEventListener('DOMContentLoaded', async function() {
 			renderHistorial();
 		});
 	// Evitar duplicidad de submit
+
 	const form = document.getElementById('form-historial');
-	if (form._submitHandlerSet) return;
-	form.addEventListener('submit', async function(e) {
-		e.preventDefault();
-		const select = document.getElementById('filtro-paciente-historial');
-		let pacienteIdValue = select && select.value ? select.value : null;
-		// Validar que pacienteIdValue es un número válido
-		if (!pacienteIdValue || isNaN(Number(pacienteIdValue))) {
-			alert('Selecciona un paciente válido antes de guardar la entrada.');
-			return;
-		}
-		pacienteIdValue = Number(pacienteIdValue);
-		// Validar que pacienteIdValue > 0
-		if (pacienteIdValue <= 0) {
-			alert('Selecciona un paciente válido antes de guardar la entrada.');
-			return;
-		}
-		// Sincronizar pacienteId global
-		pacienteId = pacienteIdValue;
-		// Validar profesional-historial
-		const profesionalSelect = document.getElementById('profesional-historial');
-		if (!profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
-			mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
-			profesionalSelect.focus();
-			return;
-		}
-		const id = document.getElementById('id-historial').value;
-		const data = {
-			paciente_id: pacienteIdValue,
-			fecha: document.getElementById('fecha-historial').value,
-			tipo_evento: document.getElementById('tipo-historial-etiqueta').value, // id etiqueta evento
-			motivo: document.getElementById('motivo-historial') ? document.getElementById('motivo-historial').value : '',
-			diagnostico: document.getElementById('diagnostico-historial-etiqueta').value, // id etiqueta diagnostico
-			tratamiento: document.getElementById('tratamiento-historial').value,
-			notas: document.getElementById('notas-historial').value,
-			adjuntos: '', // Implementar adjuntos si lo necesitas
-			profesional_id: profesionalSelect.value
-		};
-		if (id) {
-			await ipcRenderer.invoke('historial-edit', id, data);
-		} else {
-			await ipcRenderer.invoke('historial-add', data);
-		}
-		document.getElementById('form-historial').reset();
-	const idHistorialElem = document.getElementById('id-historial');
-	if (idHistorialElem) idHistorialElem.value = '';
-		const modal = bootstrap.Modal.getInstance(document.getElementById('modal-historial'));
-		if (modal) modal.hide();
-		// Recargar datos del paciente
-		const selectPaciente = document.getElementById('filtro-paciente-historial');
-		if (selectPaciente && selectPaciente.value) {
-			const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-			const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPaciente.value));
-			await renderPacienteCard(pacienteSel || null);
-		}
-		renderHistorial();
-		renderTimelinePacienteDB();
-	});
-	form._submitHandlerSet = true;
+	if (form && !form._submitHandlerSet) {
+		form.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const select = document.getElementById('filtro-paciente-historial');
+			let pacienteIdValue = select && select.value ? select.value : null;
+			if (!pacienteIdValue || isNaN(Number(pacienteIdValue))) {
+				alert('Selecciona un paciente válido antes de guardar la entrada.');
+				return;
+			}
+			pacienteIdValue = Number(pacienteIdValue);
+			if (pacienteIdValue <= 0) {
+				alert('Selecciona un paciente válido antes de guardar la entrada.');
+				return;
+			}
+			pacienteId = pacienteIdValue;
+			const profesionalSelect = document.getElementById('profesional-historial');
+			if (!profesionalSelect || !profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
+				mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
+				if (profesionalSelect) profesionalSelect.focus();
+				return;
+			}
+			const idElem = document.getElementById('id-historial');
+			const fechaElem = document.getElementById('fecha-historial');
+			const eventoElem = document.getElementById('evento-historial');
+			const motivoElem = document.getElementById('motivo-historial');
+			const notasElem = document.getElementById('notas-historial');
+			const profesionalId = profesionalSelect.value;
+			const id = idElem ? idElem.value : '';
+			const data = {
+				paciente_id: pacienteIdValue,
+				fecha: fechaElem ? fechaElem.value : '',
+				tipo_evento: eventoElem ? eventoElem.value : '',
+				motivo: motivoElem ? motivoElem.value : '',
+				diagnostico: '', // No hay campo en el modal
+				tratamiento: '', // No hay campo en el modal
+				notas: notasElem ? notasElem.value : '',
+				adjuntos: '', // Implementar adjuntos si lo necesitas
+				profesional_id: profesionalId
+			};
+			if (window.modoHistorialModal === 'editar' && id) {
+				await ipcRenderer.invoke('historial-edit', id, data);
+			} else {
+				await ipcRenderer.invoke('historial-add', data);
+			}		
+			form.reset();
+			if (idElem) idElem.value = '';
+			const modal = bootstrap.Modal.getInstance(document.getElementById('modal-historial'));
+			if (modal) modal.hide();
+			const selectPaciente = document.getElementById('filtro-paciente-historial');
+			if (selectPaciente && selectPaciente.value) {
+				const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+				const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPaciente.value));
+				await renderPacienteCard(pacienteSel || null);
+			}
+			renderHistorial();
+			renderTimelinePacienteDB();
+		});
+		form._submitHandlerSet = true;
+	}
 });
 
  
@@ -207,6 +225,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
 async function renderHistorial() {
+window.renderHistorial = renderHistorial;
     const tbody = document.querySelector('#tabla-historial tbody');
     if (!tbody) return;
     // Mantener los ejemplos fijos arriba, luego las entradas dinámicas
@@ -347,6 +366,13 @@ document.addEventListener('DOMContentLoaded', function() {
  
 // Evento. Botón de añadir entrada al historial clínico. 
 document.getElementById('btn-add-historial').addEventListener('click', function() {
+	window.modoHistorialModal = 'nuevo';
+    // Cambiar título y botón
+    const modalLabel = document.getElementById('modalHistorialLabel');
+    if (modalLabel) modalLabel.textContent = 'Añadir entrada al historial';
+    const btnGuardar = document.querySelector('#form-historial button[type="submit"]');
+    if (btnGuardar) btnGuardar.innerHTML = '<i class="bi bi-save me-1"></i> Guardar entrada';
+	
 	cargarProfesionalesEnHistorial();
 	document.getElementById('form-historial').reset();
 	const idHistorialElem2 = document.getElementById('id-historial');
@@ -377,6 +403,11 @@ document.getElementById('btn-add-historial').addEventListener('click', function(
 
 // Editar Registro del historial
 window.editHistorial = async function(idx) {
+	window.modoHistorialModal = 'editar';
+	const modalLabel = document.getElementById('modalHistorialLabel');
+    if (modalLabel) modalLabel.textContent = 'Editar entrada del historial';
+    const btnGuardar = document.querySelector('#form-historial button[type="submit"]');
+    if (btnGuardar) btnGuardar.innerHTML = '<i class="bi bi-pencil me-1"></i> Guardar cambios';
 	await cargarProfesionalesEnHistorial();
 	const item = historialData[idx];
 	// Seleccionar profesional en select y Choices.js
@@ -473,11 +504,33 @@ window.editHistorial = async function(idx) {
 
 // Archivar registro del historial
 window.archiveHistorial = async function(idx) {
-	const item = historialData[idx];
-	if (confirm('¿Seguro que quieres archivar esta entrada?')) {
-		await ipcRenderer.invoke('historial-archive', item.id);
-		renderHistorial();
-	}
+		const item = historialData[idx];
+		const modalConfirmacion = document.getElementById('modal-confirmacion');
+		if (!modalConfirmacion) return;
+		document.getElementById('modal-confirmacion-titulo').textContent = '¿Archivar Entrada?';
+		document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción archivará la entrada seleccionada. ¿Deseas continuar?`;
+		const icono = document.getElementById('modal-confirmacion-icono');
+		icono.innerHTML = '<i class="bi bi-archive-fill text-warning" style="font-size:1.7em;"></i>';
+		modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-danger','bg-success'); 
+		modalConfirmacion.querySelector('.modal-header').classList.add('bg-warning');
+		const btnConfirmar = document.getElementById('btn-confirmar-accion');
+		btnConfirmar.classList.remove('btn-danger','btn-success');
+		btnConfirmar.classList.add('btn-warning');
+
+		// Eliminar listeners previos para evitar duplicidad
+		const nuevoListener = async function() {
+			await ipcRenderer.invoke('historial-archive', item.id);
+			const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+			if (modalInstance) modalInstance.hide();
+			renderHistorial();
+			btnConfirmar.removeEventListener('click', nuevoListener);
+			renderTimelinePacienteDB();
+		};
+		btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+		btnConfirmar.addEventListener('click', nuevoListener);
+
+		const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+		modalInstance.show();
 };
 
 // Evento para cambiar la foto de perfil del paciente
@@ -568,6 +621,30 @@ document.addEventListener('DOMContentLoaded', function() {
 				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
 				if (resultado && resultado.success) {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
+					// Crear notificación
+					const tag = window.etiquetasGlobales?.find(t => String(t.id) === String(nuevaIncidencia.etiqueta_id));
+					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
+					const mensajeNotificacion = `Nueva incidencia registrada: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
+					await ipcRenderer.invoke('notificaciones-add', {
+						mensaje: mensajeNotificacion,
+						tipo: 'incidencia',
+						icono: 'bi bi-tag-fill',
+						color: tag?.color || '#009879',
+						fecha: nuevaIncidencia.fecha,
+						usuario_id: null,
+						paciente_id: nuevaIncidencia.paciente_id,
+						extra: ''
+					});
+					// Crear registro en historial_clinico
+					await ipcRenderer.invoke('historial-add', {
+						paciente_id: nuevaIncidencia.paciente_id,
+						fecha: nuevaIncidencia.fecha,
+						tipo_evento: 'Incidencia',
+						motivo: mensajeNotificacion,
+						profesional_id: null,
+						notas: '',
+						adjuntos: ''
+					});
 					// Cerrar el modal
 					var modalIncidencia = document.getElementById('modal-incidencia');
 					if (modalIncidencia) {
@@ -576,6 +653,23 @@ document.addEventListener('DOMContentLoaded', function() {
 					}
 					// Actualizar historial si es necesario
 					renderHistorial();
+					// Actualizar tabla de pacientes si está disponible
+					if (window.cargarPacientes) window.cargarPacientes();
+					// Renderizar cards de usuario en historial
+					const selectPaciente = document.getElementById('filtro-paciente-historial');
+					if (selectPaciente && selectPaciente.value) {
+						const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+						const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPaciente.value));
+						await renderPacienteCard(pacienteSel || null);
+					}
+					// Actualizar timeline del paciente en historial
+					if (typeof renderTimelinePacienteDB === 'function') {
+						await renderTimelinePacienteDB();
+					}
+					// Actualizar notificaciones en el dashboard
+					if (typeof window.refrescarNotificacionesDashboard === 'function') {
+						window.refrescarNotificacionesDashboard();
+					}
 				} else {
 					mostrarMensaje('Error al guardar la incidencia', 'danger');
 				}
@@ -643,7 +737,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				});
 			} else {
 				if (accesoInput) accesoInput.value = '';
-				console.log('No hay paciente seleccionado.');
 			}
 			// Abre el modal profesional de incidencias
 			var modalIncidencia = document.getElementById('modal-incidencia');
@@ -691,6 +784,7 @@ function renderTimelinePaciente(eventos) {
 
 // Timeline dinámico con datos reales
 async function renderTimelinePacienteDB() {
+window.renderTimelinePacienteDB = renderTimelinePacienteDB;
 	const timeline = document.getElementById('timelinePaciente');
 	const select = document.getElementById('filtro-paciente-historial');
 	const pacienteIdActual = select && select.value ? Number(select.value) : null;
@@ -706,41 +800,39 @@ async function renderTimelinePacienteDB() {
 	}
 	// Renderizar timeline con estilo visual
 	timeline.innerHTML = '';
+
+	// Colores e iconos para cada tipo de evento del modal
+	const eventoEstilos = {
+		'Registro':      { color: 'success',   icono: 'bi bi-journal-plus' },
+		'Actualización': { color: 'info',      icono: 'bi bi-pencil-square' },
+		'Eliminación':   { color: 'danger',    icono: 'bi bi-trash' },
+		'Infección':     { color: 'danger',    icono: 'bi bi-bug-fill' },
+		'Incidencia':    { color: 'warning',   icono: 'bi bi-exclamation-triangle-fill' },
+		'Otro':          { color: 'secondary', icono: 'bi bi-three-dots' }
+	};
+
 	historial.forEach(item => {
-		let icono = 'bi bi-calendar-event';
-		let colorClass = 'primary';
-		if (item.tipo_evento) {
-			const tipo = String(item.tipo_evento).toLowerCase();
-			if (tipo.includes('consulta')) { icono = 'bi bi-person-badge'; colorClass = 'primary'; }
-			else if (tipo.includes('laboratorio')) { icono = 'bi bi-flask'; colorClass = 'info'; }
-			else if (tipo.includes('incidencia')) { icono = 'bi bi-exclamation-diamond'; colorClass = 'danger'; }
-			else if (tipo.includes('tratamiento')) { icono = 'bi bi-capsule'; colorClass = 'success'; }
-			else if (tipo.includes('control')) { icono = 'bi bi-calendar-check'; colorClass = 'secondary'; }
-			else if (tipo.includes('observación')) { icono = 'bi bi-eye'; colorClass = 'warning'; }
-			else if (tipo.includes('actualización')) {
-				// Si es actualización de datos personales, color verde y icono diferente
-				if (tipo.includes('datos personales')) {
-					icono = 'bi bi-person-lines-fill';
-					colorClass = 'success';
-				} else {
-					icono = 'bi bi-arrow-repeat';
-					colorClass = 'info';
-				}
-			}
+		let estilo = eventoEstilos['Otro'];
+		if (item.tipo_evento && eventoEstilos[item.tipo_evento]) {
+			estilo = eventoEstilos[item.tipo_evento];
 		}
-		// Si contiene "actualización" en el tipo_evento, aseguramos que la palabra esté presente
-		let tipoEventoMostrar = item.tipo_evento;
-		if (String(item.tipo_evento).toLowerCase().includes('actualización') && !item.tipo_evento.includes('Actualización')) {
-			tipoEventoMostrar = 'Actualización de ' + item.tipo_evento.replace(/actualización de /i, '');
+		// Si el tipo_evento contiene 'Infección' (por variaciones de texto), usa el estilo personalizado
+		if (item.tipo_evento && String(item.tipo_evento).toLowerCase().includes('infección')) {
+			estilo = { color: 'danger', icono: 'bi bi-bug-fill' };
 		}
+		// Si el tipo_evento contiene 'Incidencia' (por variaciones de texto), usa el estilo personalizado
+		if (item.tipo_evento && String(item.tipo_evento).toLowerCase().includes('incidencia')) {
+			estilo = { color: 'warning', icono: 'bi bi-exclamation-triangle-fill' };
+		}
+		let tipoEventoMostrar = item.tipo_evento || 'Evento';
 		timeline.innerHTML += `
 			<div class="card shadow-sm border-0 mb-2 timeline-event bg-light">
 				<div class="card-body d-flex align-items-center" style="gap: 0.75rem;">
-					<span class="icon-circle bg-${colorClass} text-white flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-size:1.5em;">
-						<i class="${icono}"></i>
+					<span class="icon-circle bg-${estilo.color} text-white flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-size:1.5em;">
+						<i class="${estilo.icono}"></i>
 					</span>
 					<div class="flex-grow-1" style="min-width:0;">
-						<div class="fw-bold text-${colorClass}" style="word-break:break-word;">${tipoEventoMostrar ? tipoEventoMostrar : 'Evento'} - ${formatearFecha(item.fecha)}</div>
+						<div class="fw-bold text-${estilo.color}" style="word-break:break-word;">${tipoEventoMostrar} - ${formatearFecha(item.fecha)}</div>
 						<div style="word-break:break-word;">${item.motivo ? item.motivo : ''}</div>
 					</div>
 				</div>
@@ -1120,16 +1212,6 @@ window.renderPacienteCard = async function(paciente) {
 	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
 	
 }
-
-
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.btn-editar-paciente');
-    const contenedorHistorial = document.getElementById('historial-section');
-    if (btn && contenedorHistorial && contenedorHistorial.contains(btn)) {
-        window.origenModalEditarPaciente = 'historial';
-        // ...abrir modal de edición aquí...
-    }
-});
 
 /**
  * Agrega una entrada al historial clínico del paciente según el tipo de evento.

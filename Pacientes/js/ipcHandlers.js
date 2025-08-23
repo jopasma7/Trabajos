@@ -89,13 +89,13 @@ ipcMain.handle('add-incidencia-con-tag', (event, data) => {
   return db.addIncidenciaConTag(
     data.pacienteId,
     data.tagId,
-  data.tipo_acceso_id || null,
+    data.tipo_acceso_id || null,
     data.fecha || null,
     data.tipo || null,
     data.microorganismo_asociado || null,
     data.medidas || null,
     data.etiqueta_id || data.tagId || null,
-    typeof data.activo === 'undefined' ? 1 : data.activo
+    typeof data.activo === 'undefined' ? 1 : (data.activo === true ? 1 : data.activo === false ? 0 : data.activo)
   );
 });
 
@@ -135,18 +135,17 @@ ipcMain.handle('archivar-paciente', (event, id) => {
 
 // Eliminar un paciente
 ipcMain.handle('delete-paciente', (event, id) => {
-  // Eliminar registros relacionados antes de eliminar el paciente
-  // Eliminar registros que referencian acceso_id
-  // Eliminar todos los pendientes relacionados con el paciente directamente
-  db.prepare('DELETE FROM pendiente WHERE paciente_id = ?').run(id);
-  db.prepare('DELETE FROM acceso WHERE paciente_id = ?').run(id);
-  // db.prepare('DELETE FROM historial WHERE paciente_id = ?').run(id); // Tabla no existe
-  db.prepare('DELETE FROM incidencias WHERE paciente_id = ?').run(id);
-  db.prepare('DELETE FROM historial_clinico WHERE paciente_id = ?').run(id);
-  // Si tienes otras tablas relacionadas, agrégalas aquí
-  const stmt = db.prepare('DELETE FROM pacientes WHERE id = ?');
-  const info = stmt.run(id);
-  return { changes: info.changes };
+  try {
+    db.prepare('UPDATE pendiente SET activo = 0 WHERE paciente_id = ?').run(id);
+    db.prepare('UPDATE acceso SET activo = 0 WHERE paciente_id = ?').run(id);
+    db.prepare('UPDATE incidencias SET activo = 0 WHERE paciente_id = ?').run(id);
+    db.prepare('UPDATE historial_clinico SET archivado = 1 WHERE paciente_id = ?').run(id);
+    db.prepare('UPDATE pacientes SET activo = 0 WHERE id = ?').run(id);
+    // Si tienes otras tablas relacionadas, agrégalas aquí
+    return { changes: 1 };
+  } catch (e) {
+    return { error: e.message };
+  }
 });
 
 

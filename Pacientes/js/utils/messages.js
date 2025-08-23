@@ -1,5 +1,5 @@
 // Función global para mostrar mensajes flotantes
-function mostrarMensaje(texto, tipo = 'success') {
+window.mostrarMensaje = function mostrarMensaje(texto, tipo = 'success') {
 	// Crear contenedor de toasts si no existe
 	let toastContainer = document.getElementById('toast-messages-container');
 	if (!toastContainer) {

@@ -599,55 +599,12 @@ function renderAgenda(agendaBody, openModalEditar, eliminarEvento) {
 
   // ...declaración única de lunes, diaSemana y dias ya está arriba...
 
-  // --- EJEMPLOS DE EVENTOS PARA ESTA SEMANA ---
-  // Solo añade eventos de ejemplo si la base está vacía
-  if (!window._ejemploEventosAgregados && eventos.length === 0) {
-    const ejemploEventos = [
-      {
-        titulo: "Consulta médica",
-        descripcion: "Chequeo general con el Dr. Pérez.",
-        fecha: dias[1].toISOString().slice(0,10),
-        hora: "09:00"
-      },
-      {
-        titulo: "Reunión de equipo",
-        descripcion: "Planificación semanal de tareas.",
-        fecha: dias[2].toISOString().slice(0,10),
-        hora: "11:30"
-      },
-      {
-        titulo: "Llamada paciente",
-        descripcion: "Seguimiento telefónico a paciente Juan.",
-        fecha: dias[4].toISOString().slice(0,10),
-        hora: "16:00"
-      },
-      {
-        titulo: "Vacunación",
-        descripcion: "Aplicación de vacuna antigripal.",
-        fecha: dias[0].toISOString().slice(0,10),
-        hora: "13:00"
-      },
-      {
-        titulo: "Entrega de informes",
-        descripcion: "Enviar resultados de laboratorio.",
-        fecha: dias[6].toISOString().slice(0,10),
-        hora: "10:00"
-      }
-    ];
-    ejemploEventos.forEach(ev => {
-      eventos.push({
-        id: 'ejemplo-' + Math.random().toString(36).slice(2),
-        ...ev
-      });
-    });
-    window._ejemploEventosAgregados = true;
-  }
 
   // Agrupar eventos por día (YYYY-MM-DD)
   let eventosPorDia = {};
   dias.forEach(d => {
     const key = d.toISOString().slice(0,10);
-    eventosPorDia[key] = [];
+    eventosPorDia[key] = []; 
   });
   eventos.forEach(ev => {
     if (eventosPorDia[ev.fecha]) {

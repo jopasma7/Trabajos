@@ -21,9 +21,12 @@ require('./js/ipcHandlers.js'); // Asegura que los handlers de agenda estén act
 // Función para crear la ventana principal de la aplicación
 function createWindow() {
   // Creamos una nueva instancia de BrowserWindow (ventana de la app)
+  const path = require('path');
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, 'assets', 'app.ico'), // Icono de la app
+    title: 'Gigi Hospital',
     webPreferences: {
       nodeIntegration: true, // Permite usar Node.js en el frontend
       contextIsolation: false // Desactiva el aislamiento de contexto

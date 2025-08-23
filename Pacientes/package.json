@@ -1,5 +1,5 @@
 {
-  "name": "hospital-app",
+  "name": "gigi-hospital",
   "author": "Alejandro Pastor",
   "version": "1.0.0",
   "description": "Esqueleto de aplicación Electron con JavaScript",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "alejandro.hospitalapp",
-    "productName": "Hospital App",
+  "productName": "Gigi Hospital",
     "icon": "assets/app.ico",
     "win": {
       "target": "nsis",

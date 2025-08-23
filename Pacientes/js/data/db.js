@@ -21,6 +21,8 @@ if (!fs.existsSync(dbDir)) {
 }
 
 const db = new Database(dbPath);
+// Activar claves foráneas en SQLite
+db.pragma('foreign_keys = ON');
 
 // Crear tabla tipo_acceso (tipos de acceso vascular)
 db.prepare(`CREATE TABLE IF NOT EXISTS tipo_acceso (
@@ -76,7 +78,6 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pendiente (
   fecha_instalacion_acceso_pendiente TEXT,
   ubicacion_chd TEXT,
   lado_chd TEXT,
-  observaciones TEXT,
   profesional_id INTEGER,
   activo INTEGER DEFAULT 1,
   pendiente_tipo_acceso_id INTEGER,
@@ -197,7 +198,6 @@ db.prepare(`CREATE TABLE IF NOT EXISTS pacientes (
   correo TEXT,
   direccion TEXT,
   alergias TEXT,
-  observaciones TEXT,
   avatar TEXT,
   profesional_id INTEGER,
   activo INTEGER DEFAULT 1,
@@ -425,7 +425,7 @@ db.getAllPacientes = function() {
 };
 
 db.addPaciente = function(paciente) {
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -436,7 +436,6 @@ db.addPaciente = function(paciente) {
     paciente.correo || '',
     paciente.direccion || '',
     paciente.alergias || '',
-    paciente.observaciones || '',
     paciente.avatar || '',
     paciente.profesional_id || null
   );
@@ -444,7 +443,7 @@ db.addPaciente = function(paciente) {
 };
 
 db.editPaciente = function(paciente) {
-  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, fecha_alta = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?');
+  const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, fecha_alta = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, avatar = ?, profesional_id = ? WHERE id = ?');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -455,7 +454,6 @@ db.editPaciente = function(paciente) {
     paciente.correo || '',
     paciente.direccion || '',
     paciente.alergias || '',
-    paciente.observaciones || '',
     paciente.avatar || '',
     paciente.profesional_id || null,
     paciente.id
@@ -535,8 +533,8 @@ db.getPacientesCompletos = function() {
     if (acceso && acceso.tipo_acceso_id) {
       tipoAcceso = db.prepare('SELECT * FROM tipo_acceso WHERE id = ?').get(acceso.tipo_acceso_id);
     }
-  // Pendiente activo más reciente
-  const pendiente = db.getPendienteActualByPaciente(paciente.id);
+    // Pendiente activo más reciente
+    const pendiente = db.getPendienteActualByPaciente(paciente.id);
     // Etiquetas
     const etiquetas = db.getEtiquetasByPaciente(paciente.id);
     // Infecciones con tag
@@ -545,13 +543,20 @@ db.getPacientesCompletos = function() {
       ...inf,
       tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inf.tag_id)
     }));
+    // Incidencias con tag
+    let incidencias = db.prepare('SELECT i.*, it.tag_id as tagId FROM incidencias i JOIN incidencia_tags it ON i.id = it.incidencia_id WHERE i.paciente_id = ? AND i.activo = 1 ORDER BY i.fecha DESC, i.id DESC').all(paciente.id);
+    incidencias = incidencias.map(inc => ({
+      ...inc,
+      tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inc.tagId)
+    }));
     return {
       ...paciente,
       acceso: acceso || {},
       tipo_acceso: tipoAcceso || {},
       pendiente: pendiente || {},
       etiquetas,
-      infecciones
+      infecciones,
+      incidencias
     };
   });
 };
@@ -664,7 +669,6 @@ db.getPacientesFAVPendienteRetiroCHD = function() {
   p.ubicacion_chd = pendienteCHD ? pendienteCHD.ubicacion_chd : '';
   p.lado_chd = pendienteCHD ? pendienteCHD.lado_chd : '';
   p.fecha_instalacion_chd = pendienteCHD ? pendienteCHD.fecha_instalacion_acceso_pendiente : '';
-  p.observaciones = pendienteCHD ? pendienteCHD.observaciones : (p.observaciones || '');
   });
   return pacientes;
 };
@@ -685,8 +689,7 @@ db.getPacientesCHDFAVMadurativo = function() {
            a_chd.ubicacion_anatomica AS ubicacion_chd,
            a_chd.fecha_instalacion AS fecha_instalacion_chd,
            pen.ubicacion_chd AS ubicacion_fav,
-           pen.fecha_instalacion_acceso_pendiente AS fecha_instalacion_fav,
-           pen.observaciones
+           pen.fecha_instalacion_acceso_pendiente AS fecha_instalacion_fav
     FROM pacientes p
     JOIN acceso a_chd ON a_chd.paciente_id = p.id AND a_chd.activo = 1 AND a_chd.tipo_acceso_id = ?
     JOIN pendiente pen ON pen.paciente_id = p.id AND pen.activo = 1 AND pen.pendiente_tipo_acceso_id = ? AND pen.pendiente_tipo_id = ?
@@ -699,8 +702,7 @@ db.getPacientesCHDFAVMadurativo = function() {
     ubicacion_chd: p.ubicacion_chd || '',
     fecha_instalacion_chd: p.fecha_instalacion_chd || '',
     ubicacion_fav: p.ubicacion_fav || '',
-    fecha_instalacion_fav: p.fecha_instalacion_fav || '',
-    observaciones: p.observaciones || ''
+    fecha_instalacion_fav: p.fecha_instalacion_fav || ''
   }));
   return resultado;
   //   chdTipo,
@@ -811,6 +813,12 @@ db.addIncidenciasModal = function(incidencia) {
     incidencia.etiqueta_id,
     incidencia.activo
   );
+  // Si hay etiqueta_id, crear relación en incidencia_tags
+  if (incidencia.etiqueta_id) {
+    const incidenciaId = info.lastInsertRowid;
+    const stmtTag = db.prepare('INSERT OR IGNORE INTO incidencia_tags (incidencia_id, tag_id) VALUES (?, ?)');
+    stmtTag.run(incidenciaId, incidencia.etiqueta_id);
+  }
   return { success: info.changes > 0, id: info.lastInsertRowid };
 };
 // Inserta una incidencia con motivo y fecha como antes
@@ -847,11 +855,10 @@ db.editPacienteCompleto = function(paciente) {
       !valoresIguales(pacienteActual.correo, paciente.correo) ||
       !valoresIguales(pacienteActual.direccion, paciente.direccion) ||
       !valoresIguales(pacienteActual.alergias, paciente.alergias) ||
-      !valoresIguales(pacienteActual.observaciones, paciente.observaciones) ||
       !valoresIguales(pacienteActual.avatar, paciente.avatar) ||
       !valoresIguales(pacienteActual.profesional_id, paciente.profesional_id)) {
       cambios.paciente = true;
-      db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
+      db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
         paciente.nombre,
         paciente.apellidos,
         paciente.sexo || '',
@@ -860,7 +867,6 @@ db.editPacienteCompleto = function(paciente) {
         paciente.correo || '',
         paciente.direccion || '',
         paciente.alergias || '',
-        paciente.observaciones || '',
         paciente.avatar || '',
         paciente.profesional_id || null,
         paciente.id
@@ -880,7 +886,6 @@ db.editPacienteCompleto = function(paciente) {
   );
   if (accesoActual && hayCambiosAcceso) {
     cambios.acceso = true;
-    console.log('[DEBUG][db] Cambios detectados en acceso:', paciente.id, paciente.nombre, paciente.apellidos);
     db.prepare('UPDATE acceso SET activo = 0 WHERE id = ?').run(accesoActual.id);
     db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)').run(
       paciente.id,
@@ -906,16 +911,13 @@ db.editPacienteCompleto = function(paciente) {
       paciente.estado || ''
     );
     cambios.acceso = true;
-    console.log('[DEBUG][db] Acceso creado para paciente:', paciente.id, paciente.nombre, paciente.apellidos);
   }
 // --- LÓGICA DE PENDIENTE ---
   if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
-    console.log('[DB][editPacienteCompleto] Datos de pendiente recibidos:', paciente.pendiente);
     // Buscar pendiente activo actual
     const pendienteActivo = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1').get(paciente.id);
     if (pendienteActivo) {
       db.prepare('UPDATE pendiente SET activo = 0 WHERE id = ?').run(pendienteActivo.id);
-      console.log('[DB][editPacienteCompleto] Pendiente anterior archivado:', pendienteActivo.id);
     }
     db.addPendiente({
       paciente_id: paciente.id,
@@ -923,7 +925,6 @@ db.editPacienteCompleto = function(paciente) {
       fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente || '',
       ubicacion_chd: paciente.pendiente.ubicacion_chd || '',
       lado_chd: paciente.pendiente.lado_chd || '',
-      observaciones: paciente.pendiente.observaciones || '',
       profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
       pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
       pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
@@ -942,28 +943,10 @@ db.editPacienteCompleto = function(paciente) {
       !valoresIguales(pacienteActual.correo, paciente.correo) ||
       !valoresIguales(pacienteActual.direccion, paciente.direccion) ||
       !valoresIguales(pacienteActual.alergias, paciente.alergias) ||
-      !valoresIguales(pacienteActual.observaciones, paciente.observaciones) ||
       !valoresIguales(pacienteActual.avatar, paciente.avatar) ||
       !valoresIguales(pacienteActual.profesional_id, paciente.profesional_id)
     ) {
-      // Log para comparar observaciones normalizadas
-      const obsAntes = normalizaValor(pacienteActual.observaciones);
-      const obsDespues = normalizaValor(paciente.observaciones);
-      const iguales = obsAntes === obsDespues;
-      console.log('[DEBUG][db] observaciones comparación:', {
-        antes: obsAntes,
-        despues: obsDespues,
-        iguales
-      });
-      if (!iguales) {
-        console.log('[DEBUG][db] observaciones cambio:', {
-          antes: obsAntes,
-          despues: obsDespues
-        });
-      }
-      cambios.paciente = true;
-      console.log('[DEBUG][db] Cambios detectados en paciente:', paciente.id, paciente.nombre, paciente.apellidos);
-      db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
+      db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
         paciente.nombre,
         paciente.apellidos,
         paciente.sexo || '',
@@ -972,7 +955,6 @@ db.editPacienteCompleto = function(paciente) {
         paciente.correo || '',
         paciente.direccion || '',
         paciente.alergias || '',
-        paciente.observaciones || '',
         paciente.avatar || '',
         paciente.profesional_id || null,
         paciente.id
@@ -993,7 +975,7 @@ db.editPacienteCompleto = function(paciente) {
 // Inserta un paciente y sus relaciones normalizadas
 db.addPacienteCompleto = function(paciente) {
   // Insertar paciente principal
-  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const stmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const info = stmt.run(
     paciente.nombre,
     paciente.apellidos,
@@ -1004,7 +986,6 @@ db.addPacienteCompleto = function(paciente) {
     paciente.correo || '',
     paciente.direccion || '',
     paciente.alergias || '',
-    paciente.observaciones || '',
     paciente.avatar || '',
     paciente.profesional_id || null
   );
@@ -1033,7 +1014,6 @@ db.addPacienteCompleto = function(paciente) {
       fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente || paciente.fecha_instalacion_pendiente || '',
       ubicacion_chd: paciente.pendiente.ubicacion_chd || '',
       lado_chd: paciente.pendiente.lado_chd || '',
-      observaciones: paciente.pendiente.observaciones || '',
       profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
       pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
       pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
@@ -1048,8 +1028,7 @@ db.addPacienteCompleto = function(paciente) {
 // Agregar pendiente
 db.addPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  console.log('[DB][addPendiente] Datos recibidos:', pendiente);
-  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, pendiente_tipo_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, ubicacion_chd, lado_chd, observaciones, profesional_id, activo, pendiente_tipo_acceso_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, pendiente_tipo_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, ubicacion_chd, lado_chd, profesional_id, activo, pendiente_tipo_acceso_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     pendiente.paciente_id,
     pendiente.pendiente_tipo_id || null,
@@ -1057,19 +1036,17 @@ db.addPendiente = function(pendiente) {
     pendiente.fecha_instalacion_acceso_pendiente || null,
     pendiente.ubicacion_chd || '',
     pendiente.lado_chd || '',
-    pendiente.observaciones || '',
     pendiente.profesional_id || null,
     typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
     pendiente.pendiente_tipo_acceso_id || null
   );
-  console.log('[DB][addPendiente] Resultado INSERT:', info);
   return { id: info.lastInsertRowid };
 };
 
 // Editar pendiente
 db.editPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
-  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, pendiente_tipo_id = ?, tabla_acceso_id_vinculado = ?, fecha_instalacion_acceso_pendiente = ?, ubicacion_chd = ?, lado_chd = ?, observaciones = ?, profesional_id = ?, activo = ?, pendiente_tipo_acceso_id = ? WHERE id = ?`);
+  const stmt = db.prepare(`UPDATE pendiente SET paciente_id = ?, pendiente_tipo_id = ?, tabla_acceso_id_vinculado = ?, fecha_instalacion_acceso_pendiente = ?, ubicacion_chd = ?, lado_chd = ?, profesional_id = ?, activo = ?, pendiente_tipo_acceso_id = ? WHERE id = ?`);
   const info = stmt.run(
     pendiente.paciente_id,
     pendiente.pendiente_tipo_id || null,
@@ -1077,7 +1054,6 @@ db.editPendiente = function(pendiente) {
     pendiente.fecha_instalacion_acceso_pendiente || null,
     pendiente.ubicacion_chd || '',
     pendiente.lado_chd || '',
-    pendiente.observaciones || '',
     pendiente.profesional_id || null,
     typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
     pendiente.pendiente_tipo_acceso_id || null,
@@ -1179,142 +1155,6 @@ function insertarTiposAccesoPredeterminados() {
   });
 }
 
-/**
- * Inserta 10 pacientes de prueba con todos los campos completos en pacientes, acceso y pendiente.
- * Los datos son simulados y cubren todos los campos requeridos.
- */
-db.insertarPacientesPrueba = function() {
-  const sexos = ['hombre', 'mujer'];
-  // Asegurar que existe un profesional con id=1
-  let profesional = db.prepare('SELECT id FROM profesionales WHERE id = 1').get();
-  if (!profesional) {
-    const stmt = db.prepare('INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    stmt.run(
-      'Prueba',
-      'Demo',
-      'M',
-      'prueba@demo.com',
-      '600000001',
-      'Nefrólogo',
-      '12345',
-      '1980-01-01',
-      'Calle Falsa 123',
-      'Profesional de prueba',
-      ''
-    );
-  }
-  const nombres = [
-    'Juan', 'María', 'Pedro', 'Lucía', 'Carlos', 'Ana', 'Miguel', 'Sofía', 'José', 'Laura'
-  ];
-  const apellidos = [
-    'García', 'Martínez', 'López', 'Sánchez', 'Pérez', 'Gómez', 'Fernández', 'Ruiz', 'Díaz', 'Torres'
-  ];
-  const direcciones = [
-    'Calle Mayor 1', 'Av. Libertad 23', 'Plaza Sol 5', 'Calle Luna 8', 'Av. Paz 12',
-    'Calle Río 3', 'Calle Mar 7', 'Av. Norte 15', 'Calle Sur 9', 'Plaza Este 2'
-  ];
-  const emails = [
-    'juan@test.com', 'maria@test.com', 'pedro@test.com', 'lucia@test.com', 'carlos@test.com',
-    'ana@test.com', 'miguel@test.com', 'sofia@test.com', 'jose@test.com', 'laura@test.com'
-  ];
-  const telefonos = [
-    '600111111', '600222222', '600333333', '600444444', '600555555',
-    '600666666', '600777777', '600888888', '600999999', '600000000'
-  ];
-  const alergias = [
-    'Ninguna', 'Penicilina', 'Sulfa', 'Latex', 'Aspirina', 'Ibuprofeno', 'Ninguna', 'Ninguna', 'Paracetamol', 'Ninguna'
-  ];
-  const observaciones = [
-    'Paciente estable', 'Requiere seguimiento', 'Historial de hipertensión', 'Diabético', 'Sin incidencias',
-    'Control mensual', 'Pendiente de análisis', 'Buen estado', 'Revisión anual', 'Sin observaciones'
-  ];
-  const fechaNacimiento = [
-    '1970-01-01', '1980-02-15', '1990-03-20', '1975-04-10', '1985-05-25',
-    '1995-06-30', '1978-07-12', '1988-08-18', '1998-09-22', '1972-10-05'
-  ];
-  const fechaAlta = [
-    '2023-01-10', '2023-02-12', '2023-03-15', '2023-04-18', '2023-05-20',
-    '2023-06-22', '2023-07-25', '2023-08-28', '2023-09-30', '2023-10-05'
-  ];
-  const profesional_id = 1;
-  const avatar = '';
-
-  // Obtener tipo_acceso_id válidos
-  const tiposAcceso = db.prepare('SELECT id FROM tipo_acceso').all();
-  // Ubicaciones válidas según insertarTiposAccesoPredeterminados()
-  const ubicaciones = [
-    'Radiocefálica',
-    'Radiobasílica',
-    'Braquiocefálica',
-    'Braquiobasílica',
-    'Braquiorradial',
-    'Fémoro-femoral',
-    'Injerto protésico en brazo (brazo medio / superior)',
-    'Injerto protésico femoral (muslo)',
-    'Injerto subclavio o axilar (tórax)',
-    'Yugular Interna',
-    'Subclavia',
-    'Femoral',
-    'Variable'
-  ];
-  // Obtener pendiente_tipo_id válidos
-  const tiposPendiente = db.prepare('SELECT id FROM pendiente_tipo').all();
-
-  for (let i = 0; i < 10; i++) {
-    // Comprobar si el paciente ya existe por nombre y apellidos
-    const existe = db.prepare('SELECT id FROM pacientes WHERE nombre = ? AND apellidos = ?').get(nombres[i], apellidos[i]);
-    if (existe) continue;
-    // Insertar paciente
-    const pacienteStmt = db.prepare('INSERT INTO pacientes (nombre, apellidos, sexo, fecha_nacimiento, fecha_alta, telefono, correo, direccion, alergias, observaciones, avatar, profesional_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    const pacienteInfo = pacienteStmt.run(
-      nombres[i],
-      apellidos[i],
-      sexos[i % 2],
-      fechaNacimiento[i],
-      fechaAlta[i],
-      telefonos[i],
-      emails[i],
-      direcciones[i],
-      alergias[i],
-      observaciones[i],
-      avatar,
-      profesional_id
-    );
-    const pacienteId = pacienteInfo.lastInsertRowid;
-
-    // Insertar acceso
-    const tipo_acceso_id = tiposAcceso[i % tiposAcceso.length].id;
-    const lado = i % 2 === 0 ? 'Izquierda' : 'Derecha';
-    const accesoStmt = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, ubicacion_anatomica, ubicacion_lado, fecha_instalacion, fecha_primera_puncion, observaciones, etiqueta_id, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    accesoStmt.run(
-      pacienteId,
-      tipo_acceso_id,
-      ubicaciones[i % ubicaciones.length],
-      lado,
-      fechaAlta[i],
-      fechaAlta[i],
-      observaciones[i],
-      null,
-      profesional_id,
-      'Activo'
-    );
-
-    // Insertar pendiente solo para algunos pacientes
-    if (i % 2 === 0) {
-      const pendiente_tipo_id = tiposPendiente[i % tiposPendiente.length].id;
-      const pendienteStmt = db.prepare('INSERT INTO pendiente (paciente_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, observaciones, profesional_id, pendiente_tipo_id) VALUES (?, ?, ?, ?, ?, ?)');
-      pendienteStmt.run(
-        pacienteId,
-        tipo_acceso_id,
-        fechaAlta[i],
-        'Pendiente de revisión',
-        profesional_id,
-        pendiente_tipo_id
-      );
-    }
-  }
-};
-
 // Crear etiquetas de tipo incidencia (motivos de derivación)
 db.crearEtiquetasIncidenciaMotivos = function() {
   const motivos = [
@@ -1366,6 +1206,4 @@ const addNotification = ({ tipo, mensaje, fecha, usuario_id = null, paciente_id 
 module.exports.getRecentNotifications = getRecentNotifications;
 module.exports.addNotification = addNotification;
 
-// Llamar siempre al cargar el archivo para poblar la base de datos con pacientes de prueba
-db.insertarPacientesPrueba();
 db.crearEtiquetasIncidenciaMotivos();

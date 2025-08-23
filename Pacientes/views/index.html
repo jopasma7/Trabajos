@@ -8,7 +8,7 @@
     -->
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-    <title>Electron App</title>
+  <title>Gigi Hospital</title>
   <!-- Bootstrap 5 CSS -->
   <style>
     .modal-dialog.modal-incidencias-wide {
@@ -66,7 +66,7 @@
         <nav class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark d-flex flex-column align-items-center align-items-sm-start min-vh-100 shadow">
           <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none mt-4">
             <span class="fs-2 ms-2"><i class="bi bi-hospital"></i></span>
-            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">GiGi Hospital</span>
+            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">Gigi Hospital</span>
           </a>
           <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 mt-4" id="menu">
             <li class="w-100 border-top border-secondary mb-2"></li>
@@ -93,24 +93,6 @@
               <a href="#" class="nav-link text-white ps-4" data-section="historial">
                 <i class="bi bi-journal-medical me-2"></i>
                 <span class="d-none d-sm-inline">Historial Clínico</span>
-              </a>
-            </li>
-            <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white ps-4" data-section="medicaciones">
-                <i class="bi bi-capsule-pill me-2"></i>
-                <span class="d-none d-sm-inline">Medicaciones</span>
-              </a>
-            </li>
-            <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white ps-4" data-section="alertas">
-                <i class="bi bi-bell-fill me-2"></i>
-                <span class="d-none d-sm-inline">Alertas</span>
-              </a>
-            </li>
-            <li class="nav-item w-100">
-              <a href="#" class="nav-link text-white ps-4" data-section="documentos">
-                <i class="bi bi-folder2-open me-2"></i>
-                <span class="d-none d-sm-inline">Documentos</span>
               </a>
             </li>
             <li class="nav-item w-100">
@@ -426,9 +408,6 @@
                   <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
                   <select class="form-select" id="filtro-paciente-historial"></select>
                 </div>
-                <button class="btn btn-success ms-auto col-md-2 d-flex justify-content-center align-items-end me-3 btn-editar-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente" style="width: 150px;">
-                  <i class="bi bi-person-plus-fill me-1"></i> Editar Paciente
-                </button>
                 <div class="row g-2">
                   <div class="col-lg-6">
                     <!-- Tarjeta visual del paciente -->
@@ -566,33 +545,6 @@
                     </tbody>
                   </table>
                 </div>
-              </div>
-            </section>
-            <!-- Medicaciones Section -->
-            <section id="medicaciones-section" class="section d-none">
-              <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0"><i class="bi bi-capsule-pill me-2"></i>Medicaciones</h2>
-              </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Aquí se gestionarán las medicaciones de los pacientes.</p>
-              </div>
-            </section>
-            <!-- Alertas Section -->
-            <section id="alertas-section" class="section d-none">
-              <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0"><i class="bi bi-bell-fill me-2"></i>Alertas</h2>
-              </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Aquí aparecerán alertas importantes y recordatorios.</p>
-              </div>
-            </section>
-            <!-- Documentos Section -->
-            <section id="documentos-section" class="section d-none">
-              <div class="d-flex align-items-center mb-3">
-                <h2 class="mb-0"><i class="bi bi-folder2-open me-2"></i>Documentos</h2>
-              </div>
-              <div class="card shadow-sm p-4 text-center text-muted">
-                <p class="mb-0">Sin contenido. Aquí podrás gestionar y consultar documentos.</p>
               </div>
             </section>
             <!-- Estadísticas Section -->
@@ -1054,6 +1006,7 @@
           </div>
           <!-- Formulario -->
           <form id="form-historial" autocomplete="off">
+            <input type="hidden" id="id-historial">
             <div class="modal-body">
               <div class="row g-3">
                 <div class="col-md-4">
@@ -1064,10 +1017,8 @@
                   <label for="evento-historial" class="form-label">Evento</label>
                   <select class="form-select" id="evento-historial" required>
                     <option value="Registro">Registro</option>
-                    <option value="Infección">Infección</option>
-                    <option value="Incidencia">Incidencia</option>
-                    <option value="Cambio de acceso">Cambio de acceso</option>
-                    <option value="Fallecimiento">Fallecimiento</option>
+                    <option value="Actualización">Actualización</option>
+                    <option value="Eliminación">Eliminación</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
@@ -1402,7 +1353,7 @@
   <script src="../assets/js/emoji-picker-element.js"></script>
   <script src="../assets/bootstrap.bundle.min.js"></script>
   <script src="../assets/js/jspdf.umd.min.js"></script>
-  <script src="../assets/js/jspdf.plugin.autotable.min.js"></script>
+  <script src="../assets/js/jspdf.plugin.autotable.min.js"></script> 
   <script src="../assets/js/chart.min.js"></script>
   <!-- <script src="../js/sections/dashboard.js"></script> -->
   <script src="../js/utils/messages.js"></script>
