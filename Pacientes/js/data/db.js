@@ -833,6 +833,100 @@ db.editPacienteCompleto = function(paciente) {
   }
   // Compara campos relevantes del paciente
   if (pacienteActual) {
+    if (!valoresIguales(pacienteActual.nombre, paciente.nombre) ||
+      !valoresIguales(pacienteActual.apellidos, paciente.apellidos) ||
+      !valoresIguales(pacienteActual.sexo, paciente.sexo) ||
+      !valoresIguales(pacienteActual.fecha_nacimiento, paciente.fecha_nacimiento) ||
+      !valoresIguales(pacienteActual.telefono, paciente.telefono) ||
+      !valoresIguales(pacienteActual.correo, paciente.correo) ||
+      !valoresIguales(pacienteActual.direccion, paciente.direccion) ||
+      !valoresIguales(pacienteActual.alergias, paciente.alergias) ||
+      !valoresIguales(pacienteActual.observaciones, paciente.observaciones) ||
+      !valoresIguales(pacienteActual.avatar, paciente.avatar) ||
+      !valoresIguales(pacienteActual.profesional_id, paciente.profesional_id)) {
+      cambios.paciente = true;
+      db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
+        paciente.nombre,
+        paciente.apellidos,
+        paciente.sexo || '',
+        paciente.fecha_nacimiento || '',
+        paciente.telefono || '',
+        paciente.correo || '',
+        paciente.direccion || '',
+        paciente.alergias || '',
+        paciente.observaciones || '',
+        paciente.avatar || '',
+        paciente.profesional_id || null,
+        paciente.id
+      );
+    }
+  }
+  // --- LÓGICA DE ACCESO ---
+  const accesoActual = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
+  const hayCambiosAcceso = accesoActual && (
+    !valoresIguales(accesoActual.tipo_acceso_id, paciente.tipo_acceso_id) ||
+    !valoresIguales(accesoActual.fecha_instalacion, paciente.fecha_instalacion) ||
+    !valoresIguales(accesoActual.ubicacion_anatomica, paciente.ubicacion_anatomica) ||
+    !valoresIguales(accesoActual.ubicacion_lado, paciente.ubicacion_lado) ||
+    !valoresIguales(accesoActual.profesional_id, paciente.profesional_id) ||
+    !valoresIguales(accesoActual.estado, paciente.estado) ||
+    !valoresIguales(accesoActual.fecha_primera_puncion, (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''))
+  );
+  if (accesoActual && hayCambiosAcceso) {
+    cambios.acceso = true;
+    console.log('[DEBUG][db] Cambios detectados en acceso:', paciente.id, paciente.nombre, paciente.apellidos);
+    db.prepare('UPDATE acceso SET activo = 0 WHERE id = ?').run(accesoActual.id);
+    db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)').run(
+      paciente.id,
+      paciente.tipo_acceso_id || null,
+      paciente.fecha_instalacion || '',
+      paciente.ubicacion_anatomica || '',
+      paciente.ubicacion_lado || '',
+      (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
+      (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
+      paciente.profesional_id || null,
+      paciente.estado || ''
+    );
+  } else if (!accesoActual) {
+    db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)').run(
+      paciente.id,
+      paciente.tipo_acceso_id || null,
+      paciente.fecha_instalacion || '',
+      paciente.ubicacion_anatomica || '',
+      paciente.ubicacion_lado || '',
+      (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
+      (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
+      paciente.profesional_id || null,
+      paciente.estado || ''
+    );
+    cambios.acceso = true;
+    console.log('[DEBUG][db] Acceso creado para paciente:', paciente.id, paciente.nombre, paciente.apellidos);
+  }
+// --- LÓGICA DE PENDIENTE ---
+  if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
+    console.log('[DB][editPacienteCompleto] Datos de pendiente recibidos:', paciente.pendiente);
+    // Buscar pendiente activo actual
+    const pendienteActivo = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1').get(paciente.id);
+    if (pendienteActivo) {
+      db.prepare('UPDATE pendiente SET activo = 0 WHERE id = ?').run(pendienteActivo.id);
+      console.log('[DB][editPacienteCompleto] Pendiente anterior archivado:', pendienteActivo.id);
+    }
+    db.addPendiente({
+      paciente_id: paciente.id,
+      tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado,
+      fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente || '',
+      ubicacion_chd: paciente.pendiente.ubicacion_chd || '',
+      lado_chd: paciente.pendiente.lado_chd || '',
+      observaciones: paciente.pendiente.observaciones || '',
+      profesional_id: paciente.pendiente.profesional_id || paciente.profesional_id || null,
+      pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
+      pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
+      activo: 1
+    });
+  }
+
+  // ...existing code...
+  if (pacienteActual) {
     if (
       !valoresIguales(pacienteActual.nombre, paciente.nombre) ||
       !valoresIguales(pacienteActual.apellidos, paciente.apellidos) ||
@@ -846,6 +940,21 @@ db.editPacienteCompleto = function(paciente) {
       !valoresIguales(pacienteActual.avatar, paciente.avatar) ||
       !valoresIguales(pacienteActual.profesional_id, paciente.profesional_id)
     ) {
+      // Log para comparar observaciones normalizadas
+      const obsAntes = normalizaValor(pacienteActual.observaciones);
+      const obsDespues = normalizaValor(paciente.observaciones);
+      const iguales = obsAntes === obsDespues;
+      console.log('[DEBUG][db] observaciones comparación:', {
+        antes: obsAntes,
+        despues: obsDespues,
+        iguales
+      });
+      if (!iguales) {
+        console.log('[DEBUG][db] observaciones cambio:', {
+          antes: obsAntes,
+          despues: obsDespues
+        });
+      }
       cambios.paciente = true;
       console.log('[DEBUG][db] Cambios detectados en paciente:', paciente.id, paciente.nombre, paciente.apellidos);
       db.prepare(`UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, observaciones = ?, avatar = ?, profesional_id = ? WHERE id = ?`).run(
@@ -864,108 +973,12 @@ db.editPacienteCompleto = function(paciente) {
       );
     }
   }
-
-  // --- LÓGICA DE ACCESO ---
-  const accesoActual = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
-  const hayCambiosAcceso = accesoActual && (
-    !valoresIguales(accesoActual.tipo_acceso_id, paciente.tipo_acceso_id) ||
-    !valoresIguales(accesoActual.fecha_instalacion, paciente.fecha_instalacion) ||
-    !valoresIguales(accesoActual.ubicacion_anatomica, paciente.ubicacion_anatomica) ||
-    !valoresIguales(accesoActual.ubicacion_lado, paciente.ubicacion_lado) ||
-    !valoresIguales(accesoActual.profesional_id, paciente.profesional_id) ||
-    !valoresIguales(accesoActual.estado, paciente.estado)
-  );
-  if (accesoActual && hayCambiosAcceso) {
-    cambios.acceso = true;
-    console.log('[DEBUG][db] Cambios detectados en acceso:', paciente.id, paciente.nombre, paciente.apellidos);
-    db.prepare('UPDATE acceso SET activo = 0 WHERE id = ?').run(accesoActual.id);
-    db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, 1)').run(
-      paciente.id,
-      paciente.tipo_acceso_id || null,
-      paciente.fecha_instalacion || '',
-      paciente.ubicacion_anatomica || '',
-      paciente.ubicacion_lado || '',
-      paciente.profesional_id || null,
-      paciente.estado || ''
-    );
-  } else if (!accesoActual) {
-    db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, 1)').run(
-      paciente.id,
-      paciente.tipo_acceso_id || null,
-      paciente.fecha_instalacion || '',
-      paciente.ubicacion_anatomica || '',
-      paciente.ubicacion_lado || '',
-      paciente.profesional_id || null,
-      paciente.estado || ''
-    );
-    cambios.acceso = true;
-    console.log('[DEBUG][db] Acceso creado para paciente:', paciente.id, paciente.nombre, paciente.apellidos);
-  }
-
-  // --- LÓGICA DE PENDIENTE ---
-  if (paciente.pendiente) {
-    const pendienteActual = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
-    function normalizaValorPendiente(v) {
-      if (v === undefined || v === null || v === '') return null;
-      if (!isNaN(v) && v !== true && v !== false) return Number(v);
-      return v;
-    }
-    function valoresIgualesPendiente(a, b) {
-      return normalizaValorPendiente(a) === normalizaValorPendiente(b);
-    }
-    const hayCambiosPendiente = pendienteActual && (
-      !valoresIgualesPendiente(pendienteActual.pendiente_tipo_id, paciente.pendiente.pendiente_tipo_id) ||
-      !valoresIgualesPendiente(pendienteActual.tabla_acceso_id_vinculado, paciente.pendiente.tabla_acceso_id_vinculado) ||
-      !valoresIgualesPendiente(pendienteActual.fecha_instalacion_acceso_pendiente, paciente.pendiente.fecha_instalacion_acceso_pendiente) ||
-      !valoresIgualesPendiente(pendienteActual.ubicacion_chd, paciente.pendiente.ubicacion_chd) ||
-      !valoresIgualesPendiente(pendienteActual.lado_chd, paciente.pendiente.lado_chd) ||
-      !valoresIgualesPendiente(pendienteActual.observaciones, paciente.pendiente.observaciones) ||
-      !valoresIgualesPendiente(pendienteActual.profesional_id, paciente.pendiente.profesional_id) ||
-      !valoresIgualesPendiente(pendienteActual.pendiente_tipo_acceso_id, paciente.pendiente.pendiente_tipo_acceso_id)
-    );
-    if (pendienteActual && hayCambiosPendiente) {
-      cambios.pendiente = true;
-      console.log('[DEBUG][db] Cambios detectados en pendiente:', paciente.id, paciente.nombre, paciente.apellidos);
-      db.prepare('UPDATE pendiente SET activo = 0 WHERE paciente_id = ? AND activo = 1').run(paciente.id);
-      if (paciente.pendiente.pendiente_tipo_id && paciente.pendiente.tabla_acceso_id_vinculado) {
-        db.addPendiente({
-          paciente_id: paciente.id,
-          tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado,
-          fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente,
-          ubicacion_chd: paciente.pendiente.ubicacion_chd || '',
-          lado_chd: paciente.pendiente.lado_chd || '',
-          observaciones: paciente.pendiente.observaciones || '',
-          profesional_id: paciente.pendiente.profesional_id,
-          pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
-          pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
-          activo: 1
-        });
-      }
-    } else if (!pendienteActual) {
-      if (paciente.pendiente.pendiente_tipo_id && paciente.pendiente.tabla_acceso_id_vinculado) {
-        db.addPendiente({
-          paciente_id: paciente.id,
-          tabla_acceso_id_vinculado: paciente.pendiente.tabla_acceso_id_vinculado,
-          fecha_instalacion_acceso_pendiente: paciente.pendiente.fecha_instalacion_acceso_pendiente,
-          ubicacion_chd: paciente.pendiente.ubicacion_chd || '',
-          lado_chd: paciente.pendiente.lado_chd || '',
-          observaciones: paciente.pendiente.observaciones || '',
-          profesional_id: paciente.pendiente.profesional_id,
-          pendiente_tipo_id: paciente.pendiente.pendiente_tipo_id,
-          pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
-          activo: 1
-        });
-        cambios.pendiente = true;
-        console.log('[DEBUG][db] Pendiente creado para paciente:', paciente.id, paciente.nombre, paciente.apellidos);
-      }
-    }
-  }
+  // ...existing code...
 
   // Si hubo cambios en cualquier parte, devolver changes: 1
   if (cambios.paciente || cambios.acceso || cambios.pendiente) {
     return { changes: 1 };
   } else {
-    console.log('[DEBUG][db] No hay cambios en ningún campo relevante:', paciente.id, paciente.nombre, paciente.apellidos);
     return { changes: 0 };
   }
   // --- FIN REESTRUCTURACIÓN ---
@@ -1029,6 +1042,7 @@ db.addPacienteCompleto = function(paciente) {
 // Agregar pendiente
 db.addPendiente = function(pendiente) {
   // acceso_id ahora representa tipo_acceso_id
+  console.log('[DB][addPendiente] Datos recibidos:', pendiente);
   const stmt = db.prepare(`INSERT INTO pendiente (paciente_id, pendiente_tipo_id, tabla_acceso_id_vinculado, fecha_instalacion_acceso_pendiente, ubicacion_chd, lado_chd, observaciones, profesional_id, activo, pendiente_tipo_acceso_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
     pendiente.paciente_id,
@@ -1042,6 +1056,7 @@ db.addPendiente = function(pendiente) {
     typeof pendiente.activo === 'undefined' ? 1 : pendiente.activo ? 1 : 0,
     pendiente.pendiente_tipo_acceso_id || null
   );
+  console.log('[DB][addPendiente] Resultado INSERT:', info);
   return { id: info.lastInsertRowid };
 };
 

@@ -717,7 +717,16 @@ async function renderTimelinePacienteDB() {
 			else if (tipo.includes('tratamiento')) { icono = 'bi bi-capsule'; colorClass = 'success'; }
 			else if (tipo.includes('control')) { icono = 'bi bi-calendar-check'; colorClass = 'secondary'; }
 			else if (tipo.includes('observación')) { icono = 'bi bi-eye'; colorClass = 'warning'; }
-			else if (tipo.includes('actualización')) { icono = 'bi bi-arrow-repeat'; colorClass = 'info'; }
+			else if (tipo.includes('actualización')) {
+				// Si es actualización de datos personales, color verde y icono diferente
+				if (tipo.includes('datos personales')) {
+					icono = 'bi bi-person-lines-fill';
+					colorClass = 'success';
+				} else {
+					icono = 'bi bi-arrow-repeat';
+					colorClass = 'info';
+				}
+			}
 		}
 		// Si contiene "actualización" en el tipo_evento, aseguramos que la palabra esté presente
 		let tipoEventoMostrar = item.tipo_evento;

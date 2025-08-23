@@ -21,7 +21,6 @@ let incidenciaValoresTemp = {}
 // Variable global temporal para infecciones añadidas en el modal
 let infeccionesTemp = [];
 
-// Variables
 let pacientesGlobal = [];
 let etiquetasPorId = {};
 const pacientesPorPagina = 10;
@@ -30,6 +29,7 @@ let profesionalesGlobal = [];
 let tiposAccesoGlobal = [];
 let tiposPendienteGlobal = [];
 let ubicacionesGlobal = [];
+let paginaActual = 1;
 
 // Carga los profesionales y los guarda en la variable global
 async function cargarDatosGlobal() {
@@ -378,7 +378,13 @@ document.addEventListener('click', async function(e) {
 		const paciente = await ipcRenderer.invoke('paciente-get-con-acceso', Number(pacienteId));
 		if (!paciente) return;
 	window.pacienteEditando = paciente;
-	window.pacienteOriginalEditando = JSON.parse(JSON.stringify(paciente));
+	// Guardar copia profunda del paciente actual, asegurando que observaciones y otros campos tengan el valor real
+	const pacienteCopia = JSON.parse(JSON.stringify(paciente));
+	pacienteCopia.observaciones = paciente.observaciones;
+	if (paciente.pendiente) {
+		pacienteCopia.pendiente = { ...paciente.pendiente };
+	}
+	window.pacienteOriginalEditando = pacienteCopia;
 		const etiquetasActivasContainer = document.getElementById('etiquetas-activas-container');
 		etiquetasActivasContainer.innerHTML = '<label for="etiquetas-activas-container" class="form-label"><i class="bi bi-tag-fill me-1"></i> Etiquetas Activas</label>';
 		const incidencias = await ipcRenderer.invoke('paciente-get-incidencias', paciente.id);
@@ -418,7 +424,7 @@ document.addEventListener('click', async function(e) {
 			}).join(' ');
 		}
 		etiquetasActivasContainer.innerHTML += `<div style="margin-top:6px;">${badgesHtml}</div>`;
-		document.getElementById('nombre').value = paciente.nombre || '';
+	document.getElementById('nombre').value = paciente.nombre || '';
 		document.getElementById('apellidos').value = paciente.apellidos || '';
 		document.getElementById('sexo').value = paciente.sexo || '';
 		document.getElementById('nacimiento').value = paciente.fecha_nacimiento || '';
@@ -427,7 +433,7 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('correo').value = paciente.correo || ''; 
 		document.getElementById('direccion').value = paciente.direccion || ''; 
 		document.getElementById('alergias').value = paciente.alergias || ''; 
-		document.getElementById('observaciones').value = paciente.observaciones || '';
+		document.getElementById('observaciones').value = paciente.observaciones ?? '';
 		document.getElementById('profesional').value = paciente.acceso?.profesional_id || paciente.profesional_id || '';
 		document.getElementById('tipoAcceso').value = paciente.acceso?.tipo_acceso_id || paciente.tipo_acceso_id || '';
 		llenarSelectUbicacion();
@@ -454,10 +460,11 @@ document.addEventListener('click', async function(e) {
 		}
 		// Fecha primera punción
 		if (document.getElementById('fechaPrimeraPuncion')) {
-			document.getElementById('fechaPrimeraPuncion').value = paciente.acceso?.fecha_primera_puncion || paciente.fecha_primera_puncion || '';
+			console.log('[DEBUG] Valor fecha_primera_puncion:', paciente.acceso?.fecha_primera_puncion);
+			document.getElementById('fechaPrimeraPuncion').value = paciente.acceso?.fecha_primera_puncion ?? '';
 		}
 		if (document.getElementById('fechaInstalacionAccesoPendiente')) {
-			document.getElementById('fechaInstalacionAccesoPendiente').value = paciente.pendiente?.fecha_instalacion_acceso_pendiente || '';
+			document.getElementById('fechaInstalacionAccesoPendiente').value = paciente.pendiente?.fecha_instalacion_acceso_pendiente ?? '';
 		}
 		document.getElementById('fechaInstalacionAcceso').value = paciente.acceso?.fecha_instalacion || paciente.fecha_instalacion || '';
 		document.getElementById('etiquetasIncidencia').value = paciente.etiquetas_incidencia || '';
@@ -506,6 +513,20 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			errorFocus = true;
 		}
 		if (errorFocus) return;
+		const id = window.pacienteEditando?.id || null;
+		const pendienteObj = {
+			id: window.pacienteEditando?.pendiente?.id || null,
+			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
+			lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
+			profesional_id: profesional.value,
+			pendiente_tipo_id: document.getElementById('pendiente').value,
+			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
+			paciente_id: id,
+			activo: true
+		};
+		console.log('[DEBUG][FRONT] pendiente antes de guardar:', pendienteObj);
 		const paciente = {
 			id: window.pacienteEditando.id,
 			nombre: document.getElementById('nombre').value,
@@ -529,7 +550,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 				id: window.pacienteEditando?.pendiente?.id || null,
 				tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
 				fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-				observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
+				observaciones: window.pacienteEditando?.observaciones || '',
 				profesional_id: profesional.value,
 				ubicacion_chd: ubicacion_chd.value,
 				lado_chd: document.getElementById('chd-lado').value,
@@ -962,9 +983,13 @@ function cargarPacientes() {
 				.filter(inc => inc.activo && inc.etiqueta_id)
 				.map(inc => inc.etiqueta_id);
 		}
-		pacientesGlobal = pacientes;
-		paginaActual = 1;
-		actualizarTablaPacientes();
+	const paginaAnterior = paginaActual;
+	pacientesGlobal = pacientes;
+	// Calcular el total de páginas con los nuevos datos
+	const totalPaginas = Math.max(1, Math.ceil(pacientesGlobal.length / pacientesPorPagina));
+	// Si la página anterior sigue existiendo, mantenerla. Si no, ir a la última disponible.
+	paginaActual = Math.min(paginaAnterior, totalPaginas);
+	actualizarTablaPacientes();
 	});
 }
 
@@ -1024,6 +1049,19 @@ function limpiarCamposNuevoPaciente() {
 
 // Crear nuevo paciente
 async function crearPaciente() {
+	const profesionalValue = document.getElementById('profesional').value;
+	const pendienteObj = {
+		id: null,
+		tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+		fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+		ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
+		lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
+		profesional_id: profesionalValue,
+		pendiente_tipo_id: document.getElementById('pendiente').value,
+		pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
+		paciente_id: null,
+		activo: true
+	};
 	// Validaciones de campos obligatorios
 	const nombre = document.getElementById('nombre').value;
 	const apellidos = document.getElementById('apellidos').value;
@@ -1106,17 +1144,7 @@ async function crearPaciente() {
 		ubicacion_anatomica: ubicacion,
 		ubicacion_lado: document.getElementById('lado').value,
 		activo: true,
-		pendiente: {
-			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
-			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-			ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
-			lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
-			observaciones: '',
-			profesional_id: profesional,
-			pendiente_tipo_id: document.getElementById('pendiente').value,
-			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
-			activo: true
-		},
+	pendiente: pendienteObj,
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		fecha_instalacion_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
@@ -1350,14 +1378,13 @@ async function editarPaciente(id) {
 		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		etiquetas_incidencia: document.getElementById('etiquetasIncidencia').value,
 		activo: true,
-		pendiente: {
-			id: window.pacienteEditando?.pendiente?.id || null,
-			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
-			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-			observaciones: window.pacienteEditando?.pendiente?.observaciones || '',
-			profesional_id: document.getElementById('profesional').value,
-			ubicacion_chd: ubicacion_chd.value,
-			lado_chd: document.getElementById('chd-lado').value,
+		   pendiente: {
+			   id: window.pacienteEditando?.pendiente?.id || null,
+			   tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+			   fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			   profesional_id: document.getElementById('profesional').value,
+			   ubicacion_chd: ubicacion_chd.value,
+			   lado_chd: document.getElementById('chd-lado').value,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
 			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 			paciente_id: id,
@@ -1368,15 +1395,18 @@ async function editarPaciente(id) {
 			ubicacion_anatomica: document.getElementById('ubicacion').value,
 			ubicacion_lado: document.getElementById('lado').value,
 			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
+			fecha_primera_puncion: document.getElementById('fechaPrimeraPuncion') ? document.getElementById('fechaPrimeraPuncion').value : '',
 			profesional_id: document.getElementById('profesional').value,
 			activo: true
 		},
 		// Eliminados: incidencia, incidencia_valores
 	};
+	console.log('[DEBUG] Editando paciente:', paciente);
 
 	await registrarCambiosClinicosHistorial(window.pacienteOriginalEditando, paciente);
 
 	const result = await ipcRenderer.invoke('update-paciente', paciente);
+	console.log('[DEBUG][FRONT] pendiente después de guardar:', paciente.pendiente);
 	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 		// Solo registrar notificación si hubo cambios
 		if (result && result.changes > 0) {
@@ -1772,80 +1802,125 @@ function renderizarListaInfecciones() {
 async function registrarCambiosClinicosHistorial(pacienteAnterior, pacienteNuevo) {
 	function sonEquivalentesVacios(a, b) {
 		const vacios = [undefined, null, '', 'undefined', 'null'];
-		return vacios.includes(a) && vacios.includes(b);
+		// Solo equivalentes si ambos son vacíos
+		return vacios.includes(a) && vacios.includes(b) && (a === b);
 	}
     // --- Registro de cambios clínicos en historial ---
-    const camposClinicos = [
-        { key: 'tipo_acceso_id', nombre: 'Tipo de acceso', icono: true, tipo: 'acceso' },
-        { key: 'ubicacion_anatomica', nombre: 'Ubicación anatómica', icono: false },
-        { key: 'ubicacion_lado', nombre: 'Lado de acceso', icono: false },
-        { key: 'fecha_instalacion', nombre: 'Fecha de instalación', icono: false },
-        { key: 'alergias', nombre: 'Alergias', icono: false },
-        { key: 'observaciones', nombre: 'Observaciones', icono: false },
-        { key: 'pendiente_tipo_acceso_id', nombre: 'Acceso pendiente', icono: true, tipo: 'acceso' },
-        { key: 'fecha_instalacion_acceso_pendiente', nombre: 'Fecha instalación acceso pendiente', icono: false },
-    ];
+	const camposClinicos = [
+		{ key: 'profesional_id', nombre: 'Profesional a Cargo', icono: false },
+		{ key: 'tipo_acceso_id', nombre: 'Tipo de acceso', icono: true, tipo: 'acceso' },
+		{ key: 'ubicacion_anatomica', nombre: 'Ubicación anatómica', icono: false },
+		{ key: 'ubicacion_lado', nombre: 'Lado de acceso', icono: false },
+		{ key: 'fecha_instalacion', nombre: 'Fecha de instalación', icono: false },
+		{ key: 'fecha_alta', nombre: 'Fecha de alta', icono: false },
+		{ key: 'observaciones', nombre: 'Observaciones', icono: false },
+		{ key: 'pendiente_tipo_id', nombre: 'Pendiente', icono: true, tipo: 'pendiente' },
+		{ key: 'pendiente_tipo_acceso_id', nombre: 'Acceso pendiente', icono: true, tipo: 'acceso' },
+	{ key: 'fecha_instalacion_acceso_pendiente', nombre: 'Fecha instalación acceso pendiente', icono: false },
+	{ key: 'primera_puncion', nombre: 'Fecha de la primera punción', icono: false },
+		{ key: 'ubicacion_chd', nombre: 'CHD Ubicación anatómica', icono: false },
+		{ key: 'lado_chd', nombre: 'CHD Lado', icono: false },
+	];
+
+	const camposPersonales = [
+		{ key: 'nombre', nombre: 'Nombre', icono: false },
+		{ key: 'apellidos', nombre: 'Apellidos', icono: false },
+		{ key: 'sexo', nombre: 'Sexo', icono: false },
+		{ key: 'fecha_nacimiento', nombre: 'Fecha de Nacimiento', icono: false },
+		{ key: 'telefono', nombre: 'Teléfono', icono: false },
+		{ key: 'correo', nombre: 'Correo', icono: false },
+		{ key: 'direccion', nombre: 'Dirección', icono: false },
+		{ key: 'alergias', nombre: 'Alergias', icono: false },
+	];
 
     // Unificar estructura para comparar correctamente
 	function normalizarPaciente(p) {
 		const out = { ...p };
+		// Copiar todos los campos de acceso excepto observaciones
 		if (p.acceso) {
 			for (const key in p.acceso) {
-				if (typeof p.acceso[key] !== 'undefined') {
-					out[key] = p.acceso[key];
+				if (key !== 'observaciones') {
+					out[key] = p.acceso[key] ?? '';
 				}
 			}
 		}
+		// Copiar todos los campos de pendiente
 		if (p.pendiente) {
 			for (const key in p.pendiente) {
-				if (typeof p.pendiente[key] !== 'undefined') {
-					out['pendiente_' + key] = p.pendiente[key];
-				}
+				out[key] = p.pendiente[key] ?? '';
 			}
 			// Normalización específica para campos alternativos de acceso pendiente
-			if (typeof p.pendiente.tabla_acceso_id_vinculado !== 'undefined') {
-				out.pendiente_tipo_acceso_id = p.pendiente.pendiente_tipo_acceso_id ?? p.pendiente.tabla_acceso_id_vinculado;
-			}
-			if (typeof p.pendiente.tabla_acceso_vinculado !== 'undefined') {
-				out.pendiente_tipo_acceso = p.pendiente.pendiente_tipo_acceso ?? p.pendiente.tabla_acceso_vinculado;
-			}
-			if (typeof p.pendiente.tabla_acceso_fecha_vinculado !== 'undefined') {
-				out.pendiente_acceso_fecha = p.pendiente.pendiente_acceso_fecha ?? p.pendiente.tabla_acceso_fecha_vinculado;
-			}
-			if (typeof p.pendiente.tabla_acceso_notas_vinculado !== 'undefined') {
-				out.pendiente_acceso_notas = p.pendiente.pendiente_acceso_notas ?? p.pendiente.tabla_acceso_notas_vinculado;
-			}
+			out.pendiente_tipo_id = p.pendiente.pendiente_tipo_id ?? '';
+			out.pendiente_tipo_acceso_id = p.pendiente.pendiente_tipo_acceso_id ?? p.pendiente.tabla_acceso_id_vinculado ?? '';
+			out.pendiente_tipo_acceso = p.pendiente.pendiente_tipo_acceso ?? p.pendiente.tabla_acceso_vinculado ?? '';
+			out.pendiente_acceso_fecha = p.pendiente.pendiente_acceso_fecha ?? p.pendiente.tabla_acceso_fecha_vinculado ?? '';
+			out.pendiente_acceso_notas = p.pendiente.pendiente_acceso_notas ?? p.pendiente.tabla_acceso_notas_vinculado ?? '';
+		}
+		// Asegurar que los campos clave existan aunque sean vacíos
+		// Para primera_puncion, buscar en acceso.fecha_primera_puncion o en el propio paciente
+		out.primera_puncion = p.acceso?.fecha_primera_puncion ?? p.primera_puncion ?? '';
+		const claves = ['fecha_instalacion_acceso_pendiente','ubicacion_chd','lado_chd'];
+		for (const k of claves) {
+			if (typeof out[k] === 'undefined') out[k] = '';
 		}
 		return out;
 	}
-    const pacienteAntNorm = normalizarPaciente(pacienteAnterior);
-    const pacienteNueNorm = normalizarPaciente(pacienteNuevo);
+	const pacienteAntNorm = normalizarPaciente(pacienteAnterior);
+	const pacienteNueNorm = normalizarPaciente(pacienteNuevo);
 
-    const cambios = [];
+	const cambiosClinicos = [];
 	for (const campo of camposClinicos) {
-	let valorAnterior = pacienteAntNorm[campo.key] || '';
-	let valorNuevo = pacienteNueNorm[campo.key] || '';
-	// Evitar registrar cambios si ambos valores son equivalentes vacíos
-	if (String(valorAnterior) !== String(valorNuevo) && !sonEquivalentesVacios(valorAnterior, valorNuevo)) {
+		let valorAnterior = pacienteAntNorm[campo.key];
+		let valorNuevo = pacienteNueNorm[campo.key];
+	const equivalentes = sonEquivalentesVacios(valorAnterior, valorNuevo);
+	const iguales = String(valorAnterior).trim() === String(valorNuevo).trim();
+		if (!equivalentes && !iguales) {
 			if (campo.icono && campo.tipo === 'acceso') {
 				const accesoAnt = tiposAccesoGlobal.find(t => String(t.id) === String(valorAnterior));
 				const accesoNue = tiposAccesoGlobal.find(t => String(t.id) === String(valorNuevo));
 				const nombreAnt = accesoAnt ? `${accesoAnt.icono ? accesoAnt.icono + ' ' : ''}${accesoAnt.nombre}` : (valorAnterior ? valorAnterior : '[Sin acceso]');
 				const nombreNue = accesoNue ? `${accesoNue.icono ? accesoNue.icono + ' ' : ''}${accesoNue.nombre}` : (valorNuevo ? valorNuevo : '[Sin acceso]');
-				cambios.push(`${campo.nombre}: ${nombreAnt} → ${nombreNue}`);
+				cambiosClinicos.push(`${campo.nombre}: ${nombreAnt} → ${nombreNue}`);
+			} else if (campo.icono && campo.tipo === 'pendiente') {
+				const pendienteAnt = tiposPendienteGlobal.find(t => String(t.id) === String(valorAnterior));
+				const pendienteNue = tiposPendienteGlobal.find(t => String(t.id) === String(valorNuevo));
+				const nombreAnt = pendienteAnt ? pendienteAnt.nombre : (valorAnterior ? valorAnterior : '[Sin pendiente]');
+				const nombreNue = pendienteNue ? pendienteNue.nombre : (valorNuevo ? valorNuevo : '[Sin pendiente]');
+				cambiosClinicos.push(`${campo.nombre}: ${nombreAnt} → ${nombreNue}`);
 			} else {
-				cambios.push(`${campo.nombre}: ${valorAnterior} → ${valorNuevo}`);
+				cambiosClinicos.push(`${campo.nombre}: ${valorAnterior ?? ''} → ${valorNuevo ?? ''}`);
 			}
 		}
 	}
-	if (cambios.length > 0) {
-	console.log('[Cambios clínicos detectados]', cambios);
-		console.log('[Cambios clínicos detectados]', cambios);
-		const motivo = cambios.map(c => `• ${c}`).join('<br>');
+	if (cambiosClinicos.length > 0) {
+		const motivo = cambiosClinicos.map(c => `• ${c}`).join('<br>');
 		await ipcRenderer.invoke('historial-add', {
 			paciente_id: pacienteNuevo.id,
 			fecha: new Date().toISOString().slice(0, 10),
 			tipo_evento: `Actualización de datos clínicos`,
+			motivo,
+			profesional_id: pacienteNuevo.profesional_id,
+			notas: '',
+			adjuntos: ''
+		});
+	}
+
+	// Registro de cambios personales
+	const cambiosPersonales = [];
+	for (const campo of camposPersonales) {
+		let valorAnterior = pacienteAntNorm[campo.key];
+		let valorNuevo = pacienteNueNorm[campo.key];
+		const equivalentes = sonEquivalentesVacios(valorAnterior, valorNuevo);
+		if (!equivalentes && String(valorAnterior) !== String(valorNuevo)) {
+			cambiosPersonales.push(`${campo.nombre}: ${valorAnterior ?? ''} → ${valorNuevo ?? ''}`);
+		}
+	}
+	if (cambiosPersonales.length > 0) {
+		const motivo = cambiosPersonales.map(c => `• ${c}`).join('<br>');
+		await ipcRenderer.invoke('historial-add', {
+			paciente_id: pacienteNuevo.id,
+			fecha: new Date().toISOString().slice(0, 10),
+			tipo_evento: `Actualización de datos personales`,
 			motivo,
 			profesional_id: pacienteNuevo.profesional_id,
 			notas: '',
