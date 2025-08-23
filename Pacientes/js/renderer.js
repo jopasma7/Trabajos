@@ -184,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
             const nextSection = link.dataset.section;
-            console.log('Sidebar click:', nextSection);
 
             // Si salimos de historial, refrescar card/timeline
             if (currentSection === 'historial' && nextSection !== 'historial') {
@@ -193,7 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const selectPaciente = document.getElementById('filtro-paciente-historial');
                         if (selectPaciente) {
                             const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-                            console.log('Pacientes obtenidos (salida historial):', pacientes);
                             selectPaciente.innerHTML = '';
                             pacientes.forEach(p => {
                                 const opt = document.createElement('option');
@@ -205,14 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (pacientes.length > 0) {
                                 selectPaciente.value = pacientes[0].id;
                                 pacienteSel = pacientes[0];
-                                console.log('Paciente seleccionado:', pacienteSel);
                             }
                             if (window.renderPacienteCard) {
-                                console.log('Llamando a renderPacienteCard (salida historial)...');
                                 await window.renderPacienteCard(pacienteSel);
                             }
                             if (window.renderTimelinePacienteDB) {
-                                console.log('Llamando a renderTimelinePacienteDB (salida historial)...');
                                 await window.renderTimelinePacienteDB();
                             }
                         }

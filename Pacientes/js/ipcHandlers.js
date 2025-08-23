@@ -278,12 +278,10 @@ const db = require('./data/db');
 
 // --- IPC para pendientes ---
 ipcMain.handle('pendiente-add', (event, pendiente) => {
-  console.log('[IPC][pendiente-add] Recibido:', pendiente);
   return db.addPendiente(pendiente);
 });
 
 ipcMain.handle('pendiente-edit', (event, pendiente) => {
-  console.log('[IPC][pendiente-edit] Recibido:', pendiente);
   return db.editPendiente(pendiente);
 });
 
