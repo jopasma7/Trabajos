@@ -730,14 +730,21 @@ document.addEventListener('DOMContentLoaded', function() {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
 					// Crear notificación
 					const tag = window.etiquetasGlobales?.find(t => String(t.id) === String(nuevaIncidencia.etiqueta_id));
+					// Obtener nombre del paciente
+					let nombrePaciente = '';
+					if (nuevaIncidencia.paciente_id) {
+						const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+						const pacienteSel = pacientes.find(p => Number(p.id) === Number(nuevaIncidencia.paciente_id));
+						if (pacienteSel) nombrePaciente = `${pacienteSel.nombre} ${pacienteSel.apellidos}`;
+					}
 					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
-					const mensajeNotificacion = `Nueva incidencia registrada: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
+					const mensajeNotificacion = `Nueva incidencia registrada para el paciente <strong>${nombrePaciente}</strong>: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
 					await ipcRenderer.invoke('notificaciones-add', {
 						mensaje: mensajeNotificacion,
 						tipo: 'Incidencia',
 						icono: 'bi bi-tag-fill',
 						color: tag?.color || '#009879',
-						fecha: nuevaIncidencia.fecha,
+						fecha: new Date().toISOString(),
 						usuario_id: null,
 						paciente_id: nuevaIncidencia.paciente_id,
 						extra: ''

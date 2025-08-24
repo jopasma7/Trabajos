@@ -101,18 +101,35 @@ document.addEventListener('DOMContentLoaded', () => {
 	cargarDatosDashboard();
 
 	// --- Mostrar notificaciones recientes en el dashboard ---
-	ipcRenderer.invoke('notificaciones-get-recientes', 10).then(notificaciones => {
+	ipcRenderer.invoke('notificaciones-get-recientes', 30).then(notificaciones => {
 		const ul = document.getElementById('dashboard-notificaciones');
 		if (!ul) return;
 		if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
 			ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
 			return;
 		}
-		ul.innerHTML = notificaciones.map(n => {
-			const fecha = n.fecha ? n.fecha.replace('T', ' ').slice(0, 16) : '';
-			return `<li class="list-group-item d-flex justify-content-between align-items-center">
-				<span><strong>${n.tipo}</strong>: ${n.mensaje}</span>
-				<small class="text-muted">${fecha}</small>
+		// Normalizar fechas y crear objetos con fecha real
+		const notificacionesConFecha = notificaciones
+			.filter(n => n.fecha && n.fecha.includes('T')) // Solo notificaciones con hora/minutos
+			.map(n => {
+				return { ...n, _fechaObj: new Date(n.fecha) };
+			});
+		// Filtrar para mostrar las 10 más recientes + todas las de tipo 'Incidencia' (case-insensitive)
+		const incidencias = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() === 'incidencia');
+		const otras = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() !== 'incidencia').slice(0, 10);
+		const mostrar = [...incidencias, ...otras]; // No ordenar, solo mostrar en el orden recibido
+		ul.innerHTML = mostrar.map(n => {
+			const fechaObj = n._fechaObj;
+			const dia = String(fechaObj.getDate()).padStart(2, '0');
+			const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+			const anio = fechaObj.getFullYear();
+			const hora = String(fechaObj.getHours()).padStart(2, '0');
+			const min = String(fechaObj.getMinutes()).padStart(2, '0');
+			const fechaStr = `${dia}-${mes}-${anio} ${hora}:${min}`;
+			const tipoMostrar = n.tipo ? n.tipo.charAt(0).toUpperCase() + n.tipo.slice(1).toLowerCase() : '';
+			return `<li class=\"list-group-item d-flex justify-content-between align-items-center\">
+				<span><strong>${tipoMostrar}</strong>: ${n.mensaje}</span>
+				<small class=\"text-muted\">${fechaStr}</small>
 			</li>`;
 		}).join('');
 	});
@@ -152,29 +169,36 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function actualizarNotificacionesDashboard() {
-	const notificaciones = await ipcRenderer.invoke('notificaciones-get-recientes', 5);
-    const ul = document.getElementById('dashboard-notificaciones');
-    if (!ul) return;
-    if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
-        ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
-        return;
-    }
-	ul.innerHTML = notificaciones.map(n => {
-		let fecha = '';
-		if (n.fecha) {
-			const d = new Date(n.fecha);
-			const dia = String(d.getDate()).padStart(2, '0');
-			const mes = String(d.getMonth() + 1).padStart(2, '0');
-			const anio = d.getFullYear();
-			const hora = String(d.getHours()).padStart(2, '0');
-			const min = String(d.getMinutes()).padStart(2, '0');
-			fecha = `${dia}-${mes}-${anio} ${hora}:${min}`;
-		}
-	// Buscar nombre de paciente y ponerlo en negrita (nombre completo)
-	let mensaje = n.mensaje.replace(/(al paciente |del paciente |a la paciente |de la paciente )(.*?)([.,;]|$)/i, (match, pre, nombre, fin) => `${pre}<strong>${nombre.trim()}</strong>${fin}`);
+	const notificaciones = await ipcRenderer.invoke('notificaciones-get-recientes', 30);
+	const ul = document.getElementById('dashboard-notificaciones');
+	if (!ul) return;
+	if (!Array.isArray(notificaciones) || notificaciones.length === 0) {
+		ul.innerHTML = '<li class="text-muted text-center">No hay notificaciones recientes</li>';
+		return;
+	}
+	// Normalizar fechas y crear objetos con fecha real
+	const notificacionesConFecha = notificaciones
+		.filter(n => n.fecha && n.fecha.includes('T')) // Solo notificaciones con hora/minutos
+		.map(n => {
+			return { ...n, _fechaObj: new Date(n.fecha) };
+		});
+	// Filtrar para mostrar las 10 más recientes + todas las de tipo 'Incidencia' (case-insensitive)
+	const incidencias = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() === 'incidencia');
+	const otras = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() !== 'incidencia').slice(0, 10);
+	const mostrar = [...incidencias, ...otras]; // No ordenar, solo mostrar en el orden recibido
+	ul.innerHTML = mostrar.map(n => {
+		const fechaObj = n._fechaObj;
+		const dia = String(fechaObj.getDate()).padStart(2, '0');
+		const mes = String(fechaObj.getMonth() + 1).padStart(2, '0');
+		const anio = fechaObj.getFullYear();
+		const hora = String(fechaObj.getHours()).padStart(2, '0');
+		const min = String(fechaObj.getMinutes()).padStart(2, '0');
+		const fechaStr = `${dia}-${mes}-${anio} ${hora}:${min}`;
+		let mensaje = n.mensaje.replace(/(al paciente |del paciente |a la paciente |de la paciente )(.*?)([.,;]|$)/i, (match, pre, nombre, fin) => `${pre}<strong>${nombre.trim()}</strong>${fin}`);
+		const tipoMostrar = n.tipo ? n.tipo.charAt(0).toUpperCase() + n.tipo.slice(1).toLowerCase() : '';
 		return `<li class="list-group-item d-flex justify-content-between align-items-center">
-			<span><strong>${n.tipo}</strong>: ${mensaje}</span>
-			<small class="text-muted">${fecha}</small>
+			<span><strong>${tipoMostrar}</strong>: ${mensaje}</span>
+			<small class="text-muted">${fechaStr}</small>
 		</li>`;
 	}).join('');
 }

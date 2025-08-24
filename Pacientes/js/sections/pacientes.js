@@ -166,8 +166,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
 				if (resultado && resultado.success) {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
+					// Crear notificación
+					const tag = window.etiquetasGlobales?.find(t => String(t.id) === String(nuevaIncidencia.etiqueta_id));
+					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
+					// Obtener nombre del paciente
+					let nombrePaciente = '';
+					if (window.etiquetasGlobales && nuevaIncidencia.paciente_id) {
+						const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+						const pacienteSel = pacientes.find(p => Number(p.id) === Number(nuevaIncidencia.paciente_id));
+						if (pacienteSel) nombrePaciente = `${pacienteSel.nombre} ${pacienteSel.apellidos}`;
+					}
+					const mensajeNotificacion = `Nueva incidencia registrada para el paciente <strong>${nombrePaciente}</strong>: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
+					await ipcRenderer.invoke('notificaciones-add', {
+						mensaje: mensajeNotificacion,
+						tipo: 'Incidencia',
+						icono: 'bi bi-tag-fill',
+						color: tag?.color || '#009879',
+						fecha: new Date().toISOString(),
+						usuario_id: null,
+						paciente_id: nuevaIncidencia.paciente_id,
+						extra: ''
+					});
+					// Crear registro en historial_clinico
+					await ipcRenderer.invoke('historial-add', {
+						paciente_id: nuevaIncidencia.paciente_id,
+						fecha: nuevaIncidencia.fecha,
+						tipo_evento: 'Incidencia',
+						motivo: mensajeNotificacion,
+						profesional_id: null,
+						notas: '',
+						adjuntos: ''
+					});
 
-					
 					if(window.renderHistorial) window.renderHistorial(pacienteId);
 					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB(Number(pacienteId));
 					// Cooldown para renderHistorial y renderTimelinePacienteDB
