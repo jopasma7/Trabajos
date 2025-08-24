@@ -1199,8 +1199,9 @@ db.crearEtiquetasIncidenciaMotivos = function() {
     stmt.run(m.nombre, m.color, m.microorganismo_asociado, m.descripcion, m.tipo, m.icono);
   });
 
-  // Crear 10 etiquetas de infección
+  // Crear 20 etiquetas de infección (10 originales + 10 comunes en nefrología)
   const infecciones = [
+    // Originales
     { nombre: 'Staphylococcus aureus', color: '#e53935', microorganismo_asociado: 'Staphylococcus aureus', descripcion: 'Infección por S. aureus', tipo: 'infeccion', icono: '🦠' },
     { nombre: 'Escherichia coli', color: '#43a047', microorganismo_asociado: 'Escherichia coli', descripcion: 'Infección por E. coli', tipo: 'infeccion', icono: '🧫' },
     { nombre: 'Klebsiella pneumoniae', color: '#1e88e5', microorganismo_asociado: 'Klebsiella pneumoniae', descripcion: 'Infección por K. pneumoniae', tipo: 'infeccion', icono: '🦠' },
@@ -1210,7 +1211,18 @@ db.crearEtiquetasIncidenciaMotivos = function() {
     { nombre: 'Streptococcus pyogenes', color: '#6d4c41', microorganismo_asociado: 'Streptococcus pyogenes', descripcion: 'Infección por S. pyogenes', tipo: 'infeccion', icono: '🦠' },
     { nombre: 'Acinetobacter baumannii', color: '#f57c00', microorganismo_asociado: 'Acinetobacter baumannii', descripcion: 'Infección por A. baumannii', tipo: 'infeccion', icono: '🧫' },
     { nombre: 'Proteus mirabilis', color: '#7b1fa2', microorganismo_asociado: 'Proteus mirabilis', descripcion: 'Infección por P. mirabilis', tipo: 'infeccion', icono: '🦠' },
-    { nombre: 'Serratia marcescens', color: '#009688', microorganismo_asociado: 'Serratia marcescens', descripcion: 'Infección por S. marcescens', tipo: 'infeccion', icono: '🧫' }
+    { nombre: 'Serratia marcescens', color: '#009688', microorganismo_asociado: 'Serratia marcescens', descripcion: 'Infección por S. marcescens', tipo: 'infeccion', icono: '🧫' },
+    // Comunes en nefrología
+    { nombre: 'Staphylococcus epidermidis', color: '#bdbdbd', microorganismo_asociado: 'Staphylococcus epidermidis', descripcion: 'Infección por S. epidermidis', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Enterobacter cloacae', color: '#ffb300', microorganismo_asociado: 'Enterobacter cloacae', descripcion: 'Infección por E. cloacae', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Citrobacter freundii', color: '#8d6e63', microorganismo_asociado: 'Citrobacter freundii', descripcion: 'Infección por C. freundii', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Morganella morganii', color: '#00bcd4', microorganismo_asociado: 'Morganella morganii', descripcion: 'Infección por M. morganii', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Providencia stuartii', color: '#cddc39', microorganismo_asociado: 'Providencia stuartii', descripcion: 'Infección por P. stuartii', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Bacteroides fragilis', color: '#ff7043', microorganismo_asociado: 'Bacteroides fragilis', descripcion: 'Infección por B. fragilis', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Corynebacterium jeikeium', color: '#607d8b', microorganismo_asociado: 'Corynebacterium jeikeium', descripcion: 'Infección por C. jeikeium', tipo: 'infeccion', icono: '🦠' },
+    { nombre: 'Stenotrophomonas maltophilia', color: '#00e676', microorganismo_asociado: 'Stenotrophomonas maltophilia', descripcion: 'Infección por S. maltophilia', tipo: 'infeccion', icono: '🧫' },
+    { nombre: 'Candida glabrata', color: '#6a1b9a', microorganismo_asociado: 'Candida glabrata', descripcion: 'Infección por C. glabrata', tipo: 'infeccion', icono: '🍄' },
+    { nombre: 'Pseudomonas putida', color: '#388e3c', microorganismo_asociado: 'Pseudomonas putida', descripcion: 'Infección por P. putida', tipo: 'infeccion', icono: '🦠' }
   ];
   infecciones.forEach(i => {
     stmt.run(i.nombre, i.color, i.microorganismo_asociado, i.descripcion, i.tipo, i.icono);
