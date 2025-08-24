@@ -36,6 +36,7 @@ async function cargarDatosGlobal() {
     ubicacionesGlobal = await ipcRenderer.invoke('get-ubicaciones-anatomicas');
 	datosGlobalesCargados = true;
 }
+window.cargarDatosGlobal = cargarDatosGlobal;
 
 window.cargarPacientes = cargarPacientes;
 
@@ -95,13 +96,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 	document.addEventListener('click', function(e) {
 		if (e.target.closest('.btn-historial')) {
 			const btn = e.target.closest('.btn-historial');
-			const pacienteId = btn.getAttribute('data-id');
+			const pacienteIdRaw = btn.getAttribute('data-id');
+			const pacienteId = pacienteIdRaw ? Number(pacienteIdRaw) : null;
 			// Navegar a la sección de historial clínico
 			document.querySelectorAll('.section').forEach(sec => sec.classList.add('d-none'));
 			document.getElementById('historial-section').classList.remove('d-none');
+			// Actualizar el sidebar para marcar la sección 'historial' como activa
+			document.querySelectorAll('#menu .nav-link').forEach(link => {
+				link.classList.remove('active');
+				if (link.getAttribute('data-section') === 'historial') {
+					link.classList.add('active');
+				}
+			});
 			// Seleccionar el paciente en el selector de historial
 			const selector = document.getElementById('filtro-paciente-historial');
-			if (selector) {
+			if (selector && pacienteId) {
 				selector.value = pacienteId;
 				// Lanzar el evento change para que se actualice el historial
 				selector.dispatchEvent(new Event('change'));
@@ -158,8 +167,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 				if (resultado && resultado.success) {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
 
-					if(window.renderHistorial) window.renderHistorial();
-					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB();
+					
+					if(window.renderHistorial) window.renderHistorial(pacienteId);
+					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB(Number(pacienteId));
+					// Cooldown para renderHistorial y renderTimelinePacienteDB
+					setTimeout(() => {
+						if(window.renderHistorial) window.renderHistorial(pacienteId);
+					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB(Number(pacienteId));
+					}, 1000); // 1 segundo
+					console.log("Nueva Incidencia",nuevaIncidencia);
 
 					// Cerrar el modal
 					var modal = bootstrap.Modal.getInstance(modalIncidenciaEl);
@@ -702,6 +718,7 @@ function llenarSelectProfesional() {
 	});
 	if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 }
+window.llenarSelectProfesional = llenarSelectProfesional;
 
 // Llenar select de Tipo de Acceso y Acceso Pendiente
 function llenarSelectTipoAcceso() {
@@ -746,6 +763,7 @@ function llenarSelectPendiente() {
 	});
 	if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 }
+
 
 function llenarSelectUbicacion() {
     const select = document.getElementById('ubicacion');

@@ -248,46 +248,49 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 
 
-async function renderHistorial() {
-window.renderHistorial = renderHistorial;
-    const tbody = document.querySelector('#tabla-historial tbody');
-    if (!tbody) return;
-    // Mantener los ejemplos fijos arriba, luego las entradas dinámicas
-    const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
-    ejemplos.forEach(tr => {
-        if (tr.getAttribute('data-dinamico') === 'true') tr.remove();
-    });
-    // Leer pacienteId actual del select siempre
-	const select = document.getElementById('filtro-paciente-historial');
-	const pacienteIdActual = select && select.value ? Number(select.value) : null;
+async function renderHistorial(pacienteId) {
+	window.renderHistorial = renderHistorial;
+	const tbody = document.querySelector('#tabla-historial tbody');
+	if (!tbody) return;
+	// Mantener los ejemplos fijos arriba, luego las entradas dinámicas
+	const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
+	ejemplos.forEach(tr => {
+		if (tr.getAttribute('data-dinamico') === 'true') tr.remove();
+	});
+	// Usar pacienteId si se pasa, si no, obtenerlo del selector
+	let pacienteIdActual = pacienteId;
+	if (!pacienteIdActual) {
+		const select = document.getElementById('filtro-paciente-historial');
+		pacienteIdActual = select && select.value ? Number(select.value) : null;
+	}
 	// Log del paciente usado para recoger los datos de la tabla
 	if (!pacienteIdActual) {
 		tbody.innerHTML += `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
 		return;
 	}
-    const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
-    const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
-    if (mostrarArchivados) {
-        historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
-        tbody.innerHTML = '';
+	const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
+	const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
+	if (mostrarArchivados) {
+		historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
+		tbody.innerHTML = '';
 		if (!historialData || historialData.length === 0) {
 			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
 			return;
 		}
-    } else {
-        historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
-        tbody.innerHTML = '';
+	} else {
+		historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+		tbody.innerHTML = '';
 		if (!historialData || historialData.length === 0) {
 			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
 			return;
 		}
-    }
-    // Asegurarse de tener los tags globales
-    if (!tagsGlobal.length) {
-        tagsGlobal = await ipcRenderer.invoke('tags-get-all');
-    }
-    // Obtener lista de profesionales para mostrar nombre y avatar
-    const profesionales = await obtenerProfesionales();
+	}
+	// Asegurarse de tener los tags globales
+	if (!tagsGlobal.length) {
+		tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+	}
+	// Obtener lista de profesionales para mostrar nombre y avatar
+	const profesionales = await obtenerProfesionales();
 	// --- Filtros avanzados ---
 	const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
 	const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
@@ -731,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
 					const mensajeNotificacion = `Nueva incidencia registrada: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
 					await ipcRenderer.invoke('notificaciones-add', {
 						mensaje: mensajeNotificacion,
-						tipo: 'incidencia',
+						tipo: 'Incidencia',
 						icono: 'bi bi-tag-fill',
 						color: tag?.color || '#009879',
 						fecha: nuevaIncidencia.fecha,
@@ -916,11 +919,15 @@ function renderTimelinePaciente(eventos) {
 }
 
 // Timeline dinámico con datos reales
-async function renderTimelinePacienteDB() {
-window.renderTimelinePacienteDB = renderTimelinePacienteDB;
+async function renderTimelinePacienteDB(pacienteId) {
+	window.renderTimelinePacienteDB = renderTimelinePacienteDB;
 	const timeline = document.getElementById('timelinePaciente');
-	const select = document.getElementById('filtro-paciente-historial');
-	const pacienteIdActual = select && select.value ? Number(select.value) : null;
+	let pacienteIdActual = pacienteId;
+	if (!pacienteIdActual) {
+		// Si no se pasa el parámetro, intentar obtenerlo del selector
+		const select = document.getElementById('filtro-paciente-historial');
+		pacienteIdActual = select && select.value ? Number(select.value) : null;
+	}
 	if (!pacienteIdActual) {
 		timeline.innerHTML = '<div class="text-muted">Selecciona un paciente para ver el timeline.</div>';
 		return;
@@ -939,7 +946,7 @@ window.renderTimelinePacienteDB = renderTimelinePacienteDB;
 		'Registro':      { color: 'success',   icono: 'bi bi-journal-plus' },
 		'Actualización': { color: 'info',      icono: 'bi bi-pencil-square' },
 		'Actualización de datos clínicos': { color: 'primary', icono: 'bi bi-bar-chart-line-fill' },
-	'Actualización de datos personales': { color: 'success', icono: 'bi bi-star-fill' },
+		'Actualización de datos personales': { color: 'success', icono: 'bi bi-star-fill' },
 		'Eliminación':   { color: 'danger',    icono: 'bi bi-trash' },
 		'Infección':     { color: 'danger',    icono: 'bi bi-bug-fill' },
 		'Incidencia':    { color: 'warning',   icono: 'bi bi-exclamation-triangle-fill' },
@@ -982,7 +989,10 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTimelinePacienteDB();
 });
 
-document.getElementById('filtro-paciente-historial').addEventListener('change', renderTimelinePacienteDB);
+document.getElementById('filtro-paciente-historial').addEventListener('change', function(e) {
+	const pacienteId = Number(e.target.value);
+	window.renderTimelinePacienteDB(pacienteId);
+});
 
 // Función para abrir el menú / modal de infecciones
 function abrirMenuInfecciones() {
