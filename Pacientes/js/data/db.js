@@ -935,7 +935,6 @@ db.editPacienteCompleto = function(paciente) {
     cambios.acceso = true;
   }
 
-  console.log("Paciente a editar:", paciente);
 // --- LÓGICA DE PENDIENTE ---
   if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
     // Buscar pendiente activo actual

@@ -15,7 +15,6 @@ async function getNombreCompletoProfesional() {
 async function obtenerPacientesCHDPendienteFAV() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
   const pacientes = await ipcRenderer.invoke('get-pacientes-chd-pendiente-fav');
-  console.log('[REPORTE CHD pendiente FAV] Datos recibidos del backend:', pacientes);
   return pacientes.map((p, idx) => [
     idx + 1,
     `${p.nombre} ${p.apellidos}`,

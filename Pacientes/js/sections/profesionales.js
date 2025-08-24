@@ -103,18 +103,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             await poblarSelectorProfesionales();
             if (window.cargarDatosGlobal) {
-                console.log('[PROFESIONALES] Llamando a cargarDatosGlobal para actualizar profesionalesGlobal...');
                 window.cargarDatosGlobal().then(() => {
-                    console.log('[PROFESIONALES] profesionalesGlobal actualizado:', window.profesionalesGlobal);
                     if (window.llenarSelectProfesional) {
-                        console.log('[PROFESIONALES] Ejecutando llenarSelectProfesional...');
                         window.llenarSelectProfesional();
                     } else {
                         console.warn('[PROFESIONALES] llenarSelectProfesional no está definido en window.');
                     }
                 });
             } else if (window.llenarSelectProfesional) {
-                console.log('[PROFESIONALES] Ejecutando llenarSelectProfesional sin actualizar profesionalesGlobal...');
                 window.llenarSelectProfesional();
             }
             if (nuevoId) {

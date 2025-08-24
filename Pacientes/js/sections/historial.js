@@ -684,7 +684,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (origen === 'pacientes') {
 					// Si viene de pacientes.js, el id está en el data-paciente-id del modal
 					pacienteId = modalIncidenciaEl?.getAttribute('data-paciente-id') ? Number(modalIncidenciaEl.getAttribute('data-paciente-id')) : null;
-					console.log('Paciente ID (desde pacientes):', pacienteId);
 				} else {
 					// Si viene de historial, usar el select
 					const selectPaciente = document.getElementById('filtro-paciente-historial');

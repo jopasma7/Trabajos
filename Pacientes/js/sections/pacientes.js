@@ -205,7 +205,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 						if(window.renderHistorial) window.renderHistorial(pacienteId);
 					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB(Number(pacienteId));
 					}, 1000); // 1 segundo
-					console.log("Nueva Incidencia",nuevaIncidencia);
 
 					// Cerrar el modal
 					var modal = bootstrap.Modal.getInstance(modalIncidenciaEl);
@@ -690,7 +689,6 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('fechaInstalacionAcceso').value = paciente.acceso?.fecha_instalacion || paciente.fecha_instalacion || '';
 		mostrarCamposFechaAcceso();
 		displayCamposCHD();
-		console.log("[PACIENTE][editar] Datos del paciente:", paciente);
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
 		if (!modalInstance) {
@@ -729,7 +727,6 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			errorFocus = true;
 		}
 		if (errorFocus) return;
-		console.log('[DEBUG] Guardando Editando paciente ID:', window.pacienteEditando);
 		editarPaciente(window.pacienteEditando.id);
 	} else {
 		// Crear nuevo paciente
