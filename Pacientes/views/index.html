@@ -1219,18 +1219,6 @@
                   </div>
                 </div>
               </div>
-              <!-- Etiquetas de incidencia -->
-              <div class="section-block mb-3">
-                <div class="section-title text-warning"><i class="bi bi-tags me-2"></i>Etiquetas de incidencia</div>
-                <div class="row g-2">
-                  <div class="col-md-10">
-                    <label for="etiquetasIncidencia" class="form-label"><i class="bi bi-tag"></i> Etiquetas de incidencia</label>
-                    <select class="form-select" id="etiquetasIncidencia" name="etiquetasIncidencia" multiple></select>
-                    <div id="incidencia-valores-container" class="mt-2"></div>
-                    <div id="etiquetas-activas-container" style="margin-top:8px;"></div>
-                  </div>
-                </div>
-              </div>
             </div>
             <div class="modal-footer bg-gradient shadow-sm align-items-center">
               <div class="row mt-4">
@@ -1260,7 +1248,7 @@
             <div class="modal-body">
               <div class="mb-3">
                 <label for="incidenciaTipo" class="form-label fw-semibold">Tipo de Incidencia</label>
-                <select id="incidenciaTipo" class="form-select" required>
+                <select id="incidenciaTipo" class="form-select" multiple required>
                   <!-- Opciones dinámicas por JS: tags de tipo incidencia -->
                 </select>
               </div>

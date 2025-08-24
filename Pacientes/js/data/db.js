@@ -1,4 +1,3 @@
-
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -399,18 +398,20 @@ db.getTagById = function(tagId) {
   return tag;
 };
 
-db.addTag = function(nombre, color = '#009879', descripcion = '', tipo = 'incidencia') {
-  // arguments: nombre, color, microorganismo_asociado, descripcion, tipo, icono
+db.addTag = function(nombre, color, microorganismo_asociado, descripcion, tipo, icono) {
+  // nombre, color, microorganismo_asociado, descripcion, tipo, icono
   const stmt = db.prepare('INSERT INTO tags (nombre, color, microorganismo_asociado, descripcion, tipo, icono) VALUES (?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(nombre, color, arguments[2], descripcion, tipo, arguments[5]);
+  const info = stmt.run(nombre, color, microorganismo_asociado, descripcion, tipo, icono);
   return { id: info.lastInsertRowid };
 };
 
 db.updateTag = function(id, nombre, color, descripcion, tipo = 'incidencia') {
-  // arguments: id, nombre, color, microorganismo_asociado, descripcion, tipo, icono
+db.updateTag = function(id, nombre, color, microorganismo_asociado, descripcion, tipo, icono) {
+  // Actualiza todos los campos correctamente
   const stmt = db.prepare('UPDATE tags SET nombre = ?, color = ?, microorganismo_asociado = ?, descripcion = ?, tipo = ?, icono = ? WHERE id = ?');
-  const info = stmt.run(nombre, color, arguments[3], descripcion, tipo, arguments[6], id);
+  const info = stmt.run(nombre, color, microorganismo_asociado, descripcion, tipo, icono, id);
   return { changes: info.changes };
+};
 };
 
 db.deleteTag = function(id) {
@@ -1207,3 +1208,9 @@ module.exports.getRecentNotifications = getRecentNotifications;
 module.exports.addNotification = addNotification;
 
 db.crearEtiquetasIncidenciaMotivos();
+
+db.deleteIncidenciasByEtiqueta = function(etiquetaId) {
+  const stmt = db.prepare('DELETE FROM incidencias WHERE etiqueta_id = ?');
+  const info = stmt.run(etiquetaId);
+  return { success: true, deleted: info.changes };
+};

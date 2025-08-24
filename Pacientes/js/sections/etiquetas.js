@@ -1,18 +1,31 @@
-// Handler para editar etiquetas
-document.addEventListener('click', async function(e) {
-  const btnEditar = e.target.closest('.btn-editar-etiqueta');
-  if (btnEditar) {
-    const tagId = btnEditar.getAttribute('data-id');
-    const tag = await ipcRenderer.invoke('tags-get', tagId);
-    // Rellenar el formulario con los datos
-  inputNombre.value = tag.nombre || '';
-  inputColor.value = tag.color || '#009879';
-  inputDescripcion.value = tag.descripcion || '';
-  inputId.value = tag.id || '';
-  inputTipo.value = tag.tipo || 'incidencia';
-  // Microorganismo asociado
+// Función para obtener los datos del formulario de etiqueta
+function getEtiquetaFormData() {
+  const nombre = inputNombre.value.trim();
+  const tipo = inputTipo.value;
+  const icono = inputIcono.value;
   const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
-  if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
+  const microorganismo = (tipo === 'infeccion' && inputMicroorganismoActual) ? inputMicroorganismoActual.value.trim() : '';
+  return {
+    id: inputId.value || undefined,
+    nombre,
+    color: inputColor.value,
+    microorganismo_asociado: microorganismo,
+    descripcion: inputDescripcion.value,
+    tipo,
+    icono
+  };
+}
+// Función para preparar el formulario de etiqueta (crear/editar)
+function prepararFormularioEtiqueta(tag = null) {
+  if (tag) {
+    inputNombre.value = tag.nombre || '';
+    inputColor.value = tag.color || '#009879';
+    inputDescripcion.value = tag.descripcion || '';
+    inputId.value = tag.id || '';
+    inputTipo.value = tag.tipo || 'incidencia';
+    // Microorganismo asociado
+    const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+    if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
     inputTipo.dispatchEvent(new Event('change'));
     // Establecer el icono después del cambio de tipo para evitar que se sobrescriba
     inputIcono.value = tag.icono || '';
@@ -21,11 +34,51 @@ document.addEventListener('click', async function(e) {
     if (btnIcono) {
       btnIcono.textContent = tag.icono || '🩸';
     }
+  } else {
+    inputNombre.value = '';
+    inputColor.value = '';
+    inputDescripcion.value = '';
+    inputId.value = '';
+    inputIcono.value = '';
+    inputTipo.value = 'infeccion';
+    inputTipo.dispatchEvent(new Event('change'));
+    // Limpiar microorganismo asociado
+    const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+    if (inputMicroorganismoActual) inputMicroorganismoActual.value = '';
+    // Actualizar el botón de emoji si existe
+    const btnIcono = document.getElementById('etiqueta-icono-btn');
+    if (btnIcono) {
+      btnIcono.textContent = '🩸';
+    }
+  }
+}
+
+// Handler para editar y eliminar etiquetas
+document.addEventListener('click', async function(e) {
+  const btnEditar = e.target.closest('.btn-editar-etiqueta');
+  if (btnEditar) {
+    const tagId = btnEditar.getAttribute('data-id');
+    const tag = await ipcRenderer.invoke('tags-get', tagId);
+    prepararFormularioEtiqueta(tag);
     modalEtiqueta.show();
+    return;
+  }
+
+  const btnEliminar = e.target.closest('.btn-eliminar-etiqueta');
+  if (btnEliminar) {
+    const tagId = btnEliminar.getAttribute('data-id');
+    if (tagId) {
+      // Eliminar incidencias asociadas a la etiqueta antes de eliminar la etiqueta
+      await ipcRenderer.invoke('incidencias-delete-by-etiqueta', tagId);
+      await ipcRenderer.invoke('tags-delete', tagId);
+      showAlert('Etiqueta eliminada correctamente', 'danger');
+      cargarTags();
+    }
+    return;
   }
 });
 // js/sections/etiquetas.js
-// Lógica de gestión de etiquetas (tags) para la sección Etiquetas
+// Lógica de gestión de etiquetas (tags) para la sección Etiquetas  
 
 const { ipcRenderer } = require('electron');
 let tags = [];
@@ -97,7 +150,7 @@ function renderTags() {
           <td>${tag.descripcion ? tag.descripcion : ''}</td>
           <td>
             <button class="btn btn-sm btn-outline-primary me-1 btn-editar-etiqueta" data-id="${tag.id}"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-sm btn-outline-danger btn-eliminar" data-id="${tag.id}"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-etiqueta" data-id="${tag.id}"><i class="bi bi-trash"></i></button>
           </td>
         `;
         tablaEtiquetas.appendChild(tr);
@@ -175,17 +228,7 @@ async function cargarTags() {
 }
 
 btnNuevaEtiqueta.addEventListener('click', () => {
-  // Limpiar campos del formulario
-  inputNombre.value = '';
-  inputColor.value = '';
-  inputDescripcion.value = '';
-  inputId.value = '';
-  inputIcono.value = '';
-  // Preseleccionar tipo 'infeccion' (sin tilde, igual que en el HTML)
-  inputTipo.value = 'infeccion';
-  // Forzar evento change para actualizar visibilidad
-  inputTipo.dispatchEvent(new Event('change'));
-  // Abrir el modal
+  prepararFormularioEtiqueta();
   modalEtiqueta.show();
 });
 
@@ -206,23 +249,9 @@ function actualizarGruposTipo() {
 
 formEtiqueta.addEventListener('submit', async (e) => {
   e.preventDefault();
-  // Solo guardar etiquetas de tipo 'infección' y emoji
-  const nombre = inputNombre.value.trim();
-  const tipo = inputTipo.value;
-  const icono = inputIcono.value;
-  // Guardar etiqueta
-  // Buscar el input cada vez por si ha cambiado de lugar
-  const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
-  const microorganismo = (tipo === 'infeccion' && inputMicroorganismoActual) ? inputMicroorganismoActual.value.trim() : '';
-  const nuevaEtiqueta = {
-    id: inputId.value || undefined,
-    nombre,
-    color: inputColor.value,
-    microorganismo_asociado: microorganismo,
-    descripcion: inputDescripcion.value,
-    tipo,
-    icono
-  };
+  // Si el campo está vacío, asigna el emoji por defecto antes de recoger los datos
+  if (!inputIcono.value) inputIcono.value = '🩸';
+  const nuevaEtiqueta = getEtiquetaFormData();
   if (nuevaEtiqueta.id) {
     await ipcRenderer.invoke('tags-update', nuevaEtiqueta);
     showAlert('Etiqueta actualizada correctamente', 'success');
@@ -230,8 +259,13 @@ formEtiqueta.addEventListener('submit', async (e) => {
     await ipcRenderer.invoke('tags-add', nuevaEtiqueta);
     showAlert('Etiqueta guardada correctamente', 'success');
   }
-  showAlert('Etiqueta guardada correctamente', 'success');
+  // Refrescar etiquetas globales en toda la app
+  window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
   cargarTags();
+  // Recargar selects de etiquetas en los modales de incidencia y paciente
+  if (window.poblarEtiquetasIncidenciaPaciente) window.poblarEtiquetasIncidenciaPaciente();
+  if (window.cargarTagsInfeccion) window.cargarTagsInfeccion();
+  if (window.cargarEtiquetasHistorial) window.cargarEtiquetasHistorial();
   modalEtiqueta.hide();
 });
 

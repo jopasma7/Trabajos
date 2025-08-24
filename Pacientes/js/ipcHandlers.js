@@ -257,7 +257,6 @@ ipcMain.handle('incidencias-modal-add', (event, incidencia) => {
   return db.addIncidenciasModal(incidencia);
 });
 
-
 ipcMain.handle('incidencias-delete', (event, incidenciaId) => {
   return db.deleteIncidencia(incidenciaId);
 });
@@ -347,6 +346,10 @@ ipcMain.handle('get-incidencias-por-tipo', () => {
 // Handler: Ranking de profesionales para estadísticas
 ipcMain.handle('get-ranking-profesionales', () => {
   return db.getRankingProfesionales ? db.getRankingProfesionales() : [];
+});
+
+ipcMain.handle('incidencias-delete-by-etiqueta', async (event, etiquetaId) => {
+  return db.deleteIncidenciasByEtiqueta(etiquetaId);
 });
 
 

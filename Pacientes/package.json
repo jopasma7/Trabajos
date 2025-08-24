@@ -1,7 +1,7 @@
 {
   "name": "gigi-hospital",
   "author": "Alejandro Pastor",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Esqueleto de aplicación Electron con JavaScript",
   "main": "main.js",
   "scripts": {
@@ -10,7 +10,7 @@
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
     "version:major": "npm version major",
-    "build": "npm run version:patch && cmd /c \"echo Cerrando instancias abiertas... & taskkill /IM 'Hospital App.exe' /F >nul 2>&1 & echo Ejecutando postinstall... & npm run postinstall & echo Ejecutando dist... & npm run dist\"",
+    "build": "npm run version:patch && cmd /c \"echo Cerrando instancias abiertas... & taskkill /IM 'Gigi Hospital.exe' /F >nul 2>&1 & echo Ejecutando postinstall... & npm run postinstall & echo Ejecutando dist... & npm run dist\"",
     "dist": "electron-builder",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -29,11 +29,11 @@
   },
   "build": {
     "appId": "alejandro.hospitalapp",
-  "productName": "Gigi Hospital",
+    "productName": "Gigi Hospital",
     "icon": "assets/app.ico",
     "win": {
       "target": "nsis",
-      "artifactName": "Hospital App.${ext}"
+      "artifactName": "Gigi Hospital.${ext}"
     },
     "directories": {
       "output": "dist"
@@ -43,8 +43,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Hospital App",
-      "uninstallDisplayName": "Uninstall Hospital App"
+      "shortcutName": "Gigi Hospital",
+      "uninstallDisplayName": "Uninstall Gigi Hospital"
     }
   }
 }
