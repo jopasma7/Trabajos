@@ -514,6 +514,12 @@ db.archiveHistorialClinico = function(id) {
   return { changes: info.changes };
 };
 
+// Eliminar definitivamente una entrada de historial clínico
+db.deleteHistorial = function(id) {
+  const stmt = db.prepare('DELETE FROM historial_clinico WHERE id = ?');
+  const info = stmt.run(id);
+  return { changes: info.changes };
+};
 db.getHistorialArchivadoByPaciente = function(pacienteId) { 
   return db.prepare('SELECT * FROM historial_clinico WHERE paciente_id = ? AND archivado = 1 ORDER BY fecha DESC, id DESC').all(pacienteId);
 };
@@ -1229,6 +1235,12 @@ db.crearEtiquetasIncidenciaMotivos();
 
 db.deleteIncidenciasByEtiqueta = function(etiquetaId) {
   const stmt = db.prepare('DELETE FROM incidencias WHERE etiqueta_id = ?');
+  const info = stmt.run(etiquetaId);
+  return { success: true, deleted: info.changes };
+};
+
+db.deleteInfeccionByEtiqueta = function(etiquetaId) {
+  const stmt = db.prepare('DELETE FROM infecciones WHERE tag_id = ?');
   const info = stmt.run(etiquetaId);
   return { success: true, deleted: info.changes };
 };

@@ -169,6 +169,11 @@ ipcMain.handle('historial-archive', (event, id) => {
   return db.archiveHistorialClinico(id);
 });
 
+// Eliminar una entrada de historial clínico
+ipcMain.handle('historial-delete', (event, id) => {
+  return db.deleteHistorial(id);
+});
+
 ipcMain.handle('historial-get-archived', (event, pacienteId) => {
   return db.getHistorialArchivadoByPaciente(pacienteId);
 });
@@ -198,6 +203,10 @@ ipcMain.handle('tags-update', (event, tag) => {
   return db.updateTag(tag.id, tag.nombre, tag.color, tag.microorganismo_asociado, tag.descripcion, tag.tipo, tag.icono);
 });
 
+// Handler para eliminar infecciones por etiqueta
+ipcMain.handle('infeccion-delete-by-etiqueta', (event, etiquetaId) => {
+  return db.deleteInfeccionByEtiqueta(etiquetaId);
+});
 
 ipcMain.handle('tags-delete', (event, id) => {
   return db.deleteTag(id);

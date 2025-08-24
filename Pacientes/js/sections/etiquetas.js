@@ -68,8 +68,9 @@ document.addEventListener('click', async function(e) {
   if (btnEliminar) {
     const tagId = btnEliminar.getAttribute('data-id');
     if (tagId) {
-      // Eliminar incidencias asociadas a la etiqueta antes de eliminar la etiqueta
+      // Eliminar incidencias e infecciones asociadas a la etiqueta antes de eliminar la etiqueta
       await ipcRenderer.invoke('incidencias-delete-by-etiqueta', tagId);
+      await ipcRenderer.invoke('infeccion-delete-by-etiqueta', tagId);
       await ipcRenderer.invoke('tags-delete', tagId);
       showAlert('Etiqueta eliminada correctamente', 'danger');
       cargarTags();

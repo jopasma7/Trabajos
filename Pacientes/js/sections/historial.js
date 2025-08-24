@@ -350,6 +350,7 @@ window.renderHistorial = renderHistorial;
 				<td>${profesionalHtml}</td>
 				<td>
 					<button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
+					<button type='button' class='btn btn-outline-danger btn-sm btn-eliminar-historial' data-idx='${idx}'><i class='bi bi-trash'></i></button>
 					${esArchivado
 						? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
 						: `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
@@ -374,7 +375,13 @@ window.renderHistorial = renderHistorial;
 		const unarchiveBtn = e.target.closest('.btn-unarchive-historial');
 		if (unarchiveBtn) {
 			const idx = unarchiveBtn.getAttribute('data-idx');
-			if (idx !== null) window.archiveHistorial(Number(idx));
+ 			if (idx !== null) window.unarchiveHistorial(Number(idx));
+ 			return;
+		}
+		const deleteBtn = e.target.closest('.btn-eliminar-historial');
+		if (deleteBtn) {
+			const idx = deleteBtn.getAttribute('data-idx');
+			if (idx !== null) window.deleteHistorial(Number(idx));
 			return;
 		}
 	};
@@ -555,6 +562,68 @@ window.archiveHistorial = async function(idx) {
 
 		const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
 		modalInstance.show();
+};
+
+// Desarchivar registro del historial
+window.unarchiveHistorial = async function(idx) {
+	const item = historialData[idx];
+	const modalConfirmacion = document.getElementById('modal-confirmacion');
+	if (!modalConfirmacion) return;
+	document.getElementById('modal-confirmacion-titulo').textContent = '¿Desarchivar Entrada?';
+	document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción restaurará la entrada seleccionada al historial activo. ¿Deseas continuar?`;
+	const icono = document.getElementById('modal-confirmacion-icono');
+	icono.innerHTML = '<i class="bi bi-arrow-up-square-fill text-success" style="font-size:1.7em;"></i>';
+	modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-danger','bg-warning');
+	modalConfirmacion.querySelector('.modal-header').classList.add('bg-success');
+	const btnConfirmar = document.getElementById('btn-confirmar-accion');
+	btnConfirmar.classList.remove('btn-danger','btn-warning');
+	btnConfirmar.classList.add('btn-success');
+
+	// Eliminar listeners previos para evitar duplicidad
+	const nuevoListener = async function() {
+		await ipcRenderer.invoke('historial-unarchive', item.id);
+		const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+		if (modalInstance) modalInstance.hide();
+		renderHistorial();
+		btnConfirmar.removeEventListener('click', nuevoListener);
+		renderTimelinePacienteDB();
+	};
+	btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+	btnConfirmar.addEventListener('click', nuevoListener);
+
+	const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+	modalInstance.show();
+};
+
+// Eliminar registro del historial
+window.deleteHistorial = async function(idx) {
+	const item = historialData[idx];
+	const modalConfirmacion = document.getElementById('modal-confirmacion');
+	if (!modalConfirmacion) return;
+	document.getElementById('modal-confirmacion-titulo').textContent = '¿Eliminar Entrada?';
+	document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción eliminará la entrada seleccionada de forma permanente. ¿Deseas continuar?`;
+	const icono = document.getElementById('modal-confirmacion-icono');
+	icono.innerHTML = '<i class="bi bi-trash-fill text-danger" style="font-size:1.7em;"></i>';
+	modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-warning','bg-success');
+	modalConfirmacion.querySelector('.modal-header').classList.add('bg-danger');
+	const btnConfirmar = document.getElementById('btn-confirmar-accion');
+	btnConfirmar.classList.remove('btn-warning','btn-success');
+	btnConfirmar.classList.add('btn-danger');
+
+	// Eliminar listeners previos para evitar duplicidad
+	const nuevoListener = async function() {
+		await ipcRenderer.invoke('historial-delete', item.id);
+		const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+		if (modalInstance) modalInstance.hide();
+		renderHistorial();
+		btnConfirmar.removeEventListener('click', nuevoListener);
+		renderTimelinePacienteDB();
+	};
+	btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+	btnConfirmar.addEventListener('click', nuevoListener);
+
+	const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+	modalInstance.show();
 };
 
 // Evento para cambiar la foto de perfil del paciente
