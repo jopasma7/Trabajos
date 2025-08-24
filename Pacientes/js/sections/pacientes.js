@@ -157,6 +157,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
 				if (resultado && resultado.success) {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
+
+					if(window.renderHistorial) window.renderHistorial();
+					if(window.renderTimelinePacienteDB) window.renderTimelinePacienteDB();
+
 					// Cerrar el modal
 					var modal = bootstrap.Modal.getInstance(modalIncidenciaEl);
 					if (modal) modal.hide();
