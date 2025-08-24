@@ -631,10 +631,12 @@ db.getPacientesCHDPendienteFAV = function() {
       // Ubicación CHD y lado
       p.ubicacion_chd = acceso.ubicacion_anatomica || undefined;
       p.ubicacion_lado = acceso.ubicacion_lado || undefined;
+      p.observaciones = acceso.observaciones || '';
     } else {
       p.fecha_instalacion = undefined;
       p.ubicacion_chd = undefined;
       p.ubicacion_lado = undefined;
+      p.observaciones = '';
     }
   });
   return pacientes;
@@ -670,6 +672,9 @@ db.getPacientesFAVPendienteRetiroCHD = function() {
   p.ubicacion_chd = pendienteCHD ? pendienteCHD.ubicacion_chd : '';
   p.lado_chd = pendienteCHD ? pendienteCHD.lado_chd : '';
   p.fecha_instalacion_chd = pendienteCHD ? pendienteCHD.fecha_instalacion_acceso_pendiente : '';
+    // Añadir observaciones de acceso FAV y pendiente CHD
+    p.observaciones_fav = accesoFAV ? accesoFAV.observaciones : '';
+    p.observaciones_chd = pendienteCHD ? pendienteCHD.observaciones : '';
   });
   return pacientes;
 };
@@ -697,14 +702,22 @@ db.getPacientesCHDFAVMadurativo = function() {
     WHERE p.activo = 1
   `).all(chdTipo.id, favTipo.id, maduracionTipo.id);
   // Formatear resultado para la tabla
-  const resultado = rows.map((p, idx) => ({
-    numero: idx + 1,
-    usuario: `${p.nombre} ${p.apellidos}`,
-    ubicacion_chd: p.ubicacion_chd || '',
-    fecha_instalacion_chd: p.fecha_instalacion_chd || '',
-    ubicacion_fav: p.ubicacion_fav || '',
-    fecha_instalacion_fav: p.fecha_instalacion_fav || ''
-  }));
+  const resultado = rows.map((p, idx) => {
+    // Obtener observaciones de acceso CHD y pendiente FAV
+    const accesoCHD = db.prepare("SELECT observaciones FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id = ? ORDER BY id DESC LIMIT 1").get(p.id, chdTipo.id);
+  // Obtener observaciones del acceso FAV madurativo
+  const accesoFAV = db.prepare("SELECT observaciones FROM acceso WHERE paciente_id = ? AND activo = 1 AND tipo_acceso_id = ? ORDER BY id DESC LIMIT 1").get(p.id, favTipo.id);
+    return {
+      numero: idx + 1,
+      usuario: `${p.nombre} ${p.apellidos}`,
+      ubicacion_chd: p.ubicacion_chd || '',
+      fecha_instalacion_chd: p.fecha_instalacion_chd || '',
+      ubicacion_fav: p.ubicacion_fav || '',
+      fecha_instalacion_fav: p.fecha_instalacion_fav || '',
+  observaciones_chd: accesoCHD ? accesoCHD.observaciones : '',
+  observaciones_fav: accesoFAV ? accesoFAV.observaciones : ''
+    };
+  });
   return resultado;
   //   chdTipo,
   //   favTipo,
@@ -876,43 +889,47 @@ db.editPacienteCompleto = function(paciente) {
   }
   // --- LÓGICA DE ACCESO ---
   const accesoActual = db.prepare('SELECT * FROM acceso WHERE paciente_id = ? AND activo = 1 ORDER BY id DESC LIMIT 1').get(paciente.id);
+  const accesoData = paciente.acceso || {};
   const hayCambiosAcceso = accesoActual && (
-    !valoresIguales(accesoActual.tipo_acceso_id, paciente.tipo_acceso_id) ||
-    !valoresIguales(accesoActual.fecha_instalacion, paciente.fecha_instalacion) ||
-    !valoresIguales(accesoActual.ubicacion_anatomica, paciente.ubicacion_anatomica) ||
-    !valoresIguales(accesoActual.ubicacion_lado, paciente.ubicacion_lado) ||
-    !valoresIguales(accesoActual.profesional_id, paciente.profesional_id) ||
-    !valoresIguales(accesoActual.estado, paciente.estado) ||
-    !valoresIguales(accesoActual.fecha_primera_puncion, (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''))
+    !valoresIguales(accesoActual.tipo_acceso_id, accesoData.tipo_acceso_id) ||
+    !valoresIguales(accesoActual.fecha_instalacion, accesoData.fecha_instalacion) ||
+    !valoresIguales(accesoActual.ubicacion_anatomica, accesoData.ubicacion_anatomica) ||
+    !valoresIguales(accesoActual.ubicacion_lado, accesoData.ubicacion_lado) ||
+    !valoresIguales(accesoActual.profesional_id, accesoData.profesional_id) ||
+    !valoresIguales(accesoActual.estado, accesoData.estado) ||
+    !valoresIguales(accesoActual.observaciones, accesoData.observaciones) ||
+    !valoresIguales(accesoActual.fecha_primera_puncion, accesoData.fecha_primera_puncion)
   );
   if (accesoActual && hayCambiosAcceso) {
     cambios.acceso = true;
     db.prepare('UPDATE acceso SET activo = 0 WHERE id = ?').run(accesoActual.id);
     db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)').run(
       paciente.id,
-      paciente.tipo_acceso_id || null,
-      paciente.fecha_instalacion || '',
-      paciente.ubicacion_anatomica || '',
-      paciente.ubicacion_lado || '',
-      (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
-      (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
-      paciente.profesional_id || null,
-      paciente.estado || ''
+      accesoData.tipo_acceso_id || null,
+      accesoData.fecha_instalacion || '',
+      accesoData.ubicacion_anatomica || '',
+      accesoData.ubicacion_lado || '',
+      accesoData.fecha_primera_puncion || '',
+      accesoData.observaciones || '',
+      accesoData.profesional_id || null,
+      accesoData.estado || ''
     );
-  } else if (!accesoActual) {
+  } else if (!accesoActual && Object.keys(accesoData).length > 0) {
     db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado, activo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)').run(
       paciente.id,
-      paciente.tipo_acceso_id || null,
-      paciente.fecha_instalacion || '',
-      paciente.ubicacion_anatomica || '',
-      paciente.ubicacion_lado || '',
-      (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
-      (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
-      paciente.profesional_id || null,
-      paciente.estado || ''
+      accesoData.tipo_acceso_id || null,
+      accesoData.fecha_instalacion || '',
+      accesoData.ubicacion_anatomica || '',
+      accesoData.ubicacion_lado || '',
+      accesoData.fecha_primera_puncion || '',
+      accesoData.observaciones || '',
+      accesoData.profesional_id || null,
+      accesoData.estado || ''
     );
     cambios.acceso = true;
   }
+
+  console.log("Paciente a editar:", paciente);
 // --- LÓGICA DE PENDIENTE ---
   if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
     // Buscar pendiente activo actual
@@ -992,18 +1009,19 @@ db.addPacienteCompleto = function(paciente) {
   );
   const pacienteId = info.lastInsertRowid;
 
-  // Crear acceso asociado al paciente
+  // Crear acceso asociado al paciente SOLO usando paciente.acceso
+  const acceso = paciente.acceso || {};
   const stmtAccesoInsert = db.prepare('INSERT INTO acceso (paciente_id, tipo_acceso_id, fecha_instalacion, ubicacion_anatomica, ubicacion_lado, fecha_primera_puncion, observaciones, profesional_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
   const infoAcceso = stmtAccesoInsert.run(
     pacienteId,
-    paciente.tipo_acceso_id || null,
-    paciente.fecha_instalacion || paciente.fecha_alta || '',
-    paciente.ubicacion_anatomica || '',
-    paciente.ubicacion_lado || '',
-    (paciente.acceso && paciente.acceso.fecha_primera_puncion) ? paciente.acceso.fecha_primera_puncion : (paciente.fecha_primera_puncion || ''),
-    (paciente.acceso && paciente.acceso.observaciones) ? paciente.acceso.observaciones : (paciente.observaciones || ''),
-    paciente.profesional_id || null,
-    paciente.estado || ''
+    acceso.tipo_acceso_id || null,
+    acceso.fecha_instalacion || paciente.fecha_alta || '',
+    acceso.ubicacion_anatomica || '',
+    acceso.ubicacion_lado || '',
+    acceso.fecha_primera_puncion || '',
+    acceso.observaciones || '',
+    acceso.profesional_id || null,
+    acceso.estado || ''
   );
   const accesoId = infoAcceso.lastInsertRowid;
 

@@ -116,7 +116,7 @@ ipcMain.handle('pendiente-get-by-paciente', (event, pacienteId) => {
   // Editar un paciente
 // Handler para actualizar un paciente (usado en edición)
 ipcMain.handle('update-paciente', (event, paciente) => {
-  // Delegar la edición a una función de alto nivel en db.js que gestione la actualización normalizada
+  // 📝 Editar paciente completo (handler descriptivo)
   const result = db.editPacienteCompleto(paciente);
   return result;
 });

@@ -640,6 +640,7 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('fechaInstalacionAcceso').value = paciente.acceso?.fecha_instalacion || paciente.fecha_instalacion || '';
 		mostrarCamposFechaAcceso();
 		displayCamposCHD();
+		console.log("[PACIENTE][editar] Datos del paciente:", paciente);
 		const modalEl = document.getElementById('modal-paciente');
 		let modalInstance = bootstrap.Modal.getInstance(modalEl);
 		if (!modalInstance) {
@@ -678,6 +679,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			errorFocus = true;
 		}
 		if (errorFocus) return;
+		console.log('[DEBUG] Guardando Editando paciente ID:', window.pacienteEditando);
 		editarPaciente(window.pacienteEditando.id);
 	} else {
 		// Crear nuevo paciente
@@ -1254,16 +1256,11 @@ async function crearPaciente() {
 		direccion: document.getElementById('direccion').value,
 		alergias: document.getElementById('alergias').value,
 		profesional_id: profesional,
-		tipo_acceso_id: tipoAcceso,
-		ubicacion_anatomica: ubicacion,
-		ubicacion_lado: document.getElementById('lado').value,
 		activo: true,
 		pendiente: pendienteObj,
-		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
-		fecha_instalacion_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 		acceso: {
 			tipo_acceso_id: tipoAcceso,
-			activo: true,
+			ubicacion_anatomica: ubicacion,
 			ubicacion_lado: document.getElementById('lado').value,
 			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 			fecha_primera_puncion: document.getElementById('fechaPrimeraPuncion').value,
@@ -1378,18 +1375,14 @@ async function editarPaciente(id) {
 		direccion: document.getElementById('direccion').value,
 		alergias: document.getElementById('alergias').value,
 		profesional_id: document.getElementById('profesional').value,
-		tipo_acceso_id: document.getElementById('tipoAcceso').value,
-		ubicacion_anatomica: document.getElementById('ubicacion').value,
-		ubicacion_lado: document.getElementById('lado').value,
-		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
 		activo: true,
-		   pendiente: {
-			   id: window.pacienteEditando?.pendiente?.id || null,
-			   tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
-			   fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-			   profesional_id: document.getElementById('profesional').value,
-			   ubicacion_chd: ubicacion_chd.value,
-			   lado_chd: document.getElementById('chd-lado').value,
+		pendiente: {
+			id: window.pacienteEditando?.pendiente?.id || null,
+			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
+			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+			profesional_id: document.getElementById('profesional').value,
+			ubicacion_chd: ubicacion_chd.value,
+			lado_chd: document.getElementById('chd-lado').value,
 			pendiente_tipo_id: document.getElementById('pendiente').value,
 			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 			paciente_id: id,
@@ -1404,9 +1397,10 @@ async function editarPaciente(id) {
 			observaciones: document.getElementById('observaciones').value,
 			profesional_id: document.getElementById('profesional').value,
 			activo: true
-		},
-		// Eliminados: incidencia, incidencia_valores
+		}
 	};
+
+	console.log('Paciente a editar:', paciente);
 
 	await registrarCambiosClinicosHistorial(window.pacienteOriginalEditando, paciente);
 

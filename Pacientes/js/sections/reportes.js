@@ -15,6 +15,7 @@ async function getNombreCompletoProfesional() {
 async function obtenerPacientesCHDPendienteFAV() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
   const pacientes = await ipcRenderer.invoke('get-pacientes-chd-pendiente-fav');
+  console.log('[REPORTE CHD pendiente FAV] Datos recibidos del backend:', pacientes);
   return pacientes.map((p, idx) => [
     idx + 1,
     `${p.nombre} ${p.apellidos}`,
@@ -42,7 +43,7 @@ async function obtenerPacientesFAVPendienteRetiroCHD() {
     p.fecha_primera_puncion || '',
     p.ubicacion_chd || '',
     p.fecha_instalacion_chd || '',
-    p.observaciones || ''
+    [p.observaciones_fav, p.observaciones_chd].filter(Boolean).join(' | ')
   ]);
 }
 
@@ -58,7 +59,7 @@ async function obtenerPacientesCHDFAVMadurativo() {
     p.fecha_instalacion_chd,
     p.ubicacion_fav && p.ubicacion_fav.trim() !== '' ? p.ubicacion_fav : '⚠️ Sin datos',
     p.fecha_instalacion_fav && p.fecha_instalacion_fav.trim() !== '' ? p.fecha_instalacion_fav : '⚠️ Sin datos',
-    p.observaciones
+    [p.observaciones_chd, p.observaciones_fav].filter(Boolean).join(' | ')
   ]);
 }
 
@@ -201,8 +202,10 @@ document.getElementById('btn-generar-reporte-chd').addEventListener('click', asy
   setTimeout(async () => {
     const datos = await obtenerPacientesCHDPendienteFAV();
     const profesional = await getNombreCompletoProfesional();
-    const mes = 'Agosto';
-    const anio = '2025';
+  const fechaActual = new Date();
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mes = meses[fechaActual.getMonth()];
+  const anio = fechaActual.getFullYear();
     mostrarModalReporte({
       titulo: 'Registro de pacientes con CHD pendiente de FAV',
       descripcion: 'Controla pacientes con CHD y pendiente de confección o reparación de FAV. Este reporte permite identificar a los pacientes que aún no cuentan con una fístula arteriovenosa funcional y requieren seguimiento especial para evitar complicaciones asociadas al acceso temporal. Incluye ubicación, fecha y observaciones clínicas.',
@@ -239,8 +242,10 @@ document.getElementById('btn-generar-reporte-fav-pendiente-retiro-chd').addEvent
       row[7]  // Observaciones
     ]);
     const profesional = await getNombreCompletoProfesional();
-    const mes = 'Agosto';
-    const anio = '2025';
+  const fechaActual = new Date();
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mes = meses[fechaActual.getMonth()];
+  const anio = fechaActual.getFullYear();
     mostrarModalReporte({
       titulo: 'Acceso FAV, pendiente retiro CHD',
       descripcion: 'Visualiza pacientes con acceso FAV y retiro de CHD pendiente. Este reporte ayuda a gestionar el proceso de transición de acceso vascular, asegurando que los pacientes con FAV maduro sean evaluados para el retiro oportuno del catéter y así reducir riesgos de infección. Facilita el seguimiento y la planificación clínica.',
@@ -273,8 +278,10 @@ document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListen
       row[6]  // Observaciones
     ]);
     const profesional = await getNombreCompletoProfesional();
-    const mes = 'Agosto';
-    const anio = '2025';
+  const fechaActual = new Date();
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mes = meses[fechaActual.getMonth()];
+  const anio = fechaActual.getFullYear();
     mostrarModalReporte({
       titulo: 'Acceso CHD, FAV en proceso Madurativo',
       descripcion: 'Pacientes con CHD y FAV en proceso madurativo. Permite identificar a quienes están en fase de maduración de la fístula arteriovenosa, facilitando el control evolutivo y la toma de decisiones clínicas para el cambio de acceso.',
@@ -292,25 +299,27 @@ document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('clic
   setTimeout(async () => {
   const datosRaw = await obtenerPacientesSepsisCHD();
   const profesional = await getNombreCompletoProfesional();
-  const mes = 'Agosto';
-  const anio = '2025';
-  // Invertir el orden para mostrar la fecha más reciente primero
-  const formatearFecha = fecha => {
-    if (!fecha) return '';
-    const partes = fecha.split('-');
-    if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
-    return fecha;
-  };
-  const datos = datosRaw
-    .filter(row => row && (row.paciente || row.fecha_diagnostico || row.microorganismo || row.medidas))
-    .map((row, idx) => [
-      (row.numero !== undefined ? row.numero : idx + 1),
-      row.paciente || '',
-      formatearFecha(row.fecha_diagnostico),
-      row.microorganismo || '',
-      row.medidas || ''
-    ])
-    .reverse();
+  const fechaActual = new Date();
+  const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+  const mes = meses[fechaActual.getMonth()];
+  const anio = fechaActual.getFullYear();
+     // Ordenar para mostrar el número 1 primero y el último al final
+     const formatearFecha = fecha => {
+       if (!fecha) return '';
+       const partes = fecha.split('-');
+       if (partes.length === 3) return `${partes[2]}-${partes[1]}-${partes[0]}`;
+       return fecha;
+     };
+     const datos = datosRaw
+       .filter(row => row && (row.paciente || row.fecha_diagnostico || row.microorganismo || row.medidas))
+       .map((row, idx) => [
+         (row.numero !== undefined ? row.numero : idx + 1),
+         row.paciente || '',
+         formatearFecha(row.fecha_diagnostico),
+         row.microorganismo || '',
+         row.medidas || ''
+       ])
+       .sort((a, b) => a[0] - b[0]); // Sort by patient number
   mostrarModalReporte({
     titulo: 'Sepsis CHD',
     descripcion: 'Reporte de pacientes con infecciones asociadas a CHD. Permite el seguimiento de casos de infección grave vinculados al catéter, facilitando la gestión clínica y la prevención de complicaciones.',
