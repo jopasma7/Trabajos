@@ -28,18 +28,17 @@
 
 ---
 
-## 🚀 Instalación y uso
+## 🚀 Cómo usar la aplicación
 
-1. Instala las dependencias:
-   ```sh
-   npm install
-   ```
-2. Inicia la aplicación:
-   ```sh
-   npm start
-   ```
+1. Descarga e instala la aplicación siguiendo las instrucciones del instalador.
+2. Abre la aplicación desde tu escritorio.
+3. Navega por las diferentes secciones usando la barra lateral:
+   - **Dashboard**: Vista general con tarjetas de resumen, estadísticas y accesos rápidos.
+   - **Pacientes**: Gestión completa de pacientes, búsqueda, edición y visualización de historial.
+   - **Reportes**: Genera y consulta reportes médicos y administrativos.
+   - **Configuración**: Personaliza la aplicación, consulta la versión y ajusta preferencias.
 
-Se abrirá una ventana de escritorio con la interfaz profesional y navegación lista para usar.
+La interfaz es intuitiva y profesional, pensada para facilitar el trabajo diario en entornos hospitalarios.
 
 ---
 
