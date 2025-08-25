@@ -884,19 +884,42 @@ function filtrarPacientes() {
 	const fechaInicio = filtroFechaPacientesInicio?.value;
 	const fechaFin = filtroFechaPacientesFin?.value;
 	if (fechaInicio || fechaFin) {
-		filtrados = filtrados.filter(p => {
-			let fechaInstalacion = p.fecha_instalacion || p.fecha_alta || '';
-			if (!fechaInstalacion || !p.nombre) return false;
-			// Extraer solo la parte YYYY-MM-DD
-			fechaInstalacion = fechaInstalacion.slice(0, 10);
-			if (fechaInicio && fechaFin) {
-				return fechaInstalacion >= fechaInicio && fechaInstalacion <= fechaFin;
-			} else if (fechaInicio) {
-				return fechaInstalacion >= fechaInicio;
-			} else if (fechaFin) {
-				return fechaInstalacion <= fechaFin;
+		// Normaliza fechas al formato DD-MM-YYYY
+		function normalizaFecha(fechaStr) {
+			if (!fechaStr) return '';
+			// Si es YYYY-MM-DD
+			if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
+				const [a, m, d] = fechaStr.split('-');
+				return `${d}-${m}-${a}`;
 			}
-			return true;
+			// Si es DD-MM-YYYY
+			if (/^\d{2}-\d{2}-\d{4}$/.test(fechaStr)) {
+				return fechaStr;
+			}
+			// Si es otro formato, intentar parsear
+			const fecha = new Date(fechaStr);
+			if (isNaN(fecha.getTime())) return '';
+			const d = String(fecha.getDate()).padStart(2, '0');
+			const m = String(fecha.getMonth() + 1).padStart(2, '0');
+			const a = fecha.getFullYear();
+			return `${d}-${m}-${a}`;
+		}
+		// Normalizar los valores de los inputs antes de comparar
+		const fechaInicioNorm = fechaInicio ? normalizaFecha(fechaInicio) : '';
+		const fechaFinNorm = fechaFin ? normalizaFecha(fechaFin) : '';
+		filtrados = filtrados.filter(p => {
+			let fechaInstalacion = p.acceso?.fecha_instalacion || '';
+			if (!fechaInstalacion || !p.nombre) return false;
+			const fechaNorm = normalizaFecha(fechaInstalacion);
+			if (!fechaNorm) return false;
+			let incluir = true;
+			if (fechaInicioNorm) {
+				incluir = incluir && (fechaNorm >= fechaInicioNorm);
+			}
+			if (fechaFinNorm) {
+				incluir = incluir && (fechaNorm <= fechaFinNorm);
+			}
+			return incluir;
 		});
 	}
 		// Filtro por nombre/apellidos (soporta búsqueda por palabras separadas)

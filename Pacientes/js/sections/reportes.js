@@ -69,65 +69,84 @@ async function obtenerPacientesSepsisCHD() {
   return await ipcRenderer.invoke('get-pacientes-sepsis-chd');
 }
 
-function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true, descripcion = '' }) {
-  let modal = document.getElementById(id);
-  if (!modal) {
-    modal = document.createElement('div');
+// Crear el modal genérico al iniciar la app (solo una vez)
+(function crearModalGenerico() {
+  const id = 'modal-reporte-generico';
+  if (!document.getElementById(id)) {
+    const modal = document.createElement('div');
     modal.id = id;
     modal.className = 'modal fade';
     modal.tabIndex = -1;
+    // El contenido se actualizará dinámicamente en mostrarModalReporte
     modal.innerHTML = `
       <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <div style="width:100%">
-              <h5 class="modal-title modal-titulo-reporte"><span>🩺</span> ${titulo}</h5>
-              <div class="modal-descripcion-reporte text-muted" style="font-size:1.05em;margin-top:2px;">${descripcion}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-2">
-              <strong>Mes:</strong> ${mes} &nbsp; <strong>Año:</strong> ${anio}
-            </div>
-            <table class="table table-bordered table-sm">
-              <thead class="table-light">
-                <tr>
-                  ${columnas.map(col => `<th>${col}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody id="reporte-generico-body"></tbody>
-            </table>
-            <div class="mt-3" id="profesional-reporte-modal"></div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-success" onclick="window.print()">
-              <i class="bi bi-printer"></i> Imprimir
-            </button>
-            ${exportarPDF ? `<button class="btn btn-pdf" id="btn-exportar-pdf-reporte-generico"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>` : ''}
-            <button class="btn btn-cerrar" data-bs-dismiss="modal">Cerrar</button>
-          </div>
-        </div>
+        <div class="modal-content"></div>
       </div>
     `;
     document.body.appendChild(modal);
-    // Eliminar el modal del DOM al cerrarse para evitar solapamiento de campos
-    modal.addEventListener('hidden.bs.modal', () => {
-      if (modal.parentNode) {
-        modal.parentNode.removeChild(modal);
-      }
-    });
+    // Si quieres eliminar el modal al cerrarse, puedes dejar el listener, pero ya no es necesario para evitar el error
+    // modal.addEventListener('hidden.bs.modal', () => { modal.remove(); });
   }
-  // Actualizar SIEMPRE el título y la descripción del modal antes de mostrarlo
-  const tituloElem = modal.querySelector('.modal-titulo-reporte');
-  if (tituloElem) {
-    tituloElem.innerHTML = `<span>🩺</span> ${titulo}`;
-  }
-  const descripcionElem = modal.querySelector('.modal-descripcion-reporte');
-  if (descripcionElem) {
-    descripcionElem.innerHTML = descripcion;
-  }
-  // Poblar la tabla, mostrando solo 5 filas si hay menos de 5 pacientes; si hay más, solo los pacientes reales
+})();
+
+function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, id = 'modal-reporte-generico', exportarPDF = true, descripcion = '' }) {
+  const modal = document.getElementById(id);
+  // Actualiza el contenido del modal SIEMPRE
+  modal.querySelector('.modal-content').innerHTML = `
+    <div class="modal-header">
+      <div style="width:100%">
+        <h5 class="modal-title modal-titulo-reporte"><span>🩺</span> ${titulo}</h5>
+        <div class="modal-descripcion-reporte text-muted" style="font-size:1.05em;margin-top:2px;">${descripcion}</div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+      <div class="row mb-3 g-3 align-items-end">
+        <div class="col-md-3 col-12">
+          <label for="filtro-fecha-inicio" class="form-label"><i class="bi bi-calendar-date"></i> Fecha inicio</label>
+          <input type="date" id="filtro-fecha-inicio" class="form-control" />
+        </div>
+        <div class="col-md-3 col-12">
+          <label for="filtro-fecha-fin" class="form-label"><i class="bi bi-calendar-date"></i> Fecha fin</label>
+          <input type="date" id="filtro-fecha-fin" class="form-control" />
+        </div>
+        <div class="col-md-6 col-12 d-flex justify-content-end align-items-end">
+          <button id="btn-filtrar-fechas-reporte" class="btn btn-pdf" style="font-size:1.08em; min-width:180px;"><i class="bi bi-funnel"></i> Filtrar por fecha</button>
+        </div>
+      </div>
+      <div class="mb-2">
+        <strong>Mes:</strong> ${mes} &nbsp; <strong>Año:</strong> ${anio}
+      </div>
+      <table class="table table-bordered table-sm">
+        <thead class="table-light">
+          <tr>
+            ${(() => {
+              // Buscar la columna de fecha
+              const fechaIdx = columnas.findIndex(c => c.toLowerCase().includes('fecha'));
+              return columnas.map((col, idx) => {
+                if (idx === fechaIdx) {
+                  return `<th class="columna-fecha-ref" title="Columna de referencia para el filtro"><i class="bi bi-calendar-event"></i> ${col}</th>`;
+                } else {
+                  return `<th>${col}</th>`;
+                }
+              }).join('');
+            })()}
+          </tr>
+        </thead>
+        <tbody id="reporte-generico-body"></tbody>
+      </table>
+      <div class="mt-3" id="profesional-reporte-modal"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-success" onclick="window.print()">
+        <i class="bi bi-printer"></i> Imprimir
+      </button>
+      ${exportarPDF ? `<button class="btn btn-pdf" id="btn-exportar-pdf-reporte-generico"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</button>` : ''}
+      <button class="btn btn-cerrar" data-bs-dismiss="modal">Cerrar</button>
+    </div>
+  `;
+
+  // Poblar la tabla, mostrando solo 5 filas si hay menos de 5 pacientes
   const tbody = modal.querySelector('#reporte-generico-body');
   tbody.innerHTML = '';
   let rows = datos.slice();
@@ -140,14 +159,81 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
   rows.forEach(item => {
     tbody.innerHTML += `<tr>${item.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
   });
-  // Actualizar el campo Profesional en el modal (sin bold, solo texto)
+
+  // Lógica de filtrado por fecha
+  const btnFiltrar = modal.querySelector('#btn-filtrar-fechas-reporte');
+  if (btnFiltrar) {
+    btnFiltrar.onclick = function() {
+      const inicio = modal.querySelector('#filtro-fecha-inicio').value;
+      const fin = modal.querySelector('#filtro-fecha-fin').value;
+      let filtrados = datos;
+      if (inicio || fin) {
+        // Buscar la PRIMERA columna que contenga "fecha" en el nombre
+        let fechaIdx = columnas.findIndex(c => c.toLowerCase().includes('fecha'));
+        if (fechaIdx === -1) {
+          tbody.innerHTML = '';
+          return; // No hay columna de fecha, no filtrar
+        }
+        // Función para normalizar a DD-MM-YYYY
+        function normalizaFecha(fechaStr) {
+          if (!fechaStr) return '';
+          // Si es YYYY-MM-DD
+          if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
+            const [a, m, d] = fechaStr.split('-');
+            return `${d}-${m}-${a}`;
+          }
+          // Si es DD-MM-YYYY
+          if (/^\d{2}-\d{2}-\d{4}$/.test(fechaStr)) {
+            return fechaStr;
+          }
+          // Si es otro formato, intentar parsear
+          const fecha = new Date(fechaStr);
+          if (isNaN(fecha.getTime())) return '';
+          const d = String(fecha.getDate()).padStart(2, '0');
+          const m = String(fecha.getMonth() + 1).padStart(2, '0');
+          const a = fecha.getFullYear();
+          return `${d}-${m}-${a}`;
+        }
+
+        filtrados = datos.filter(row => {
+          const fechaStr = row[fechaIdx];
+          const fechaNorm = normalizaFecha(fechaStr);
+          if (!fechaNorm) return false;
+          let incluir = true;
+          if (inicio) {
+            const inicioNorm = normalizaFecha(inicio);
+            incluir = incluir && (fechaNorm >= inicioNorm);
+          }
+          if (fin) {
+            const finNorm = normalizaFecha(fin);
+            incluir = incluir && (fechaNorm <= finNorm);
+          }
+          return incluir;
+        });
+      }
+      tbody.innerHTML = '';
+      let rowsFiltrados = filtrados.slice();
+      if (rowsFiltrados.length < minFilas) {
+        while (rowsFiltrados.length < minFilas) {
+          rowsFiltrados.push(Array(columnas.length).fill('&nbsp;'));
+        }
+      }
+      rowsFiltrados.forEach(item => {
+        tbody.innerHTML += `<tr>${item.map(cell => `<td>${cell}</td>`).join('')}</tr>`;
+      });
+    };
+  }
+
+  // Actualizar el campo Profesional en el modal
   const profesionalDiv = modal.querySelector('#profesional-reporte-modal');
   if (profesionalDiv) {
     profesionalDiv.innerHTML = `<strong>Profesional:</strong> ${profesional}`;
   }
+
   // Mostrar el modal
   const bsModal = new bootstrap.Modal(modal);
   bsModal.show();
+
   // Evento para exportar PDF
   if (exportarPDF) {
     const btnExportar = modal.querySelector('#btn-exportar-pdf-reporte-generico');
@@ -164,15 +250,15 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
       doc.text(`Mes: ${mes}    Año: ${anio}`, 14, 26);
       // Tabla
       let headers = columnas;
-      let minFilas = 15;
-      let rows = datos.slice();
-      while (rows.length < minFilas) {
-        rows.push(Array(headers.length).fill(''));
+      let minFilasPDF = 15;
+      let rowsPDF = datos.slice();
+      while (rowsPDF.length < minFilasPDF) {
+        rowsPDF.push(Array(headers.length).fill(''));
       }
       if (typeof doc.autoTable === 'function') {
         doc.autoTable({
           head: [headers],
-          body: rows,
+          body: rowsPDF,
           startY: 32,
           theme: 'grid',
           headStyles: { fillColor: [220, 230, 241], textColor: 40, fontStyle: 'bold', halign: 'left', fontSize: 10 },
@@ -184,7 +270,7 @@ function mostrarModalReporte({ titulo, mes, anio, profesional, columnas, datos, 
         doc.setFontSize(10);
         doc.text(headers.join(' | '), 10, y, { align: 'left' });
         y += 7;
-        rows.forEach(row => {
+        rowsPDF.forEach(row => {
           doc.text(row.join(' | '), 10, y, { align: 'left' });
           y += 7;
         });

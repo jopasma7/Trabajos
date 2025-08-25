@@ -161,8 +161,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 	   let ultimoPacienteId = null;
 	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
 		   const pacienteId = Number(this.value);
-		   if (pacienteId === ultimoPacienteId) return;
-		   ultimoPacienteId = pacienteId;
 		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
 		   await renderPacienteCard(pacienteSel || null);
