@@ -98,6 +98,15 @@ window.cargarDatosDashboard = async function() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+		// Mostrar versión real desde package.json en configuración
+		fetch('../package.json')
+			.then(res => res.json())
+			.then(pkg => {
+				const versionSpan = document.getElementById('app-version');
+				if (versionSpan && pkg.version) {
+					versionSpan.textContent = pkg.version;
+				}
+			});
 	cargarDatosDashboard();
 
 	// --- Mostrar notificaciones recientes en el dashboard ---
@@ -114,10 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
 			.map(n => {
 				return { ...n, _fechaObj: new Date(n.fecha) };
 			});
-		// Filtrar para mostrar las 10 más recientes + todas las de tipo 'Incidencia' (case-insensitive)
-		const incidencias = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() === 'incidencia');
-		const otras = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() !== 'incidencia').slice(0, 10);
-		const mostrar = [...incidencias, ...otras]; // No ordenar, solo mostrar en el orden recibido
+		// Mostrar solo las 5 más recientes
+		const mostrar = notificacionesConFecha.slice(0, 5);
 		ul.innerHTML = mostrar.map(n => {
 			const fechaObj = n._fechaObj;
 			const dia = String(fechaObj.getDate()).padStart(2, '0');
@@ -182,10 +189,8 @@ async function actualizarNotificacionesDashboard() {
 		.map(n => {
 			return { ...n, _fechaObj: new Date(n.fecha) };
 		});
-	// Filtrar para mostrar las 10 más recientes + todas las de tipo 'Incidencia' (case-insensitive)
-	const incidencias = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() === 'incidencia');
-	const otras = notificacionesConFecha.filter(n => String(n.tipo).toLowerCase() !== 'incidencia').slice(0, 10);
-	const mostrar = [...incidencias, ...otras]; // No ordenar, solo mostrar en el orden recibido
+	// Mostrar solo las 5 más recientes
+	const mostrar = notificacionesConFecha.slice(0, 5);
 	ul.innerHTML = mostrar.map(n => {
 		const fechaObj = n._fechaObj;
 		const dia = String(fechaObj.getDate()).padStart(2, '0');
@@ -293,12 +298,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					if (filtro) {
 						if (idx === 0) {
 							filtro.value = '';
-							console.debug('[Dashboard Card Click] idx:', idx, 'Todos');
 						} else {
 							const nombre = tipoAccesoNombres[idx-1];
 							const id = tipoAccesoIds[nombre];
 							filtro.value = id;
-							console.debug('[Dashboard Card Click] idx:', idx, 'nombre:', nombre, 'id:', id);
 						}
 						filtro.dispatchEvent(new Event('change'));
 					}
@@ -350,7 +353,6 @@ document.addEventListener('DOMContentLoaded', function() {
 									filtroFechaFin.value = '';
 									filtroFechaFin.dispatchEvent(new Event('change'));
 								}
-								console.debug('[Pacientes Section Exit] Reiniciar todos los filtros');
 							}
 						}, 100);
 					});

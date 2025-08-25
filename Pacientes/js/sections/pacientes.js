@@ -1316,14 +1316,10 @@ async function crearPaciente() {
 		activo: true
 	};
 
-	console.log('Creando paciente con acceso:', pacienteObj, accesoObj);
-	console.log('Acceso activo previo:', accesoActivo);
-
 	// 2. Crear paciente y acceso en el backend
 	const res = await ipcRenderer.invoke('add-paciente', { ...pacienteObj, acceso: accesoObj });
 	if (!res || !res.id || !res.acceso_id) {
 		mostrarMensaje('Error al crear paciente o acceso', 'danger');
-		console.log('Error al crear paciente o acceso:', res);
 		return;
 	}
 
@@ -1340,10 +1336,8 @@ async function crearPaciente() {
 		paciente_id: res.id,
 		activo: true
 	};
-	console.log('Fuera Pendiente tipo ID:', pendienteObj);
 	if (pendienteObj.pendiente_tipo_id && pendienteObj.pendiente_tipo_acceso_id 
 		&& pendienteObj.pendiente_tipo_id !== "" && pendienteObj.pendiente_tipo_acceso_id !== "") {
-			console.log('Dentro Creando pendiente:', pendienteObj);
 			await ipcRenderer.invoke('pendiente-add', pendienteObj);
 	}
 	// Resultado final
@@ -1384,6 +1378,11 @@ async function crearPaciente() {
 	} else {
 		const nombreCompleto = document.getElementById('nombre').value + ' ' + document.getElementById('apellidos').value;
 		mostrarMensaje(`Paciente creado correctamente: <b>${nombreCompleto}</b>`, 'success');
+	if (window.mostrarConfetti) window.mostrarConfetti();
+	// Reproducir sonido de éxito
+	const audio = new Audio('../assets/sounds/success-ta-da.mp3');
+	audio.volume = 0.7;
+	audio.play();
 	}
 	incidenciaValoresTemp = {}; // Limpiar variable temporal tras guardar
 	// Actualizar cards del dashboard

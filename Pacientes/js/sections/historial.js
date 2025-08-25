@@ -682,12 +682,10 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (origen === 'pacientes') {
 					// Si viene de pacientes.js, el id está en el data-paciente-id del modal
 					pacienteId = modalIncidenciaEl?.getAttribute('data-paciente-id') ? Number(modalIncidenciaEl.getAttribute('data-paciente-id')) : null;
-					console.log('Paciente ID desde pacientes.js:', pacienteId);
 				} else {
 					// Si viene de historial, usar el select
 					const selectPaciente = document.getElementById('filtro-paciente-historial');
 					pacienteId = selectPaciente && selectPaciente.value ? Number(selectPaciente.value) : null;
-					console.log('Paciente ID desde historial:', pacienteId);
 				}
 				const tipoIncidenciaId = document.getElementById('incidenciaTipo')?.value || '';
 				const fecha = document.getElementById('incidenciaFecha')?.value || '';
@@ -695,14 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
 				let tipoAccesoId = null;
 				let etiquetaId = null;
 				let pacienteSelect = null;
-				console.log('Paciente ID para incidencia:', pacienteId);
 				await ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
 					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
 					if (pacienteSel && pacienteSel.tipo_acceso) {
 						tipoAccesoId = pacienteSel.tipo_acceso.id;
 						pacienteSelect = pacienteSel;
-						console.log('Paciente:', pacienteSelect);
-						console.log('Tipo de acceso ID:', tipoAccesoId);
 					}
 				});
 				// El campo tipo es el nombre del tipo de incidencia (no el id)

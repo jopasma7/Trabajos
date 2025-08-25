@@ -253,7 +253,6 @@
               </div>
             </div>
           </section>
-
           <!-- Pacientes Section (movido) -->
           <section id="pacientes-section" class="section d-none">
             <div class="card shadow-sm p-3">
@@ -679,13 +678,72 @@
           </section>
           <!-- Configuración Section -->
           <section id="configuracion-section" class="section d-none">
-            <div class="d-flex align-items-center mb-3">
-              <h2 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Configuración</h2>
-            </div>
-            <div class="card shadow-sm p-4">
-              <h5 class="card-title mb-3">Preferencias</h5>
-              <p class="card-text">Personaliza la aplicación según tus necesidades.</p>
-              <button class="btn btn-outline-secondary"><i class="bi bi-palette"></i> Cambiar Tema</button>
+            <div class="row g-4">
+              <div class="col-12 col-md-6">
+                <div class="card border-0 p-3 h-100 w-100" style="background: #fff; border-radius: 1.2rem; box-shadow: 0 4px 18px rgba(60,100,180,0.10);">
+                  <div class="d-flex align-items-center mb-3">
+                    <h2 class="card-title fs-4 mb-0 me-2">Preferencias</h2>
+                    <span class="badge bg-danger bg-gradient" style="font-size:1rem;">Próximamente</span>
+                  </div>
+                  <p class="card-text">Configura la experiencia de Gigi Hospital a tu gusto. Ajusta opciones visuales, idioma y notificaciones para trabajar de forma cómoda y eficiente.</p>
+                  <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label for="preferencias-idioma" class="form-label mb-1"><i class="bi bi-translate me-1"></i> Idioma</label>
+                      <select id="preferencias-idioma" class="form-select form-select-sm w-auto d-inline-block">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                      </select>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label class="form-label mb-1"><i class="bi bi-bell me-1"></i> Notificaciones</label>
+                      <div class="form-check form-switch d-inline-block ms-2">
+                        <input class="form-check-input" type="checkbox" id="preferencias-notificaciones" checked>
+                        <label class="form-check-label" for="preferencias-notificaciones">Activar</label>
+                      </div>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label class="form-label mb-1"><i class="bi bi-moon me-1"></i> Modo oscuro</label>
+                      <div class="form-check form-switch d-inline-block ms-2">
+                        <input class="form-check-input" type="checkbox" id="preferencias-modo-oscuro">
+                        <label class="form-check-label" for="preferencias-modo-oscuro">Activar</label>
+                      </div>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label for="preferencias-fuente" class="form-label mb-1"><i class="bi bi-fonts me-1"></i> Tamaño de fuente</label>
+                      <select id="preferencias-fuente" class="form-select form-select-sm w-auto d-inline-block">
+                        <option value="normal">Normal</option>
+                        <option value="grande">Grande</option>
+                        <option value="extra-grande">Extra grande</option>
+                      </select>
+                    </li>
+                  </ul>
+                  <p class="text-muted small mt-3 mb-0">Las preferencias se guardan automáticamente y se aplican en toda la aplicación.</p>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="card border-0 p-3 h-100 w-100" style="background: linear-gradient(120deg, #e3f0ff 60%, #f8fafc 100%); border-radius: 1.2rem; box-shadow: 0 4px 18px rgba(60,100,180,0.10);">
+                  <div class="d-flex align-items-center mb-4 gap-3">
+                    <div class="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width:54px; height:54px; overflow:hidden;">
+                      <img src="../assets/app.ico" alt="App Icon" style="width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(60,100,180,0.15));">
+                    </div>
+                    <div>
+                      <h4 class="fw-bold mb-1" style="letter-spacing:1px; color:#2a4365;">Gigi Hospital</h4>
+                      <span class="badge bg-primary bg-gradient fs-6 shadow-sm">v1.0.3</span>
+                    </div>
+                  </div>
+                  <hr class="my-3" style="border-top:1.5px solid #b6c2d6;">
+                  <ul class="list-group list-group-flush mb-3 rounded-3 overflow-hidden">
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Creador:</strong> <span class="text-primary fw-semibold">Alejandro Pastor</span></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Versión:</strong> <span class="fw-semibold" id="app-version">1.0.3</span></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Contacto:</strong> <a href="mailto:Alejandro-benilloba@hotmail.com" class="text-decoration-none text-primary fw-semibold">Alejandro-benilloba@hotmail.com</a></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Año:</strong> <span class="fw-semibold">2025</span></li>
+                  </ul>
+                  <div class="mt-2">
+                    <p class="text-secondary mb-1" style="font-size:1.05rem;">Esta aplicación está diseñada para la gestión clínica de pacientes con acceso vascular.</p>
+                    <p class="text-muted small mb-0">Todos los derechos reservados &copy; Alejandro Pastor</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
           <!-- Etiquetas Section -->
@@ -1345,6 +1403,7 @@
   <script src="../assets/js/chart.min.js"></script>
   <!-- <script src="../js/sections/dashboard.js"></script> -->
   <script src="../js/utils/messages.js"></script>
+  <script src="../js/utils/animaciones.js"></script>
   <script src="../js/utils/emoji-picker.js"></script>
   <!-- <script src="../js/sections/agenda.js"></script> -->
 
