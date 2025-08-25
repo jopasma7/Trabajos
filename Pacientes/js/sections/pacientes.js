@@ -98,22 +98,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 			const btn = e.target.closest('.btn-historial');
 			const pacienteIdRaw = btn.getAttribute('data-id');
 			const pacienteId = pacienteIdRaw ? Number(pacienteIdRaw) : null;
-			// Navegar a la sección de historial clínico
-			document.querySelectorAll('.section').forEach(sec => sec.classList.add('d-none'));
-			document.getElementById('historial-section').classList.remove('d-none');
-			// Actualizar el sidebar para marcar la sección 'historial' como activa
-			document.querySelectorAll('#menu .nav-link').forEach(link => {
-				link.classList.remove('active');
-				if (link.getAttribute('data-section') === 'historial') {
-					link.classList.add('active');
-				}
-			});
+			// Navegar a la sección de historial clínico usando showSection para refresco centralizado
+			if (window.showSection) {
+				window.currentSection = 'historial'; // Establecer correctamente la sección actual
+				window.showSection('historial');
+			}
 			// Seleccionar el paciente en el selector de historial
 			const selector = document.getElementById('filtro-paciente-historial');
 			if (selector && pacienteId) {
 				selector.value = pacienteId;
-				// Lanzar el evento change para que se actualice el historial
 				selector.dispatchEvent(new Event('change'));
+				// Renderizar el card con la info del usuario seleccionado
+				if (window.renderPacienteCard) {
+					// Buscar el paciente en la lista actual
+					ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+						const pacienteObj = pacientes.find(p => p.id === pacienteId);
+						if (pacienteObj) {
+							window.renderPacienteCard(pacienteObj);
+						}
+					});
+				}
 			}
 		}
 	});
@@ -171,10 +175,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
 					// Obtener nombre del paciente
 					let nombrePaciente = '';
+					let pacienteSelect = null;
 					if (window.etiquetasGlobales && nuevaIncidencia.paciente_id) {
 						const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 						const pacienteSel = pacientes.find(p => Number(p.id) === Number(nuevaIncidencia.paciente_id));
-						if (pacienteSel) nombrePaciente = `${pacienteSel.nombre} ${pacienteSel.apellidos}`;
+						if (pacienteSel) {
+							nombrePaciente = `${pacienteSel.nombre} ${pacienteSel.apellidos}`;
+							pacienteSelect = pacienteSel;
+						}
 					}
 					const mensajeNotificacion = `Nueva incidencia registrada para el paciente <strong>${nombrePaciente}</strong>: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
 					await ipcRenderer.invoke('notificaciones-add', {
@@ -193,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 						fecha: nuevaIncidencia.fecha,
 						tipo_evento: 'Incidencia',
 						motivo: mensajeNotificacion,
-						profesional_id: null,
+						profesional_id: pacienteSelect && pacienteSelect.profesional_id ? pacienteSelect.profesional_id : null,
 						notas: '',
 						adjuntos: ''
 					});
@@ -233,8 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 			window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
 				const option = document.createElement('option');
 				option.value = tag.id;
-				// Emoji/icono delante del nombre
-				option.textContent = `${tag.icono ? tag.icono + ' ' : '🏷️ '}${tag.nombre}`;
+				// Siempre mostrar el emoji 🏷️ antes del nombre
+				option.textContent = `🏷️ ${tag.nombre}`;
 				incidenciaTipoSelect.appendChild(option);
 			});
 		}
@@ -662,7 +670,7 @@ document.addEventListener('click', async function(e) {
 		document.getElementById('lado').value = paciente.acceso?.ubicacion_lado || paciente.ubicacion_lado || '';
 		const pendienteSelect = document.getElementById('pendiente');
 		pendienteSelect.value = paciente.pendiente?.pendiente_tipo_id || '';
-		document.getElementById('accesoPendiente').value = paciente.pendiente?.tabla_acceso_id_vinculado || paciente.pendiente?.pendiente_tipo_acceso_id || '';
+		document.getElementById('accesoPendiente').value = paciente.pendiente?.pendiente_tipo_acceso_id || '';
 		// Ocultar accesoPendiente si pendiente es 'No Pendiente' al editar
 		const accesoPendienteGroup = document.getElementById('accesoPendiente-group');
 		if (accesoPendienteGroup) {
@@ -727,6 +735,7 @@ btnGuardarPaciente.addEventListener('click', function(e) {
 			errorFocus = true;
 		}
 		if (errorFocus) return;
+		//console.log('[DEBUG] Guardando Editando paciente ID:', window.pacienteEditando);
 		editarPaciente(window.pacienteEditando.id);
 	} else {
 		// Crear nuevo paciente
@@ -1216,120 +1225,115 @@ function limpiarCamposNuevoPaciente() {
 // Crear nuevo paciente
 async function crearPaciente() {
 	const profesionalValue = document.getElementById('profesional').value;
-	const pendienteObj = {
-		id: null,
-		tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
-		fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-		ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
-		lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
-		profesional_id: profesionalValue,
-		pendiente_tipo_id: document.getElementById('pendiente').value,
-		pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
-		paciente_id: null,
-		activo: true
-	};
-	// Validaciones de campos obligatorios
-	const nombre = document.getElementById('nombre').value;
-	const apellidos = document.getElementById('apellidos').value;
-	const sexo = document.getElementById('sexo').value;
-	const profesional = document.getElementById('profesional').value;
-	const tipoAcceso = document.getElementById('tipoAcceso').value;
-	const ubicacion = document.getElementById('ubicacion').value;
-	const fechaInstalacionAcceso = document.getElementById('fechaInstalacionAcceso').value;
-	// Validación condicional de campos visibles
-	const fechaInstalacionAccesoPendiente = document.getElementById('fechaInstalacionAccesoPendiente');
-	const chdUbicacion = document.getElementById('chd-ubicacion');
-	const chdLado = document.getElementById('chd-lado');
-	let errorFocus = null;
-	// Usar getComputedStyle para verificar visibilidad real
-	if (fechaInstalacionAccesoPendiente && window.getComputedStyle(fechaInstalacionAccesoPendiente).display !== 'none' && !fechaInstalacionAccesoPendiente.value) {
-		fechaInstalacionAccesoPendiente.focus();
-		mostrarMensaje('El campo Fecha Instalación Acceso Pendiente es obligatorio', 'danger');
-		errorFocus = true;
+	// Obtener el acceso activo del paciente antes de crear el pendiente
+	let accesoActivo = null;
+	try {
+		accesoActivo = await ipcRenderer.invoke('get-acceso-by-paciente', null); // null porque el paciente aún no existe
+	} catch (e) {
+		accesoActivo = null;
 	}
-	if (chdUbicacion && chdUbicacion.parentElement && window.getComputedStyle(chdUbicacion.parentElement).display !== 'none' && !chdUbicacion.value) {
-		chdUbicacion.focus();
-		mostrarMensaje('El campo Ubicación CHD es obligatorio', 'danger');
-		errorFocus = true;
+
+	// Validaciones compactas de campos obligatorios y condicionales
+	const campos = [
+		{ id: 'nombre', msg: 'El campo Nombre es obligatorio' },
+		{ id: 'apellidos', msg: 'El campo Apellidos es obligatorio' },
+		{ id: 'sexo', msg: 'El campo Sexo es obligatorio' },
+		{ id: 'profesional', msg: 'El campo Profesional a Cargo es obligatorio' },
+		{ id: 'tipoAcceso', msg: 'El campo Tipo de Acceso es obligatorio' },
+		{ id: 'ubicacion', msg: 'El campo Ubicación Anatómica es obligatorio' },
+		{ id: 'fechaInstalacionAcceso', msg: 'El campo Fecha Instalación del Acceso es obligatorio' }
+	];
+	for (const campo of campos) {
+		const el = document.getElementById(campo.id);
+		if (!el || !el.value) {
+			if (el) el.focus();
+			mostrarMensaje(campo.msg, 'danger');
+			return;
+		}
 	}
-	if (chdLado && chdLado.parentElement && window.getComputedStyle(chdLado.parentElement).display !== 'none' && !chdLado.value) {
-		chdLado.focus();
-		mostrarMensaje('El campo Lado CHD es obligatorio', 'danger');
-		errorFocus = true;
+	// Validaciones condicionales de campos visibles
+	const condicionales = [
+		{ id: 'fechaInstalacionAccesoPendiente', msg: 'El campo Fecha Instalación Acceso Pendiente es obligatorio' },
+		{ id: 'chd-ubicacion', msg: 'El campo Ubicación CHD es obligatorio', parent: true },
+		{ id: 'chd-lado', msg: 'El campo Lado CHD es obligatorio', parent: true }
+	];
+	for (const campo of condicionales) {
+		const el = document.getElementById(campo.id);
+		if (el) {
+			const visible = campo.parent ? window.getComputedStyle(el.parentElement).display !== 'none' : window.getComputedStyle(el).display !== 'none';
+			if (visible && !el.value) {
+				el.focus();
+				mostrarMensaje(campo.msg, 'danger');
+				return;
+			}
+		}
 	}
-	if (errorFocus) return;
-	if (!nombre) {
-		document.getElementById('nombre').focus();
-		mostrarMensaje('El campo Nombre es obligatorio', 'danger');
-		return;
-	}
-	if (!apellidos) {
-		document.getElementById('apellidos').focus();
-		mostrarMensaje('El campo Apellidos es obligatorio', 'danger');
-		return;
-	}
-	if (!sexo) {
-		document.getElementById('sexo').focus();
-		mostrarMensaje('El campo Sexo es obligatorio', 'danger');
-		return;
-	}
-	if (!profesional) {
-		document.getElementById('profesional').focus();
-		mostrarMensaje('El campo Profesional a Cargo es obligatorio', 'danger');
-		return;
-	}
-	if (!tipoAcceso) {
-		document.getElementById('tipoAcceso').focus();
-		mostrarMensaje('El campo Tipo de Acceso es obligatorio', 'danger');
-		return;
-	}
-	if (!ubicacion) {
-		document.getElementById('ubicacion').focus();
-		mostrarMensaje('El campo Ubicación Anatómica es obligatorio', 'danger');
-		return;
-	}
-	if (!fechaInstalacionAcceso) {
-		document.getElementById('fechaInstalacionAcceso').focus();
-		mostrarMensaje('El campo Fecha Instalación del Acceso es obligatorio', 'danger');
-		return;
-	}
-	// Recoge los datos del formulario
-	const paciente = {
-		nombre,
-		apellidos,
-		sexo,
+		// 1. Crear paciente y acceso primero
+	const pacienteObj = {
+		nombre: document.getElementById('nombre').value,
+		apellidos: document.getElementById('apellidos').value,
+		sexo: document.getElementById('sexo').value,
 		fecha_nacimiento: document.getElementById('nacimiento').value,
 		fecha_alta: document.getElementById('alta').value,
 		telefono: document.getElementById('telefono').value,
 		correo: document.getElementById('correo').value,
 		direccion: document.getElementById('direccion').value,
 		alergias: document.getElementById('alergias').value,
-		profesional_id: profesional,
-		activo: true,
-		pendiente: pendienteObj,
-		acceso: {
-			tipo_acceso_id: tipoAcceso,
-			ubicacion_anatomica: ubicacion,
-			ubicacion_lado: document.getElementById('lado').value,
-			fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
-			fecha_primera_puncion: document.getElementById('fechaPrimeraPuncion').value,
-			observaciones: document.getElementById('observaciones').value,
-			profesional_id: profesional,
-			activo: true
-		}
+		profesional_id: profesionalValue,
+		activo: true
 	};
-	// Llama al ipcHandler para añadir paciente y obtiene el id
-	const result = await ipcRenderer.invoke('add-paciente', paciente);
+	const accesoObj = {
+		tipo_acceso_id: document.getElementById('tipoAcceso').value,
+		ubicacion_anatomica: document.getElementById('ubicacion').value,
+		ubicacion_lado: document.getElementById('lado').value,
+		fecha_instalacion: document.getElementById('fechaInstalacionAcceso').value,
+		fecha_primera_puncion: document.getElementById('fechaPrimeraPuncion') ? document.getElementById('fechaPrimeraPuncion').value : '',
+		observaciones: document.getElementById('observaciones').value,
+		profesional_id: profesionalValue,
+		activo: true
+	};
+
+	console.log('Creando paciente con acceso:', pacienteObj, accesoObj);
+	console.log('Acceso activo previo:', accesoActivo);
+
+	// 2. Crear paciente y acceso en el backend
+	const res = await ipcRenderer.invoke('add-paciente', { ...pacienteObj, acceso: accesoObj });
+	if (!res || !res.id || !res.acceso_id) {
+		mostrarMensaje('Error al crear paciente o acceso', 'danger');
+		console.log('Error al crear paciente o acceso:', res);
+		return;
+	}
+
+	// 3. Crear pendiente usando el id del acceso recién creado
+	const pendienteObj = {
+		id: null,
+		tabla_acceso_id_vinculado: res.acceso_id,
+		fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+		ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
+		lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
+		profesional_id: profesionalValue,
+		pendiente_tipo_id: document.getElementById('pendiente').value,
+		pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
+		paciente_id: res.id,
+		activo: true
+	};
+	console.log('Fuera Pendiente tipo ID:', pendienteObj);
+	if (pendienteObj.pendiente_tipo_id && pendienteObj.pendiente_tipo_acceso_id 
+		&& pendienteObj.pendiente_tipo_id !== "" && pendienteObj.pendiente_tipo_acceso_id !== "") {
+			console.log('Dentro Creando pendiente:', pendienteObj);
+			await ipcRenderer.invoke('pendiente-add', pendienteObj);
+	}
+	// Resultado final
 	if (window.cargarPacientesHistorial) window.cargarPacientesHistorial();
 
-	const pacienteId = result && result.id ? result.id : null;
-	// Notificación: paciente añadido
+	const pacienteId = res && res.id ? res.id : null;
+	// Notificación y Historial: paciente añadido
 	if (pacienteId) {
 		await ipcRenderer.invoke('notificaciones-add', {
 			tipo: 'Pacientes',
-			mensaje: `Se añadió el paciente ${paciente.nombre} ${paciente.apellidos}`,
+			mensaje: `Se añadió el paciente ${pacienteObj.nombre} ${pacienteObj.apellidos}`,
 			fecha: new Date().toISOString(),
-			usuario_id: paciente.profesional_id || null,
+			usuario_id: pacienteObj.profesional_id || null,
 			paciente_id: pacienteId,
 			extra: ''
 		});
@@ -1339,7 +1343,7 @@ async function crearPaciente() {
 		if (window.addEntradasHistorial) {
 			   await window.addEntradasHistorial('Registro', {
 				   paciente_id: pacienteId,
-				   profesional_id: paciente.profesional_id ? Number(paciente.profesional_id) : null
+				   profesional_id: pacienteObj.profesional_id ? Number(pacienteObj.profesional_id) : null
 			   });
 		}
 	}
@@ -1348,12 +1352,8 @@ async function crearPaciente() {
 	cargarPacientes();
 	const modalEl = document.getElementById('modal-paciente');
 	let modalInstance = bootstrap.Modal.getInstance(modalEl);
-	if (!modalInstance) {
-		modalInstance = new bootstrap.Modal(modalEl);
-	}
-	if (modalInstance) {
-		modalInstance.hide();
-	}
+	if (!modalInstance) modalInstance = new bootstrap.Modal(modalEl);
+	if (modalInstance) modalInstance.hide();
 	limpiarBackdropsDuplicados();
 	if (window.pacienteEditando && window.pacienteEditando.id) {
 		const nombreCompleto = document.getElementById('nombre').value + ' ' + document.getElementById('apellidos').value;
@@ -1425,18 +1425,20 @@ async function editarPaciente(id) {
 		alergias: document.getElementById('alergias').value,
 		profesional_id: document.getElementById('profesional').value,
 		activo: true,
-		pendiente: {
-			id: window.pacienteEditando?.pendiente?.id || null,
-			tabla_acceso_id_vinculado: document.getElementById('accesoPendiente').value,
-			fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
-			profesional_id: document.getElementById('profesional').value,
-			ubicacion_chd: ubicacion_chd.value,
-			lado_chd: document.getElementById('chd-lado').value,
-			pendiente_tipo_id: document.getElementById('pendiente').value,
-			pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
-			paciente_id: id,
-			activo: true
-		},
+		...(document.getElementById('pendiente').value ? {
+			pendiente: {
+				id: window.pacienteEditando?.pendiente?.id || null,
+				tabla_acceso_id_vinculado: window.pacienteEditando?.acceso?.id || null,
+				fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
+				profesional_id: document.getElementById('profesional').value,
+				ubicacion_chd: ubicacion_chd.value,
+				lado_chd: document.getElementById('chd-lado').value,
+				pendiente_tipo_id: document.getElementById('pendiente').value,
+				pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
+				paciente_id: id,
+				activo: true
+			}
+		} : {}),
 		acceso: {
 			tipo_acceso_id: document.getElementById('tipoAcceso').value,
 			ubicacion_anatomica: document.getElementById('ubicacion').value,
@@ -1449,7 +1451,7 @@ async function editarPaciente(id) {
 		}
 	};
 
-	console.log('Paciente a editar:', paciente);
+	//console.log('aaaaaaaaaaaaa Paciente a editar:', paciente);
 
 	await registrarCambiosClinicosHistorial(window.pacienteOriginalEditando, paciente);
 

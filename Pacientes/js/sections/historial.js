@@ -9,7 +9,7 @@ window.cargarEtiquetasHistorial = async function() {
 		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
 			const option = document.createElement('option');
 			option.value = tag.id;
-			option.textContent = `${tag.icono ? tag.icono + ' ' : '🏷️ '}${tag.nombre}`;
+			option.textContent = `🏷️ ${tag.nombre}`;
 			incidenciaTipoSelect.appendChild(option);
 		});
 	}
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
 			const option = document.createElement('option');
 			option.value = tag.id;
-			option.textContent = `${tag.icono ? tag.icono + ' ' : '🏷️ '}${tag.nombre}`;
+			option.textContent = `🏷️ ${tag.nombre}`;
 			incidenciaTipoSelect.appendChild(option);
 		});
 	}
@@ -684,20 +684,27 @@ document.addEventListener('DOMContentLoaded', function() {
 				if (origen === 'pacientes') {
 					// Si viene de pacientes.js, el id está en el data-paciente-id del modal
 					pacienteId = modalIncidenciaEl?.getAttribute('data-paciente-id') ? Number(modalIncidenciaEl.getAttribute('data-paciente-id')) : null;
+					console.log('Paciente ID desde pacientes.js:', pacienteId);
 				} else {
 					// Si viene de historial, usar el select
 					const selectPaciente = document.getElementById('filtro-paciente-historial');
 					pacienteId = selectPaciente && selectPaciente.value ? Number(selectPaciente.value) : null;
+					console.log('Paciente ID desde historial:', pacienteId);
 				}
 				const tipoIncidenciaId = document.getElementById('incidenciaTipo')?.value || '';
 				const fecha = document.getElementById('incidenciaFecha')?.value || '';
 				const medidas = document.getElementById('incidenciaMedidas')?.value || '';
 				let tipoAccesoId = null;
 				let etiquetaId = null;
+				let pacienteSelect = null;
+				console.log('Paciente ID para incidencia:', pacienteId);
 				await ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
 					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
 					if (pacienteSel && pacienteSel.tipo_acceso) {
 						tipoAccesoId = pacienteSel.tipo_acceso.id;
+						pacienteSelect = pacienteSel;
+						console.log('Paciente:', pacienteSelect);
+						console.log('Tipo de acceso ID:', tipoAccesoId);
 					}
 				});
 				// El campo tipo es el nombre del tipo de incidencia (no el id)
@@ -754,7 +761,7 @@ document.addEventListener('DOMContentLoaded', function() {
 						fecha: nuevaIncidencia.fecha,
 						tipo_evento: 'Incidencia',
 						motivo: mensajeNotificacion,
-						profesional_id: null,
+						profesional_id: pacienteSelect && pacienteSelect.profesional_id ? pacienteSelect.profesional_id : null,
 						notas: '',
 						adjuntos: ''
 					});
@@ -825,38 +832,37 @@ document.addEventListener('DOMContentLoaded', function() {
 		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
 			const option = document.createElement('option');
 			option.value = tag.id;
-			option.textContent = `${tag.icono ? tag.icono + ' ' : '🏷️ '}${tag.nombre}`;
+			option.textContent = `🏷️ ${tag.nombre}`;
 			incidenciaTipoSelect.appendChild(option);
 		});
 	}
-			// Solo rellenar el box de tipo de acceso si estamos en historial
+			// Rellenar SIEMPRE el box de tipo de acceso al abrir el modal desde historial
 			const modalIncidenciaEl = document.getElementById('modal-incidencia');
-			const origen = modalIncidenciaEl?.getAttribute('data-origen') || 'historial';
-			if (origen === 'historial') {
-				const select = document.getElementById('filtro-paciente-historial');
-				let pacienteId = select && select.value ? Number(select.value) : null;
-				const accesoIcono = document.getElementById('incidenciaAccesoIcono');
-				const accesoNombre = document.getElementById('incidenciaAccesoNombre');
-				const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
-				if (pacienteId) {
-					ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
-						const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
-						if (pacienteSel && pacienteSel.tipo_acceso) {
-							// Mostrar icono como emoji si existe, si no, mostrar 🏷️
-							if (accesoIcono) accesoIcono.textContent = pacienteSel.tipo_acceso.icono ? pacienteSel.tipo_acceso.icono : '🏷️';
-							if (accesoNombre) accesoNombre.textContent = pacienteSel.tipo_acceso.nombre || '';
-							if (accesoDescripcion) accesoDescripcion.textContent = pacienteSel.tipo_acceso.descripcion || '';
-						} else {
-							if (accesoIcono) accesoIcono.textContent = '';
-							if (accesoNombre) accesoNombre.textContent = '';
-							if (accesoDescripcion) accesoDescripcion.textContent = '';
-						}
-					});
-				} else {
-					if (accesoIcono) accesoIcono.textContent = '';
-					if (accesoNombre) accesoNombre.textContent = '';
-					if (accesoDescripcion) accesoDescripcion.textContent = '';
-				}
+			// Forzar el origen a 'historial' al abrir desde historial.js
+			if (modalIncidenciaEl) modalIncidenciaEl.setAttribute('data-origen', 'historial');
+			const select = document.getElementById('filtro-paciente-historial');
+			let pacienteId = select && select.value ? Number(select.value) : null;
+			const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+			const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+			const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+			if (pacienteId) {
+				ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+					if (pacienteSel && pacienteSel.tipo_acceso) {
+						// Mostrar 🏷️
+						if (accesoIcono) accesoIcono.textContent = pacienteSel.tipo_acceso.icono ? pacienteSel.tipo_acceso.icono : '🏷️';
+						if (accesoNombre) accesoNombre.textContent = pacienteSel.tipo_acceso.nombre || '';
+						if (accesoDescripcion) accesoDescripcion.textContent = pacienteSel.tipo_acceso.descripcion || '';
+					} else {
+						if (accesoIcono) accesoIcono.textContent = '';
+						if (accesoNombre) accesoNombre.textContent = '';
+						if (accesoDescripcion) accesoDescripcion.textContent = '';
+					}
+				});
+			} else {
+				if (accesoIcono) accesoIcono.textContent = '';
+				if (accesoNombre) accesoNombre.textContent = '';
+				if (accesoDescripcion) accesoDescripcion.textContent = '';
 			}
 			// Abre el modal profesional de incidencias
 			var modalIncidenciaVar = document.getElementById('modal-incidencia');
@@ -902,26 +908,6 @@ function formatearFecha(fechaStr) {
 		return `${partes[2]}-${partes[1]}-${partes[0]}`;
 	}
 	return fechaStr;
-}
-
-// Renderizar timeline visual de eventos clínicos recientes
-function renderTimelinePaciente(eventos) {
-	if (!timeline) return;
-	if (!eventos || eventos.length === 0) {
-		timeline.innerHTML = '<div class="text-muted">Sin datos de evolución disponibles.</div>';
-		return;
-	}
-	timeline.innerHTML = eventos.map(ev => `
-		<div class="d-flex align-items-start mb-3">
-			<div class="icon-circle bg-${ev.color}-subtle text-${ev.color} me-3" style="font-size:1.3em;">
-				<i class="${ev.icono}"></i>
-			</div>
-			<div>
-				<div class="fw-semibold text-${ev.color}">${ev.tipo} <span class="text-muted small ms-2">${ev.fecha}</span></div>
-				<div class="text-dark">${ev.descripcion}</div>
-			</div>
-		</div>
-	`).join('');
 }
 
 // Timeline dinámico con datos reales
@@ -990,7 +976,6 @@ async function renderTimelinePacienteDB(pacienteId) {
 }
 
 // Llamar al timeline dinámico al cargar y al cambiar paciente
-
 document.addEventListener('DOMContentLoaded', function() {
     renderTimelinePacienteDB();
 });

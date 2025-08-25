@@ -243,6 +243,37 @@ db.prepare(`CREATE TABLE IF NOT EXISTS incidencia_tags (
 
 
 // --- Métodos para profesionales ---
+// Insertar profesional de prueba si no existe
+const profesionalPrueba = {
+  nombre: 'Prueba',
+  apellidos: 'Test',
+  sexo: 'Otro',
+  email: 'prueba@test.com',
+  telefono: '123456789',
+  cargo: 'Tester',
+  numero_colegiado: '0000',
+  fecha_nacimiento: '1990-01-01',
+  direccion: 'Calle Falsa 123',
+  notas: 'Profesional de prueba',
+  avatar: ''
+};
+const existePrueba = db.prepare('SELECT 1 FROM profesionales WHERE nombre = ? AND apellidos = ?').get(profesionalPrueba.nombre, profesionalPrueba.apellidos);
+if (!existePrueba) {
+  db.prepare(`INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      profesionalPrueba.nombre,
+      profesionalPrueba.apellidos,
+      profesionalPrueba.sexo,
+      profesionalPrueba.email,
+      profesionalPrueba.telefono,
+      profesionalPrueba.cargo,
+      profesionalPrueba.numero_colegiado,
+      profesionalPrueba.fecha_nacimiento,
+      profesionalPrueba.direccion,
+      profesionalPrueba.notas,
+      profesionalPrueba.avatar
+    );
+}
 db.addProfesional = function(prof) {
   const stmt = db.prepare(`INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(
@@ -620,7 +651,7 @@ db.getPacientesCHDPendienteFAV = function() {
     INNER JOIN pendiente_tipo pt ON pen.pendiente_tipo_id = pt.id
     WHERE pen.activo = 1 AND p.activo = 1
       AND pt.nombre LIKE '%Confección%'
-      AND pen.tabla_acceso_id_vinculado IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%')
+      AND pen.pendiente_tipo_acceso_id IN (SELECT id FROM tipo_acceso WHERE nombre LIKE '%Fístula%')
   `).all();
   pacientes.forEach(p => {
     p.etiquetas = db.getEtiquetasByPaciente(p.id);
@@ -734,25 +765,30 @@ db.getPacientesCHDFAVMadurativo = function() {
 
 // Pacientes con CHD y diagnóstico de Sepsis
 db.getPacientesSepsisCHD = function() {
-  // Seleccionar infecciones activas asociadas a CHD (catéter) y pacientes activos
+  // Seleccionar infecciones activas asociadas a CHD (catéter) y pacientes activos, incluyendo tipo de acceso actual
   const rows = db.prepare(`
     SELECT 
       inf.id as id,
       p.nombre || ' ' || p.apellidos as paciente,
       inf.fecha_infeccion as fecha_diagnostico,
       t.microorganismo_asociado as microorganismo,
-      inf.observaciones as medidas
+      inf.observaciones as medidas,
+      ta.nombre as tipo_acceso
     FROM infecciones inf
     JOIN pacientes p ON p.id = inf.paciente_id
     JOIN tags t ON t.id = inf.tag_id
+    LEFT JOIN acceso a ON a.paciente_id = p.id AND a.activo = 1
+    LEFT JOIN tipo_acceso ta ON a.tipo_acceso_id = ta.id
     WHERE inf.activo = 1 AND p.activo = 1
       AND t.tipo = 'infeccion'
+    GROUP BY inf.id
     ORDER BY inf.fecha_infeccion DESC
   `).all();
   // Añadir número correlativo
   return rows.map((row, idx) => ({
     numero: idx + 1,
     paciente: row.paciente,
+    tipo_acceso: row.tipo_acceso || '',
     fecha_diagnostico: row.fecha_diagnostico,
     microorganismo: row.microorganismo,
     medidas: row.medidas
@@ -937,7 +973,7 @@ db.editPacienteCompleto = function(paciente) {
 
 // --- LÓGICA DE PENDIENTE ---
   if (paciente.pendiente && paciente.pendiente.pendiente_tipo_id) {
-    // Buscar pendiente activo actual
+    // Si hay pendiente, actualizar como antes
     const pendienteActivo = db.prepare('SELECT * FROM pendiente WHERE paciente_id = ? AND activo = 1').get(paciente.id);
     if (pendienteActivo) {
       db.prepare('UPDATE pendiente SET activo = 0 WHERE id = ?').run(pendienteActivo.id);
@@ -953,6 +989,9 @@ db.editPacienteCompleto = function(paciente) {
       pendiente_tipo_acceso_id: paciente.pendiente.pendiente_tipo_acceso_id,
       activo: 1
     });
+  } else {
+    // Si NO hay pendiente, desactivar cualquier pendiente activo anterior
+    db.prepare('UPDATE pendiente SET activo = 0 WHERE paciente_id = ? AND activo = 1').run(paciente.id);
   }
 
   // ...existing code...

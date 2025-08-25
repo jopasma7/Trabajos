@@ -62,7 +62,7 @@ async function obtenerPacientesCHDFAVMadurativo() {
   ]);
 }
 
-// Función para obtener pacientes con Sepsis CHD
+// Función para obtener pacientes con Sepsis
 async function obtenerPacientesSepsisCHD() {
   const { ipcRenderer } = window.require ? window.require('electron') : window.electron;
   // El backend ya devuelve los datos en el formato correcto
@@ -293,7 +293,7 @@ document.getElementById('btn-generar-reporte-chd-fav-madurativo').addEventListen
   }, 200);
 });
 
-// Evento para reporte: Sepsis CHD
+// Evento para reporte: Sepsis
 document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('click', async function() {
   setTimeout(async () => {
   const datosRaw = await obtenerPacientesSepsisCHD();
@@ -314,18 +314,19 @@ document.getElementById('btn-generar-reporte-sepsis-chd').addEventListener('clic
        .map((row, idx) => [
          (row.numero !== undefined ? row.numero : idx + 1),
          row.paciente || '',
+         (row.tipo_acceso && typeof row.tipo_acceso === 'object') ? (row.tipo_acceso.nombre || '') : (typeof row.tipo_acceso === 'string' ? row.tipo_acceso : ''),
          formatearFecha(row.fecha_diagnostico),
          row.microorganismo || '',
          row.medidas || ''
        ])
        .sort((a, b) => a[0] - b[0]); // Sort by patient number
   mostrarModalReporte({
-    titulo: 'Sepsis CHD',
+  titulo: 'Sepsis',
     descripcion: 'Reporte de pacientes con infecciones asociadas a CHD. Permite el seguimiento de casos de infección grave vinculados al catéter, facilitando la gestión clínica y la prevención de complicaciones.',
     mes,
     anio,
     profesional,
-    columnas: ['Nº', 'Paciente', 'Fecha de Diagnóstico', 'Microorganismo asociado', 'Medidas'],
+  columnas: ['Nº', 'Paciente', 'Tipo de Acceso', 'Fecha de Diagnóstico', 'Microorganismo asociado', 'Medidas'],
     datos
   });
   }, 200);

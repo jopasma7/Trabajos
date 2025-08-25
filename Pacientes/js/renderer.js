@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	};
 	const sectionTitle = document.getElementById('section-title');
 
-	function showSection(section) {
+    window.showSection = function showSection(section) {
 		Object.keys(sections).forEach(key => {
 			if (key === section) {
 				sections[key].classList.remove('d-none');
@@ -170,50 +170,54 @@ document.addEventListener('DOMContentLoaded', () => {
 			   sectionTitle.className = '';
 			   sectionTitle.removeAttribute('style');
 		   }
-		// Actualizar nav-link activo
-		navLinks.forEach(link => {
-			link.classList.toggle('active', link.dataset.section === section);
-		});
+        // Actualizar nav-link activo
+        navLinks.forEach(link => {
+            link.classList.toggle('active', link.dataset.section === section);
+        });
 
-		// Ya no refrescamos manualmente la agenda aquí; setupAgendaSection gestiona los eventos y renderizado.
+    // Refrescar selector y cards al salir de historial, independientemente del método de navegación
+    if ((currentSection === 'historial' || window.currentSection === 'historial') && section !== 'historial') {
+        (async () => {
+            try {
+                const selectPaciente = document.getElementById('filtro-paciente-historial');
+                if (selectPaciente) {
+                    const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+                    selectPaciente.innerHTML = '';
+                    pacientes.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = `${p.nombre} ${p.apellidos}`;
+                        selectPaciente.appendChild(opt);
+                    });
+                    let pacienteSel = null;
+                    if (pacientes.length > 0) {
+                        selectPaciente.selectedIndex = 0;
+                        pacienteSel = pacientes[0];
+                    }
+                    if (window.renderPacienteCard) {
+                        await window.renderPacienteCard(pacienteSel);
+                    }
+                    if (window.renderTimelinePacienteDB) {
+                        await window.renderTimelinePacienteDB();
+                    }
+                    if (window.renderHistorial) {
+                        await window.renderHistorial(pacienteSel?.id);
+                    }
+                }
+            } catch (err) { console.error('Error al salir de historial:', err); }
+        })();
+    }
+        // Ya no refrescamos manualmente la agenda aquí; setupAgendaSection gestiona los eventos y renderizado.
 	}
 
 
     let currentSection = 'dashboard';
+    window.currentSection = currentSection;
     navLinks.forEach(link => {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
             const nextSection = link.dataset.section;
 
-            // Si salimos de historial, refrescar card/timeline
-            if (currentSection === 'historial' && nextSection !== 'historial') {
-                setTimeout(async () => {
-                    try {
-                        const selectPaciente = document.getElementById('filtro-paciente-historial');
-                        if (selectPaciente) {
-                            const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
-                            selectPaciente.innerHTML = '';
-                            pacientes.forEach(p => {
-                                const opt = document.createElement('option');
-                                opt.value = p.id;
-                                opt.textContent = `${p.nombre} ${p.apellidos}`;
-                                selectPaciente.appendChild(opt);
-                            });
-                            let pacienteSel = null;
-                            if (pacientes.length > 0) {
-                                selectPaciente.value = pacientes[0].id;
-                                pacienteSel = pacientes[0];
-                            }
-                            if (window.renderPacienteCard) {
-                                await window.renderPacienteCard(pacienteSel);
-                            }
-                            if (window.renderTimelinePacienteDB) {
-                                await window.renderTimelinePacienteDB();
-                            }
-                        }
-                    } catch (err) { console.error('Error al salir de historial:', err); }
-                }, 150);
-            }
 
             showSection(nextSection);
 
@@ -223,6 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             currentSection = nextSection;
+            window.currentSection = currentSection;
         });
     });
 

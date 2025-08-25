@@ -28,28 +28,29 @@ function prepararFormularioEtiqueta(tag = null) {
     if (inputMicroorganismoActual) inputMicroorganismoActual.value = tag.microorganismo_asociado || '';
     inputTipo.dispatchEvent(new Event('change'));
     // Establecer el icono después del cambio de tipo para evitar que se sobrescriba
-    inputIcono.value = tag.icono || '';
-    // Actualizar el botón de emoji si existe
-    const btnIcono = document.getElementById('etiqueta-icono-btn');
-    if (btnIcono) {
-      btnIcono.textContent = tag.icono || '🩸';
+    if (tag.tipo === 'incidencia') {
+      inputIcono.value = '';
+      const btnIcono = document.getElementById('etiqueta-icono-btn');
+      if (btnIcono) btnIcono.textContent = '';
+    } else {
+      inputIcono.value = tag.icono || '';
+      const btnIcono = document.getElementById('etiqueta-icono-btn');
+      if (btnIcono) btnIcono.textContent = tag.icono || '🩸';
     }
   } else {
     inputNombre.value = '';
     inputColor.value = '';
     inputDescripcion.value = '';
     inputId.value = '';
-    inputIcono.value = '';
-    inputTipo.value = 'infeccion';
-    inputTipo.dispatchEvent(new Event('change'));
-    // Limpiar microorganismo asociado
-    const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
-    if (inputMicroorganismoActual) inputMicroorganismoActual.value = '';
-    // Actualizar el botón de emoji si existe
-    const btnIcono = document.getElementById('etiqueta-icono-btn');
-    if (btnIcono) {
-      btnIcono.textContent = '🩸';
-    }
+  inputIcono.value = '';
+  inputTipo.value = 'infeccion';
+  inputTipo.dispatchEvent(new Event('change'));
+  // Limpiar microorganismo asociado
+  const inputMicroorganismoActual = document.getElementById('etiqueta-microorganismo');
+  if (inputMicroorganismoActual) inputMicroorganismoActual.value = '';
+  // Actualizar el botón de emoji si existe
+  const btnIcono = document.getElementById('etiqueta-icono-btn');
+  if (btnIcono) btnIcono.textContent = '';
   }
 }
 
@@ -114,6 +115,20 @@ function showAlert(msg, tipo = 'success') {
     // Fallback mínimo si no está cargada (no debería ocurrir)
     alert(msg);
   }
+}
+
+// Limpiar icono si el tipo es incidencia
+if (inputTipo) {
+  inputTipo.addEventListener('change', function() {
+    const btnIcono = document.getElementById('etiqueta-icono-btn');
+    if (this.value === 'incidencia') {
+      inputIcono.value = '';
+      if (btnIcono) btnIcono.textContent = '';
+    } else if (this.value === 'infeccion') {
+      if (!inputIcono.value) inputIcono.value = '🩸';
+      if (btnIcono && !btnIcono.textContent) btnIcono.textContent = '🩸';
+    }
+  });
 }
 
 function renderTags() {
@@ -250,8 +265,14 @@ function actualizarGruposTipo() {
 
 formEtiqueta.addEventListener('submit', async (e) => {
   e.preventDefault();
-  // Si el campo está vacío, asigna el emoji por defecto antes de recoger los datos
-  if (!inputIcono.value) inputIcono.value = '🩸';
+  // Solo asigna el emoji por defecto si el tipo es 'infeccion'
+  if (!inputIcono.value) {
+    if (inputTipo.value === 'infeccion') {
+      inputIcono.value = '🩸';
+    } else {
+      inputIcono.value = '';
+    }
+  }
   const nuevaEtiqueta = getEtiquetaFormData();
   if (nuevaEtiqueta.id) {
     await ipcRenderer.invoke('tags-update', nuevaEtiqueta);
