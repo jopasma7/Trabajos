@@ -1,3 +1,14 @@
+/* Badge especial para sidebar "Nuevo" */
+.badge-nuevo {
+  font-size: 0.78em;
+  vertical-align: middle;
+  border-radius: 1em;
+  font-weight: 700;
+  padding: 2px 1px;
+  box-shadow: 0 2px 8px rgba(255,193,7,0.18);
+  background: linear-gradient(90deg,#f1ff95 60%,#a6a46d 100%);
+  text-shadow: 0 1px 2px #fff9c4;
+}
 /* Alertas personalizadas */
 .custom-alert {
   border-radius: 1.3em;
