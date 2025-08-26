@@ -474,6 +474,8 @@ db.addPaciente = function(paciente) {
   return { id: info.lastInsertRowid };
 };
 
+
+
 db.editPaciente = function(paciente) {
   const stmt = db.prepare('UPDATE pacientes SET nombre = ?, apellidos = ?, sexo = ?, fecha_nacimiento = ?, fecha_alta = ?, telefono = ?, correo = ?, direccion = ?, alergias = ?, avatar = ?, profesional_id = ? WHERE id = ?');
   const info = stmt.run(
@@ -582,10 +584,10 @@ db.getPacientesCompletos = function() {
       tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inf.tag_id)
     }));
     // Incidencias con tag
-    let incidencias = db.prepare('SELECT i.*, it.tag_id as tagId FROM incidencias i JOIN incidencia_tags it ON i.id = it.incidencia_id WHERE i.paciente_id = ? AND i.activo = 1 ORDER BY i.fecha DESC, i.id DESC').all(paciente.id);
+    let incidencias = db.prepare('SELECT i.*, it.tag_id as etiqueta_id FROM incidencias i JOIN incidencia_tags it ON i.id = it.incidencia_id WHERE i.paciente_id = ? AND i.activo = 1 ORDER BY i.fecha DESC, i.id DESC').all(paciente.id);
     incidencias = incidencias.map(inc => ({
       ...inc,
-      tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inc.tagId)
+      tag: db.prepare('SELECT * FROM tags WHERE id = ?').get(inc.etiqueta_id)
     }));
     return {
       ...paciente,
@@ -1294,3 +1296,28 @@ db.deleteInfeccionByEtiqueta = function(etiquetaId) {
   const info = stmt.run(etiquetaId);
   return { success: true, deleted: info.changes };
 };
+
+
+// Función para insertar 30 pacientes de prueba con todos los campos
+/**
+ * Inserta 30 pacientes de prueba en la base de datos
+ */
+db.insertarPacientesPrueba = function() {
+  for (let i = 1; i <= 30; i++) {
+    db.addPaciente({
+      nombre: `Paciente${i}`,
+      apellidos: `Apellido${i}`,
+      sexo: i % 2 === 0 ? 'M' : 'F',
+      fecha_nacimiento: `198${i % 10}-0${(i % 12) + 1}-15`,
+      fecha_alta: `2025-08-26`,
+      telefono: `6000000${i.toString().padStart(2, '0')}`,
+      correo: `paciente${i}@prueba.com`,
+      direccion: `Calle Falsa ${i}, Ciudad`,
+      alergias: i % 3 === 0 ? 'Penicilina' : '',
+      avatar: '',
+      profesional_id: 1 // Asume que existe un profesional con id 1
+    });
+  }
+};
+// Llamada automática para insertar pacientes de prueba
+db.insertarPacientesPrueba();

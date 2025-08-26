@@ -170,6 +170,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
 				if (resultado && resultado.success) {
 					mostrarMensaje('Incidencia guardada correctamente', 'success');
+					// Añadir la etiqueta al array etiquetas del paciente
+					const pacienteObj = pacientesGlobal.find(p => Number(p.id) === Number(nuevaIncidencia.paciente_id));
+					if (pacienteObj) {
+						if (!Array.isArray(pacienteObj.etiquetas)) pacienteObj.etiquetas = [];
+						if (!pacienteObj.etiquetas.includes(nuevaIncidencia.etiqueta_id)) {
+							pacienteObj.etiquetas.push(nuevaIncidencia.etiqueta_id);
+						}
+					}
 					// Crear notificación
 					const tag = window.etiquetasGlobales?.find(t => String(t.id) === String(nuevaIncidencia.etiqueta_id));
 					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
@@ -233,6 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 		if (!window.etiquetasGlobales) {
 			window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
 		}
+		// Poblar etiquetasPorId para filtros
+		etiquetasPorId = Object.fromEntries(window.etiquetasGlobales.map(tag => [tag.id, tag]));
 		// Rellenar select de tipo de incidencia
 		const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
 		if (incidenciaTipoSelect && window.etiquetasGlobales) {
@@ -396,13 +406,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 	// Listeners para filtros de la tabla pacientes
 	if (inputBusqueda) {
-		inputBusqueda.addEventListener('input', actualizarTablaPacientes);
+		inputBusqueda.addEventListener('input', function() {
+			paginaActual = 1;
+			actualizarTablaPacientes();
+		});
 	}
 	if (filtroTipoAcceso) {
-		filtroTipoAcceso.addEventListener('change', actualizarTablaPacientes);
+		filtroTipoAcceso.addEventListener('change', function() {
+			paginaActual = 1;
+			actualizarTablaPacientes();
+		});
 	}
 	if (filtroPendiente) {
-		filtroPendiente.addEventListener('change', cargarPacientes);
+		filtroPendiente.addEventListener('change', function() {
+			paginaActual = 1;
+			cargarPacientes();
+		});
 	}
 });
 
@@ -924,10 +943,14 @@ function filtrarPacientes() {
 	}
 		// Filtro por nombre/apellidos (soporta búsqueda por palabras separadas)
 		const texto = (inputBusqueda?.value || '').toLowerCase().trim();
+		// Función para quitar acentos/diacríticos
+		function quitarAcentos(str) {
+			return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+		}
 		if (texto) {
-			const palabras = texto.split(/\s+/);
+			const palabras = quitarAcentos(texto).split(/\s+/);
 			filtrados = filtrados.filter(p => {
-				const nombreCompleto = `${p.nombre} ${p.apellidos}`.toLowerCase();
+				const nombreCompleto = quitarAcentos(`${p.nombre} ${p.apellidos}`.toLowerCase());
 				return palabras.every(palabra => nombreCompleto.includes(palabra));
 			});
 		}
@@ -1190,11 +1213,20 @@ async function cargarPacientes() {
 	} else {
 		pacientes = await ipcRenderer.invoke('get-pacientes-completos');
 	}
-	// Para cada paciente, asociar los IDs de etiquetas desde sus incidencias activas
+	// Inicializar etiquetasPorId de forma robusta
+	if (!window.etiquetasGlobales || !Array.isArray(window.etiquetasGlobales)) {
+		window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
+	}
+	etiquetasPorId = {};
+	window.etiquetasGlobales.forEach(tag => {
+		etiquetasPorId[tag.id] = tag;
+	});
+
+	// Para cada paciente, asociar los IDs de etiquetas desde sus incidencias activas y de tipo 'incidencia'
 	for (const paciente of pacientes) {
 		if (Array.isArray(paciente.incidencias)) {
 			paciente.etiquetas = paciente.incidencias
-				.filter(inc => inc.activo && inc.etiqueta_id)
+				.filter(inc => inc && inc.activo && inc.etiqueta_id && inc.tag && etiquetasPorId[inc.etiqueta_id]?.tipo === 'incidencia')
 				.map(inc => inc.etiqueta_id);
 		} else {
 			paciente.etiquetas = [];
@@ -1356,6 +1388,7 @@ async function crearPaciente() {
 		});
 		if (window.refrescarNotificacionesDashboard) window.refrescarNotificacionesDashboard();
 
+
 		// Crear entrada de historial tipo Registro
 		if (window.addEntradasHistorial) {
 			   await window.addEntradasHistorial('Registro', {
@@ -1453,8 +1486,8 @@ async function editarPaciente(id) {
 				tabla_acceso_id_vinculado: window.pacienteEditando?.acceso?.id || null,
 				fecha_instalacion_acceso_pendiente: document.getElementById('fechaInstalacionAccesoPendiente').value,
 				profesional_id: document.getElementById('profesional').value,
-				ubicacion_chd: ubicacion_chd.value,
-				lado_chd: document.getElementById('chd-lado').value,
+				ubicacion_chd: document.getElementById('chd-ubicacion') ? document.getElementById('chd-ubicacion').value : '',
+				lado_chd: document.getElementById('chd-lado') ? document.getElementById('chd-lado').value : '',
 				pendiente_tipo_id: document.getElementById('pendiente').value,
 				pendiente_tipo_acceso_id: document.getElementById('accesoPendiente').value,
 				paciente_id: id,
