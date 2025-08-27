@@ -1074,19 +1074,42 @@
                 <div class="col-md-8">
                   <label for="evento-historial" class="form-label">Evento</label>
                   <select class="form-select" id="evento-historial" required>
-                    <option value="Registro">Registro</option>
-                    <option value="Actualización">Actualización</option>
-                    <option value="Eliminación">Eliminación</option>
+                    <option value="Actualización">Actualización de Datos</option>
+                    <option value="Cambio de Acceso">Cambio de Acceso</option>
+                    <option value="Eliminación">Eliminación de Datos</option>
+                    <option value="Fallecimiento">Fallecimiento</option>
                     <option value="Otro">Otro</option>
                   </select>
+                </div>
+                <div class="row g-3">
+                  <div class="col-6" id="grupo-tipo-acceso-anterior" style="display:none;">
+                    <label for="tipo-acceso-anterior" class="form-label">Tipo de Acceso (Anterior)</label>
+                    <select class="form-control" id="tipo-acceso-anterior">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-ubicacion-acceso-anterior" style="display:none;">
+                    <label for="ubicacion-acceso-anterior" class="form-label">Ubicación (Acceso Anterior)</label>
+                    <select class="form-control" id="ubicacion-acceso-anterior">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-tipo-acceso-nuevo" style="display:none;">
+                    <label for="tipo-acceso-nuevo" class="form-label">Tipo de Acceso (Nuevo)</label>
+                    <select class="form-control" id="tipo-acceso-nuevo">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-ubicacion-acceso-nuevo" style="display:none;">
+                    <label for="ubicacion-acceso-nuevo" class="form-label">Ubicación (Acceso Nuevo)</label>
+                    <select class="form-control" id="ubicacion-acceso-nuevo">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="col-12">
                   <label for="motivo-historial" class="form-label">Motivo / Descripción</label>
                   <textarea class="form-control" id="motivo-historial" rows="2" required placeholder="Describe el motivo clínico, síntoma, diagnóstico o razón de la entrada..."></textarea>
-                </div>
-                <div class="col-12">
-                  <label for="adjuntos-historial" class="form-label">Adjuntos (opcional)</label>
-                  <input type="file" class="form-control" id="adjuntos-historial" multiple>
                 </div>
                 <div class="col-md-6">
                   <label for="profesional-historial" class="form-label">Profesional responsable</label>

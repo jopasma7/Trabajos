@@ -1326,4 +1326,4 @@ db.insertarPacientesPrueba = function() {
   }
 };
 // Llamada automática para insertar pacientes de prueba
-db.insertarPacientesPrueba();
+//db.insertarPacientesPrueba();

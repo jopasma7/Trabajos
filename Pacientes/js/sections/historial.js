@@ -104,6 +104,108 @@ const eventosPaciente = [
 
 
 document.addEventListener('DOMContentLoaded', async function() {
+	// --- Modal Historial: lógica para selects de cambio de acceso ---
+	const eventoHistorialSelect = document.getElementById('evento-historial');
+	const tipoAccesoAnteriorSelect = document.getElementById('tipo-acceso-anterior');
+	const tipoAccesoNuevoSelect = document.getElementById('tipo-acceso-nuevo');
+	const ubicacionAccesoAnteriorSelect = document.getElementById('ubicacion-acceso-anterior'); // Existing line
+	const ubicacionAccesoNuevoSelect = document.getElementById('ubicacion-acceso-nuevo'); // Existing line
+	const filaAcceso = [tipoAccesoAnteriorSelect, tipoAccesoNuevoSelect, ubicacionAccesoAnteriorSelect, ubicacionAccesoNuevoSelect]; // Existing line
+
+	function mostrarCamposCambioAcceso(mostrar) {
+		filaAcceso.forEach(sel => {
+			if (sel) sel.closest('.col-6').style.display = mostrar ? '' : 'none';
+		});
+	}
+	mostrarCamposCambioAcceso(false);
+
+	// Poblar tipos de acceso en los selects
+	async function poblarTiposAccesoSelects() {
+		if (!window.tiposAccesoGlobal || window.tiposAccesoGlobal.length === 0) {
+			window.tiposAccesoGlobal = await ipcRenderer.invoke('tipo-acceso-get-all');
+		}
+		[tipoAccesoAnteriorSelect, tipoAccesoNuevoSelect].forEach(select => {
+			if (select) {
+				select.innerHTML = '<option value="">-- Selecciona --</option>';
+				window.tiposAccesoGlobal.forEach(tipo => {
+					select.innerHTML += `<option value="${tipo.id}">${tipo.icono ? tipo.icono + ' ' : ''}${tipo.nombre}</option>`;
+				});
+			}
+		});
+	}
+	poblarTiposAccesoSelects();
+
+	// Función para poblar ubicaciones según tipo de acceso seleccionado
+	async function poblarUbicaciones(selectTipoAcceso, selectUbicacion) {
+		if (!window.ubicacionesGlobal || window.ubicacionesGlobal.length === 0) {
+			window.ubicacionesGlobal = await ipcRenderer.invoke('get-ubicaciones-anatomicas');
+		}
+		const tipoId = selectTipoAcceso.value;
+		const tipoObj = window.tiposAccesoGlobal.find(t => String(t.id) === String(tipoId));
+		const ubicaciones = tipoObj ? (window.ubicacionesGlobal.find(u => u.acceso === tipoObj.nombre)?.ubicaciones || []) : [];
+		selectUbicacion.innerHTML = '<option value="">-- Selecciona --</option>';
+		ubicaciones.forEach(ubic => {
+			selectUbicacion.innerHTML += `<option value="${ubic}-Derecha">${ubic} - Derecha</option>`;
+			selectUbicacion.innerHTML += `<option value="${ubic}-Izquierda">${ubic} - Izquierda</option>`;
+		});
+	}
+
+	// Actualizar motivo-historial dinámicamente según selección de cambio de acceso
+	function obtenerTextoAcceso(tipoId, ubicacionId, selectTipo, selectUbicacion) {
+		let tipo = '';
+		let ubicacion = '';
+		if (selectTipo && tipoId) {
+			const opt = Array.from(selectTipo.options).find(o => String(o.value) === String(tipoId));
+			tipo = opt ? opt.textContent : '';
+		}
+		if (selectUbicacion && ubicacionId) {
+			const opt = Array.from(selectUbicacion.options).find(o => String(o.value) === String(ubicacionId));
+			ubicacion = opt ? opt.textContent : '';
+		}
+		return tipo && ubicacion ? `${tipo} (${ubicacion})` : tipo || ubicacion || '';
+	}
+
+	function actualizarMotivoCambioAcceso() {
+		const tipoAnt = tipoAccesoAnteriorSelect.value;
+		const ubicAnt = ubicacionAccesoAnteriorSelect.value;
+		const tipoNue = tipoAccesoNuevoSelect.value;
+		const ubicNue = ubicacionAccesoNuevoSelect.value;
+		const motivoInput = document.getElementById('motivo-historial');
+		if (!motivoInput) return;
+		if (tipoAnt && ubicAnt && tipoNue && ubicNue) {
+			const datosAntiguo = obtenerTextoAcceso(tipoAnt, ubicAnt, tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect);
+			const datosNuevo = obtenerTextoAcceso(tipoNue, ubicNue, tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect);
+			motivoInput.value = `Cambio de acceso de ${datosAntiguo} a ${datosNuevo}.`;
+		} else {
+			motivoInput.value = '';
+		}
+	}
+
+	// Solo activar si el evento es Cambio de Acceso
+	[tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect, tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect].forEach(sel => {
+		if (sel) sel.addEventListener('change', function() {
+			if (eventoHistorialSelect.value === 'Cambio de Acceso') {
+				actualizarMotivoCambioAcceso();
+			}
+		});
+	});
+	
+
+	if (tipoAccesoAnteriorSelect && ubicacionAccesoAnteriorSelect) {
+		tipoAccesoAnteriorSelect.addEventListener('change', () => poblarUbicaciones(tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect));
+	}
+	if (tipoAccesoNuevoSelect && ubicacionAccesoNuevoSelect) {
+		tipoAccesoNuevoSelect.addEventListener('change', () => poblarUbicaciones(tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect));
+	}
+
+	// Mostrar/ocultar campos según evento seleccionado
+	if (eventoHistorialSelect) {
+		eventoHistorialSelect.addEventListener('change', function() {
+			mostrarCamposCambioAcceso(this.value === 'Cambio de Acceso');
+		});
+		// Inicializar ocultos
+		mostrarCamposCambioAcceso(eventoHistorialSelect.value === 'Cambio de Acceso');
+	}
 	// Mostrar alerta al interactuar con el campo de adjuntos
 	const adjuntosInput = document.getElementById('adjuntos-historial');
 	if (adjuntosInput) {
@@ -431,6 +533,12 @@ document.getElementById('btn-add-historial').addEventListener('click', function(
 		const dd = String(hoy.getDate()).padStart(2, '0');
 		fechaInput.value = `${yyyy}-${mm}-${dd}`;
 	}
+
+	// Ocultar los campos de acceso al abrir el modal
+	['grupo-tipo-acceso-anterior','grupo-ubicacion-acceso-anterior','grupo-tipo-acceso-nuevo','grupo-ubicacion-acceso-nuevo'].forEach(id => {
+		const elem = document.getElementById(id);
+		if (elem) elem.style.display = 'none';
+	});
 });
 
 // Editar Registro del historial
@@ -929,6 +1037,8 @@ async function renderTimelinePacienteDB(pacienteId) {
 	// Colores e iconos para cada tipo de evento del modal
 	const eventoEstilos = {
 		'Registro':      { color: 'success',   icono: 'bi bi-journal-plus' },
+		'Cambio de Acceso': { color: 'success', icono: 'bi bi-arrow-left-right' },
+		'Fallecimiento': { color: 'dark', icono: 'bi bi-emoji-dizzy' },
 		'Actualización': { color: 'info',      icono: 'bi bi-pencil-square' },
 		'Actualización de datos clínicos': { color: 'primary', icono: 'bi bi-bar-chart-line-fill' },
 		'Actualización de datos personales': { color: 'success', icono: 'bi bi-star-fill' },
