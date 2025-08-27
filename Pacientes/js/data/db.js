@@ -312,6 +312,12 @@ db.editProfesional = function(prof) {
 };
 
 db.deleteProfesional = function(id) {
+  // Actualizar profesional_id a NULL en tablas relacionadas
+  db.prepare('UPDATE pacientes SET profesional_id = NULL WHERE profesional_id = ?').run(id);
+  db.prepare('UPDATE acceso SET profesional_id = NULL WHERE profesional_id = ?').run(id);
+  db.prepare('UPDATE historial_clinico SET profesional_id = NULL WHERE profesional_id = ?').run(id);
+  db.prepare('UPDATE pendiente SET profesional_id = NULL WHERE profesional_id = ?').run(id);
+  // Eliminar profesional
   const stmt = db.prepare('DELETE FROM profesionales WHERE id = ?');
   const info = stmt.run(id);
   return { changes: info.changes };

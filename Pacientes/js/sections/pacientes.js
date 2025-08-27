@@ -119,6 +119,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 					});
 				}
 			}
+			// Reiniciar todos los filtros de pacientes
+			if (filtroFechaPacientesInicio) filtroFechaPacientesInicio.value = '';
+			if (filtroFechaPacientesFin) filtroFechaPacientesFin.value = '';
+			if (inputBusqueda) inputBusqueda.value = '';
+			if (filtroTipoAcceso) filtroTipoAcceso.value = '';
+			if (filtroPendiente) filtroPendiente.value = '';
+			paginaActual = 1;
+			// Recargar la tabla de pacientes
+			if (typeof window.cargarPacientes === 'function') {
+				window.cargarPacientes();
+			} else if (typeof actualizarTablaPacientes === 'function') {
+				actualizarTablaPacientes();
+			}
+
+			
 		}
 	});
 	// Función para abrir el modal de añadir incidencia a un paciente
@@ -903,40 +918,36 @@ function filtrarPacientes() {
 	const fechaInicio = filtroFechaPacientesInicio?.value;
 	const fechaFin = filtroFechaPacientesFin?.value;
 	if (fechaInicio || fechaFin) {
-		// Normaliza fechas al formato DD-MM-YYYY
-		function normalizaFecha(fechaStr) {
-			if (!fechaStr) return '';
+		// Convierte string a objeto Date (soporta YYYY-MM-DD y DD-MM-YYYY)
+		function parseFecha(fechaStr) {
+			if (!fechaStr) return null;
 			// Si es YYYY-MM-DD
 			if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
 				const [a, m, d] = fechaStr.split('-');
-				return `${d}-${m}-${a}`;
+				return new Date(`${a}-${m}-${d}`);
 			}
 			// Si es DD-MM-YYYY
 			if (/^\d{2}-\d{2}-\d{4}$/.test(fechaStr)) {
-				return fechaStr;
+				const [d, m, a] = fechaStr.split('-');
+				return new Date(`${a}-${m}-${d}`);
 			}
 			// Si es otro formato, intentar parsear
 			const fecha = new Date(fechaStr);
-			if (isNaN(fecha.getTime())) return '';
-			const d = String(fecha.getDate()).padStart(2, '0');
-			const m = String(fecha.getMonth() + 1).padStart(2, '0');
-			const a = fecha.getFullYear();
-			return `${d}-${m}-${a}`;
+			return isNaN(fecha.getTime()) ? null : fecha;
 		}
-		// Normalizar los valores de los inputs antes de comparar
-		const fechaInicioNorm = fechaInicio ? normalizaFecha(fechaInicio) : '';
-		const fechaFinNorm = fechaFin ? normalizaFecha(fechaFin) : '';
+		const fechaInicioObj = fechaInicio ? parseFecha(fechaInicio) : null;
+		const fechaFinObj = fechaFin ? parseFecha(fechaFin) : null;
 		filtrados = filtrados.filter(p => {
 			let fechaInstalacion = p.acceso?.fecha_instalacion || '';
 			if (!fechaInstalacion || !p.nombre) return false;
-			const fechaNorm = normalizaFecha(fechaInstalacion);
-			if (!fechaNorm) return false;
+			const fechaObj = parseFecha(fechaInstalacion);
+			if (!fechaObj) return false;
 			let incluir = true;
-			if (fechaInicioNorm) {
-				incluir = incluir && (fechaNorm >= fechaInicioNorm);
+			if (fechaInicioObj) {
+				incluir = incluir && (fechaObj >= fechaInicioObj);
 			}
-			if (fechaFinNorm) {
-				incluir = incluir && (fechaNorm <= fechaFinNorm);
+			if (fechaFinObj) {
+				incluir = incluir && (fechaObj <= fechaFinObj);
 			}
 			return incluir;
 		});

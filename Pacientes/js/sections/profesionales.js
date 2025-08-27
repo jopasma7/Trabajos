@@ -4,6 +4,48 @@
 const { ipcRenderer } = require('electron');
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Handler para el botón eliminar profesional
+    const btnEliminarProfesional = document.getElementById('eliminar-profesional-btn');
+    if (btnEliminarProfesional) {
+        btnEliminarProfesional.addEventListener('click', () => {
+            const id = document.getElementById('profesional-id').value;
+            const nombre = document.getElementById('profesional-nombre').value;
+            const apellidos = document.getElementById('profesional-apellidos').value;
+            if (!id) {
+                mostrarMensaje('Selecciona un profesional para eliminar.', 'warning');
+                return;
+            }
+            // Configurar el modal de confirmación
+            const modalConfirm = document.getElementById('modal-confirmacion');
+            document.getElementById('modal-confirmacion-titulo').textContent = '¿Eliminar?';
+            document.getElementById('modal-confirmacion-icono').innerHTML = '<i class="bi bi-trash text-danger"></i>';
+            document.getElementById('modal-confirmacion-mensaje').textContent = `¿Seguro que quieres eliminar a ${nombre} ${apellidos}? Esta acción no se puede deshacer.`;
+            // Guardar datos en window para el callback
+            window._profesionalEliminar = { id, nombre, apellidos };
+            // Mostrar el modal
+            const bsModal = new bootstrap.Modal(modalConfirm);
+            bsModal.show();
+        });
+        // Handler para el botón de confirmar en el modal
+        const btnConfirmar = document.getElementById('btn-confirmar-accion');
+        btnConfirmar.addEventListener('click', async () => {
+            const modalConfirm = document.getElementById('modal-confirmacion');
+            const bsModal = bootstrap.Modal.getInstance(modalConfirm);
+            if (window._profesionalEliminar) {
+                const { id, nombre, apellidos } = window._profesionalEliminar;
+                await eliminarProfesional(id, nombre, apellidos);
+                // Limpiar formulario y selector
+                document.getElementById('form-profesional').reset();
+                document.getElementById('profesional-id').value = '';
+                if (avatarImg) avatarImg.src = '../assets/avatar-default.png';
+                if (avatarFeedback) avatarFeedback.textContent = '';
+                selectorProfesional.value = '';
+                await poblarSelectorProfesionales();
+                window._profesionalEliminar = null;
+            }
+            bsModal.hide();
+        });
+    }
     // Limpiar formulario y selector al pulsar 'Agregar profesional'
     const btnAgregarProfesional = document.getElementById('btn-agregar-profesional');
     if (btnAgregarProfesional) {
@@ -174,9 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Ejemplo de función para eliminar profesional y mostrar alerta
     async function eliminarProfesional(id, nombre, apellidos) {
-        await ipcRenderer.invoke('delete-profesional', id);
-        mostrarMensaje(`Profesional <b>${nombre} ${apellidos}</b> eliminado correctamente.`, 'danger');
-        // Aquí puedes recargar la lista o limpiar el formulario si es necesario
+    await ipcRenderer.invoke('delete-profesional', id);
+    mostrarMensaje(`Profesional <b>${nombre} ${apellidos}</b> eliminado correctamente.`, 'danger');
+    // Recargar selectores en pacientes
+    if (window.cargarDatosGlobal) await window.cargarDatosGlobal();
+    if (window.llenarSelectProfesional) window.llenarSelectProfesional();
     }
 });
 
