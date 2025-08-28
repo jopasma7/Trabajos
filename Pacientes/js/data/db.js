@@ -257,7 +257,7 @@ const profesionalPrueba = {
   notas: 'Profesional de prueba',
   avatar: ''
 };
-const existePrueba = db.prepare('SELECT 1 FROM profesionales WHERE nombre = ? AND apellidos = ?').get(profesionalPrueba.nombre, profesionalPrueba.apellidos);
+/*const existePrueba = db.prepare('SELECT 1 FROM profesionales WHERE nombre = ? AND apellidos = ?').get(profesionalPrueba.nombre, profesionalPrueba.apellidos);
 if (!existePrueba) {
   db.prepare(`INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .run(
@@ -273,7 +273,7 @@ if (!existePrueba) {
       profesionalPrueba.notas,
       profesionalPrueba.avatar
     );
-}
+}*/
 db.addProfesional = function(prof) {
   const stmt = db.prepare(`INSERT INTO profesionales (nombre, apellidos, sexo, email, telefono, cargo, numero_colegiado, fecha_nacimiento, direccion, notas, avatar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const info = stmt.run(

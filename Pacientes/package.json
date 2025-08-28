@@ -1,7 +1,7 @@
 {
   "name": "gigi-hospital",
   "author": "Alejandro Pastor",
-  "version": "1.2.4",
+  "version": "1.2.6",
   "description": "Esqueleto de aplicación Electron con JavaScript",
   "main": "main.js",
   "scripts": {
