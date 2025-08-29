@@ -3,6 +3,10 @@ const path = require('path');
 const fs = require('fs');
 
 class FlowerShopDatabase {
+    // Descontar stock de un producto (alias para compatibilidad IPC)
+    async descontarStock(productoId, cantidad) {
+        return this.descontarStockProducto(productoId, cantidad);
+    }
     /**
      * Listar notificaciones eliminadas (papelera)
      * @param {Object} filtros { usuario_id, tipo }
@@ -1390,12 +1394,12 @@ class FlowerShopDatabase {
         `);
         
         // Ventas del mes actual
-        const ventasMes = await this.getQuery(`
-            SELECT COALESCE(SUM(total), 0) as total 
-            FROM pedidos 
-            WHERE estado = 'entregado' 
-            AND strftime('%Y-%m', fecha_pedido) = strftime('%Y-%m', 'now')
-        `);
+            const ventasMes = await this.getQuery(`
+                SELECT COALESCE(SUM(total), 0) as total 
+                FROM pedidos 
+                WHERE estado = 'completado' 
+                AND strftime('%Y-%m', fecha_pedido) = strftime('%Y-%m', 'now')
+            `);
         stats.ventasMesActual = ventasMes.total;
         
         return stats;
@@ -1413,7 +1417,7 @@ class FlowerShopDatabase {
                 COALESCE(SUM(subtotal), 0) as subtotal,
                 COALESCE(AVG(total), 0) as ticket_promedio
             FROM pedidos 
-            WHERE estado IN ('entregado', 'confirmado') 
+            WHERE estado IN ('entregado', 'confirmado', 'completado') 
             AND DATE(fecha_pedido) >= DATE('now', '-' || ? || ' days')
             GROUP BY DATE(fecha_pedido)
             ORDER BY fecha DESC
@@ -1427,7 +1431,7 @@ class FlowerShopDatabase {
                 COALESCE(AVG(total), 0) as ticket_promedio,
                 COUNT(DISTINCT cliente_id) as clientes_activos
             FROM pedidos 
-            WHERE estado IN ('entregado', 'confirmado')
+            WHERE estado IN ('entregado', 'confirmado', 'completado')
             AND DATE(fecha_pedido) >= DATE('now', '-' || ? || ' days')
         `, [dias]);
 
@@ -1452,7 +1456,7 @@ class FlowerShopDatabase {
             JOIN productos p ON pd.producto_id = p.id
             JOIN categorias c ON p.categoria_id = c.id
             JOIN pedidos pe ON pd.pedido_id = pe.id
-            WHERE pe.estado IN ('entregado', 'confirmado')
+            WHERE pe.estado IN ('entregado', 'confirmado', 'completado')
             AND DATE(pe.fecha_pedido) >= DATE('now', '-' || ? || ' days')
             GROUP BY p.id
             ORDER BY cantidad_vendida DESC

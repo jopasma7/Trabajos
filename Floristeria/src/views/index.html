@@ -1153,13 +1153,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                             <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:0.7rem;">| Estadísticas y resultados</span>
                                         </h2>
                     <div class="reports-grid">
-                        <div class="report-card">
-                            <h3>💰 Ventas por Período</h3>
-                            <canvas id="sales-chart"></canvas>
+                        <div class="report-row">
+                            <div class="report-card">
+                                <h3>💰 Ventas por Período</h3>
+                                <canvas id="sales-chart"></canvas>
+                            </div>
+                            <div class="report-card">
+                                <h3>📦 Estado de los Pedidos</h3>
+                                <canvas id="orders-status-chart"></canvas>
+                            </div>
                         </div>
-                        <div class="report-card">
-                            <h3>🌺 Productos Más Vendidos</h3>
-                            <div id="top-products"></div>
+                        <div class="report-row">
+                            <div class="report-card">
+                                <h3>🔄 Rotación de Inventario</h3>
+                                <canvas id="inventory-rotation-chart"></canvas>
+                            </div>
+                            <div class="report-card">
+                                <h3>🌺 Productos Más Vendidos</h3>
+                                <div id="top-products"></div>
+                            </div>
                         </div>
                     </div>
                 </section>

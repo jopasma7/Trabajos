@@ -530,6 +530,9 @@ class FlowerShopApp {
                         <button class="btn btn-sm btn-success" onclick="app.nuevoPedidoCliente(${cliente.id})" title="Nuevo pedido">
                             📋
                         </button>
+                            <button class="btn btn-sm btn-danger" onclick="app.eliminarCliente(${cliente.id})" title="Eliminar cliente">
+                                🗑️
+                            </button>
                     </div>
                 </td>
             </tr>
@@ -1067,7 +1070,7 @@ class FlowerShopApp {
             // Cargar análisis de rotación
             try {
                 const analisisData = await window.flowerShopAPI.getAnalisisInventario();
-                this.createRotationAnalysisChart(analisisData);
+                this.createRotationAnalysisChart(analisisData.productos_rotacion_rapida || []);
                 this.displayProductsWithoutMovement(analisisData.productos_sin_movimiento || []);
             } catch (error) {
                 console.warn('⚠️ Análisis de inventario no disponible:', error);
@@ -3017,6 +3020,7 @@ class FlowerShopApp {
             if (editId) {
                 // Actualizar evento existente
                 await window.flowerShopAPI.actualizarEvento(Number(editId), evento);
+
                 form.removeAttribute('data-edit-id');
                 this.showToastGlobal('Evento actualizado correctamente', 'success', 'toast-global');
             } else {
@@ -6403,8 +6407,8 @@ class FlowerShopApp {
 
     // Funciones auxiliares para nuevos elementos
     async loadConfiguracionData() {
-        console.log('⚙️ Cargando configuración...');
-        this.showNotification('Configuración cargada', 'info');
+    console.log('⚙️ Cargando configuración...');
+    this.showToastGlobal('Configuración cargada', 'info', 'toast-global');
     }
 
     // ========== MODAL DE CONFIRMACIÓN DE ELIMINACIÓN ==========
@@ -6581,13 +6585,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('perfil-email').value = perfil.email || '';
                 document.getElementById('perfil-telefono').value = perfil.telefono || '';
                 document.getElementById('perfil-rol').value = perfil.rol || 'Administrador';
-                if (perfil.avatarPath && avatarPreview) {
-                    avatarPreview.src = perfil.avatarPath;
+                if (perfil.avatar && avatarPreview) {
+                    avatarPreview.src = perfil.avatar;
                 }
                 // Cambiar avatar del header
                 if (headerAvatar) {
-                    if (perfil.avatarPath) {
-                        headerAvatar.src = perfil.avatarPath;
+                    if (perfil.avatar) {
+                        headerAvatar.src = perfil.avatar;
                     } else {
                         headerAvatar.src = 'https://randomuser.me/api/portraits/men/1.jpg';
                     }
