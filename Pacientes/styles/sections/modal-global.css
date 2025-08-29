@@ -1,0 +1,266 @@
+/* Centrar el modal verticalmente */
+.modal.show .modal-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90vh;
+}
+/* Título bonito para el modal de reporte */
+.modal-titulo-reporte {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #198754;
+  text-shadow: 0 2px 8px rgba(25,135,84,0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+
+/* Botón PDF con estilo bonito naranja */
+.modal-content .btn-pdf {
+  background: linear-gradient(90deg, #fb923c 0%, #f59e42 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #fb923c33;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-content .btn-pdf:hover, .modal-content .btn-pdf:focus {
+  background: linear-gradient(90deg, #f59e42 0%, #fb923c 100%);
+  box-shadow: 0 4px 16px 0 #fb923c33;
+}
+
+/* Botón cerrar con estilo bonito rojo suave */
+.modal-content .btn-cerrar {
+  background: linear-gradient(90deg, #f87171 0%, #fca5a5 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #f8717133;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.modal-content .btn-cerrar:hover, .modal-content .btn-cerrar:focus {
+  background: linear-gradient(90deg, #fca5a5 0%, #f87171 100%);
+  box-shadow: 0 4px 16px 0 #f8717133;
+}
+/* MODAL DE PELIGRO (eliminación) - Sobrescribe estilos globales */
+.modal-content.border-danger {
+  background: white !important;
+  box-shadow: 0 8px 32px 0 #dc354544 !important;
+  padding: 0.5em 0.5em 0.5em 0.5em !important;
+}
+
+.modal-content.border-danger .form-control,
+.modal-content.border-danger .form-select {
+  border: 1.5px solid #f5c2c7 !important;
+  background: #fff0f0 !important;
+  box-shadow: 0 1px 4px 0 #f5c2c722 !important;
+}
+
+.modal-content.border-danger .btn-danger {
+  background: linear-gradient(90deg, #dc3545 0%, #b91c1c 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0.8em !important;
+  font-weight: 700 !important;
+  padding: 0.7em 2.2em !important;
+  box-shadow: 0 2px 8px 0 #dc354533 !important;
+}
+
+.modal-content.border-danger .btn-danger:hover {
+  background: linear-gradient(90deg, #b91c1c 0%, #dc3545 100%) !important;
+  box-shadow: 0 4px 16px 0 #dc354533 !important;
+}
+
+.modal-content.border-danger .btn-secondary {
+  background: #f5c2c7 !important;
+  color: #b91c1c !important;
+  border: none !important;
+  border-radius: 0.8em !important;
+  font-weight: 600 !important;
+  padding: 0.7em 2.2em !important;
+  margin-right: 0.7em !important;
+}
+
+.modal-content.border-danger .btn-secondary:hover {
+  background: #b91c1c !important;
+  color: #fff !important;
+}
+
+.modal-content.border-danger label {
+  font-weight: bold !important;
+  color: #b91c1c !important;
+}
+
+.modal-content.border-danger .modal-header {
+  background: linear-gradient(90deg, #ffb3b3 0%, #ffe5e5 100%) !important;
+  border-radius: 1.5em 1.5em 0 0 !important;
+  padding: 1.2em 2em 1em 2em !important;
+  box-shadow: 0 2px 8px 0 #f5c2c733 !important;
+}
+
+.modal-content.border-danger .modal-title {
+  color: #b91c1c !important;
+  font-size: 1.8em !important;
+  text-shadow: 0 2px 8px #f5c2c744, 0 1px 0 #fff !important;
+}
+
+.modal-content.border-danger .modal-body {
+  background: transparent !important;
+  padding: 2em 2em 1.5em 2em !important;
+}
+
+.modal-content.border-danger .modal-footer {
+  background: transparent !important;
+  border-radius: 0 0 1.5em 1.5em !important;
+  padding: 1.2em 2em 1.2em 2em !important;
+}
+
+/* MODAL GLOBAL - Diseño más bonito y visualmente atractivo */
+/* Aplica estilos a todos los modales excepto los de peligro (eliminación) */
+.modal-content {
+  border-radius: 1.5em;
+  box-shadow: 0 16px 48px 0 rgba(44,62,80,0.18), 0 2px 8px 0 rgba(44,62,80,0.10);
+  border: none;
+  background: linear-gradient(120deg, #f8fafc 60%, #e0f7fa 100%);
+  padding: 0.5em 0.5em 0.5em 0.5em;
+  animation: modalPopIn 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes modalPopIn {
+  0% { opacity: 0; transform: translateY(40px) scale(0.97); }
+  80% { opacity: 1; transform: translateY(-4px) scale(1.03); }
+  100% { opacity: 1; transform: none; }
+}
+.modal-header {
+  border-bottom: none;
+  background: linear-gradient(90deg, #e0f2fe 0%, #f0fdf4 100%);
+  border-radius: 1.5em 1.5em 0 0;
+  padding: 1.2em 2em 1em 2em;
+  box-shadow: 0 2px 8px 0 #e0f2fe33;
+}
+.modal-title {
+  font-size: 2em;
+  font-weight: 900;
+  color: #2563eb;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px #e0e7ff44, 0 1px 0 #fff;
+  display: inline-block;
+  padding-bottom: 0.05em;
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif
+}
+.modal-body {
+  padding: 2em 2em 1.5em 2em;
+  background: transparent;
+}
+.modal-footer {
+  border-top: none;
+  background: transparent;
+  border-radius: 0 0 1.5em 1.5em;
+  padding: 1.2em 2em 1.2em 2em;
+}
+.modal-content .form-control, .modal-content .form-select {
+  border-radius: 0.5em;
+  border: 1.5px solid #e0e7ef;
+  background: #f8fafc;
+  font-size: 1.08em;
+  box-shadow: 0 1px 4px 0 #e0e7ef22;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.modal-content .form-control:focus, .modal-content .form-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px #2563eb22;
+}
+.modal-content .btn-success {
+  background: linear-gradient(90deg, #34d399 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #34d39933;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* Make modal form labels bold */
+.modal-content label {
+  font-weight: bold;
+}
+
+.modal-content .btn-success:hover {
+  background: linear-gradient(90deg, #2563eb 0%, #34d399 100%);
+  box-shadow: 0 4px 16px 0 #2563eb33;
+}
+.modal-content .btn-secondary {
+  background: linear-gradient(90deg, #e0e7ef 60%, #b6c6e3 100%) !important;
+  color: #2563eb !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  padding: 5px 14px !important;
+  font-size: 0.98em !important;
+  margin-right: 0.7em;
+  box-shadow: 0 2px 8px #b6c6e333, 0 0 4px #2563eb22;
+  letter-spacing: 0.5px;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.modal-content .btn-secondary:hover {
+  background: linear-gradient(90deg, #b6c6e3 70%, #e0e7ef 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px #2563eb33, 0 0 8px #b6c6e355;
+  transform: translateY(-1px) scale(1.03);
+}
+.modal-header .btn-close {
+  filter: invert(40%) sepia(80%) saturate(300%) hue-rotate(180deg);
+  opacity: 0.7;
+  transition: opacity 0.2s, filter 0.2s;
+}
+.modal-header .btn-close:hover {
+  opacity: 1;
+  filter: invert(20%) sepia(100%) saturate(800%) hue-rotate(200deg);
+}
+
+
+@media (max-width: 600px) {
+  .modal-dialog {
+    max-width: 99vw;
+    margin: 0 auto;
+  }
+  .modal-content {
+    width: 98vw;
+    max-width: 98vw;
+    min-width: 0;
+    padding: 0.5em 0.2em 0.5em 0.2em;
+    font-size: 0.92em;
+  }
+  .modal-body {
+    padding: 1em 0.5em 1em 0.5em;
+    font-size: 0.95em;
+  }
+  .modal-title {
+    font-size: 1.2em;
+    padding-bottom: 0.02em;
+  }
+  .modal-header {
+    padding: 0.7em 1em 0.7em 1em;
+  }
+  .modal-footer {
+    padding: 0.7em 1em 0.7em 1em;
+  }
+  .modal-content .form-control, .modal-content .form-select {
+    font-size: 0.98em;
+    padding: 0.5em 0.7em;
+    margin-bottom: 0.4em;
+  }
+  .modal-content .btn-success, .modal-content .btn-secondary {
+    font-size: 0.98em;
+    padding: 0.5em 1.2em;
+  }
+}

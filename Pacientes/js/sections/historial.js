@@ -1,0 +1,1488 @@
+window.cargarEtiquetasHistorial = async function() {
+	window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
+	const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+	const incidenciaAccesoSelect = document.getElementById('incidenciaAcceso');
+	// Rellenar tipos de incidencia desde etiquetas tipo 'incidencia'
+	if (incidenciaTipoSelect && window.etiquetasGlobales) {
+		incidenciaTipoSelect.innerHTML = '';
+		incidenciaTipoSelect.setAttribute('multiple', 'multiple');
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.textContent = `🏷️ ${tag.nombre}`;
+			incidenciaTipoSelect.appendChild(option);
+		});
+	}
+	if (incidenciaAccesoSelect && window.etiquetasGlobales) {
+		incidenciaAccesoSelect.innerHTML = '';
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'acceso').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.innerHTML = `<i class='${tag.icono || ''}'></i> ${tag.nombre}`;
+			incidenciaAccesoSelect.appendChild(option);
+		});
+	}
+};
+
+const { ipcRenderer } = require('electron');
+
+var fechaInput = document.getElementById('infeccion-fecha');
+var listaInfeccion = document.getElementById('infeccion-lista');
+var comentariosInput = document.getElementById('infeccion-comentarios');
+
+const modal_historial = document.getElementById('modal-historial');
+const modal_infeccion = document.getElementById('modal-infeccion');
+const select_profesional_historial = document.getElementById('profesional-historial');
+const btn_guardar_infecciones = document.getElementById('btn-guardar-infecciones');
+const infeccion_tags = document.getElementById('infeccion-tags');
+const seleccionar_paciente_principal = document.getElementById('filtro-paciente-historial');
+const filtro_profesional_historial = document.getElementById('filtro-profesional-historial');
+const filtro_fecha_historial = document.getElementById('filtro-fecha-historial');
+const timeline = document.getElementById('timelinePaciente');
+const avatar = document.getElementById('pacienteAvatarInput');
+
+// Asegura disponibilidad global de la función
+window.addEntradasHistorial = addEntradasHistorial;
+window.modoHistorialModal = 'nuevo';
+
+let paciente_seleccionado = null;
+let tagsGlobal = [];
+let historialData = [];
+
+// Ejemplo de eventos clínicos recientes
+const eventosPaciente = [
+	{
+		fecha: '2025-08-01',
+		tipo: 'Consulta',
+		descripcion: 'Dolor abdominal. Diagnóstico: Gastritis aguda.',
+		icono: 'bi bi-person-badge',
+		color: 'primary'
+	},
+	{
+		fecha: '2025-08-10',
+		tipo: 'Prueba Laboratorio',
+		descripcion: 'Hemograma y bioquímica normales.',
+		icono: 'bi bi-flask',
+		color: 'info'
+	},
+	{
+		fecha: '2025-08-15',
+		tipo: 'Incidencia',
+		descripcion: 'Alergia detectada: Penicilina.',
+		icono: 'bi bi-exclamation-diamond',
+		color: 'danger'
+	},
+	{
+		fecha: '2025-08-20',
+		tipo: 'Tratamiento',
+		descripcion: 'Inicio de Omeprazol 20mg/día. Seguimiento semanal.',
+		icono: 'bi bi-capsule',
+		color: 'success'
+	},
+	{
+		fecha: '2025-08-25',
+		tipo: 'Cita de control',
+		descripcion: 'Control de evolución. Sin complicaciones.',
+		icono: 'bi bi-calendar-check',
+		color: 'secondary'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	},
+	{
+		fecha: '2025-08-28',
+		tipo: 'Observación',
+		descripcion: 'Paciente refiere mejoría significativa. Se mantiene tratamiento.',
+		icono: 'bi bi-eye',
+		color: 'warning'
+	}
+];
+
+
+document.addEventListener('DOMContentLoaded', async function() {
+	// --- Modal Historial: lógica para selects de cambio de acceso ---
+	const eventoHistorialSelect = document.getElementById('evento-historial');
+	const tipoAccesoAnteriorSelect = document.getElementById('tipo-acceso-anterior');
+	const tipoAccesoNuevoSelect = document.getElementById('tipo-acceso-nuevo');
+	const ubicacionAccesoAnteriorSelect = document.getElementById('ubicacion-acceso-anterior'); // Existing line
+	const ubicacionAccesoNuevoSelect = document.getElementById('ubicacion-acceso-nuevo'); // Existing line
+	const filaAcceso = [tipoAccesoAnteriorSelect, tipoAccesoNuevoSelect, ubicacionAccesoAnteriorSelect, ubicacionAccesoNuevoSelect]; // Existing line
+
+	function mostrarCamposCambioAcceso(mostrar) {
+		filaAcceso.forEach(sel => {
+			if (sel) sel.closest('.col-6').style.display = mostrar ? '' : 'none';
+		});
+	}
+	mostrarCamposCambioAcceso(false);
+
+	// Poblar tipos de acceso en los selects
+	async function poblarTiposAccesoSelects() {
+		if (!window.tiposAccesoGlobal || window.tiposAccesoGlobal.length === 0) {
+			window.tiposAccesoGlobal = await ipcRenderer.invoke('tipo-acceso-get-all');
+		}
+		[tipoAccesoAnteriorSelect, tipoAccesoNuevoSelect].forEach(select => {
+			if (select) {
+				select.innerHTML = '<option value="">-- Selecciona --</option>';
+				window.tiposAccesoGlobal.forEach(tipo => {
+					select.innerHTML += `<option value="${tipo.id}">${tipo.icono ? tipo.icono + ' ' : ''}${tipo.nombre}</option>`;
+				});
+			}
+		});
+	}
+	poblarTiposAccesoSelects();
+
+	// Función para poblar ubicaciones según tipo de acceso seleccionado
+	async function poblarUbicaciones(selectTipoAcceso, selectUbicacion) {
+		if (!window.ubicacionesGlobal || window.ubicacionesGlobal.length === 0) {
+			window.ubicacionesGlobal = await ipcRenderer.invoke('get-ubicaciones-anatomicas');
+		}
+		const tipoId = selectTipoAcceso.value;
+		const tipoObj = window.tiposAccesoGlobal.find(t => String(t.id) === String(tipoId));
+		const ubicaciones = tipoObj ? (window.ubicacionesGlobal.find(u => u.acceso === tipoObj.nombre)?.ubicaciones || []) : [];
+		selectUbicacion.innerHTML = '<option value="">-- Selecciona --</option>';
+		ubicaciones.forEach(ubic => {
+			selectUbicacion.innerHTML += `<option value="${ubic}-Derecha">${ubic} - Derecha</option>`;
+			selectUbicacion.innerHTML += `<option value="${ubic}-Izquierda">${ubic} - Izquierda</option>`;
+		});
+	}
+
+	// Actualizar motivo-historial dinámicamente según selección de cambio de acceso
+	function obtenerTextoAcceso(tipoId, ubicacionId, selectTipo, selectUbicacion) {
+		let tipo = '';
+		let ubicacion = '';
+		if (selectTipo && tipoId) {
+			const opt = Array.from(selectTipo.options).find(o => String(o.value) === String(tipoId));
+			tipo = opt ? opt.textContent : '';
+		}
+		if (selectUbicacion && ubicacionId) {
+			const opt = Array.from(selectUbicacion.options).find(o => String(o.value) === String(ubicacionId));
+			ubicacion = opt ? opt.textContent : '';
+		}
+		return tipo && ubicacion ? `${tipo} (${ubicacion})` : tipo || ubicacion || '';
+	}
+
+	function actualizarMotivoCambioAcceso() {
+		const tipoAnt = tipoAccesoAnteriorSelect.value;
+		const ubicAnt = ubicacionAccesoAnteriorSelect.value;
+		const tipoNue = tipoAccesoNuevoSelect.value;
+		const ubicNue = ubicacionAccesoNuevoSelect.value;
+		const motivoInput = document.getElementById('motivo-historial');
+		if (!motivoInput) return;
+		if (tipoAnt && ubicAnt && tipoNue && ubicNue) {
+			const datosAntiguo = obtenerTextoAcceso(tipoAnt, ubicAnt, tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect);
+			const datosNuevo = obtenerTextoAcceso(tipoNue, ubicNue, tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect);
+			motivoInput.value = `Cambio de acceso de ${datosAntiguo} a ${datosNuevo}.`;
+		} else {
+			motivoInput.value = '';
+		}
+	}
+
+	// Solo activar si el evento es Cambio de Acceso
+	[tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect, tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect].forEach(sel => {
+		if (sel) sel.addEventListener('change', function() {
+			if (eventoHistorialSelect.value === 'Cambio de Acceso') {
+				actualizarMotivoCambioAcceso();
+			}
+		});
+	});
+	
+
+	if (tipoAccesoAnteriorSelect && ubicacionAccesoAnteriorSelect) {
+		tipoAccesoAnteriorSelect.addEventListener('change', () => poblarUbicaciones(tipoAccesoAnteriorSelect, ubicacionAccesoAnteriorSelect));
+	}
+	if (tipoAccesoNuevoSelect && ubicacionAccesoNuevoSelect) {
+		tipoAccesoNuevoSelect.addEventListener('change', () => poblarUbicaciones(tipoAccesoNuevoSelect, ubicacionAccesoNuevoSelect));
+	}
+
+	// Mostrar/ocultar campos según evento seleccionado
+	if (eventoHistorialSelect) {
+		eventoHistorialSelect.addEventListener('change', function() {
+			mostrarCamposCambioAcceso(this.value === 'Cambio de Acceso');
+		});
+		// Inicializar ocultos
+		mostrarCamposCambioAcceso(eventoHistorialSelect.value === 'Cambio de Acceso');
+	}
+	// Mostrar alerta al interactuar con el campo de adjuntos
+	const adjuntosInput = document.getElementById('adjuntos-historial');
+	if (adjuntosInput) {
+		adjuntosInput.addEventListener('click', function(e) {
+			e.preventDefault();
+			mostrarMensaje('La funcionalidad de adjuntar archivos estará disponible próximamente.', 'warning');
+		});
+		adjuntosInput.addEventListener('change', function(e) {
+			e.preventDefault();
+			mostrarMensaje('La funcionalidad de adjuntar archivos estará disponible próximamente.', 'warning');
+			this.value = '';
+		});
+	}
+	// --- Modal Incidencia: rellenar selectores dinámicamente ---
+	const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+	const incidenciaAccesoSelect = document.getElementById('incidenciaAcceso');
+	if (incidenciaTipoSelect && window.etiquetasGlobales) {
+		incidenciaTipoSelect.innerHTML = '';
+		incidenciaTipoSelect.setAttribute('multiple', 'multiple');
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.textContent = `🏷️ ${tag.nombre}`;
+			incidenciaTipoSelect.appendChild(option);
+		});
+	}
+
+	// Rellenar tipos de acceso con iconos
+	if (incidenciaAccesoSelect && window.etiquetasGlobales) {
+		incidenciaAccesoSelect.innerHTML = '';
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'acceso').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.innerHTML = `<i class='${tag.icono || ''}'></i> ${tag.nombre}`;
+			incidenciaAccesoSelect.appendChild(option);
+		});
+	}
+	// Cargar etiquetas globales al iniciar
+	window.etiquetasGlobales = await ipcRenderer.invoke('tags-get-all');
+	   await cargarPacientesHistorial();
+	   // Renderizar historial y timeline del primer paciente seleccionado
+	   const selectPacienteInicial = document.getElementById('filtro-paciente-historial');
+	   if (selectPacienteInicial && selectPacienteInicial.value) {
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPacienteInicial.value));
+		   await renderPacienteCard(pacienteSel || null);
+		   renderHistorial();
+		   renderTimelinePacienteDB();
+	   }
+
+	   await poblarFiltroProfesionalHistorial();
+	   await poblarFiltroFechaHistorial();
+	// Mostrar datos del paciente seleccionado solo al cambiar
+	const select = document.getElementById('filtro-paciente-historial');
+	   let ultimoPacienteId = null;
+	   document.getElementById('filtro-paciente-historial').addEventListener('change', async function() {
+		   const pacienteId = Number(this.value);
+		   const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+		   const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+		   await renderPacienteCard(pacienteSel || null);
+		   renderHistorial();
+	   });
+	   document.getElementById('mostrar-archivados-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-tipo-evento-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-fecha-historial').addEventListener('change', function() {
+		   renderHistorial();
+	   });
+	   document.getElementById('filtro-profesional-historial').addEventListener('change', function() {
+			renderHistorial();
+		});
+	// Evitar duplicidad de submit
+
+	const form = document.getElementById('form-historial');
+	if (form && !form._submitHandlerSet) {
+		form.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			const select = document.getElementById('filtro-paciente-historial');
+			let pacienteIdValue = select && select.value ? select.value : null;
+			if (!pacienteIdValue || isNaN(Number(pacienteIdValue))) {
+				alert('Selecciona un paciente válido antes de guardar la entrada.');
+				return;
+			}
+			pacienteIdValue = Number(pacienteIdValue);
+			if (pacienteIdValue <= 0) {
+				alert('Selecciona un paciente válido antes de guardar la entrada.');
+				return;
+			}
+			pacienteId = pacienteIdValue;
+			const profesionalSelect = document.getElementById('profesional-historial');
+			if (!profesionalSelect || !profesionalSelect.value || profesionalSelect.value === '' || profesionalSelect.selectedIndex === -1) {
+				mostrarMensaje('Selecciona un profesional antes de guardar la entrada.', 'danger');
+				if (profesionalSelect) profesionalSelect.focus();
+				return;
+			}
+			const idElem = document.getElementById('id-historial');
+			const fechaElem = document.getElementById('fecha-historial');
+			const eventoElem = document.getElementById('evento-historial');
+			const motivoElem = document.getElementById('motivo-historial');
+			const notasElem = document.getElementById('notas-historial');
+			const profesionalId = profesionalSelect.value;
+			const id = idElem ? idElem.value : '';
+			const data = {
+				paciente_id: pacienteIdValue,
+				fecha: fechaElem ? fechaElem.value : '',
+				tipo_evento: eventoElem ? eventoElem.value : '',
+				motivo: motivoElem ? motivoElem.value : '',
+				diagnostico: '', // No hay campo en el modal
+				tratamiento: '', // No hay campo en el modal
+				notas: notasElem ? notasElem.value : '',
+				adjuntos: '', // Implementar adjuntos si lo necesitas
+				profesional_id: profesionalId
+			};
+			if (window.modoHistorialModal === 'editar' && id) {
+				await ipcRenderer.invoke('historial-edit', id, data);
+			} else {
+				await ipcRenderer.invoke('historial-add', data);
+			}		
+			form.reset();
+			if (idElem) idElem.value = '';
+			const modal = bootstrap.Modal.getInstance(document.getElementById('modal-historial'));
+			if (modal) modal.hide();
+			const selectPaciente = document.getElementById('filtro-paciente-historial');
+			if (selectPaciente && selectPaciente.value) {
+				const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+				const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPaciente.value));
+				await renderPacienteCard(pacienteSel || null);
+			}
+			renderHistorial();
+			renderTimelinePacienteDB();
+		});
+		form._submitHandlerSet = true;
+	}
+});
+
+ 
+
+
+
+async function renderHistorial(pacienteId) {
+	window.renderHistorial = renderHistorial;
+	const tbody = document.querySelector('#tabla-historial tbody');
+	if (!tbody) return;
+	// Mantener los ejemplos fijos arriba, luego las entradas dinámicas
+	const ejemplos = document.querySelectorAll('#tabla-historial tbody tr');
+	ejemplos.forEach(tr => {
+		if (tr.getAttribute('data-dinamico') === 'true') tr.remove();
+	});
+	// Usar pacienteId si se pasa, si no, obtenerlo del selector
+	let pacienteIdActual = pacienteId;
+	if (!pacienteIdActual) {
+		const select = document.getElementById('filtro-paciente-historial');
+		pacienteIdActual = select && select.value ? Number(select.value) : null;
+	}
+	// Log del paciente usado para recoger los datos de la tabla
+	if (!pacienteIdActual) {
+		tbody.innerHTML += `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">Selecciona un paciente.</td></tr>`;
+		return;
+	}
+	const mostrarArchivadosCheckbox = document.getElementById('mostrar-archivados-historial');
+	const mostrarArchivados = mostrarArchivadosCheckbox ? mostrarArchivadosCheckbox.checked : false;
+	if (mostrarArchivados) {
+		historialData = await ipcRenderer.invoke('historial-get-archived', pacienteIdActual);
+		tbody.innerHTML = '';
+		if (!historialData || historialData.length === 0) {
+			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas archivadas.</td></tr>`;
+			return;
+		}
+	} else {
+		historialData = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+		tbody.innerHTML = '';
+		if (!historialData || historialData.length === 0) {
+			tbody.innerHTML = `<tr data-dinamico="true"><td colspan="5" class="text-center text-muted">No hay entradas en el historial.</td></tr>`;
+			return;
+		}
+	}
+	// Asegurarse de tener los tags globales
+	if (!tagsGlobal.length) {
+		tagsGlobal = await ipcRenderer.invoke('tags-get-all');
+	}
+	// Obtener lista de profesionales para mostrar nombre y avatar
+	const profesionales = await obtenerProfesionales();
+	// --- Filtros avanzados ---
+	const filtroTipoEvento = document.getElementById('filtro-tipo-evento-historial')?.value || '';
+	const filtroFecha = document.getElementById('filtro-fecha-historial')?.value || '';
+	const filtroProfesional = document.getElementById('filtro-profesional-historial')?.value || '';
+
+		const idsUnicos = new Set();
+		historialData.forEach((item, idx) => {
+			// Filtrar por tipo de evento
+			if (filtroTipoEvento && String(item.tipo_evento) !== String(filtroTipoEvento)) return;
+			// Filtrar por fecha exacta
+			if (filtroFecha && String(item.fecha) !== String(filtroFecha)) return;
+			// Filtrar por profesional (nombre y apellidos exacto)
+			if (filtroProfesional) {
+				let nombreCompleto = '';
+				if (item.profesional) {
+					const prof = profesionales.find(p => String(p.id) === String(item.profesional));
+					if (prof) {
+						nombreCompleto = `${prof.nombre} ${prof.apellidos}`;
+					}
+				}
+				if (nombreCompleto !== filtroProfesional) return;
+			}
+			// Evitar duplicados por id
+			if (idsUnicos.has(item.id)) return;
+			idsUnicos.add(item.id);
+			// ...código para agregar la fila...
+		
+
+        const esArchivado = item.archivado === 1 || item.archivado === true;
+        // Buscar nombre de etiqueta evento
+        let nombreEvento = '';
+        if (item.tipo_evento) {
+            const tagEvento = tagsGlobal.find(t => String(t.id) === String(item.tipo_evento));
+            nombreEvento = tagEvento ? tagEvento.nombre : item.tipo_evento;
+        }
+        // Buscar nombre de etiqueta diagnostico
+        let nombreDiagnostico = '';
+        if (item.diagnostico) {
+            const tagDiag = tagsGlobal.find(t => String(t.id) === String(item.diagnostico));
+            nombreDiagnostico = tagDiag ? tagDiag.nombre : item.diagnostico;
+        }
+        // Mostrar profesional: avatar + nombre + apellidos
+		let profesionalHtml = '';
+		if (item.profesional_id) {
+			const prof = profesionales.find(p => String(p.id) === String(item.profesional_id));
+			if (prof) {
+				const avatarUrl = prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png';
+				profesionalHtml = `<img src='${avatarUrl}' class='rounded-circle' style='width:28px;height:28px;object-fit:cover;vertical-align:middle;margin-right:2px;'> <span>${prof.nombre} ${prof.apellidos}</span>`;
+			} else {
+				profesionalHtml = `<span class='text-muted'>No encontrado</span>`;
+			}
+		} else {
+			profesionalHtml = `<span class='text-muted'>Sin profesional</span>`;
+		}
+		tbody.innerHTML += `
+			<tr data-dinamico="true">
+				<td>${formatearFecha(item.fecha)}</td>
+				<td>${nombreEvento}</td>
+				<td>${item.motivo ? item.motivo : ''}</td>
+				<td>${profesionalHtml}</td>
+				<td>
+					<button type='button' class='btn btn-sm btn-outline-primary me-1 btn-edit-historial' data-idx='${idx}'><i class='bi bi-pencil'></i></button>
+					<button type='button' class='btn btn-outline-danger btn-sm btn-eliminar-historial' data-idx='${idx}'><i class='bi bi-trash'></i></button>
+					${esArchivado
+						? `<button type='button' class='btn btn-sm btn-outline-success btn-unarchive-historial' data-idx='${idx}'><i class='bi bi-arrow-up-square'></i> Desarchivar</button>`
+						: `<button type='button' class='btn btn-sm btn-outline-warning btn-archive-historial' data-idx='${idx}'><i class='bi bi-archive'></i> Archivar</button>`}
+				</td>
+			</tr>
+		`;
+    });
+    // Delegación de eventos para los botones de acción
+	tbody.onclick = function(e) {
+		const editBtn = e.target.closest('.btn-edit-historial');
+		if (editBtn) {
+			const idx = editBtn.getAttribute('data-idx');
+			if (idx !== null) window.editHistorial(Number(idx));
+			return;
+		}
+		const archiveBtn = e.target.closest('.btn-archive-historial');
+		if (archiveBtn) {
+			const idx = archiveBtn.getAttribute('data-idx'); 
+			if (idx !== null) window.archiveHistorial(Number(idx));
+			return;
+		}
+		const unarchiveBtn = e.target.closest('.btn-unarchive-historial');
+		if (unarchiveBtn) {
+			const idx = unarchiveBtn.getAttribute('data-idx');
+ 			if (idx !== null) window.unarchiveHistorial(Number(idx));
+ 			return;
+		}
+		const deleteBtn = e.target.closest('.btn-eliminar-historial');
+		if (deleteBtn) {
+			const idx = deleteBtn.getAttribute('data-idx');
+			if (idx !== null) window.deleteHistorial(Number(idx));
+			return;
+		}
+	};
+}
+
+// TIMELINE. Llama a la función con tus datos.
+document.addEventListener('DOMContentLoaded', function() {
+	renderTimelinePacienteDB();
+
+	// Eliminado bloque que usaba historialSection no definida
+});
+
+ 
+// Evento. Botón de añadir entrada al historial clínico. 
+document.getElementById('btn-add-historial').addEventListener('click', function() {
+	window.modoHistorialModal = 'nuevo';
+    // Cambiar título y botón
+    const modalLabel = document.getElementById('modalHistorialLabel');
+    if (modalLabel) modalLabel.textContent = 'Añadir entrada al historial';
+    const btnGuardar = document.querySelector('#form-historial button[type="submit"]');
+    if (btnGuardar) btnGuardar.innerHTML = '<i class="bi bi-save me-1"></i> Guardar entrada';
+	
+	cargarProfesionalesEnHistorial();
+	document.getElementById('form-historial').reset();
+	const idHistorialElem2 = document.getElementById('id-historial');
+	if (idHistorialElem2) idHistorialElem2.value = '';
+	const select = document.getElementById('filtro-paciente-historial');
+	const nombreSpan = document.getElementById('modalHistorialPaciente');
+	const avatarImg = document.getElementById('modalHistorialAvatar');
+	if (select && nombreSpan) {
+		const selectedOption = select.options[select.selectedIndex];
+		if (selectedOption) {
+			nombreSpan.textContent = `Paciente: ${selectedOption.textContent}`;
+			// Si tienes el avatar, actualízalo aquí:
+			// avatarImg.src = ...;
+		} else {
+			nombreSpan.textContent = 'Paciente: [No seleccionado]';
+		}
+	}
+	// Establecer la fecha por defecto en hoy
+	const fechaInput = document.getElementById('fecha-historial');
+	if (fechaInput) {
+		const hoy = new Date();
+		const yyyy = hoy.getFullYear();
+		const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		const dd = String(hoy.getDate()).padStart(2, '0');
+		fechaInput.value = `${yyyy}-${mm}-${dd}`;
+	}
+
+	// Ocultar los campos de acceso al abrir el modal
+	['grupo-tipo-acceso-anterior','grupo-ubicacion-acceso-anterior','grupo-tipo-acceso-nuevo','grupo-ubicacion-acceso-nuevo'].forEach(id => {
+		const elem = document.getElementById(id);
+		if (elem) elem.style.display = 'none';
+	});
+});
+
+// Editar Registro del historial
+window.editHistorial = async function(idx) {
+	window.modoHistorialModal = 'editar';
+	const modalLabel = document.getElementById('modalHistorialLabel');
+    if (modalLabel) modalLabel.textContent = 'Editar entrada del historial';
+    const btnGuardar = document.querySelector('#form-historial button[type="submit"]');
+    if (btnGuardar) btnGuardar.innerHTML = '<i class="bi bi-pencil me-1"></i> Guardar cambios';
+	await cargarProfesionalesEnHistorial();
+	const item = historialData[idx];
+	// Seleccionar profesional en select y Choices.js
+	const profElem = document.getElementById('profesional-historial');
+	const profesionalId = typeof item.profesional_id !== 'undefined' ? String(item.profesional_id) : (typeof item.profesional !== 'undefined' ? String(item.profesional) : '');
+	if (profElem) {
+		const optionExists = Array.from(profElem.options).some(opt => String(opt.value) === profesionalId);
+		if (optionExists) {
+			profElem.value = profesionalId;
+			if (profElem.choicesInstance) {
+				profElem.choicesInstance.setChoiceByValue(profesionalId);
+			}
+		} else {
+			profElem.selectedIndex = 0;
+			if (profElem.choicesInstance) {
+				profElem.choicesInstance.setChoiceByValue(profElem.options[0].value);
+			}
+			mostrarMensaje('El profesional original de la entrada no existe. Se ha seleccionado el primero disponible.', 'warning');
+		}
+	}
+	// Asignar el motivo real de la entrada al input
+	const motivoInput = document.getElementById('motivo-historial');
+	if (motivoInput && typeof item.motivo !== 'undefined') {
+		motivoInput.value = item.motivo;
+	}
+	// Asignar las notas reales de la entrada al textarea
+	const notasInput = document.getElementById('notas-historial');
+	if (notasInput && typeof item.notas !== 'undefined') {
+		notasInput.value = item.notas;
+	}
+
+	// Asignar la fecha real de la entrada al input
+	const fechaInput = document.getElementById('fecha-historial');
+	if (fechaInput && item.fecha) {
+		fechaInput.value = item.fecha;
+	}
+    // Seleccionar Tipo de Evento en select y Choices.js
+    setTimeout(() => {
+        const tipoEventoElem = document.getElementById('tipo-historial-etiqueta');
+        if (tipoEventoElem) {
+            const optionExists = Array.from(tipoEventoElem.options).some(opt => String(opt.value) === String(item.tipo_evento));
+            if (optionExists) {
+                tipoEventoElem.value = item.tipo_evento;
+                if (tipoEventoElem.choicesInstance) {
+                    tipoEventoElem.choicesInstance.setChoiceByValue(item.tipo_evento);
+                }
+            } else {
+                tipoEventoElem.selectedIndex = 0;
+                if (tipoEventoElem.choicesInstance) {
+                    tipoEventoElem.choicesInstance.setChoiceByValue(tipoEventoElem.options[0].value);
+                }
+                mostrarMensaje('El tipo de evento original no existe. Se ha seleccionado el primero disponible.', 'warning');
+            }
+        }
+        // Seleccionar Diagnóstico en select y Choices.js
+        const diagEtiquetaElem = document.getElementById('diagnostico-historial-etiqueta');
+        if (diagEtiquetaElem) {
+            const optionExists = Array.from(diagEtiquetaElem.options).some(opt => String(opt.value) === String(item.diagnostico));
+            if (optionExists) {
+                diagEtiquetaElem.value = item.diagnostico;
+                if (diagEtiquetaElem.choicesInstance) {
+                    diagEtiquetaElem.choicesInstance.setChoiceByValue(item.diagnostico);
+                }
+            } else {
+                diagEtiquetaElem.selectedIndex = 0;
+                if (diagEtiquetaElem.choicesInstance) {
+                    diagEtiquetaElem.choicesInstance.setChoiceByValue(diagEtiquetaElem.options[0].value);
+                }
+                mostrarMensaje('El diagnóstico original no existe. Se ha seleccionado el primero disponible.', 'warning');
+            }
+        }
+    }, 0);
+    const idElem = document.getElementById('id-historial');
+	if (idElem) idElem.value = item.id;
+	// Mostrar nombre del paciente en el modal
+	const select = document.getElementById('filtro-paciente-historial');
+	const nombreDiv = document.getElementById('paciente-historial-nombre');
+	if (select && nombreDiv) {
+		const selectedOption = select.options[select.selectedIndex];
+		if (selectedOption) {
+			nombreDiv.textContent = `Paciente seleccionado: ${selectedOption.textContent}`;
+			nombreDiv.style.display = 'block';
+		} else {
+			nombreDiv.textContent = 'Selecciona un paciente antes de editar entrada.';
+			nombreDiv.style.display = 'block';
+		}
+	}
+	const modalElem = document.getElementById('modal-historial');
+	if (modalElem) {
+		const modal = new bootstrap.Modal(modalElem);
+		modal.show();
+	}
+};
+
+// Archivar registro del historial
+window.archiveHistorial = async function(idx) {
+		const item = historialData[idx];
+		const modalConfirmacion = document.getElementById('modal-confirmacion');
+		if (!modalConfirmacion) return;
+		document.getElementById('modal-confirmacion-titulo').textContent = '¿Archivar Entrada?';
+		document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción archivará la entrada seleccionada. ¿Deseas continuar?`;
+		const icono = document.getElementById('modal-confirmacion-icono');
+		icono.innerHTML = '<i class="bi bi-archive-fill text-warning" style="font-size:1.7em;"></i>';
+		modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-danger','bg-success'); 
+		modalConfirmacion.querySelector('.modal-header').classList.add('bg-warning');
+		const btnConfirmar = document.getElementById('btn-confirmar-accion');
+		btnConfirmar.classList.remove('btn-danger','btn-success');
+		btnConfirmar.classList.add('btn-warning');
+
+		// Eliminar listeners previos para evitar duplicidad
+		const nuevoListener = async function() {
+			await ipcRenderer.invoke('historial-archive', item.id);
+			const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+			if (modalInstance) modalInstance.hide();
+			renderHistorial();
+			btnConfirmar.removeEventListener('click', nuevoListener);
+			renderTimelinePacienteDB();
+		};
+		btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+		btnConfirmar.addEventListener('click', nuevoListener);
+
+		const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+		modalInstance.show();
+};
+
+// Desarchivar registro del historial
+window.unarchiveHistorial = async function(idx) {
+	const item = historialData[idx];
+	const modalConfirmacion = document.getElementById('modal-confirmacion');
+	if (!modalConfirmacion) return;
+	document.getElementById('modal-confirmacion-titulo').textContent = '¿Desarchivar Entrada?';
+	document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción restaurará la entrada seleccionada al historial activo. ¿Deseas continuar?`;
+	const icono = document.getElementById('modal-confirmacion-icono');
+	icono.innerHTML = '<i class="bi bi-arrow-up-square-fill text-success" style="font-size:1.7em;"></i>';
+	modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-danger','bg-warning');
+	modalConfirmacion.querySelector('.modal-header').classList.add('bg-success');
+	const btnConfirmar = document.getElementById('btn-confirmar-accion');
+	btnConfirmar.classList.remove('btn-danger','btn-warning');
+	btnConfirmar.classList.add('btn-success');
+
+	// Eliminar listeners previos para evitar duplicidad
+	const nuevoListener = async function() {
+		await ipcRenderer.invoke('historial-unarchive', item.id);
+		const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+		if (modalInstance) modalInstance.hide();
+		renderHistorial();
+		btnConfirmar.removeEventListener('click', nuevoListener);
+		renderTimelinePacienteDB();
+	};
+	btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+	btnConfirmar.addEventListener('click', nuevoListener);
+
+	const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+	modalInstance.show();
+};
+
+// Eliminar registro del historial
+window.deleteHistorial = async function(idx) {
+	const item = historialData[idx];
+	const modalConfirmacion = document.getElementById('modal-confirmacion');
+	if (!modalConfirmacion) return;
+	document.getElementById('modal-confirmacion-titulo').textContent = '¿Eliminar Entrada?';
+	document.getElementById('modal-confirmacion-mensaje').textContent = `Esta acción eliminará la entrada seleccionada de forma permanente. ¿Deseas continuar?`;
+	const icono = document.getElementById('modal-confirmacion-icono');
+	icono.innerHTML = '<i class="bi bi-trash-fill text-danger" style="font-size:1.7em;"></i>';
+	modalConfirmacion.querySelector('.modal-header').classList.remove('bg-light','bg-warning','bg-success');
+	modalConfirmacion.querySelector('.modal-header').classList.add('bg-danger');
+	const btnConfirmar = document.getElementById('btn-confirmar-accion');
+	btnConfirmar.classList.remove('btn-warning','btn-success');
+	btnConfirmar.classList.add('btn-danger');
+
+	// Eliminar listeners previos para evitar duplicidad
+	const nuevoListener = async function() {
+		await ipcRenderer.invoke('historial-delete', item.id);
+		const modalInstance = bootstrap.Modal.getInstance(modalConfirmacion);
+		if (modalInstance) modalInstance.hide();
+		renderHistorial();
+		btnConfirmar.removeEventListener('click', nuevoListener);
+		renderTimelinePacienteDB();
+	};
+	btnConfirmar.removeEventListener('click', nuevoListener); // Por si acaso
+	btnConfirmar.addEventListener('click', nuevoListener);
+
+	const modalInstance = bootstrap.Modal.getOrCreateInstance(modalConfirmacion);
+	modalInstance.show();
+};
+
+// Evento para cambiar la foto de perfil del paciente
+avatar.addEventListener('change', async function() {
+    const input = this;
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64 = e.target.result;
+        document.getElementById('pacienteAvatar').src = base64;
+        const select = document.getElementById('filtro-paciente-historial');
+        const pacienteId = select && select.value ? Number(select.value) : null;
+        if (pacienteId) {
+            await ipcRenderer.invoke('paciente-set-avatar', pacienteId, base64);
+			mostrarMensaje('¡Foto de perfil actualizada correctamente!', 'info');
+        }
+    };
+    reader.readAsDataURL(file);
+});
+// Evento para el select del paciente principal
+seleccionar_paciente_principal.addEventListener('change', async function() {
+	// Eliminado: event listener duplicado
+});
+
+// Boton de infecciones / incidencias.
+document.addEventListener('DOMContentLoaded', function() {
+	// Inicializar tooltips Bootstrap
+	var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+	tooltipTriggerList.map(function(tooltipTriggerEl) {
+		return new bootstrap.Tooltip(tooltipTriggerEl);
+	});
+
+	// Event handler para el botón de infecciones
+	var btnInfeccion = document.getElementById('btn-historial-add-infeccion');
+	if (btnInfeccion) {
+		btnInfeccion.addEventListener('click', function() {
+			abrirMenuInfecciones();
+		});
+	}
+
+	// Event handler para el botón de incidencias (puedes añadir funcionalidad aquí)
+	var btnIncidencia = document.getElementById('btn-historial-add-incidencia');
+	if (btnIncidencia) {
+		btnIncidencia.addEventListener('click', function() {
+		// Handler para guardar incidencia
+		const formIncidencia = document.getElementById('form-incidencia');
+		if (formIncidencia && !formIncidencia._submitHandlerSet) {
+			formIncidencia.addEventListener('submit', async function(e) {
+				e.preventDefault();
+				// Comprobación de origen del modal
+				const modalIncidenciaEl = document.getElementById('modal-incidencia');
+				const origen = modalIncidenciaEl?.getAttribute('data-origen') || 'historial';
+				let pacienteId = null;
+				if (origen === 'pacientes') {
+					// Si viene de pacientes.js, el id está en el data-paciente-id del modal
+					pacienteId = modalIncidenciaEl?.getAttribute('data-paciente-id') ? Number(modalIncidenciaEl.getAttribute('data-paciente-id')) : null;
+				} else {
+					// Si viene de historial, usar el select
+					const selectPaciente = document.getElementById('filtro-paciente-historial');
+					pacienteId = selectPaciente && selectPaciente.value ? Number(selectPaciente.value) : null;
+				}
+				const tipoIncidenciaId = document.getElementById('incidenciaTipo')?.value || '';
+				const fecha = document.getElementById('incidenciaFecha')?.value || '';
+				const medidas = document.getElementById('incidenciaMedidas')?.value || '';
+				let tipoAccesoId = null;
+				let etiquetaId = null;
+				let pacienteSelect = null;
+				await ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+					if (pacienteSel && pacienteSel.tipo_acceso) {
+						tipoAccesoId = pacienteSel.tipo_acceso.id;
+						pacienteSelect = pacienteSel;
+					}
+				});
+				// El campo tipo es el nombre del tipo de incidencia (no el id)
+				let tipoIncidenciaNombre = '';
+				if (window.etiquetasGlobales && tipoIncidenciaId) {
+					const tag = window.etiquetasGlobales.find(t => String(t.id) === String(tipoIncidenciaId));
+					if (tag) {
+						tipoIncidenciaNombre = tag.nombre;
+						etiquetaId = tag.id;
+					}
+				}
+				if (!pacienteId || !tipoIncidenciaNombre || !fecha) {
+					alert('Faltan datos obligatorios.');
+					return;
+				}
+				// Construir objeto incidencia según la tabla
+				const nuevaIncidencia = {
+					paciente_id: pacienteId,
+					tipo_acceso_id: tipoAccesoId,
+					fecha: fecha,
+					tipo: tipoIncidenciaNombre,
+					medidas: medidas,
+					etiqueta_id: etiquetaId,
+					activo: 1
+				};
+				// Guardar en la base de datos
+				const resultado = await ipcRenderer.invoke('incidencias-modal-add', nuevaIncidencia);
+				if (resultado && resultado.success) {
+					mostrarMensaje('Incidencia guardada correctamente', 'success');
+					// Crear notificación
+					const tag = window.etiquetasGlobales?.find(t => String(t.id) === String(nuevaIncidencia.etiqueta_id));
+					// Obtener nombre del paciente
+					let nombrePaciente = '';
+					if (nuevaIncidencia.paciente_id) {
+						const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+						const pacienteSel = pacientes.find(p => Number(p.id) === Number(nuevaIncidencia.paciente_id));
+						if (pacienteSel) nombrePaciente = `${pacienteSel.nombre} ${pacienteSel.apellidos}`;
+					}
+					const iconoIncidencia = `<i class='bi bi-tag-fill' style='color:${tag?.color || '#009879'};font-size:1.1em;vertical-align:-0.1em;'></i>`;
+					const mensajeNotificacion = `Nueva incidencia registrada para el paciente <strong>${nombrePaciente}</strong>: ${iconoIncidencia} ${nuevaIncidencia.tipo}.`;
+					await ipcRenderer.invoke('notificaciones-add', {
+						mensaje: mensajeNotificacion,
+						tipo: 'Incidencia',
+						icono: 'bi bi-tag-fill',
+						color: tag?.color || '#009879',
+						fecha: new Date().toISOString(),
+						usuario_id: null,
+						paciente_id: nuevaIncidencia.paciente_id,
+						extra: ''
+					});
+					// Crear registro en historial_clinico
+					await ipcRenderer.invoke('historial-add', {
+						paciente_id: nuevaIncidencia.paciente_id,
+						fecha: nuevaIncidencia.fecha,
+						tipo_evento: 'Incidencia',
+						motivo: mensajeNotificacion,
+						profesional_id: pacienteSelect && pacienteSelect.profesional_id ? pacienteSelect.profesional_id : null,
+						notas: '',
+						adjuntos: ''
+					});
+					// Cerrar el modal
+					var modalIncidenciaVar = document.getElementById('modal-incidencia');
+					if (modalIncidenciaVar) {
+						var modal = bootstrap.Modal.getInstance(modalIncidenciaVar);
+						if (modal) modal.hide();
+					}
+					if (origen === 'historial') {
+						// Actualizar historial si es necesario
+						if (typeof renderHistorial === 'function') renderHistorial();
+						// Renderizar cards de usuario en historial
+						const selectPaciente = document.getElementById('filtro-paciente-historial');
+						if (selectPaciente && selectPaciente.value && typeof renderPacienteCard === 'function') {
+							const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+							const pacienteSel = pacientes.find(p => Number(p.id) === Number(selectPaciente.value));
+							await renderPacienteCard(pacienteSel || null);
+						}
+						// Actualizar timeline del paciente en historial
+						if (typeof renderTimelinePacienteDB === 'function') {
+							await renderTimelinePacienteDB();
+						}
+					}
+					// Actualizar tabla de pacientes si está disponible
+					if (window.cargarPacientes) window.cargarPacientes();
+					// Actualizar notificaciones en el dashboard
+					if (typeof window.refrescarNotificacionesDashboard === 'function') {
+						window.refrescarNotificacionesDashboard();
+					}
+				} else {
+					mostrarMensaje('Error al guardar la incidencia', 'danger');
+				}
+			});
+			formIncidencia._submitHandlerSet = true;
+		}
+		// Limpiar campos al cerrar el modal de incidencias
+		var modalIncidenciaVar = document.getElementById('modal-incidencia');
+		if (modalIncidenciaVar) {
+			modalIncidenciaVar.addEventListener('hidden.bs.modal', function() {
+				const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+				const fechaInput = document.getElementById('incidenciaFecha');
+				const medidasInput = document.getElementById('incidenciaMedidas');
+				const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+				const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+				const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+				if (incidenciaTipoSelect) incidenciaTipoSelect.selectedIndex = -1;
+				if (fechaInput) fechaInput.value = '';
+				if (medidasInput) medidasInput.value = '';
+				if (accesoIcono) accesoIcono.textContent = '';
+				if (accesoNombre) accesoNombre.textContent = '';
+				if (accesoDescripcion) accesoDescripcion.textContent = '';
+			});
+		}
+		// Establecer la fecha del modal en el día de hoy
+		const fechaInput = document.getElementById('incidenciaFecha');
+		if (fechaInput) {
+			const hoy = new Date();
+			const yyyy = hoy.getFullYear();
+			const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+			const dd = String(hoy.getDate()).padStart(2, '0');
+			fechaInput.value = `${yyyy}-${mm}-${dd}`;
+		}
+	const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+	if (incidenciaTipoSelect && window.etiquetasGlobales) {
+		incidenciaTipoSelect.innerHTML = '';
+		incidenciaTipoSelect.setAttribute('multiple', 'multiple');
+		window.etiquetasGlobales.filter(tag => tag.tipo === 'incidencia').forEach(tag => {
+			const option = document.createElement('option');
+			option.value = tag.id;
+			option.textContent = `🏷️ ${tag.nombre}`;
+			incidenciaTipoSelect.appendChild(option);
+		});
+	}
+			// Rellenar SIEMPRE el box de tipo de acceso al abrir el modal desde historial
+			const modalIncidenciaEl = document.getElementById('modal-incidencia');
+			// Forzar el origen a 'historial' al abrir desde historial.js
+			if (modalIncidenciaEl) modalIncidenciaEl.setAttribute('data-origen', 'historial');
+			const select = document.getElementById('filtro-paciente-historial');
+			let pacienteId = select && select.value ? Number(select.value) : null;
+			const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+			const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+			const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+			if (pacienteId) {
+				ipcRenderer.invoke('get-pacientes-completos').then(pacientes => {
+					const pacienteSel = pacientes.find(p => Number(p.id) === pacienteId);
+					if (pacienteSel && pacienteSel.tipo_acceso) {
+						// Mostrar 🏷️
+						if (accesoIcono) accesoIcono.textContent = pacienteSel.tipo_acceso.icono ? pacienteSel.tipo_acceso.icono : '🏷️';
+						if (accesoNombre) accesoNombre.textContent = pacienteSel.tipo_acceso.nombre || '';
+						if (accesoDescripcion) accesoDescripcion.textContent = pacienteSel.tipo_acceso.descripcion || '';
+					} else {
+						if (accesoIcono) accesoIcono.textContent = '';
+						if (accesoNombre) accesoNombre.textContent = '';
+						if (accesoDescripcion) accesoDescripcion.textContent = '';
+					}
+				});
+			} else {
+				if (accesoIcono) accesoIcono.textContent = '';
+				if (accesoNombre) accesoNombre.textContent = '';
+				if (accesoDescripcion) accesoDescripcion.textContent = '';
+			}
+			// Abre el modal profesional de incidencias
+			var modalIncidenciaVar = document.getElementById('modal-incidencia');
+			if (modalIncidenciaVar) {
+				// Limpiar todos los campos y atributos relevantes
+				modalIncidenciaVar.setAttribute('data-origen', 'historial');
+				modalIncidenciaVar.setAttribute('data-paciente-id', '');
+				modalIncidenciaVar.setAttribute('data-tipo-acceso', '');
+				const incidenciaTipoSelect = document.getElementById('incidenciaTipo');
+				const fechaInput = document.getElementById('incidenciaFecha');
+				const medidasInput = document.getElementById('incidenciaMedidas');
+				const accesoIcono = document.getElementById('incidenciaAccesoIcono');
+				const accesoNombre = document.getElementById('incidenciaAccesoNombre');
+				const accesoDescripcion = document.getElementById('incidenciaAccesoDescripcion');
+				if (incidenciaTipoSelect) incidenciaTipoSelect.selectedIndex = -1;
+				if (fechaInput) {
+					const hoy = new Date();
+					const yyyy = hoy.getFullYear();
+					const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+					const dd = String(hoy.getDate()).padStart(2, '0');
+					fechaInput.value = `${yyyy}-${mm}-${dd}`;
+				}
+				if (medidasInput) medidasInput.value = '';
+				if (accesoIcono) accesoIcono.textContent = '';
+				if (accesoNombre) accesoNombre.textContent = '';
+				if (accesoDescripcion) accesoDescripcion.textContent = '';
+				var modal = new bootstrap.Modal(modalIncidenciaVar);
+				modal.show();
+			}
+		});
+	}
+});
+
+/*****************************/
+/*        FUNCIONES         */
+/*****************************/
+
+// Formatear fecha
+function formatearFecha(fechaStr) {
+	if (!fechaStr) return '';
+	const partes = fechaStr.split('-');
+	if (partes.length === 3) {
+		return `${partes[2]}-${partes[1]}-${partes[0]}`;
+	}
+	return fechaStr;
+}
+
+// Timeline dinámico con datos reales
+async function renderTimelinePacienteDB(pacienteId) {
+	window.renderTimelinePacienteDB = renderTimelinePacienteDB;
+	const timeline = document.getElementById('timelinePaciente');
+	let pacienteIdActual = pacienteId;
+	if (!pacienteIdActual) {
+		// Si no se pasa el parámetro, intentar obtenerlo del selector
+		const select = document.getElementById('filtro-paciente-historial');
+		pacienteIdActual = select && select.value ? Number(select.value) : null;
+	}
+	if (!pacienteIdActual) {
+		timeline.innerHTML = '<div class="text-muted">Selecciona un paciente para ver el timeline.</div>';
+		return;
+	}
+	// Obtener historial clínico real
+	const historial = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+	if (!historial || historial.length === 0) {
+		timeline.innerHTML = '<div class="text-muted">No hay eventos clínicos para este paciente.</div>';
+		return;
+	}
+	// Renderizar timeline con estilo visual
+	timeline.innerHTML = '';
+
+	// Colores e iconos para cada tipo de evento del modal
+	const eventoEstilos = {
+		'Registro':      { color: 'success',   icono: 'bi bi-journal-plus' },
+		'Cambio de Acceso': { color: 'success', icono: 'bi bi-arrow-left-right' },
+		'Fallecimiento': { color: 'dark', icono: 'bi bi-emoji-dizzy' },
+		'Actualización': { color: 'info',      icono: 'bi bi-pencil-square' },
+		'Actualización de datos clínicos': { color: 'primary', icono: 'bi bi-bar-chart-line-fill' },
+		'Actualización de datos personales': { color: 'success', icono: 'bi bi-star-fill' },
+		'Eliminación':   { color: 'danger',    icono: 'bi bi-trash' },
+		'Infección':     { color: 'danger',    icono: 'bi bi-bug-fill' },
+		'Incidencia':    { color: 'warning',   icono: 'bi bi-exclamation-triangle-fill' },
+		'Otro':          { color: 'secondary', icono: 'bi bi-three-dots' }
+	};
+
+	historial.forEach(item => {
+		let estilo = eventoEstilos['Otro'];
+		if (item.tipo_evento && eventoEstilos[item.tipo_evento]) {
+			estilo = eventoEstilos[item.tipo_evento];
+		}
+		// Si el tipo_evento contiene 'Infección' (por variaciones de texto), usa el estilo personalizado
+		if (item.tipo_evento && String(item.tipo_evento).toLowerCase().includes('infección')) {
+			estilo = { color: 'danger', icono: 'bi bi-bug-fill' };
+		}
+		// Si el tipo_evento contiene 'Incidencia' (por variaciones de texto), usa el estilo personalizado
+		if (item.tipo_evento && String(item.tipo_evento).toLowerCase().includes('incidencia')) {
+			estilo = { color: 'warning', icono: 'bi bi-exclamation-triangle-fill' };
+		}
+		let tipoEventoMostrar = item.tipo_evento || 'Evento';
+		timeline.innerHTML += `
+			<div class="card shadow-sm border-0 mb-2 timeline-event bg-light">
+				<div class="card-body d-flex align-items-center" style="gap: 0.75rem;">
+					<span class="icon-circle bg-${estilo.color} text-white flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-size:1.5em;">
+						<i class="${estilo.icono}"></i>
+					</span>
+					<div class="flex-grow-1" style="min-width:0;">
+						<div class="fw-bold text-${estilo.color}" style="word-break:break-word;">${tipoEventoMostrar} - ${formatearFecha(item.fecha)}</div>
+						<div style="word-break:break-word;">${item.motivo ? item.motivo : ''}</div>
+					</div>
+				</div>
+			</div>
+		`;
+	});
+}
+
+// Llamar al timeline dinámico al cargar y al cambiar paciente
+document.addEventListener('DOMContentLoaded', function() {
+    renderTimelinePacienteDB();
+});
+
+document.getElementById('filtro-paciente-historial').addEventListener('change', function(e) {
+	const pacienteId = Number(e.target.value);
+	window.renderTimelinePacienteDB(pacienteId);
+});
+
+// Función para abrir el menú / modal de infecciones
+function abrirMenuInfecciones() {
+    var modal = modal_infeccion;
+    // Guardar el origen del modal en una variable global
+    window.origenModalInfeccion = 'historial'; // Puedes cambiar este valor desde otra sección si lo usas allí
+    // Limpiar modal
+	limpiarModalInfecciones();
+	if (modal) {
+        // Cargar etiquetas de tipo infección antes de mostrar el modal
+        var select = infeccion_tags;
+        if (select) {
+            select.innerHTML = '';
+            if (window.etiquetasGlobales && Array.isArray(window.etiquetasGlobales)) {
+                window.etiquetasGlobales.forEach(function(etiqueta) {
+                    if (etiqueta.tipo === 'infeccion' || etiqueta.tipo === 'infección') {
+                        var option = document.createElement('option');
+                        option.value = etiqueta.id;
+                        if (etiqueta.icono) {
+                            option.textContent = `${etiqueta.icono} ${etiqueta.nombre}`;
+                        } else {
+                            option.textContent = etiqueta.nombre;
+                        }
+                        select.appendChild(option);
+                    }
+                });
+            }
+        }
+        window.infeccionesTemp = [];
+        if (listaInfeccion) listaInfeccion.innerHTML = '';
+        var modalInstance = new bootstrap.Modal(modal);
+        modalInstance.show();
+    } else {
+        alert('No se encontró el modal de infección.');
+    }
+}
+
+// Limpiar el modal de Infecciones
+function limpiarModalInfecciones(){
+	// Limpiar comentarios y lista de infecciones
+	if (comentariosInput) comentariosInput.value = '';
+	if (listaInfeccion) listaInfeccion.innerHTML = '';
+	// Poner la fecha actual por defecto en el campo de fecha de infección
+	if (fechaInput) {
+		var hoy = new Date();
+		var yyyy = hoy.getFullYear();
+		var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+		var dd = String(hoy.getDate()).padStart(2, '0');
+		fechaInput.value = `${yyyy}-${mm}-${dd}`;
+	}
+	if(btn_guardar_infecciones) btn_guardar_infecciones.classList.add('d-none');
+	// Limpiar variable de infecciones añadidas
+	if (window.infeccionesTemp) window.infeccionesTemp = [];
+}
+
+// FILTROS: Poblar filtro de profesional en la tabla (única función, con avatar y Choices.js)
+async function poblarFiltroProfesionalHistorial() {
+    filtro_profesional_historial.innerHTML = '';
+    // Opción por defecto 'Todos'
+    const optionTodos = document.createElement('option');
+    optionTodos.value = '';
+    optionTodos.textContent = 'Todos';
+    filtro_profesional_historial.appendChild(optionTodos);
+
+    const profesionales = await obtenerProfesionales();
+    profesionales.forEach((prof) => {
+        const opt = document.createElement('option');
+        opt.value = `${prof.nombre} ${prof.apellidos}`;
+        opt.textContent = `${prof.nombre} ${prof.apellidos}`;
+        opt.setAttribute('data-custom-properties', JSON.stringify({
+            avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png'
+        }));
+        filtro_profesional_historial.appendChild(opt);
+    });
+
+    // Inicializar Choices.js para mostrar lista desplegable mejorada con avatar
+    if (filtro_profesional_historial.choicesInstance) {
+        filtro_profesional_historial.choicesInstance.destroy();
+        filtro_profesional_historial.choicesInstance = null;
+    }
+    if (window.Choices) {
+        filtro_profesional_historial.choicesInstance = new Choices(filtro_profesional_historial, {
+            searchEnabled: false,
+            itemSelectText: '',
+            callbackOnCreateTemplates: function(template) {
+                return {
+                    choice: (classNames, data) => {
+                        let avatar = '';
+                        if (data.customProperties && data.customProperties.avatar) {
+                            avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:18px;height:18px;object-fit:cover;margin-right:8px;'>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.itemChoice}' style='padding:4px 10px;border-bottom:1px solid #eee;display:flex;align-items:center;' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${avatar}${data.label}</div>`;
+                        return template(html);
+                    },
+                    item: (classNames, data) => { 
+                        let avatar = '';
+                        if (data.customProperties && data.customProperties.avatar) {
+                            avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle' style='width:18px;height:18px;object-fit:cover;margin-right:2px;'>`;
+                        }
+                        const html = `<div class='${classNames.item} ${classNames.highlighted}' style='display:flex;align-items:center;' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${avatar}${data.label}</div>`;
+                        return template(html);
+                    }
+                };
+            }
+        });
+    }
+}
+
+
+// FILTROS: Poblar filtro de fecha en la tabla
+async function poblarFiltroFechaHistorial() {
+	if (!filtro_fecha_historial) return;
+	filtro_fecha_historial.innerHTML = '';
+	// Opción para mostrar todas
+	const optTodos = document.createElement('option');
+	optTodos.value = '';
+	optTodos.textContent = 'Todas';
+	filtro_fecha_historial.appendChild(optTodos);
+	// Obtener historial del paciente seleccionado
+	const pacienteSelect = document.getElementById('filtro-paciente-historial');
+	const pacienteIdActual = pacienteSelect && pacienteSelect.value ? Number(pacienteSelect.value) : null;
+	if (!pacienteIdActual) return;
+	let historial = await ipcRenderer.invoke('historial-get', pacienteIdActual);
+	// Extraer fechas únicas y ordenarlas
+	const fechasUnicas = [...new Set(historial.map(item => item.fecha))].sort();
+	fechasUnicas.forEach(fecha => {
+		const opt = document.createElement('option');
+		opt.value = fecha;
+		opt.textContent = formatearFecha(fecha);
+		filtro_fecha_historial.appendChild(opt);
+	});
+}
+
+// Poblar el select de profesionales en el modal de historial
+async function cargarProfesionalesEnHistorial() {
+	if (!select_profesional_historial) return;
+	select_profesional_historial.innerHTML = '';
+		const profesionales = await obtenerProfesionales();
+		const options = [];
+		if (!profesionales || profesionales.length === 0) {
+			console.error('No se recibieron profesionales desde la base de datos.');
+			options.push({
+				value: '',
+				label: 'No hay profesionales registrados'
+			});
+		} else {
+			profesionales.forEach((prof, idx) => {
+						options.push({
+							value: prof.id,
+							label: `${prof.nombre} ${prof.apellidos}`,
+							customProperties: { avatar: prof.avatar && prof.avatar !== '' ? prof.avatar : '../assets/avatar-default.png' },
+							selected: idx === 0 // Selecciona el primero por defecto
+						});
+			});
+		}
+		// Destruir instancia previa de Choices si existe
+		if (select_profesional_historial.choicesInstance) {
+			select_profesional_historial.choicesInstance.destroy();
+			select_profesional_historial.choicesInstance = null;
+		}
+		// Crear opciones en el select
+		options.forEach(opt => {
+			const optionElem = document.createElement('option');
+			optionElem.value = opt.value;
+			optionElem.textContent = opt.label;
+			if (opt.disabled) optionElem.disabled = true;
+			if (opt.selected) optionElem.selected = true;
+			if (opt.customProperties) optionElem.setAttribute('data-custom-properties', JSON.stringify(opt.customProperties));
+			select_profesional_historial.appendChild(optionElem);
+		});
+		// Inicializar Choices con template personalizado para mostrar avatar
+		select_profesional_historial.choicesInstance = new Choices(select_profesional_historial, {
+			searchEnabled: false,
+			itemSelectText: '',
+			callbackOnCreateTemplates: function(template) {
+				return {
+					choice: (classNames, data) => {
+						let avatar = '';
+						if (data.customProperties && data.customProperties.avatar) {
+						avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:28px;height:28px;object-fit:cover;margin: 8px 0 8px 8px;'>`;
+						}
+						const html = `<div class='${classNames.item} ${classNames.itemChoice}' data-select-text='${this.config.itemSelectText}' data-choice ${data.disabled ? "data-choice-disabled aria-disabled='true'" : ''} data-id='${data.id}' data-value='${data.value}' ${data.groupId > 0 ? "role='treeitem'" : "role='option'"}>${avatar}${data.label}</div>`;
+						return template(html);
+					},
+					item: (classNames, data) => {
+						let avatar = '';
+						if (data.customProperties && data.customProperties.avatar) {
+							avatar = `<img src='${data.customProperties.avatar}' class='rounded-circle me-2' style='width:28px;height:28px;object-fit:cover;'>`;
+						}
+						const html = `<div class='${classNames.item} ${classNames.highlighted}' data-item data-id='${data.id}' data-value='${data.value}' ${data.active ? "aria-selected='true'" : ''} ${data.disabled ? "aria-disabled='true'" : ''}>${avatar}${data.label}</div>`;
+						return template(html);
+					}
+				};
+			}
+		});
+}
+
+// Función para obtener profesionales registrados
+async function obtenerProfesionales() {
+	// IPC call para obtener profesionales desde el backend
+	profesionales = await ipcRenderer.invoke('get-profesionales');
+	return profesionales;
+}
+
+// Obtener pacientes completos
+async function obtenerPacientesCompletos() {
+	const pacientes = await ipcRenderer.invoke('get-pacientes-completos');
+	return pacientes || [];
+}
+
+async function cargarPacientesHistorial() {
+if (!seleccionar_paciente_principal) return;
+	const pacientes = await obtenerPacientesCompletos();
+	seleccionar_paciente_principal.innerHTML = '';
+	if (!pacientes || pacientes.length === 0) {
+		console.warn('No se recibieron pacientes para el filtro.');
+	}
+	pacientes.forEach(p => {
+		const opt = document.createElement('option');
+		opt.value = Number(p.id) > 0 ? Number(p.id) : '';
+		opt.textContent = `${p.nombre} ${p.apellidos}`;
+		seleccionar_paciente_principal.appendChild(opt);
+	});
+	// Seleccionar el primero por defecto solo si no hay ninguno seleccionado
+	if (pacientes.length > 0 && !seleccionar_paciente_principal.value) {
+		pacienteId = pacientes[0].id;
+		seleccionar_paciente_principal.value = pacienteId;
+		paciente_seleccionado = pacientes[0];
+	}
+}
+
+window.cargarPacientesHistorial = cargarPacientesHistorial;
+	
+
+window.renderPacienteCard = async function(paciente) {
+	const avatar = document.getElementById('pacienteAvatar');
+	const nombre = document.getElementById('pacienteNombre');
+	const datos = document.getElementById('pacienteDatos');
+	const extra = document.getElementById('pacienteExtra');
+	const sexoBadge = document.getElementById('pacienteSexo');
+	const telefono = document.getElementById('pacienteTelefono');
+	const correo = document.getElementById('pacienteCorreo');
+	const direccion = document.getElementById('pacienteDireccion');
+	const alergias = document.getElementById('pacienteAlergias');
+	const profesional = document.getElementById('pacienteProfesional');
+	const observaciones = document.getElementById('pacienteObservaciones');
+	const tipoAccesoElem = document.getElementById('paciente-tipoacceso-info');
+	// Definir historia correctamente para evitar ReferenceError
+	const historia = document.getElementById('pacienteHistoria');  
+
+	if (!paciente) {
+		avatar.src = '../assets/avatar-default.png';
+		nombre.textContent = 'Selecciona un paciente';
+		datos.textContent = '';
+		extra.textContent = '';
+		sexoBadge.textContent = '';
+		sexoBadge.className = 'badge bg-secondary mt-2';
+		if (telefono) telefono.textContent = '-';
+		if (correo) correo.textContent = '-';
+		if (direccion) direccion.textContent = '-';
+		if (historia) historia.textContent = '-';
+		if (alergias) alergias.textContent = '-';
+		if (profesional) profesional.textContent = '-';
+		if (observaciones) observaciones.textContent = '-';
+		if (tipoAccesoElem) tipoAccesoElem.textContent = '-';
+		return;
+	}
+	// Nuevos campos visuales profesionales
+	if (telefono) telefono.textContent = paciente.telefono || '-';
+	if (correo) correo.textContent = paciente.correo || '-';
+	if (direccion) direccion.textContent = paciente.direccion || '-';
+	if (alergias) alergias.textContent = paciente.alergias || '-';
+	if (profesional) profesional.textContent = paciente.alergias || '-';
+	if (observaciones) observaciones.textContent = paciente.observaciones || '-';
+    let avatarData = paciente.avatar;
+    if (!avatarData && paciente.id) {
+        avatarData = await ipcRenderer.invoke('paciente-get-avatar', paciente.id);
+    }
+    if (avatarData && avatarData !== '') {
+        if (avatarData.startsWith('data:image')) {
+            avatar.src = avatarData;
+        } else {
+            avatar.src = avatarData;
+        }
+    } else {
+        avatar.src = paciente.sexo === 'M' ? '../assets/hombre.jpg' : (paciente.sexo === 'F' ? '../assets/mujer.jpg' : '../assets/avatar-default.png');
+    }
+	let iconosInfeccion = '';
+	if (Array.isArray(paciente.infecciones) && paciente.infecciones.length > 0) {
+		paciente.infecciones.forEach(inf => {
+			if (inf.tag.emoji || inf.tag.icono || inf.tag.nombre) {
+				const nombreInf = inf.tag.nombre ? inf.tag.nombre : 'Infección';
+				if (inf.tag.emoji) {
+					iconosInfeccion += inf.tag.emoji;
+				} else if (inf.tag.icono) {
+					iconosInfeccion += inf.tag.icono;
+				}
+			}
+		});
+	}
+	nombre.innerHTML = paciente.nombre + (paciente.apellidos ? ' ' + paciente.apellidos : '') + " " + iconosInfeccion;
+	// Inicializar tooltips Bootstrap para los iconos de infección
+	if (nombre) {
+		var tooltipTriggerList = [].slice.call(nombre.querySelectorAll('[data-bs-toggle="tooltip"]'));
+		tooltipTriggerList.map(function(tooltipTriggerEl) {
+			return new bootstrap.Tooltip(tooltipTriggerEl);
+		});
+	}
+    let edad = '';
+	let fechaNac = paciente.fecha_nacimiento || '';
+	let acceso_final = '';
+	if (paciente.tipo_acceso) {
+		// Usar datos del objeto acceso si existe 
+		let accesoObj = paciente.acceso || {};
+		let tipoAcceso = paciente.tipo_acceso;
+		let ubicacion = accesoObj.ubicacion_anatomica || paciente.ubicacion_anatomica || '';
+		let lado = accesoObj.ubicacion_lado || paciente.ubicacion_lado || '';
+		acceso_final = `${tipoAcceso.icono ? tipoAcceso.icono + ' ' : ''}${tipoAcceso.nombre ? tipoAcceso.nombre : ''}`;
+		if (ubicacion) acceso_final += ', ' + ubicacion;
+		if (lado) acceso_final += ', ' + lado;
+		if (tipoAccesoElem) {
+			tipoAccesoElem.textContent = acceso_final;
+			tipoAccesoElem.title = tipoAcceso.descripcion || '';
+		}
+	} else {
+		if (tipoAccesoElem) tipoAccesoElem.textContent = '';
+	}
+	if (fechaNac) {
+        const nacimiento = new Date(fechaNac);
+        const hoy = new Date();
+        let years = hoy.getFullYear() - nacimiento.getFullYear();
+        if (hoy.getMonth() < nacimiento.getMonth() || (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate())) {
+            years--;
+        }
+        edad = years + ' años';
+    }
+
+	let fechaAlta = paciente.fecha_instalacion || '';
+	// Formatear fecha de alta a dd/mm/yyyy
+	let fechaAltaFormateada = '';
+	if (fechaAlta && fechaAlta.includes('-')) {
+		const [y, m, d] = fechaAlta.split('-');
+		fechaAltaFormateada = `${d}/${m}/${y}`;
+	} else {
+		fechaAltaFormateada = fechaAlta;
+	}
+	datos.innerHTML = `${edad ? edad : 'Edad desconocida'}<br>`;
+	let sexoNorm = (paciente.sexo || '').toString().trim().toLowerCase();
+	if (sexoNorm === 'm' || sexoNorm === 'hombre') {
+		sexoBadge.textContent = 'Hombre';
+		sexoBadge.className = 'badge bg-primary mt-2';
+		sexoBadge.style.backgroundColor = '';
+	} else if (sexoNorm === 'f' || sexoNorm === 'mujer') {
+		sexoBadge.textContent = 'Mujer';
+		sexoBadge.className = 'badge bg-pink mt-2';
+		sexoBadge.style.backgroundColor = '#e83e8c';
+	} else {
+		sexoBadge.textContent = 'Sin especificar';
+		sexoBadge.className = 'badge bg-secondary mt-2';
+		sexoBadge.style.backgroundColor = '';
+	}
+	extra.innerHTML = `ID: ${paciente.id || ''}${fechaAltaFormateada ? ', Alta: ' + fechaAltaFormateada : ''}`;
+	
+}
+
+/**
+ * Agrega una entrada al historial clínico del paciente según el tipo de evento.
+ * @param {string|Object} evento - Puede ser un string ('Registro') o un objeto con datos.
+ * Ejemplo de uso: addEntradasHistorial('Registro', { paciente_id, profesional })
+ */
+async function addEntradasHistorial(evento, datos = {}) {
+	if (evento === 'Registro') {
+		if (!datos.paciente_id) return;
+		const fechaHoy = new Date();
+		const yyyy = fechaHoy.getFullYear();
+		const mm = String(fechaHoy.getMonth() + 1).padStart(2, '0');
+		const dd = String(fechaHoy.getDate()).padStart(2, '0');
+		const fecha = `${yyyy}-${mm}-${dd}`;
+		let profesionalId = null;
+		if (typeof datos.profesional_id !== 'undefined' && datos.profesional_id !== null && !isNaN(Number(datos.profesional_id))) {
+			profesionalId = Number(datos.profesional_id);
+		} else if (typeof datos.profesional !== 'undefined' && datos.profesional !== null && !isNaN(Number(datos.profesional))) {
+			profesionalId = Number(datos.profesional);
+		}
+		const entrada = {
+			paciente_id: datos.paciente_id,
+			fecha: fecha,
+			tipo_evento: 'Registro',
+			motivo: 'Registro de nuevo paciente',
+			diagnostico: null,
+			tratamiento: '',
+			notas: '',
+			adjuntos: '',
+			profesional_id: profesionalId,
+		};
+		await ipcRenderer.invoke('historial-add', entrada);
+	}
+	// Aquí puedes añadir otros tipos de evento en el futuro
+}

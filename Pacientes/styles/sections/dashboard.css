@@ -1,0 +1,314 @@
+#dashboard-notificaciones {
+	padding-top: 0.2rem !important;
+	padding-bottom: 0.2rem !important;
+}
+
+#dashboard-notificaciones .list-group-item {
+	padding: 0.55rem 0.7rem !important;
+	font-size: 0.98em !important;
+	margin-bottom: 0.25rem !important;
+	border-radius: 0.45rem !important;
+	gap: 0.4em !important;
+}
+
+#dashboard-notificaciones .notificacion-fecha {
+	font-size: 0.93em !important;
+	margin-left: 0.7em !important;
+}
+#dashboard-notificaciones-container {
+	border-radius: 1.2rem;
+	box-shadow: 0 6px 32px rgba(52,199,89,0.10), 0 2px 8px rgba(0,152,121,0.13);
+	overflow: hidden;
+	background: #fff;
+	border: 1.5px solid #e6f9e6;
+}
+
+#dashboard-notificaciones-container .card-title {
+	font-size: 1.32rem;
+	font-weight: 800;
+	letter-spacing: 0.7px;
+	text-shadow: 0 1px 2px rgba(0,0,0,0.04);
+	color: #222 !important;
+}
+
+#dashboard-notificaciones-container .badge {
+	font-size: 1.08em;
+	font-weight: 700;
+	border-radius: 0.8em;
+	box-shadow: 0 2px 8px rgba(52,199,89,0.13);
+	background: linear-gradient(90deg, #e6f9e6 0%, #34c759 100%);
+	color: #009879;
+	border: 1px solid #34c759;
+}
+
+#dashboard-notificaciones {
+	background: #f8f9fa;
+	border-radius: 0 0 1.2rem 1.2rem;
+	padding-top: 0.7rem;
+	padding-bottom: 0.7rem;
+}
+
+#dashboard-notificaciones .list-group-item {
+	background: #fff;
+	border: none;
+	border-radius: 0.7rem;
+	margin-bottom: 0.6rem;
+	box-shadow: 0 2px 8px rgba(52,199,89,0.09);
+	transition: box-shadow 0.18s, transform 0.18s;
+	font-size: 1.12em;
+	padding: 1rem 1.3rem;
+	display: flex;
+	align-items: center;
+	gap: 0.7em;
+	position: relative;
+}
+
+#dashboard-notificaciones .list-group-item:hover {
+	box-shadow: 0 8px 24px rgba(52,199,89,0.17);
+	transform: translateY(-2px) scale(1.025);
+	z-index: 2;
+}
+
+#dashboard-notificaciones .notificacion-icono {
+	font-size: 1.5em;
+	margin-right: 0.8em;
+	color: #34c759;
+	flex-shrink: 0;
+	filter: drop-shadow(0 1px 2px #e6f9e6);
+}
+
+#dashboard-notificaciones .notificacion-tipo {
+	font-weight: 700;
+	color: #009879;
+	margin-right: 0.6em;
+	font-size: 1.05em;
+}
+
+#dashboard-notificaciones .notificacion-mensaje {
+	color: #222;
+	flex: 1;
+	font-weight: 500;
+	letter-spacing: 0.1px;
+}
+
+#dashboard-notificaciones .notificacion-fecha {
+	font-size: 0.99em;
+	color: #888;
+	margin-left: 1.2em;
+	font-style: italic;
+	font-weight: 400;
+}
+/* Panel de notificaciones profesional */
+#dashboard-notificaciones-container {
+	border-radius: 1rem;
+	box-shadow: 0 4px 24px rgba(52,199,89,0.08), 0 1.5px 6px rgba(0,152,121,0.10);
+	overflow: hidden;
+}
+
+#dashboard-notificaciones-container .card-title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+#dashboard-notificaciones-container .badge {
+	font-size: 1.05em;
+	font-weight: 600;
+	border-radius: 0.7em;
+	box-shadow: 0 2px 8px rgba(52,199,89,0.10);
+}
+
+#dashboard-notificaciones {
+	background: #f8f9fa;
+	border-radius: 0 0 1rem 1rem;
+	padding-top: 0.5rem;
+	padding-bottom: 0.5rem;
+}
+
+#dashboard-notificaciones .list-group-item {
+	background: #fff;
+	border: none;
+	border-radius: 0.6rem;
+	margin-bottom: 0.5rem;
+	box-shadow: 0 1px 4px rgba(52,199,89,0.07);
+	transition: box-shadow 0.2s, transform 0.2s;
+	font-size: 1.08em;
+	padding: 0.85rem 1.1rem;
+	display: flex;
+	align-items: center;
+}
+
+#dashboard-notificaciones .list-group-item:hover {
+	box-shadow: 0 4px 16px rgba(52,199,89,0.13);
+	transform: translateY(-2px) scale(1.02);
+}
+
+#dashboard-notificaciones .notificacion-icono {
+	font-size: 1.35em;
+	margin-right: 0.7em;
+	color: #34c759;
+	flex-shrink: 0;
+}
+
+#dashboard-notificaciones .notificacion-tipo {
+	font-weight: 600;
+	color: #009879;
+	margin-right: 0.5em;
+}
+
+#dashboard-notificaciones .notificacion-mensaje {
+	color: #222;
+	flex: 1;
+}
+
+#dashboard-notificaciones .notificacion-fecha {
+	font-size: 0.98em;
+	color: #888;
+	margin-left: 1em;
+	font-style: italic;
+}
+#dashboard-grafica-pacientes {
+	background: #fff;
+	border-radius: 1.25rem;
+	box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,152,121,0.04);
+	border: 1.5px solid #e6f9e6;
+	padding: 2.1rem 1.3rem 1.3rem 1.3rem;
+	margin-bottom: 2.2rem;
+	animation: fadeInCitas 0.7s cubic-bezier(.4,2,.3,1);
+}
+#dashboard-grafica-pacientes .card-title {
+	font-size: 1.18rem;
+	font-weight: 900;
+	color: #009879;
+	letter-spacing: 0.8px;
+	margin-bottom: 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+#dashboard-grafica-pacientes .card-title i {
+	font-size: 1.35em;
+}
+/* Estilos modernos para los cards del Dashboard */
+#dashboard-pacientes-cards .card {
+	transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.18s;
+	border-radius: 1.25rem;
+	box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1.5px 6px rgba(0,0,0,0.04);
+	border: none;
+	overflow: hidden;
+}
+#dashboard-pacientes-cards .card:hover {
+	transform: translateY(-4px) scale(1.03);
+	box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+	z-index: 2;
+}
+#dashboard-section .card-title {
+		font-size: 1rem;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+	margin-bottom: 0.5rem;
+}
+#dashboard-section .card-text.fs-3 {
+		font-size: 1.7rem !important;
+	font-weight: 900;
+	margin-bottom: 0.25rem;
+	text-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+#dashboard-section .card-body {
+	padding: 2rem 1.2rem 1.2rem 1.2rem;
+}
+#dashboard-section .card .mb-2 i {
+		font-size: 2rem !important;
+	filter: drop-shadow(0 2px 6px rgba(0,0,0,0.10));
+}
+#dashboard-section .card.bg-success {
+	background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+	color: #fff;
+}
+#dashboard-section .card.bg-white.text-success {
+	background: linear-gradient(135deg, #fff 60%, #e0ffe0 100%);
+	color: #009879;
+}
+#dashboard-section .card[style*="linear-gradient(135deg, #34c759"] {
+	background: linear-gradient(135deg, #34c759 60%, #009879 100%) !important;
+	color: #fff !important;
+}
+#dashboard-section .card[style*="linear-gradient(135deg, #14532d"] {
+	background: linear-gradient(135deg, #14532d 60%, #009879 100%) !important;
+	color: #fff !important;
+}
+
+/* --- Próximas citas dashboard (nuevo estilo minimalista y elegante) --- */
+#dashboard-proximas-citas {
+	background: #fff;
+	border-radius: 1.25rem;
+	box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,152,121,0.04);
+	border: 1.5px solid #e6f9e6;
+	padding: 2.1rem 1.3rem 1.3rem 1.3rem;
+	margin-bottom: 2.2rem;
+	animation: fadeInCitas 0.7s cubic-bezier(.4,2,.3,1);
+}
+@keyframes fadeInCitas {
+	from { opacity: 0; transform: translateY(24px) scale(0.98); }
+	to { opacity: 1; transform: none; }
+}
+#dashboard-proximas-citas .card-title {
+	font-size: 1.18rem;
+	font-weight: 900;
+	color: #009879;
+	letter-spacing: 0.8px;
+	margin-bottom: 1.2rem;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+#dashboard-proximas-citas .card-title i {
+	font-size: 1.35em;
+	color: #38bfa7;
+}
+#dashboard-proximas-citas .card {
+	background: #f8fdf8;
+	border-radius: 1rem;
+	box-shadow: 0 2px 12px rgba(0,152,121,0.06);
+	border: 1px solid #e0ffe0;
+}
+#dashboard-proximas-citas .card-body {
+	padding: 1.1rem 0.8rem 0.8rem 0.8rem;
+}
+#dashboard-proximas-citas table.table {
+	background: transparent;
+	border-radius: 0.7rem;
+	overflow: hidden;
+	margin-bottom: 0;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+#dashboard-proximas-citas table.table thead th {
+	background: #e6f9e6;
+	color: #009879;
+	font-weight: 700;
+	border-bottom: 1.5px solid #e0ffe0;
+	font-size: 1.07rem;
+	letter-spacing: 0.4px;
+	text-align: center;
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+#dashboard-proximas-citas table.table tbody tr {
+	transition: background 0.18s;
+}
+#dashboard-proximas-citas table.table tbody tr:hover {
+	background: #e0ffe0;
+}
+#dashboard-proximas-citas table.table td {
+	border: none;
+	font-size: 1.03rem;
+	vertical-align: middle;
+	padding: 0.55rem 0.7rem;
+	text-align: center;
+	color: #222;
+}
+#dashboard-proximas-citas table.table .text-muted {
+	color: #b2b2b2 !important;
+}

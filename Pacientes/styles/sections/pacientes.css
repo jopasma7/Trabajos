@@ -1,0 +1,206 @@
+/* Limita el ancho de la columna de ubicación y muestra puntos suspensivos */
+.pacientes-ubicacion {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Formularios dinámicos para incidencias seleccionadas */
+#incidencia-valores-container .incidencia-form {
+  background: #f8fafc;
+  border: 1px solid #e0e0e0;
+  border-radius: 7px;
+  margin-bottom: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 4px rgba(40,60,90,0.06);
+}
+#incidencia-valores-container .badge {
+  font-size: 0.95em;
+  padding: 4px 12px;
+  border-radius: 12px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#incidencia-valores-container .form-control-sm,
+#incidencia-valores-container .form-select-sm {
+  font-size: 0.92em;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+#modal-paciente .card.avatar-card {
+  background: transparent !important;
+  box-shadow: 0 1px 6px rgba(40,60,90,0.10);
+  border: 1px solid rgba(0, 152, 121, 0.45);
+}
+
+#modal-paciente .modal-content {
+  background: linear-gradient(135deg, #075b49 60%, #009879 100%);
+  color: #fff;
+  font-size: 0.92rem;
+  padding: 5px;
+}
+#modal-paciente .modal-header {
+  background: linear-gradient(90deg, #009879 60%, #3a8dde 100%);
+  color: #fff;
+  padding: 8px 14px 6px 14px;
+}
+#modal-paciente .modal-title {
+  font-size: 2em;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+#modal-paciente .modal-body {
+  background: #f9fafc;
+  padding: 8px 10px 6px 10px;
+}
+#modal-paciente label.form-label {
+  font-weight: bold;
+  color: #14532d;
+  font-size: 0.78em;
+  letter-spacing: 0.1px;
+  margin-bottom: 1px;
+}
+#modal-paciente input.form-control,
+#modal-paciente select.form-select {
+  border-radius: 6px;
+  border: 1px solid #b2dfdb;
+  font-size: 0.78em;
+  background: #f8fafc;
+  box-shadow: 0 1px 3px rgba(58,141,222,0.03);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 3px 6px;
+}
+#modal-paciente input.form-control:focus,
+#modal-paciente select.form-select:focus {
+  border-color: #009879;
+  box-shadow: 0 2px 8px rgba(0,152,121,0.08);
+  background: #e0f7ef;
+}
+#modal-paciente .modal-footer {
+  padding: 8px 16px !important; /* Reduce el espacio interno */
+  min-height: 40px;             /* Altura mínima más baja */
+  background-color: #075b49;
+}
+
+#modal-paciente .modal-footer .row {
+  margin-top: 0 !important;     /* Elimina el margen superior extra */
+}
+#modal-paciente .btn-success{
+  background: #4d9886;
+  color: #fff;
+  border: none;
+  border-radius: 0.8em;
+  font-weight: 700;
+  padding: 0.35em 1.1em;
+  font-size: 0.95em;
+  box-shadow: 0 2px 8px 0 #34d39933;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+ #modal-paciente .btn-success.btn-lg:hover {
+  background: linear-gradient(90deg, #009879 70%, #4d9886 100%) !important;
+  box-shadow: 0 4px 16px #00987955, 0 0 8px #3a8dde55;
+  transform: scale(1.03);
+}
+#modal-paciente .btn-secondary {
+  background: #e8f0fe;
+  color: #222;
+  border: none;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78em;
+}
+#modal-paciente hr {
+  border-top: 2px solid #b3d8f7;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+#modal-paciente .form-label.small {
+  font-size: 0.98em;
+}
+#modal-paciente .list-unstyled {
+  margin-top: 10px;
+}
+#modal-paciente .btn-outline-primary {
+  border-radius: 6px;
+  font-size: 0.78em;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+#modal-paciente .btn-close {
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+#modal-paciente input[type="file"] {
+  background: #e8f0fe;
+  border: 1.5px solid #b3d8f7;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+#modal-paciente .row.g-2 > div {
+  margin-bottom: 3px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 3px 6px 1px 6px;
+}
+
+#modal-paciente .section-title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  margin-top: 0.2rem;
+}
+/* Títulos de grupo */
+#modal-paciente .modal-body h6 {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #b2dfdb;
+  margin-bottom: 4px;
+  letter-spacing: 0.2px;
+}
+/* Badges suaves para tipo de acceso */
+.badge-fistula {
+  color: #c62828;
+  font-weight: normal;
+}
+.badge-cateter {
+  color: #1565c0;
+  font-weight: normal;
+}
+.badge-protesis {
+  color: #b28900;
+  font-weight: normal;
+}
+/* Estilos para la sección de pacientes */
+
+/* Fecha de instalación en tabla pacientes: mantener en una sola línea */
+/* Acciones de la tabla pacientes: mantener botones en línea */
+td:last-child, td:nth-child(4) {
+  white-space: nowrap;
+}
+
+td:last-child .btn {
+  margin-right: 0.25rem;
+  margin-bottom: 0;
+}
+
+.choices__list--dropdown .choices__item[data-custom-properties] {
+  background: #fff !important;
+  color: #222 !important;
+}
+.choices__list--dropdown {
+  background: #fff !important;
+  color: #222 !important;
+  z-index: 9999 !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+}

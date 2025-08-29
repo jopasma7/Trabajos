@@ -1,0 +1,50 @@
+/* Título principal de la sección de perfil */
+#perfil-section h2 {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-weight: 600;
+  font-size: 2rem;
+  color: #222;
+  margin-bottom: 1.5rem;
+  background: none;
+  border: none;
+  padding-bottom: 0;
+  text-shadow: none;
+}
+/* Botón eliminar avatar (X) */
+#eliminar-avatar-btn {
+  top: 6px !important;
+  right: auto !important;
+  left: 70px !important;
+  bottom: auto !important;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  z-index: 3;
+  padding: 0;
+}
+
+#eliminar-avatar-btn .text-success {
+  margin-bottom: 5px;
+}
+#eliminar-avatar-btn .text-danger {
+  font-size: 1.3em;
+  line-height: 1;
+}
+#eliminar-avatar-btn:hover {
+  background: #ffeaea;
+  border-color: #dc3545;
+}
+/* Labels en negrita para el formulario de perfil */
+#perfil-section .form-label {
+  font-weight: 600;
+}
+/* Avatar editable general */
+.avatar-editable {
+  display: inline-block;
+}
+.avatar-img {
+  transition: box-shadow 0.2s;
+}

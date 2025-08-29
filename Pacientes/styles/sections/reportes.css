@@ -1,0 +1,176 @@
+/* Estilo profesional y elegante para cards de reportes: Neumorphism + Soft Gradient */
+.card-neumo-report {
+  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ef 100%);
+  border-radius: 1.6rem;
+  box-shadow: 8px 8px 24px #d1d9e6, -8px -8px 24px #ffffff;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card-neumo-report:hover {
+  box-shadow: 12px 12px 32px #d1d9e6, -12px -12px 32px #ffffff;
+  transform: translateY(-2px) scale(1.02);
+}
+.card-neumo-report .card-body {
+  padding: 2.3rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 320px;
+}
+.card-neumo-report .icon-neumo {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e0e7ef 0%, #f8fafc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  box-shadow: 4px 4px 12px #d1d9e6, -4px -4px 12px #ffffff;
+  margin-right: 1.1rem;
+}
+.card-neumo-report .card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+.card-neumo-report .card-text {
+  color: #6b7280;
+  font-size: 1.08rem;
+  margin-bottom: 1.2rem;
+}
+.card-neumo-report .btn-neumo-report {
+  background: linear-gradient(90deg, #e0e7ef 0%, #f8fafc 100%);
+  color: #374151;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.7rem;
+  box-shadow: 2px 2px 8px #d1d9e6, -2px -2px 8px #ffffff;
+  padding: 0.85rem 0;
+  font-size: 1.08rem;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.card-neumo-report .btn-neumo-report:hover {
+  background: linear-gradient(90deg, #f8fafc 0%, #e0e7ef 100%);
+  color: #2563eb;
+  box-shadow: 4px 4px 16px #d1d9e6, -4px -4px 16px #ffffff;
+}
+.card-neumo-report .badge-neumo {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  background: linear-gradient(90deg, #e0e7ef 0%, #f8fafc 100%);
+  color: #374151;
+  font-weight: 600;
+  border-radius: 1rem;
+  box-shadow: 2px 2px 8px #d1d9e6, -2px -2px 8px #ffffff;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.98rem;
+}
+
+/* Estilo premium para cards de reportes: Dashboard Medical UI */
+.card-premium-report {
+  background: linear-gradient(135deg, #f6f8fc 0%, #e9f5ff 100%);
+  border-radius: 1.3rem;
+  box-shadow: 0 8px 32px 0 rgba(44, 62, 80, 0.18), 0 2px 8px 0 rgba(44, 62, 80, 0.10);
+  border: 2.5px solid #e3eafc;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.18s, border-color 0.18s;
+}
+.card-premium-report:hover {
+  box-shadow: 0 16px 48px 0 rgba(44, 62, 80, 0.22), 0 4px 16px 0 rgba(44, 62, 80, 0.14);
+  transform: translateY(-3px) scale(1.025);
+  border-color: #b3c6f7;
+}
+.card-premium-report .card-body {
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 240px;
+}
+.card-premium-report .icon-premium {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #b3c6f7 0%, #e9f5ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  box-shadow: 0 0 18px 2px #b3c6f744;
+  margin-right: 0.8rem;
+  animation: glowIcon 2.2s infinite alternate;
+}
+@keyframes glowIcon {
+  0% { box-shadow: 0 0 18px 2px #b3c6f744; }
+  100% { box-shadow: 0 0 32px 6px #b3c6f799; }
+}
+.card-premium-report .card-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #2d3a4a;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.01em;
+}
+.card-premium-report .card-text {
+  color: #4b5563;
+  font-size: 0.97rem;
+  margin-bottom: 0.7rem;
+  line-height: 1.6;
+}
+.card-premium-report .btn-premium-report {
+  background: linear-gradient(90deg, #b3c6f7 0%, #e9f5ff 100%);
+  color: #2d3a4a;
+  font-weight: 700;
+  border: none;
+  border-radius: 0.6rem;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.10);
+  padding: 0.7rem 0;
+  font-size: 0.98rem;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.18s;
+}
+.card-premium-report .btn-premium-report:active {
+  transform: scale(0.97);
+  box-shadow: 0 1px 6px rgba(44, 62, 80, 0.08);
+}
+.card-premium-report .btn-premium-report:hover {
+  background: linear-gradient(90deg, #e9f5ff 0%, #b3c6f7 100%);
+  color: #2563eb;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.15);
+}
+.card-premium-report .badge-premium {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  background: linear-gradient(90deg, #b3c6f7 0%, #e9f5ff 100%);
+  color: #c0392b;
+  font-weight: 700;
+  border-radius: 0.7rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+  padding: 0.32rem 0.7rem;
+  font-size: 0.85rem;
+  animation: badgeIn 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+}
+@keyframes badgeIn {
+  0% { opacity: 0; transform: scale(0.7) translateY(-12px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Badge color personalizado para cada card premium de reportes */
+.card-premium-report.chd .badge-premium {
+  color: #1565c0;
+}
+.card-premium-report.fav .badge-premium {
+  color: #bdb76b;
+}
+.card-premium-report.madurativo .badge-premium {
+  color: #0288d1;
+}
+.card-premium-report.sepsis .badge-premium {
+  color: #c0392b;
+}

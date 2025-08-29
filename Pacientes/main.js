@@ -1,24 +1,38 @@
 
+// Recarga automática en desarrollo
+try {
+  require('electron-reloader')(module, {
+    ignore: [
+      'data',
+      'data/**'
+    ]
+  });
+} catch (_) {}
+
 
 // Importamos los módulos principales de Electron
 const { app, BrowserWindow } = require('electron');
 
 // Inicializamos la base de datos y los handlers de IPC
 require('./js/data/db');
-require('./js/ipcHandlers');
+require('./js/ipcHandlers.js'); // Asegura que los handlers de agenda estén activos
 
 
 // Función para crear la ventana principal de la aplicación
 function createWindow() {
   // Creamos una nueva instancia de BrowserWindow (ventana de la app)
+  const path = require('path');
   const win = new BrowserWindow({
-    width: 800, // Ancho de la ventana
-    height: 600, // Alto de la ventana
+    width: 1200,
+    height: 800,
+    icon: path.join(__dirname, 'assets', 'app.ico'), // Icono de la app
+    title: 'Gigi Hospital',
     webPreferences: {
       nodeIntegration: true, // Permite usar Node.js en el frontend
       contextIsolation: false // Desactiva el aislamiento de contexto
     }
   });
+  win.maximize();
   // Cargamos el archivo HTML principal desde la carpeta views
   win.loadFile('views/index.html');
 }

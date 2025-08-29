@@ -1,18 +1,63 @@
 <!DOCTYPE html>
 <html>
   <head>
+  <script src="../node_modules/choices.js/public/assets/scripts/choices.min.js"></script>
     <!--
       Archivo principal HTML de la app Electron
       Incluye los estilos y el script de frontend
     -->
-    <meta charset="UTF-8">
-    <title>Electron App</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>Gigi Hospital</title>
   <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .modal-dialog.modal-incidencias-wide {
+      max-width: 800px !important;
+      width: 98vw !important;
+    }
+    .modal-dialog.modal-etiqueta-wide {
+      max-width: 800px !important;
+      width: 98vw !important;
+    }
+    .icon-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 1.15rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      margin-right: 0.25rem;
+    }
+    .timeline-paciente {
+      max-height: 323px;
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-width: thin;
+    }
+    .timeline-paciente::-webkit-scrollbar {
+      width: 7px;
+      background: #f1f1f1;
+    }
+    .timeline-paciente::-webkit-scrollbar-thumb {
+      background: #b2f7b2;
+      border-radius: 4px;
+    }
+  </style>
+  <link href="../assets/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="../assets/bootstrap-icons.css">
   <!-- Estilos personalizados -->
+   <link rel="stylesheet" href="../node_modules/choices.js/public/assets/styles/choices.min.css">
   <link rel="stylesheet" href="../styles/styles.css">
+  <link rel="stylesheet" href="../styles/sections/profile.css">
+  <link rel="stylesheet" href="../styles/sections/agenda.css">
+  <link rel="stylesheet" href="../styles/sections/pacientes.css">
+  <link rel="stylesheet" href="../styles/sections/dashboard.css">
+  <link rel="stylesheet" href="../styles/sections/modal-global.css">
+  <link rel="stylesheet" href="../styles/sections/reportes.css">
+    <link rel="stylesheet" href="../styles/sections/stats.css">
   </head>
   <body>
     <div class="container-fluid min-vh-100 bg-light">
@@ -21,13 +66,14 @@
         <nav class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 bg-dark d-flex flex-column align-items-center align-items-sm-start min-vh-100 shadow">
           <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none mt-4">
             <span class="fs-2 ms-2"><i class="bi bi-hospital"></i></span>
-            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">HospitalApp</span>
+            <span class="fs-4 d-none d-sm-inline ms-2 fw-bold">Gigi Hospital</span>
           </a>
           <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100 mt-4" id="menu">
+            <li class="w-100 border-top border-secondary mb-2"></li>
             <li class="nav-item w-100">
               <a href="#" class="nav-link text-white active ps-4" data-section="dashboard">
                 <i class="bi bi-speedometer2 me-2"></i>
-                <span class="d-none d-sm-inline">Dashboard</span>
+                <span class="d-none d-sm-inline">Dashboard ✨</span>
               </a>
             </li>
             <li class="nav-item w-100">
@@ -37,9 +83,47 @@
               </a>
             </li>
             <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="agenda">
+                <i class="bi bi-calendar-event me-2"></i>
+                <span class="d-none d-sm-inline">Agenda</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="historial">
+                <i class="bi bi-journal-medical me-2"></i>
+                <span class="d-none d-sm-inline">Historial Clínico</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="estadisticas">
+                <i class="bi bi-graph-up-arrow me-2"></i>
+                <span class="d-none d-sm-inline">Estadísticas</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
               <a href="#" class="nav-link text-white ps-4" data-section="reportes">
                 <i class="bi bi-bar-chart-fill me-2"></i>
                 <span class="d-none d-sm-inline">Reportes</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="profesionales">
+                <i class="bi bi-person-badge me-2"></i>
+                <span class="d-none d-sm-inline">Profesionales</span>
+              </a>
+            </li>
+          </ul>
+          <ul class="nav nav-pills flex-column w-100 mb-3 pt-3 border-top border-secondary mt-auto">
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="perfil">
+                <i class="bi bi-person-circle me-2"></i>
+                <span class="d-none d-sm-inline">Perfil</span>
+              </a>
+            </li>
+            <li class="nav-item w-100">
+              <a href="#" class="nav-link text-white ps-4" data-section="etiquetas">
+                <i class="bi bi-tags-fill me-2"></i>
+                <span class="d-none d-sm-inline">Etiquetas</span>
               </a>
             </li>
             <li class="nav-item w-100">
@@ -53,15 +137,19 @@
         <!-- Main content -->
         <main class="col py-4 px-4">
           <header class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h1 id="section-title" class="h3 text-success mb-0"><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+            <h1 id="section-title" class="h3 text-success mb-0">Dashboard</h1>
             <div class="d-flex align-items-center gap-3">
-              <span class="text-muted small">Usuario</span>
-              <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="avatar" class="rounded-circle" width="36" height="36">
+              <span class="text-muted fw-semibold header-username" style="font-size:1.15rem;">Usuario</span>
+              <style>
+                .header-cargo { font-size:1.25rem; font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; color: #111; font-weight: 700; letter-spacing: 1px; }
+              </style>
+              <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle" width="48" height="48">
             </div>
           </header>
           <!-- Dashboard Section -->
           <section id="dashboard-section" class="section">
-            <div class="row g-4 mb-4">
+            <!-- Cards originales -->
+            <div class="row g-4 mb-4" id="dashboard-pacientes-cards">
               <div class="col-md-3">
                 <div class="card shadow border-0 bg-success text-white">
                   <div class="card-body text-center">
@@ -99,85 +187,1250 @@
                 </div>
               </div>
             </div>
-          </section>
-          <!-- Pacientes Section -->
-          <section id="pacientes-section" class="section d-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <h2 class="mb-0"><i class="bi bi-people-fill me-2"></i>Pacientes</h2>
-              <button class="btn btn-success"><i class="bi bi-person-plus-fill me-1"></i>Nuevo Paciente</button>
+
+            <!-- Panel de notificaciones recientes -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-12">
+                <div class="card shadow border-0" id="dashboard-notificaciones-container">
+                  <div class="card-body p-0">
+                    <div class="d-flex align-items-center justify-content-between px-4 pt-4 pb-2 border-bottom bg-gradient" style="background: linear-gradient(90deg, #34c759 0%, #009879 100%);">
+                      <h5 class="card-title mb-0 text-white fw-bold"><i class="bi bi-bell-fill me-2 text-warning"></i> Notificaciones recientes</h5>
+                      <span class="badge bg-light text-success px-3 py-2 shadow-sm" style="font-size:1.05em;">En tiempo real</span>
+                    </div>
+                    <ul id="dashboard-notificaciones" class="list-group list-group-flush px-3 py-3" style="background: #f8f9fa; border-radius:0 0 1rem 1rem;">
+                      <!-- Notificaciones dinámicas -->
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Gráfica y próximas citas -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-7">
+                <div class="card shadow border-0" id="dashboard-grafica-pacientes">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-graph-up-arrow me-2"></i> Pacientes por mes</h5>
+                    <canvas id="dashboard-chart-pacientes" height="120"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-5">
+                <div class="card shadow border-0" id="dashboard-proximas-citas">
+                  <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-calendar-event me-2"></i> Próximas citas</h5>
+                    <table class="table table-sm table-hover">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Asunto</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody id="dashboard-citas"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Perfil profesional -->
+            <div class="row g-4 mb-4">
+              <div class="col-md-12">
+                <div class="card shadow border-0">
+                  <div class="card-body d-flex align-items-center">
+                    <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle me-3" width="64" height="64">
+                    <div>
+                      <h5 class="mb-1" id="dashboard-nombre-profesional">Nombre Profesional</h5>
+                      <p class="mb-0 text-muted" id="dashboard-cargo-profesional">Especialidad</p>
+                    </div>
+                    <div class="ms-auto">
+                      <button class="btn btn-outline-secondary"><i class="bi bi-gear me-1"></i> Configurar Perfil</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- Pacientes Section (movido) -->
+          <section id="pacientes-section" class="section d-none">
             <div class="card shadow-sm p-3">
+              <div class="row g-2 mb-3 align-items-end">
+                <div class="col-md-2">
+                  <label for="busqueda-pacientes" class="form-label mb-1">Nombre o apellidos</label>
+                  <input type="text" class="form-control" id="busqueda-pacientes" placeholder="Buscar paciente...">
+                </div>
+                <div class="col-md-2">
+                  <label for="filtro-tipoacceso" class="form-label mb-1">Tipo de Acceso</label>
+                  <select id="filtro-tipoacceso" class="form-select">
+                    <option value="">Todos</option>
+                  </select>
+                </div>
+                  <div class="col-md-2">
+                    <label for="filtro-pendiente" class="form-label mb-1">Estado</label>
+                    <select id="filtro-pendiente" class="form-select">
+                      <option value="">Todos</option>
+                      <option value="infectado">🦠 Infectado</option>
+                      <option value="incidencias">🏷️ Incidencias</option>
+                      <option value="pendiente">⏳ Pendiente</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-fecha-pacientes-inicio" class="form-label mb-1">Fecha Inicio</label>
+                    <input type="date" id="filtro-fecha-pacientes-inicio" class="form-control">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="filtro-fecha-pacientes-fin" class="form-label mb-1">Fecha Fin</label>
+                    <input type="date" id="filtro-fecha-pacientes-fin" class="form-control">
+                  </div>
+                <div class="col-md-2 text-end">
+                  <button class="btn btn-success ms-auto col-md-2 d-flex justify-content-center align-items-end me-3 btn-nuevo-paciente" data-bs-toggle="modal" data-bs-target="#modal-paciente" style="width: 150px;">
+                    <i class="bi bi-person-plus-fill me-1"></i> Nuevo Paciente
+                  </button>
+                </div>
+              </div>
               <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                  <thead class="table-success">
+                  <thead class="table-success"> 
                     <tr>
                       <th>Nombre</th>
-                      <th>Apellidos</th>
                       <th>Tipo Acceso</th>
-                      <th>Fecha Instalación</th>
                       <th>Ubicación</th>
-                      <th>Incidentes</th>
+                      <th>Fecha Instalación</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>Juan</td>
-                      <td>Pérez</td>
-                      <td>Fístula</td>
-                      <td>2025-08-01</td>
-                      <td>Braquio Cefálica Izquierda</td>
-                      <td>Sin incidentes</td>
-                      <td>
-                        <button class="btn btn-outline-success btn-sm"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-                      </td>
-                    </tr>
-                    <!-- Más filas dinámicas -->
+                    <!-- Filas dinámicas -->
                   </tbody>
                 </table>
               </div>
+              <nav class="mt-3 d-flex justify-content-center" aria-label="Paginación pacientes">
+                <ul class="pagination mb-0" id="paginacion-pacientes">
+                  <!-- Controles de paginación dinámicos -->
+                </ul>
+              </nav>
             </div>
           </section>
-          <!-- Reportes Section -->
-          <section id="reportes-section" class="section d-none">
-            <div class="d-flex align-items-center mb-3">
-              <h2 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Reportes</h2>
-            </div>
-            <div class="row g-4">
-              <div class="col-md-6">
-                <div class="card shadow-sm p-4">
-                  <h5 class="card-title mb-3">Reporte General</h5>
-                  <p class="card-text">Visualiza estadísticas y tendencias de los pacientes y accesos vasculares.</p>
-                  <button class="btn btn-outline-success"><i class="bi bi-file-earmark-bar-graph"></i> Generar Reporte</button>
+            <!-- Agenda Section -->
+            <section id="agenda-section" class="section d-none">
+              <div class="card agenda-card shadow-sm p-4">
+                <div class="d-flex align-items-center justify-content-between mb-2 gap-2 flex-wrap">
+                  <div class="d-flex align-items-center gap-1">
+                    <button class="btn btn-light btn-sm border" id="agendaSemanaPrev" title="Semana anterior"><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn btn-light btn-sm border" id="agendaSemanaHoy">Hoy</button>
+                    <button class="btn btn-light btn-sm border" id="agendaSemanaNext" title="Semana siguiente"><i class="bi bi-chevron-right"></i></button>
+                    <span class="ms-2 fw-semibold" id="agendaSemanaLabel"></span>
+                    <span class="fw-bold text-secondary">Semana actual</span>
+                    <span id="contador-proximos" class="badge bg-warning text-dark ms-2" style="font-size:0.95em;display:none;"></span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <input type="text" class="form-control form-control-sm w-auto" id="agendaBusquedaEventos" placeholder="Buscar evento..." style="min-width:160px;max-width:220px;">
+                    <select id="agendaFiltroCategoria" class="form-select form-select-sm w-auto">
+                      <option value="">Todas las categorías</option>
+                      <option value="importante">❗ Importante</option>
+                      <option value="personal">👤 Personal</option>
+                      <option value="trabajo">💼 Trabajo</option>
+                    </select>
+                    <select id="agendaFiltroEventos" class="form-select form-select-sm w-auto">
+                      <option value="todos">Todos</option>
+                      <option value="futuros">Futuros</option>
+                      <option value="pasados">Pasados</option>
+                    </select>
+                    <input type="date" class="form-control form-control-sm w-auto" id="agendaSemanaPicker" title="Ir a semana...">
+                    <button class="btn btn-success" id="btn-nuevo-evento"><i class="bi bi-plus-circle me-1"></i>Nuevo Evento</button>
+                  </div>
+                </div>
+                <div id="agenda-body">
+                  <!-- Aquí se renderiza la lista de eventos -->
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="card shadow-sm p-4">
-                  <h5 class="card-title mb-3">Exportar/Imprimir</h5>
-                  <p class="card-text">Exporta los datos a PDF o imprime los reportes fácilmente.</p>
-                  <button class="btn btn-outline-primary"><i class="bi bi-printer"></i> Imprimir</button>
-                  <button class="btn btn-outline-danger ms-2"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+              <!-- Modal Evento -->
+              <div class="modal fade" id="modal-evento" tabindex="-1" aria-labelledby="modalEventoLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="max-width:700px;width:90vw;margin-top:5vh;">
+                    <form id="form-evento">
+                      <div class="modal-header">
+                        <div class="w-100">
+                          <h5 class="modal-title mb-1" style="font-size:2em;font-weight:900;letter-spacing:1px;">
+                            <span style="font-size:1.2em;vertical-align:-0.1em;">🗓️</span> <span id="modalEventoTitulo">Nuevo Evento</span>
+                          </h5>
+                          <div class="modal-subtitle text-secondary mt-1" style="font-size:1.05em; font-weight:400;">Crea y organiza tus actividades importantes</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row g-3 justify-content-center" style="max-width:600px;margin:0 auto;">
+                          <div class="col-md-6">
+                            <label for="evento-titulo" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="evento-titulo" maxlength="60" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-categoria" class="form-label">Categoría</label>
+                            <select class="form-select" id="evento-categoria">
+                              <option value="">🔖 Sin categoría</option>
+                                <option value="importante">❗ Importante</option>
+                                <option value="personal">👤 Personal</option>
+                                <option value="trabajo">💼 Trabajo</option>
+                            </select>
+                          </div>
+                          <div class="col-12">
+                            <label for="evento-descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="evento-descripcion" rows="2" maxlength="200"></textarea>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-fecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="evento-fecha" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="evento-hora" class="form-label">Hora</label>
+                            <input type="time" class="form-control" id="evento-hora" required>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                      </div>
+                      <input type="hidden" id="evento-id">
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <!-- Historial Clínico Section -->
+            <section id="historial-section" class="section">
+              <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-3 d-flex flex-row align-items-center gap-3">
+                  <label for="filtro-paciente-historial" class="form-label mb-1">Paciente</label>
+                  <select class="form-select" id="filtro-paciente-historial"></select>
+                </div>
+                <div class="row g-2">
+                  <div class="col-lg-6">
+                    <!-- Tarjeta visual del paciente -->
+                    <div id="historialPacienteCard" class="card shadow-lg border-0 mb-4" style="max-width: 940px; margin-right: 10px;">
+                      <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                          <div class="rounded-circle border border-3 border-success shadow-sm me-3" style="width: 90px; height: 90px; overflow: hidden; background: linear-gradient(135deg, #e0ffe0 60%, #b2f7b2 100%);">
+                            <img id="pacienteAvatar" src="../assets/avatar-default.png" class="img-fluid" alt="Avatar" style="width: 90px; height: 90px; object-fit: cover;">
+                          </div>
+                          
+                          <div>
+                            <h4 class="fw-bold text-success mb-1" id="pacienteNombre">Nombre del paciente</h4>
+                            <span class="badge mt-1" id="pacienteSexo">Sexo</span>
+                            <label for="pacienteAvatarInput" class="form-label mt-2 mb-0 small text-muted d-block">Cambiar foto</label>
+                            <input type="file" id="pacienteAvatarInput" accept="image/*" class="form-control form-control-sm" style="max-width:137px;">
+                          </div>
+                            <div>
+                              <button id="btn-historial-add-infeccion" class="btn btn-outline-danger btn-sm fw-bold fs-5" style="position:absolute;top:18px;right:18px;height:38px;min-width:38px;box-shadow:0 2px 8px rgba(220,53,69,0.12);font-weight:600;z-index:2;" data-bs-toggle="tooltip" data-bs-placement="top" title="Añadir infección">
+                                <i class="bi bi-bug"></i>
+                              </button>
+                              <button id="btn-historial-add-incidencia" class="btn btn-outline-secondary btn-sm fw-bold fs-5" style="position:absolute;top:18px;right:70px;height:38px;min-width:38px;box-shadow:0 2px 8px rgba(142,68,173,0.12);font-weight:600;z-index:2;border-color:#8e44ad;color:#8e44ad;" data-bs-toggle="tooltip" data-bs-placement="top" title="Añadir incidencia">
+                                <i class="bi bi-virus"></i>
+                              </button>
+                          </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6">
+                            <span class="icon-circle bg-warning-subtle text-warning me-2"><i class="bi bi-house-door"></i></span>
+                            <span class="fw-semibold">Dirección:</span>
+                            <span id="pacienteDireccion" class="text-muted">-</span>
+                          </div>
+                          <div class="col-12 col-md-6">
+                            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-telephone"></i></span>
+                            <span class="fw-semibold">Teléfono:</span> 
+                            <span id="pacienteTelefono" class="text-muted">-</span>
+                          </div>
+                          
+                        </div>
+                        <div class="row g-2 mb-2">
+                          <div class="col-12 col-md-6">
+                            <span class="icon-circle bg-info-subtle text-info me-2"><i class="bi bi-calendar-heart"></i></span>
+                            <span class="fw-semibold">Edad:</span>
+                            <span id="pacienteDatos" class="text-muted">-</span>
+                          </div>
+                          <div class="col-12 col-md-6">
+                            <span class="icon-circle bg-danger-subtle text-danger me-2"><i class="bi bi-exclamation-diamond"></i></span>
+                            <span class="fw-semibold">Alergias:</span>
+                            <span id="pacienteAlergias" class="text-muted">-</span>
+                          </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                          <div class="col-12">
+                            <span class="icon-circle bg-primary-subtle text-primary me-2"><i class="bi bi-envelope"></i></span>
+                            <span class="fw-semibold">Correo:</span>
+                            <span id="pacienteCorreo" class="text-muted">-</span>
+                          </div>
+                          <div class="col-12">
+                            <span class="icon-circle bg-success-subtle text-success me-2"><i class="bi bi-chat-left-text"></i></span>
+                            <span class="fw-semibold">Observaciones:</span>
+                            <span id="pacienteObservaciones" class="text-muted">-</span>
+                          </div>
+                          <div class="col-12">
+                            <span class="icon-circle bg-warning-subtle text-warning me-2"><i class="bi bi-eye"></i></span>
+                            <span class="fw-semibold">Tipo de Acceso:</span>
+                            <span id="paciente-tipoacceso-info" class="text-muted">-</span>
+                          </div>
+                        </div>
+                        <hr>
+                        <div class="mb-1">
+                          <span class="fw-semibold text-dark"><i class="bi bi-person-badge me-1"></i>ID, Fecha de alta:</span>
+                          <span id="pacienteExtra" class="text-muted">-</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-lg-6">
+                    <!-- Panel resumen visual/timeline -->
+                    <div class="card shadow-sm border-0 mb-4" id="panelResumenPaciente">
+                      <div class="card-body p-4">
+                        <h5 class="fw-bold text-primary mb-4">
+                          <i class="bi bi-graph-up-arrow me-2"></i>Evolución y eventos recientes
+                        </h5>
+                        <div id="timelinePaciente" class="timeline-paciente">
+                          <!-- Aquí se renderizará la gráfica/timeline por JS -->
+                          <div class="text-muted">Sin datos de evolución disponibles.</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <div class="card shadow-sm p-4 mt-0"> 
+                <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-2">
+                  <label for="filtro-profesional-historial" class="form-label mb-1">Profesional</label>
+                  <select disabled id="filtro-profesional-historial" class="form-select">
+                    <option value="">Todos</option>
+                    <!-- Opciones dinámicas por JS -->
+                  </select>
+                </div>
+                  <div class="col-md-3">
+                  <label for="filtro-tipo-evento-historial" class="form-label mb-1">Tipo de Evento</label>
+                  <select disabled class="form-select" id="filtro-tipo-evento-historial">
+                    <option value="">Todos</option>
+                    <!-- Opciones dinámicas por JS -->
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label for="filtro-fecha-historial-inicio" class="form-label mb-1">Fecha</label>
+                  <input disabled type="date" class="form-control" id="filtro-fecha-historial">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <div class="form-check me-3">
+                    <input class="form-check-input" type="checkbox" id="mostrar-archivados-historial">
+                    <label class="form-check-label" for="mostrar-archivados-historial">Archivados</label>
+                  </div>
+                  
+                </div>
+                <button class="btn btn-primary ms-auto col-md-2 d-flex justify-content-center align-items-end me-2" id="btn-add-historial" data-bs-toggle="modal" data-bs-target="#modal-historial" style="width: 150px;">
+                  <i class="bi bi-plus-lg"></i> Añadir entrada
+                </button>
+              </div>        
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle" id="tabla-historial">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Tipo de Evento</th>
+                        <th>Motivo</th>
+                        <th>Profesional</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <!-- Entradas dinámicas -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+            <!-- Estadísticas Section -->
+            <section id="estadisticas-section" class="section">
+              <div class="row g-4 mb-4 justify-content-center">
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-primary" style="font-size:1.35rem;"><i class="bi bi-pie-chart-fill me-2"></i> Pacientes por tipo de acceso</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:140px;">
+                      <canvas id="stats-chart-acceso" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Distribución actual de pacientes según el tipo de acceso vascular.</div>
+                  </div>
+                </div>
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-info" style="font-size:1.35rem;"><i class="bi bi-people-fill me-2"></i> Distribución por sexo</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-sexo-edad" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Visualización de pacientes por sexo.</div>
+                  </div>
+                </div>
+              </div>
+              <div class="row g-4 mb-4 justify-content-center">
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.35rem;"><i class="bi bi-bar-chart-line-fill me-2"></i> Evolución mensual de pacientes</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-evolucion" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Altas y bajas de pacientes por mes. <span class="stats-highlight">Tendencia y crecimiento.</span></div>
+                  </div>
+                </div>
+                <div class="col-md-6 d-flex">
+                  <div class="card shadow border-0 rounded-4 p-3 flex-fill">
+                    <h5 class="mb-2 fw-bold text-warning" style="font-size:1.35rem;"><i class="bi bi-exclamation-triangle-fill me-2"></i> Incidencias por tipo</h5>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-incidencias" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description mb-2" style="font-size:0.92em;">Cantidad de incidencias registradas por tipo y mes.</div>
+                    <h6 class="mb-2 fw-bold text-info mt-4" style="font-size:1.35rem;"><i class="bi bi-bar-chart-fill me-2"></i> Distribución por edad</h6>
+                    <div class="d-flex justify-content-center align-items-center mb-2" style="min-height:100px;">
+                      <canvas id="stats-chart-edad" class="stats-chart"></canvas>
+                    </div>
+                    <div class="stats-description" style="font-size:0.92em;">Visualización de pacientes por rangos de edad.</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          <!-- Reportes Section -->
+          <section id="reportes-section" class="section d-none">
+            <div class="row g-4">
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report chd position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-droplet-half text-primary"></i></span>
+                      <span class="card-title">CHD pendiente de FAV</span>
+                    </div>
+                      <p class="card-text">
+                        Controla pacientes con CHD y pendiente de confección o reparación de FAV.<br>
+                        Este reporte permite identificar a los pacientes que aún no cuentan con una fístula arteriovenosa funcional y requieren seguimiento especial para evitar complicaciones asociadas al acceso temporal.<br>
+                        <span class="text-chd"><b>Incluye ubicación, fecha y observaciones clínicas.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-chd">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Relevante</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report fav position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-heart-pulse text-warning"></i></span>
+                      <span class="card-title">FAV pendiente retiro CHD</span>
+                    </div>
+                      <p class="card-text">
+                        Visualiza pacientes con acceso FAV y retiro de CHD pendiente.<br>
+                        Este reporte ayuda a gestionar el proceso de transición de acceso vascular, asegurando que los pacientes con FAV maduro sean evaluados para el retiro oportuno del catéter y así reducir riesgos de infección.<br>
+                        <span class="text-fav"><b>Facilita el seguimiento y la planificación clínica.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-fav-pendiente-retiro-chd">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Nuevo</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report madurativo position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-arrow-repeat text-info"></i></span>
+                      <span class="card-title">CHD, FAV Madurativo</span>
+                    </div>
+                      <p class="card-text">
+                        Pacientes con CHD y FAV en proceso de maduración.<br>
+                        Este reporte permite monitorear el progreso de la maduración de la fístula arteriovenosa en pacientes que aún dependen de un catéter, facilitando la toma de decisiones clínicas para el cambio de acceso.<br>
+                        <span class="text-madurativo"><b>Permite seguimiento y planificación del cambio de acceso.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-chd-fav-madurativo">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Madurando</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6 mb-4">
+                <div class="card-premium-report sepsis position-relative h-100">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                      <span class="icon-premium me-3"><i class="bi bi-bug text-danger"></i></span>
+                      <span class="card-title">Sepsis CHD</span>
+                    </div>
+                      <p class="card-text">
+                        Pacientes con diagnóstico de sepsis relacionada a CHD.<br>
+                        Este reporte destaca los casos críticos de infección asociada al catéter, permitiendo priorizar la atención, implementar protocolos de manejo y reducir complicaciones graves en la población de pacientes.<br>
+                        <span class="text-sepsis"><b>Visualiza casos críticos y facilita el control clínico.</b></span>
+                      </p>
+                    <button class="btn-premium-report w-100 mt-auto" id="btn-generar-reporte-sepsis-chd">
+                      <i class="bi bi-file-earmark-plus"></i> Generar Reporte
+                    </button>
+                    <span class="badge-premium">Crítico</span>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
           <!-- Configuración Section -->
           <section id="configuracion-section" class="section d-none">
-            <div class="d-flex align-items-center mb-3">
-              <h2 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Configuración</h2>
+            <div class="row g-4">
+              <div class="col-12 col-md-6">
+                <div class="card border-0 p-3 h-100 w-100" style="background: #fff; border-radius: 1.2rem; box-shadow: 0 4px 18px rgba(60,100,180,0.10);">
+                  <div class="d-flex align-items-center mb-3">
+                    <h2 class="card-title fs-4 mb-0 me-2">Preferencias</h2>
+                    <span class="badge bg-danger bg-gradient" style="font-size:1rem;">Próximamente</span>
+                  </div>
+                  <p class="card-text">Configura la experiencia de Gigi Hospital a tu gusto. Ajusta opciones visuales, idioma y notificaciones para trabajar de forma cómoda y eficiente.</p>
+                  <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label for="preferencias-idioma" class="form-label mb-1"><i class="bi bi-translate me-1"></i> Idioma</label>
+                      <select id="preferencias-idioma" class="form-select form-select-sm w-auto d-inline-block">
+                        <option value="es">Español</option>
+                        <option value="en">English</option>
+                      </select>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label class="form-label mb-1"><i class="bi bi-bell me-1"></i> Notificaciones</label>
+                      <div class="form-check form-switch d-inline-block ms-2">
+                        <input class="form-check-input" type="checkbox" id="preferencias-notificaciones" checked>
+                        <label class="form-check-label" for="preferencias-notificaciones">Activar</label>
+                      </div>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label class="form-label mb-1"><i class="bi bi-moon me-1"></i> Modo oscuro</label>
+                      <div class="form-check form-switch d-inline-block ms-2">
+                        <input class="form-check-input" type="checkbox" id="preferencias-modo-oscuro">
+                        <label class="form-check-label" for="preferencias-modo-oscuro">Activar</label>
+                      </div>
+                    </li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2">
+                      <label for="preferencias-fuente" class="form-label mb-1"><i class="bi bi-fonts me-1"></i> Tamaño de fuente</label>
+                      <select id="preferencias-fuente" class="form-select form-select-sm w-auto d-inline-block">
+                        <option value="normal">Normal</option>
+                        <option value="grande">Grande</option>
+                        <option value="extra-grande">Extra grande</option>
+                      </select>
+                    </li>
+                  </ul>
+                  <p class="text-muted small mt-3 mb-0">Las preferencias se guardan automáticamente y se aplican en toda la aplicación.</p>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="card border-0 p-3 h-100 w-100" style="background: linear-gradient(120deg, #e3f0ff 60%, #f8fafc 100%); border-radius: 1.2rem; box-shadow: 0 4px 18px rgba(60,100,180,0.10);">
+                  <div class="d-flex align-items-center mb-4 gap-3">
+                    <div class="bg-primary bg-gradient rounded-circle d-flex align-items-center justify-content-center" style="width:54px; height:54px; overflow:hidden;">
+                      <img src="../assets/app.ico" alt="App Icon" style="width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 2px 6px rgba(60,100,180,0.15));">
+                    </div>
+                    <div>
+                      <h4 class="fw-bold mb-1" style="letter-spacing:1px; color:#2a4365;">Gigi Hospital</h4>
+                      <span class="badge bg-primary bg-gradient fs-6 shadow-sm">v1.0.3</span>
+                    </div>
+                  </div>
+                  <hr class="my-3" style="border-top:1.5px solid #b6c2d6;">
+                  <ul class="list-group list-group-flush mb-3 rounded-3 overflow-hidden">
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Creador:</strong> <span class="text-primary fw-semibold">Alejandro Pastor</span></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Versión:</strong> <span class="fw-semibold" id="app-version">1.0.3</span></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Contacto:</strong> <a href="mailto:Alejandro-benilloba@hotmail.com" class="text-decoration-none text-primary fw-semibold">Alejandro-benilloba@hotmail.com</a></li>
+                    <li class="list-group-item bg-transparent border-0 ps-0 pb-2"><strong>Año:</strong> <span class="fw-semibold">2025</span></li>
+                  </ul>
+                  <div class="mt-2">
+                    <p class="text-secondary mb-1" style="font-size:1.05rem;">Esta aplicación está diseñada para la gestión clínica de pacientes con acceso vascular.</p>
+                    <p class="text-muted small mb-0">Todos los derechos reservados &copy; Alejandro Pastor</p>
+                  </div>
+                </div>
+              </div>
             </div>
+          </section>
+          <!-- Etiquetas Section -->
+          <section id="etiquetas-section" class="section d-none">
             <div class="card shadow-sm p-4">
-              <h5 class="card-title mb-3">Preferencias</h5>
-              <p class="card-text">Personaliza la aplicación según tus necesidades.</p>
-              <button class="btn btn-outline-secondary"><i class="bi bi-palette"></i> Cambiar Tema</button>
+              <div class="d-flex justify-content-between align-items-center pb-3">
+                <h4></h4>
+                <div class="d-flex justify-content-end align-items-center gap-2">
+                  <div style="min-width:220px;">
+                    <div class="d-flex align-items-center gap-2">
+                      <label for="filtro-tipo-etiqueta" class="form-label mb-0">Filtrar por tipo</label>
+                      <select id="filtro-tipo-etiqueta" class="form-select" style="width:auto; min-width:120px;">
+                        <option value="">Todos</option>
+                        <option value="incidencia">Incidencia</option>
+                        <option value="acceso">Acceso</option>
+                        <option value="evento">Evento</option>
+                        <option value="proceso">Proceso</option>
+                        <option value="diagnostico">Diagnóstico</option>
+                      </select>
+                    </div>
+                    </select>
+                  </div>
+                <button class="btn btn-success" id="btn-nueva-etiqueta"><i class="bi bi-plus-circle"></i> Nueva Etiqueta</button>
+                </div>
+              </div>
+              <div id="tags-lista-vacia" class="text-center text-muted my-4 d-none">
+                <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                  <div class="rounded-circle bg-light border border-2 border-success mb-3" style="width:70px;height:70px;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-tags-fill text-success" style="font-size:2.5rem;"></i>
+                  </div>
+                  <div class="fw-bold text-secondary mb-1" style="font-size:1.15rem;">No hay etiquetas registradas</div>
+                  <div class="text-muted" style="font-size:1.01rem;max-width:320px;">Crea tu primera etiqueta para organizar y clasificar las incidencias de manera profesional.</div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="tabla-etiquetas">
+                  <thead>
+                    <tr>
+                      <th style="width:40px"></th>
+                      <th>Nombre</th>
+                      <th>Símbolo</th>
+                      <th>Tipo</th>
+                      <th>Descripción</th>
+                      <th style="width:120px">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Etiquetas dinámicas aquí -->
+                  </tbody>
+                </table>
+                <nav class="mt-3 d-flex justify-content-center" aria-label="Paginación etiquetas">
+                  <ul class="pagination mb-0" id="paginacion-etiquetas">
+                    <!-- Controles de paginación dinámicos -->
+                  </ul>
+                </nav>
+              </div>
             </div>
+            <!-- Modal Nueva/Editar Etiqueta -->
+            <div class="modal fade" id="modal-etiqueta" tabindex="-1" aria-labelledby="modalEtiquetaLabel" aria-hidden="true">
+              <div class="modal-dialog modal-dialog-centered modal-etiqueta-wide">
+                <div class="modal-content">
+                  <form id="form-etiqueta">
+                    <div class="modal-header">
+                      <div class="w-100">
+                        <h5 class="modal-title mb-0" id="modalEtiquetaLabel">🏷️ Nueva Etiqueta</h5>
+                        <span class="modal-subtitle text-muted small mt-1 mb-0">Crea o edita una etiqueta para clasificar incidencias o pacientes.</span>
+                      </div>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label for="etiqueta-nombre" class="form-label">Nombre</label>
+                          <input type="text" class="form-control" id="etiqueta-nombre" maxlength="32" required>
+                        </div>
+                        <div class="col-md-5">
+                          <label for="etiqueta-tipo" class="form-label">Tipo de etiqueta</label>
+                          <select class="form-select" id="etiqueta-tipo" required>
+                          <option value="incidencia">Incidencia</option>
+                          <option value="infeccion">Infección</option>
+                          </select>                     
+                        </div>
+                        <div class="col-md-1" id="etiqueta-icono-group" style="display:none;">
+                          <label for="etiqueta-icono" class="form-label">Emoji</label>
+                          <div class="input-group">
+                            <button type="button" class="btn btn-outline-secondary" id="etiqueta-icono-btn" style="font-size:1.2rem; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">🩸</button>
+                            <input type="hidden" id="etiqueta-icono" value="">
+                          </div>
+                        </div>
+                        <div class="col-md-1" id="etiqueta-color-group">
+                          <label for="etiqueta-color" class="form-label">Color</label>
+                          <input type="color" class="form-control form-control-color" id="etiqueta-color" value="#009879" title="Elige un color">
+                        </div>
+                        <div class="col-12" id="grupo-microorganismo" style="display:none;">
+                          <label for="etiqueta-microorganismo" class="form-label">Microorganismo asociado</label>
+                          <input type="text" class="form-control" id="etiqueta-microorganismo" placeholder="Ejemplo: Staphylococcus aureus">
+                        </div>
+                        <div class="col-12">
+                          <label for="etiqueta-descripcion" class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>
+                          <textarea class="form-control" id="etiqueta-descripcion" rows="2" maxlength="100"></textarea>
+                        </div>
+                      </div>
+                      <input type="hidden" id="etiqueta-id">
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="submit" class="btn btn-success">Guardar</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
+          <!-- Perfil Section -->
+          <section id="perfil-section" class="section d-none">
+            <form id="form-datos-usuario">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-4">
+                    <h5 class="mb-3 fw-bold text-success"><i class="bi bi-person-badge me-2"></i>Datos de usuario</h5>
+                    <!-- ...campos anteriores... -->
+                    <div class="mb-3">
+                      <label for="perfil-nombre" class="form-label">Nombre</label>
+                      <input type="text" class="form-control" id="perfil-nombre" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-apellido" class="form-label">Apellidos</label>
+                      <input type="text" class="form-control" id="perfil-apellido" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-sexo" class="form-label">Sexo</label>
+                      <select class="form-select" id="perfil-sexo" required>
+                        <option value="hombre">Hombre</option>
+                        <option value="mujer">Mujer</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-email" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="perfil-email">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-cargo" class="form-label">Cargo</label>
+                      <input type="text" class="form-control" id="perfil-cargo" placeholder="Ej: Enfermero/a, Médico/a">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-numero-colegiado" class="form-label">Número de Colegiado</label>
+                      <input type="text" class="form-control" id="perfil-numero-colegiado" placeholder="Ej: 1234567">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-4">
+                    <h5 class="mb-3 fw-bold text-success"><i class="bi bi-info-circle me-2"></i>Información adicional</h5>
+                    <div class="mb-3">
+                      <label for="perfil-telefono" class="form-label">Teléfono</label>
+                      <input type="tel" class="form-control" id="perfil-telefono" placeholder="Ej: 600123456">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
+                      <input type="date" class="form-control" id="perfil-fecha-nacimiento">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-direccion" class="form-label">Dirección</label>
+                      <input type="text" class="form-control" id="perfil-direccion" placeholder="Ciudad, Provincia">
+                    </div>
+                    <div class="mb-3">
+                      <label for="perfil-notas" class="form-label">Notas</label>
+                      <textarea class="form-control" id="perfil-notas" rows="2" placeholder="Información adicional..."></textarea>
+                    </div>
+                    <div class="card shadow-sm p-4 text-center mt-4">
+                      <h5 class="mb-3 fw-bold text-success"><i class="bi bi-person-circle me-2"></i>Avatar</h5>
+                      <div class="mb-3">
+                        <div class="d-inline-block avatar-editable mb-2">
+                          <div class="position-relative d-inline-block">
+                            <img src="../assets/avatar-default.png" alt="avatar" class="rounded-circle border border-3 border-success avatar-img" width="90" height="90">
+                            <button type="button" class="btn btn-light btn-sm position-absolute top-0 end-0 translate-middle p-0 border border-3 border-success rounded-circle" id="eliminar-avatar-btn" title="Eliminar imagen" style="width:28px;height:28px;z-index:3;">
+                              <span class="text-success fs-5">&times;</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <button type="button" class="btn btn-outline-success btn-sm fw-semibold" id="cambiar-avatar-btn">
+                          <i class="bi bi-image"></i> Cambiar foto
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
+              </div>
+            </form>
+            <!-- Botón eliminado, ahora está dentro del card -->
+          </section>
+          <!-- Profesionales Section -->
+          <section id="profesionales-section" class="section d-none">
+            <form id="form-profesional">
+              <div class="mb-3" style="max-width:340px;margin-bottom:18px;">
+                <div class="d-flex align-items-end gap-2">
+                  <div style="flex:1;">
+                    <label for="selector-profesional" class="form-label fw-semibold text-success" style="font-size:1.08em;"><i class="bi bi-person-lines-fill me-1"></i>Seleccionar profesional</label>
+                    <select id="selector-profesional" class="form-select form-select-sm">
+                      <option value="">-- Agregar un profesional --</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-3 mb-3">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-person-badge me-2"></i>Datos del profesional</h5>
+                    <div class="mb-2">
+                      <label for="profesional-nombre" class="form-label">Nombre</label>
+                      <input type="text" class="form-control" id="profesional-nombre" maxlength="40" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-apellidos" class="form-label">Apellidos</label>
+                      <input type="text" class="form-control" id="profesional-apellidos" maxlength="60" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-sexo" class="form-label">Sexo</label>
+                      <select class="form-select" id="profesional-sexo" required>
+                        <option value="hombre">Hombre</option>
+                        <option value="mujer">Mujer</option>
+                        <option value="otro">Otro</option>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-email" class="form-label">Email</label>
+                      <input type="email" class="form-control" id="profesional-email" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-cargo" class="form-label">Cargo</label>
+                      <input type="text" class="form-control" id="profesional-cargo" placeholder="Ej: Enfermero/a, Médico/a" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-numero-colegiado" class="form-label">Número de Colegiado</label>
+                      <input type="text" class="form-control" id="profesional-numero-colegiado" placeholder="Ej: 1234567" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-telefono" class="form-label">Teléfono</label>
+                      <input type="tel" class="form-control" id="profesional-telefono" placeholder="Ej: 600123456" required>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card shadow-sm p-3 mb-3 text-center">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-person-circle me-2"></i>Avatar</h5>
+                    <div class="d-flex flex-column align-items-center justify-content-center">
+                      <div class="position-relative mb-2" style="width:72px;height:72px;">
+                        <img src="../assets/hombre.jpg" alt="avatar" class="rounded-circle border border-2 border-success shadow avatar-img" id="profesional-avatar-img" width="72" height="72" style="object-fit:cover;background:#e6f9e6;">
+                      </div>
+                      <div style="max-width:220px;">
+                        <span class="badge text-dark shadow-sm d-inline-flex align-items-center gap-1" style="font-weight:500;letter-spacing:0.5px;font-size:1rem;">
+                          <i class="bi bi-star-fill text-warning"></i>
+                          Establece tu avatar
+                          <i class="bi bi-star-fill text-warning"></i>
+                        </span>
+                      </div>
+                      <div class="d-flex gap-2 w-100 mt-1">
+                        <button type="button" class="btn btn-outline-success btn-sm fw-semibold flex-fill" id="cambiar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
+                          <i class="bi bi-image"></i> Cambiar foto
+                        </button>
+                        <input type="file" id="profesional-avatar-input" accept="image/*" class="d-none">
+                        <button type="button" class="btn btn-outline-danger btn-sm fw-semibold flex-fill" id="eliminar-profesional-avatar-btn" style="padding:2px 8px;font-size:0.95em;">
+                          <i class="bi bi-x-circle"></i> Eliminar avatar
+                        </button>
+                      </div>
+                      <div id="avatar-profesional-feedback" class="text-muted small mt-1" style="min-height:18px;font-size:0.95em;"></div>
+                    </div>
+                  </div>
+                  <div class="card shadow-sm p-3 mb-3">
+                    <h5 class="mb-2 fw-bold text-success" style="font-size:1.15rem;"><i class="bi bi-info-circle me-2"></i>Información adicional</h5>
+                    <div class="mb-2">
+                      <label for="profesional-fecha-nacimiento" class="form-label">Fecha de nacimiento</label>
+                      <input type="date" class="form-control" id="profesional-fecha-nacimiento" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-direccion" class="form-label">Dirección</label>
+                      <input type="text" class="form-control" id="profesional-direccion" placeholder="Ciudad, Provincia" required>
+                    </div>
+                    <div class="mb-2">
+                      <label for="profesional-notas" class="form-label">Notas</label>
+                      <textarea class="form-control" id="profesional-notas" rows="2" placeholder="Información adicional..."></textarea>
+                    </div>
+                    <input type="hidden" id="profesional-id">
+                    <div class="d-flex justify-content-end mt-3">
+                      <button type="button" class="btn btn-danger me-2" id="eliminar-profesional-btn"><i class="bi bi-trash me-1"></i> Eliminar</button>
+                      <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i> Guardar Cambios</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
           </section>
         </main>
       </div>
     </div>
+
+    <!-- Modal: Añadir entrada al historial -->
+    <div class="modal fade" id="modal-historial" tabindex="-1" aria-labelledby="modalHistorialLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <!-- Header -->
+          <div class="modal-header bg-light">
+            <div class="d-flex align-items-center w-100">
+              <span class="fs-3 me-2">📝</span>
+              <div>
+                <h5 class="modal-title" id="modalHistorialLabel">Añadir entrada al historial</h5>
+                <div class="d-flex align-items-center mt-1">
+                  <img id="modalHistorialAvatar" src="../assets/avatar-default.png" class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;">
+                  <span id="modalHistorialPaciente" class="fw-semibold text-primary">Paciente: [Nombre y apellidos]</span>
+                </div>
+              </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <!-- Formulario -->
+          <form id="form-historial" autocomplete="off">
+            <input type="hidden" id="id-historial">
+            <div class="modal-body">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="fecha-historial" class="form-label">Fecha</label>
+                  <input type="date" class="form-control" id="fecha-historial" required>
+                </div>
+                <div class="col-md-8">
+                  <label for="evento-historial" class="form-label">Evento</label>
+                  <select class="form-select" id="evento-historial" required>
+                    <option value="Actualización">Actualización de Datos</option>
+                    <option value="Cambio de Acceso">Cambio de Acceso</option>
+                    <option value="Eliminación">Eliminación de Datos</option>
+                    <option value="Fallecimiento">Fallecimiento</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+                <div class="row g-3">
+                  <div class="col-6" id="grupo-tipo-acceso-anterior" style="display:none;">
+                    <label for="tipo-acceso-anterior" class="form-label">Tipo de Acceso (Anterior)</label>
+                    <select class="form-control" id="tipo-acceso-anterior">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-ubicacion-acceso-anterior" style="display:none;">
+                    <label for="ubicacion-acceso-anterior" class="form-label">Ubicación (Acceso Anterior)</label>
+                    <select class="form-control" id="ubicacion-acceso-anterior">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-tipo-acceso-nuevo" style="display:none;">
+                    <label for="tipo-acceso-nuevo" class="form-label">Tipo de Acceso (Nuevo)</label>
+                    <select class="form-control" id="tipo-acceso-nuevo">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                  <div class="col-6" id="grupo-ubicacion-acceso-nuevo" style="display:none;">
+                    <label for="ubicacion-acceso-nuevo" class="form-label">Ubicación (Acceso Nuevo)</label>
+                    <select class="form-control" id="ubicacion-acceso-nuevo">
+                      <option value="">-- Selecciona --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label for="motivo-historial" class="form-label">Motivo / Descripción</label>
+                  <textarea class="form-control" id="motivo-historial" rows="2" required placeholder="Describe el motivo clínico, síntoma, diagnóstico o razón de la entrada..."></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label for="profesional-historial" class="form-label">Profesional responsable</label>
+                  <select class="form-select" id="profesional-historial" required>
+                    <!-- Opciones dinámicas -->
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label for="notas-historial" class="form-label">Notas (opcional)</label>
+                  <textarea class="form-control" id="notas-historial" rows="2" placeholder="Notas, Observaciones (opcional)"></textarea>
+                </div>
+                <!-- Advertencia visual si evento es Fallecimiento -->
+                <div class="col-12" id="fallecimiento-alert" style="display:none;">
+                  <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <span>Advertencia: Estás registrando un fallecimiento.</span>
+                  </div>
+                </div>
+                <!-- Etiquetas asociadas si evento es Infección o Incidencia -->
+                <div class="col-12" id="etiquetas-historial-group" style="display:none;">
+                  <label for="etiquetas-historial" class="form-label">Etiquetas asociadas</label>
+                  <select class="form-select" id="etiquetas-historial" multiple>
+                    <!-- Opciones dinámicas -->
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!-- Footer -->
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="bi bi-save me-1"></i> Guardar entrada
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <!-- Modal Nuevo Paciente -->
+    <div class="modal fade" id="modal-paciente" tabindex="-1" aria-labelledby="nuevoPacienteLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-gradient shadow-sm align-items-center">
+            <div class="w-100">
+              <h5 class="modal-title d-flex align-items-center gap-2 mb-1" id="nuevoPacienteLabel">
+                <span style="font-family:'Fira Sans', 'Comic Sans MS', cursive;">👨‍⚕️ Agregar un Paciente</span>
+              </h5>
+              <div class="modal-subtitle small mt-0 mb-1 text-start" style="color:#fff;font-family:'Fira Sans', 'Comic Sans MS', cursive;">Rellena los datos personales y clínicos para registrar un nuevo paciente en el sistema.</div>
+            </div>
+            </h5>
+            <button type="button" class="btn border-0 bg-transparent p-0" data-bs-dismiss="modal" aria-label="Cerrar" style="font-size:1.7rem;line-height:1;color:#fff;">
+              <span aria-hidden="true" style="color:#fff;display:inline-block;transform:translate(-10px,-8px);font-size:3rem;">&times;</span>
+            </button>
+          </div>
+          <form id="formNuevoPaciente">
+            <div class="modal-body">
+              <!-- Datos personales -->
+              <div class="section-block mb-1">
+                <div class="section-title text-success"><i class="bi bi-person-badge me-1"></i>Datos personales</div>
+                <div class="row g-1">
+                  <div class="col-md-16">
+                    <div class="row g-2">
+                      <div class="col-md-2">
+                        <label for="nombre" class="form-label"><i class="bi bi-person"></i> Nombre</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" autocomplete="off" required>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="apellidos" class="form-label"><i class="bi bi-person-lines-fill"></i> Apellidos</label>
+                        <input type="text" class="form-control" id="apellidos" name="apellidos" autocomplete="off" required>
+                      </div>
+                      <div class="col-md-1">
+                        <label for="sexo" class="form-label"><i class="bi bi-gender-ambiguous"></i> Sexo</label>
+                        <select class="form-select" id="sexo" name="sexo" required>
+                          <option value="">-</option>
+                          <option value="hombre">Hombre</option>
+                          <option value="mujer">Mujer</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label for="nacimiento" class="form-label"><i class="bi bi-calendar-date"></i> Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" id="nacimiento" name="nacimiento">
+                      </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-md-2">
+                        <label for="telefono" class="form-label"><i class="bi bi-telephone"></i> Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="correo" class="form-label"><i class="bi bi-envelope"></i> Correo</label>
+                        <input type="email" class="form-control" id="correo" name="correo" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="direccion" class="form-label"><i class="bi bi-geo-alt"></i> Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" autocomplete="off">
+                      </div>
+                      <div class="col-md-2">
+                        <label for="alergias" class="form-label"><i class="bi bi-exclamation-triangle"></i> Alergias</label>
+                        <input type="text" class="form-control" id="alergias" name="alergias" autocomplete="off">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Datos clínicos -->
+              <div class="section-block mb-3">
+                <div class="section-title text-primary"><i class="bi bi-clipboard-pulse me-2"></i>Datos clínicos</div>
+                <div class="row g-2">
+                  <div class="col-md-2">
+                    <label for="profesional" class="form-label"><i class="bi bi-person-workspace"></i> Profesional a Cargo</label>
+                    <select class="form-select" id="profesional" name="profesional" required>
+                      <option value="">Selecciona un profesional</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="tipoAcceso" class="form-label"><i class="bi bi-door-open"></i> Tipo acceso</label>
+                    <select class="form-select" id="tipoAcceso" name="tipoAcceso" required>
+                      <option value="">Selecciona tipo de acceso</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="ubicacion" class="form-label"><i class="bi bi-geo"></i> Ubicación anatómica</label>
+                    <select class="form-select" id="ubicacion" name="ubicacion" required>
+                      <option value="">Selecciona ubicación</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
+                    <select class="form-select" id="lado" name="lado">
+                      <option value="">Seleccionar Lado</option>
+                      <option value="Izquierda">Izquierda</option>
+                      <option value="Derecha">Derecha</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label for="pendiente" class="form-label"><i class="bi bi-diagram-3"></i> Pendiente</label>
+                    <select class="form-select" id="pendiente" name="pendiente" required>
+                      <option value="">Sin estado</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2" id="accesoPendiente-group">
+                    <label for="accesoPendiente" class="form-label" id="labelAccesoPendiente"><i class="bi bi-key"></i> Acceso pendiente</label>
+                    <select class="form-select" id="accesoPendiente" name="accesoPendiente">
+                      <option value="">Selecciona tipo de acceso</option>
+                    </select>
+                  </div>
+                  <div class="row">
+
+                  </div>
+                    <div class="col-md-2">
+                      <label for="alta" class="form-label"><i class="bi bi-calendar-check"></i> Fecha de Alta</label>
+                      <input type="date" class="form-control" id="alta" name="alta">
+                    </div>
+                  <div class="col-md-2">
+                    <label for="fechaInstalacionAcceso" class="form-label" id="labelFechaInstalacionAcceso" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha Instalación del Acceso</label>
+                    <input type="date" class="form-control" id="fechaInstalacionAcceso" name="fechaInstalacionAcceso" style="display:none;">
+                  </div>
+                  <div class="col-md-4">
+                    <label for="observaciones" class="form-label"><i class="bi bi-chat-dots"></i> Observaciones</label>
+                    <input type="text" class="form-control" id="observaciones" name="observaciones" autocomplete="off">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="fechaPrimeraPuncion" class="form-label" id="labelFechaPrimeraPuncion" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha de la Primera Punción</label>
+                    <input type="date" class="form-control" id="fechaPrimeraPuncion" name="fechaPrimeraPuncion" style="display:none;">
+                  </div>
+                  <div class="col-md-2">
+                    <label for="fechaInstalacionAccesoPendiente" class="form-label" id="labelFechaInstalacionAccesoPendiente" style="display:none;"><i class="bi bi-calendar-check"></i> Fecha del Acceso Pendiente</label>
+                    <input type="date" class="form-control" id="fechaInstalacionAccesoPendiente" name="fechaInstalacionAccesoPendiente" style="display:none;">
+                  </div>
+                  <div class="col-md-8"></div>
+                  <div class="col-md-2" id="chd-ubicacion-group" style="display:none;">
+                    <label for="chd-ubicacion" class="form-label"><i class="bi bi-geo"></i> Ubicación anatómica</label>
+                    <select class="form-select" id="chd-ubicacion" name="chd-ubicacion" required>
+                      <option value="">Selecciona ubicación</option>
+                      <!-- Opciones dinámicas por JS -->
+                    </select>
+                  </div>
+                  <div class="col-md-2" id="chd-lado-group" style="display:none;">
+                    <label for="chd-lado" class="form-label"><i class="bi bi-arrow-left-right"></i> Lado</label>
+                    <select class="form-select" id="chd-lado" name="chd-lado">
+                      <option value="">Seleccionar Lado</option>
+                      <option value="Izquierda">Izquierda</option>
+                      <option value="Derecha">Derecha</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer bg-gradient shadow-sm align-items-center">
+              <div class="row mt-4">
+                <div class="col-12 d-flex justify-content-end">
+                  <button type="submit" class="btn btn-success btn-lg px-4" id="btnGuardarPaciente">
+                    <i class="bi bi-save" style="padding-right: 8px; font-size:1.3rem;"></i> <span style="font-size:1.1rem;">Guardar Paciente</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Incidencias -->
+    <div class="modal fade" id="modal-incidencia" tabindex="-1" aria-labelledby="modalIncidenciaLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-warning shadow-lg">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title fw-bold" id="modalIncidenciaLabel">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> Nueva Incidencia Clínica
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form id="form-incidencia">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="incidenciaTipo" class="form-label fw-semibold">Tipo de Incidencia</label>
+                <select id="incidenciaTipo" class="form-select" multiple required>
+                  <!-- Opciones dinámicas por JS: tags de tipo incidencia -->
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="incidenciaAcceso" class="form-label fw-semibold">Tipo de Acceso del Paciente</label>
+                <div id="incidenciaAccesoBox" class="d-flex align-items-center p-2 rounded-3" style="background:#f8f9fa;min-height:48px;">
+                  <span id="incidenciaAccesoIcono" style="font-size:1.25em;margin-right:8px;"></span>
+                  <span id="incidenciaAccesoNombre" class="fw-bold text-dark" style="font-size:1em;"></span>
+                </div>
+                <div id="incidenciaAccesoDescripcion" class="text-muted small mt-1" style="background:#f8f9fa;padding:6px 10px;border-radius:6px;"></div>
+              </div>
+              <div class="mb-3">
+                <label for="incidenciaFecha" class="form-label fw-semibold">Fecha</label>
+                <input type="date" id="incidenciaFecha" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="incidenciaMedidas" class="form-label fw-semibold">Medidas</label>
+                <textarea id="incidenciaMedidas" class="form-control" rows="2" placeholder="Medidas tomadas tras la incidencia"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer bg-light">
+              <button type="submit" class="btn btn-success fw-bold btn-lg w-100">
+                <i class="bi bi-plus-lg me-1"></i> Guardar Incidencia
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Añadir Infección -->
+    <div class="modal fade" id="modal-infeccion" tabindex="-1" aria-labelledby="modalInfeccionLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius:18px;box-shadow:0 4px 24px rgba(0,0,0,0.13);">
+          <div class="modal-header" style="background:linear-gradient(90deg,#e3f2fd 0%,#f8fafc 100%);border-bottom:1.5px solid #e0e0e0;">
+            <h5 class="modal-title" id="modalInfeccionLabel" style="font-weight:600;color:#14532d;"><i class="bi bi-bug me-2" style="color:#1976d2;font-size:1.3em;"></i>Añadir Infección</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" style="padding:28px 32px;">
+            <form id="form-infeccion">
+              <div class="mb-3">
+                <label for="infeccion-tags" class="form-label" style="font-weight:500;color:#1976d2;">Tipo de infección</label>
+                <select id="infeccion-tags" class="form-select" multiple required style="min-height:44px;"></select>
+                <div class="form-text">Puedes seleccionar una o varias infecciones.</div>
+              </div>
+              <div class="mb-3">
+                <label for="infeccion-fecha" class="form-label" style="font-weight:500;color:#1976d2;">Fecha de infección</label>
+                <input type="date" id="infeccion-fecha" class="form-control" required style="max-width:220px;">
+              </div>
+              <div class="mb-3">
+                <label for="infeccion-comentarios" class="form-label" style="font-weight:500;color:#1976d2;">Comentarios adicionales</label>
+                <textarea id="infeccion-comentarios" class="form-control" rows="2" placeholder="Detalles, observaciones..." style="border-radius:8px;"></textarea>
+              </div>
+              <div id="infeccion-lista" class="mb-3"></div>
+              <div class="d-flex justify-content-between align-items-center mt-4">
+                <button type="button" id="btn-agregar-infeccion" class="btn btn-primary me-2" style="font-weight:500;border-radius:8px;padding:8px 22px;">Añadir infección</button>
+                <button type="button" id="btn-guardar-infecciones" class="btn btn-primary d-none" style="font-weight:500;border-radius:8px;padding:8px 22px;">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Confirmación Eliminar/Archivar -->
+    <div class="modal fade" id="modal-confirmacion" tabindex="-1" aria-labelledby="modalConfirmacionLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow border-0">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold" id="modalConfirmacionLabel">
+              <span id="modal-confirmacion-icono" class="me-2"></span>
+              <span id="modal-confirmacion-titulo">¿Confirmar acción?</span>
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <p id="modal-confirmacion-mensaje" class="mb-3">¿Estás seguro de que deseas realizar esta acción?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" id="btn-confirmar-accion">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
     <!-- Bootstrap 5 JS y dependencias -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/renderer.js"></script>
+  <script src="../node_modules/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script src="../assets/js/emoji-picker-element.js"></script>
+  <script src="../assets/bootstrap.bundle.min.js"></script>
+  <script src="../assets/js/jspdf.umd.min.js"></script>
+  <script src="../assets/js/jspdf.plugin.autotable.min.js"></script> 
+  <script src="../assets/js/chart.min.js"></script>
+  <!-- <script src="../js/sections/dashboard.js"></script> -->
+  <script src="../js/utils/messages.js"></script>
+  <script src="../js/utils/animaciones.js"></script>
+  <script src="../js/utils/emoji-picker.js"></script>
+  <!-- <script src="../js/sections/agenda.js"></script> -->
+
+  <script src="../js/sections/stats.js"></script>
+  <script src="../js/renderer.js"></script>
   </body>
-</html>
+</html> 
