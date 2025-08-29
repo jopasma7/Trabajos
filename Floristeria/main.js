@@ -315,6 +315,16 @@ ipcMain.handle('cargar-perfil-usuario', async () => {
     }
 });
 // Métodos de actualización
+// Handler para descontar stock de un producto
+ipcMain.handle('descontar-stock-producto', async (event, productoId, cantidad) => {
+    try {
+        // Debe existir el método descontarStock en dbManager
+        return await dbManager.descontarStock(productoId, cantidad);
+    } catch (error) {
+        console.error('Error descontando stock:', error);
+        throw error;
+    }
+});
 ipcMain.handle('actualizar-producto', async (event, id, producto) => {
     try {
         const result = await dbManager.runQuery(
