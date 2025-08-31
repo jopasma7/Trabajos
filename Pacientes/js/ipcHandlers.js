@@ -1,5 +1,10 @@
 // Eliminar require innecesario de agendaData
-const { app, dialog } = require('electron');
+const { app, dialog, BrowserWindow } = require('electron');
+// Helper to send logs to renderer (frontend)
+function sendSyncLog(msg) {
+  const win = BrowserWindow.getAllWindows()[0];
+  if (win) win.webContents.send('sync-log', msg);
+}
 const fs = require('fs');
 const path = require('path');
 const { ipcMain } = require('electron');
@@ -359,6 +364,19 @@ ipcMain.handle('get-ranking-profesionales', () => {
 
 ipcMain.handle('incidencias-delete-by-etiqueta', async (event, etiquetaId) => {
   return db.deleteIncidenciasByEtiqueta(etiquetaId);
+});
+
+// --- Backup y Sincronización con Turso ---
+const syncTurso = require('./data/syncTurso');
+
+ipcMain.handle('syncLocalToTurso', async () => {
+  await syncTurso.syncLocalToTurso(sendSyncLog);
+  return true;
+});
+
+ipcMain.handle('agregarDesdeTursoAlLocal', async () => {
+  await syncTurso.agregarDesdeTursoAlLocal(sendSyncLog);
+  return true;
 });
 
 

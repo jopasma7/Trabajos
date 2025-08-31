@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@joeattardi/emoji-button": "^4.6.4",
+    "@libsql/client": "^0.15.14",
     "better-sqlite3": "^12.2.0",
     "choices.js": "^11.1.0",
     "emoji-button": "^2.2.2",

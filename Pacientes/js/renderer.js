@@ -7,6 +7,7 @@ const { setupProfileSection } = require('../js/sections/profile.js');
 const agenda = require('../js/sections/agenda.js');
 const etiquetas = require('../js/sections/etiquetas.js');
 require('../js/sections/profesionales.js');
+require('../js/sections/configuracion.js');
 
 
 // Navegación entre secciones con Bootstrap (global)
@@ -240,3 +241,19 @@ document.addEventListener('DOMContentLoaded', () => {
 	// --- Inicialización de Agenda ---
 	agenda.setupAgendaSection();
 });
+
+// Listener para logs de sincronización desde el backend
+if (window.electron && window.electron.ipcRenderer) {
+  window.electron.ipcRenderer.on('sync-log', (event, msg) => {
+    console.log('[SYNC LOG]', msg);
+  });
+} else if (typeof require === 'function') {
+  try {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.on('sync-log', (event, msg) => {
+      console.log('[SYNC LOG]', msg);
+    });
+  } catch (e) {
+    // No disponible en contexto actual
+  }
+}

@@ -39,7 +39,11 @@ function createWindow() {
 
 
 // Cuando Electron esté listo, creamos la ventana principal
-app.whenReady().then(createWindow);
+const syncTurso = require('./js/data/syncTurso');
+app.whenReady().then(async () => {
+  //await syncTurso.agregarDesdeTursoAlLocal();
+  createWindow();
+});
 
 
 // Evento: cuando todas las ventanas están cerradas
